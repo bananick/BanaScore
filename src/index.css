@@ -1,0 +1,200 @@
+:root {
+  --primary: #f1c40f;
+  --secondary: #2c3e50;
+  --accent: #e67e22;
+  --blue: #2980b9;
+  --bg: #1a1a2e;
+  --card-bg: rgba(255, 255, 255, 0.1);
+  --text: #ffffff;
+  --success: #27ae60;
+  --error: #e74c3c;
+  --disabled: #7f8c8d;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  background-attachment: fixed;
+  background-image: radial-gradient(circle at 50% 50%, #16213e 0%, #1a1a2e 100%);
+}
+
+.app-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(45deg, var(--primary), var(--accent));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 10px 20px rgba(241, 196, 15, 0.2);
+}
+
+/* Prevent gradient clip from bleeding into icons/SVG inside h1 */
+h1 svg, h1 img {
+  -webkit-text-fill-color: initial;
+}
+
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  padding: 24px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: transform 0.2s;
+}
+
+/* IMPROVED CONTRAST FOR TEAM VOTE CARDS */
+.vote-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Stronger border */
+    color: white;
+}
+
+.vote-card:not(:disabled):hover {
+    background: rgba(255, 255, 15, 0.2);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.vote-card.selected {
+    background: var(--primary);
+    color: var(--secondary);
+    border-color: white;
+    font-weight: bold;
+}
+
+.festive-button {
+  background: linear-gradient(45deg, var(--primary), var(--accent));
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  color: var(--secondary);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 10px;
+  display: inline-block;
+  text-align: center;
+}
+
+.festive-button:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.festive-button:disabled {
+  background: var(--disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.3);
+  color: white;
+  box-sizing: border-box;
+}
+
+/* RANK-BASED SCORING BUTTONS */
+.score-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.score-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--primary);
+    background: transparent;
+    color: var(--primary);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.score-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--secondary);
+}
+
+.score-btn.active {
+    background: var(--primary);
+    color: var(--secondary);
+}
+
+.score-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+    border-color: var(--disabled);
+    color: var(--disabled);
+}
+
+.clear-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--error);
+    background: transparent;
+    color: var(--error);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.clear-btn:hover {
+    background: var(--error);
+    color: white;
+}
+
+.icon-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.icon-btn--danger {
+    border-color: var(--error);
+    color: var(--error);
+}
+
+.icon-btn--danger:hover {
+    background: rgba(231, 76, 60, 0.2);
+}

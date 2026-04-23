@@ -1,0 +1,35 @@
+{
+  "name": "bananote",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"vite\"",
+    "server": "ts-node-dev --project tsconfig.node.json server/index.ts",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.14.0",
+    "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "lucide-react": "^1.7.0",
+    "qrcode.react": "^4.2.0",
+    "react-router-dom": "^7.13.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3"
+  }
+}
