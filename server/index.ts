@@ -191,7 +191,7 @@ app.get('/api/events/:eventId/ranking/global', (req: Request, res: Response) => 
 });
 
 app.listen(port, () => {
-  console.log(`Bananote server running at http://localhost:${port}`);
+  console.log(`BanaScore server running at http://localhost:${port}`);
 });
 
 export {};

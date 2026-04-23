@@ -14,7 +14,7 @@ const Home = () => {
 
   return (
     <div className="app-container">
-      <h1>🍌 Bananote</h1>
+      <h1>🍌 BanaScore</h1>
       <p>The funnest way to vote for your events!</p>
       <div className="card">
         <h2>Open Events</h2>
@@ -332,7 +332,7 @@ const EventView = () => {
     return (
         <div className="app-container">
             <header style={{ marginBottom: '30px' }}>
-                <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>🍌 Bananote</Link>
+                <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>🍌 BanaScore</Link>
                 <h1>{participant ? `Hello, ${participant.pseudo}!` : 'Event View'}</h1>
             </header>
             

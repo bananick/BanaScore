@@ -1,8 +1,8 @@
-# Bananote — Plan d'analyse
+# BanaScore — Plan d'analyse
 
 ## Vue d'ensemble
 
-**Bananote** est une application d'événement interactif : l'admin crée un événement, des équipes et des activités, attribue des points *par classement* (1…N) par activité, et génère des **codes QR** par équipe pour l'inscription. Les participants rejoignent une équipe via le QR, puis **votent jusqu'à 3 fois** pour d'autres équipes. Le **classement global** additionne la **somme des points d'activités** et le **nombre de votes reçus**.
+**BanaScore** est une application d'événement interactif : l'admin crée un événement, des équipes et des activités, attribue des points *par classement* (1…N) par activité, et génère des **codes QR** par équipe pour l'inscription. Les participants rejoignent une équipe via le QR, puis **votent jusqu'à 3 fois** pour d'autres équipes. Le **classement global** additionne la **somme des points d'activités** et le **nombre de votes reçus**.
 
 **Stack :** React 19, Vite 8, React Router 7, Express 5, SQLite (`better-sqlite3`), TypeScript, axios, lucide-react, qrcode.react. Le dev proxy `/api` pointe vers `http://localhost:3001`.
 
@@ -50,11 +50,11 @@
 - **Serveur** : mélange `require` / `import` — homogénéiser le module system pour build et outillage.
 - **`admin_points`** sur `teams` : **non utilisé** — l'exploiter (bonus manuel) ou le retirer.
 - **API** : validation (longueur pseudo, noms) ; réponses d'erreur **JSON** structurées plutôt que chaînes brutes.
-- **Déploiement** : documenter (README), sauvegarde `bananote.db`, **CORS** restreint en prod.
+- **Déploiement** : documenter (README), sauvegarde `banascore.db`, **CORS** restreint en prod.
 - **Tests** : ajouter des tests d'intégration sur règles de vote et de scoring.
 
 ---
 
 ## Résumé
 
-Bananote est un **MVP cohérent** pour un atelier ou une soirée (votes + activités + QR). Les leviers principaux : **sécuriser l'admin**, **aligner produit / schéma** (champs inutilisés, date & lieu) et améliorer le **temps réel** / la **maintenabilité** du code (découpage, types, erreurs).
+BanaScore est un **MVP cohérent** pour un atelier ou une soirée (votes + activités + QR). Les leviers principaux : **sécuriser l'admin**, **aligner produit / schéma** (champs inutilisés, date & lieu) et améliorer le **temps réel** / la **maintenabilité** du code (découpage, types, erreurs).

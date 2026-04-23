@@ -1,7 +1,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const dbPath = path.resolve(__dirname, '../bananote.db');
+const dbPath = path.resolve(__dirname, '../banascore.db');
 const db = new Database(dbPath);
 db.pragma('foreign_keys = ON');
 
