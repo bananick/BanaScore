@@ -1,194 +1,226 @@
-const express = require('express');
-const cors = require('cors');
-const db = require('./db');
-const crypto = require('crypto');
-import { Request, Response } from 'express';
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import db from './db';
+import { handle, sendError } from './errors';
+import { requireAdmin, checkPassword, issueToken } from './auth';
+import { optString, reqInt, reqStatus, reqString } from './validation';
+import * as store from './store';
 
 const app = express();
-const port = 3001;
+const port = Number(process.env.PORT) || 3001;
 
-app.use(cors());
+// CORS: restrict to a comma-separated allowlist in production via CORS_ORIGIN.
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(
+  cors(
+    corsOrigin
+      ? { origin: corsOrigin.split(',').map((o) => o.trim()) }
+      : undefined, // dev: reflect request origin
+  ),
+);
 app.use(express.json());
 
-// API Endpoints
+const id = (req: Request, key: string) => reqInt(req.params[key], key, { min: 1 });
+
+// --- ADMIN AUTH ---
+app.post(
+  '/api/admin/login',
+  handle((req, res) => {
+    if (!checkPassword(req.body?.password)) {
+      sendError(res, 401, 'BAD_CREDENTIALS', 'Invalid password');
+      return;
+    }
+    res.json({ token: issueToken() });
+  }),
+);
+
+// Lightweight check used by the UI to confirm a stored token is still valid.
+app.get('/api/admin/session', requireAdmin, (_req, res) => res.json({ ok: true }));
 
 // --- EVENTS ---
-app.get('/api/events', (req: Request, res: Response) => {
-  const events = db.prepare('SELECT * FROM events').all();
-  res.json(events);
-});
+app.get(
+  '/api/events',
+  handle((req, res) => {
+    // Public listing shows only open events unless the caller is admin (?all=1).
+    const all = req.query.all === '1';
+    res.json(store.listEvents(db, { onlyOpen: !all }));
+  }),
+);
 
-app.post('/api/events', (req: Request, res: Response) => {
-  const { name, date, location } = req.body;
-  const result = db.prepare('INSERT INTO events (name, date, location) VALUES (?, ?, ?)').run(name, date, location);
-  res.status(201).json({ id: result.lastInsertRowid });
-});
+app.get(
+  '/api/events/:id',
+  handle((req, res) => res.json(store.getEvent(db, id(req, 'id')))),
+);
 
-app.get('/api/events/:id', (req: Request, res: Response) => {
-  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id);
-  if (!event) return res.status(404).send('Event not found');
-  res.json(event);
-});
+app.post(
+  '/api/events',
+  requireAdmin,
+  handle((req, res) => {
+    const name = reqString(req.body?.name, 'name', { max: 80 });
+    const date = optString(req.body?.date, 'date', 40);
+    const location = optString(req.body?.location, 'location', 120);
+    res.status(201).json(store.createEvent(db, { name, date, location }));
+  }),
+);
 
-app.delete('/api/events/:id', (req: Request, res: Response) => {
-  const r = db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
-  if (r.changes === 0) return res.status(404).send('Event not found');
-  res.sendStatus(204);
-});
+app.patch(
+  '/api/events/:id',
+  requireAdmin,
+  handle((req, res) => {
+    const name = reqString(req.body?.name, 'name', { max: 80 });
+    const date = optString(req.body?.date, 'date', 40);
+    const location = optString(req.body?.location, 'location', 120);
+    const status = reqStatus(req.body?.status ?? 'open');
+    res.json(store.updateEvent(db, id(req, 'id'), { name, date, location, status }));
+  }),
+);
+
+app.delete(
+  '/api/events/:id',
+  requireAdmin,
+  handle((req, res) => {
+    store.deleteEvent(db, id(req, 'id'));
+    res.sendStatus(204);
+  }),
+);
 
 // --- TEAMS ---
-app.get('/api/events/:eventId/teams', (req: Request, res: Response) => {
-  const teams = db.prepare('SELECT * FROM teams WHERE event_id = ?').all(req.params.eventId);
-  res.json(teams);
-});
+app.get(
+  '/api/events/:eventId/teams',
+  handle((req, res) => res.json(store.listTeams(db, id(req, 'eventId')))),
+);
 
-app.post('/api/events/:eventId/teams', (req: Request, res: Response) => {
-  const { name } = req.body;
-  const qrToken = crypto.randomBytes(16).toString('hex');
-  const result = db.prepare('INSERT INTO teams (name, event_id, qr_token) VALUES (?, ?, ?)').run(name, req.params.eventId, qrToken);
-  res.status(201).json({ id: result.lastInsertRowid, qr_token: qrToken });
-});
+app.post(
+  '/api/events/:eventId/teams',
+  requireAdmin,
+  handle((req, res) => {
+    const name = reqString(req.body?.name, 'name', { max: 60 });
+    res.status(201).json(store.createTeam(db, id(req, 'eventId'), name));
+  }),
+);
 
-app.delete('/api/events/:eventId/teams/:teamId', (req: Request, res: Response) => {
-  const { eventId, teamId } = req.params;
-  const team = db.prepare('SELECT id FROM teams WHERE id = ? AND event_id = ?').get(teamId, eventId);
-  if (!team) return res.status(404).send('Team not found');
-  db.prepare('DELETE FROM teams WHERE id = ?').run(teamId);
-  res.sendStatus(204);
-});
+app.patch(
+  '/api/events/:eventId/teams/:teamId',
+  requireAdmin,
+  handle((req, res) => {
+    const name = req.body?.name !== undefined ? reqString(req.body.name, 'name', { max: 60 }) : undefined;
+    const adminPoints =
+      req.body?.adminPoints !== undefined
+        ? reqInt(req.body.adminPoints, 'adminPoints', { min: -999, max: 999 })
+        : undefined;
+    res.json(store.updateTeam(db, id(req, 'eventId'), id(req, 'teamId'), { name, adminPoints }));
+  }),
+);
+
+app.delete(
+  '/api/events/:eventId/teams/:teamId',
+  requireAdmin,
+  handle((req, res) => {
+    store.deleteTeam(db, id(req, 'eventId'), id(req, 'teamId'));
+    res.sendStatus(204);
+  }),
+);
 
 // --- ACTIVITIES ---
-app.get('/api/events/:eventId/activities', (req: Request, res: Response) => {
-    const activities = db.prepare('SELECT * FROM activities WHERE event_id = ?').all(req.params.eventId);
-    res.json(activities);
-});
+app.get(
+  '/api/events/:eventId/activities',
+  handle((req, res) => res.json(store.listActivities(db, id(req, 'eventId')))),
+);
 
-app.post('/api/events/:eventId/activities', (req: Request, res: Response) => {
-    const { name } = req.body;
-    const result = db.prepare('INSERT INTO activities (name, event_id) VALUES (?, ?)').run(name, req.params.eventId);
-    res.status(201).json({ id: result.lastInsertRowid });
-});
+app.post(
+  '/api/events/:eventId/activities',
+  requireAdmin,
+  handle((req, res) => {
+    const name = reqString(req.body?.name, 'name', { max: 60 });
+    res.status(201).json(store.createActivity(db, id(req, 'eventId'), name));
+  }),
+);
 
-app.patch('/api/activities/:activityId/scores/:teamId', (req: Request, res: Response) => {
-    const { points } = req.body;
-    const { activityId, teamId } = req.params;
-    
-    if (points === null) {
-        db.prepare('DELETE FROM activity_scores WHERE activity_id = ? AND team_id = ?').run(activityId, teamId);
-    } else {
-        db.prepare(`
-            INSERT INTO activity_scores (activity_id, team_id, points)
-            VALUES (?, ?, ?)
-            ON CONFLICT(activity_id, team_id) DO UPDATE SET points = excluded.points
-        `).run(activityId, teamId, points);
-    }
+app.patch(
+  '/api/activities/:activityId',
+  requireAdmin,
+  handle((req, res) => {
+    const name = reqString(req.body?.name, 'name', { max: 60 });
+    res.json(store.updateActivity(db, id(req, 'activityId'), name));
+  }),
+);
+
+app.delete(
+  '/api/activities/:activityId',
+  requireAdmin,
+  handle((req, res) => {
+    store.deleteActivity(db, id(req, 'activityId'));
     res.sendStatus(204);
-});
+  }),
+);
 
-app.get('/api/activities/:activityId/scores', (req: Request, res: Response) => {
-    const scores = db.prepare('SELECT * FROM activity_scores WHERE activity_id = ?').all(req.params.activityId);
-    res.json(scores);
-});
+app.get(
+  '/api/activities/:activityId/scores',
+  handle((req, res) => res.json(store.listScores(db, id(req, 'activityId')))),
+);
+
+app.patch(
+  '/api/activities/:activityId/scores/:teamId',
+  requireAdmin,
+  handle((req, res) => {
+    const raw = req.body?.points;
+    const points = raw === null ? null : reqInt(raw, 'points', { min: 1, max: 999 });
+    store.setActivityScore(db, id(req, 'activityId'), id(req, 'teamId'), points);
+    res.sendStatus(204);
+  }),
+);
 
 // --- PARTICIPANTS ---
-app.post('/api/participants/register', (req: Request, res: Response) => {
-  const { pseudo, qrToken, deviceId } = req.body;
-  
-  const team = db.prepare('SELECT id, event_id FROM teams WHERE qr_token = ?').get(qrToken) as any;
-  if (!team) return res.status(404).send('Invalid QR Code');
+app.post(
+  '/api/participants/register',
+  handle((req, res) => {
+    const pseudo = reqString(req.body?.pseudo, 'pseudo', { max: 40 });
+    const qrToken = reqString(req.body?.qrToken, 'qrToken', { max: 64 });
+    const deviceId = reqString(req.body?.deviceId, 'deviceId', { max: 64 });
+    const participant = store.registerParticipant(db, { pseudo, qrToken, deviceId });
+    res
+      .status(201)
+      .json({ ...participant, teamId: participant.team_id, eventId: participant.event_id });
+  }),
+);
 
-  try {
-    const result = db.prepare('INSERT INTO participants (pseudo, team_id, event_id, device_id) VALUES (?, ?, ?, ?)').run(pseudo, team.id, team.event_id, deviceId);
-    res.status(201).json({ id: result.lastInsertRowid, teamId: team.id, eventId: team.event_id });
-  } catch (err: any) {
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      const existing = db.prepare('SELECT * FROM participants WHERE event_id = ? AND device_id = ?').get(team.event_id, deviceId);
-      res.json(existing);
-    } else {
-      res.status(500).send(err.message);
-    }
-  }
-});
+app.get(
+  '/api/participants/:id',
+  handle((req, res) => res.json(store.getParticipant(db, id(req, 'id')))),
+);
 
-app.get('/api/participants/:id', (req: Request, res: Response) => {
-    const participant = db.prepare('SELECT * FROM participants WHERE id = ?').get(req.params.id);
-    res.json(participant);
-});
-
-app.get('/api/participants/:id/votes', (req: Request, res: Response) => {
-    const votes = db.prepare('SELECT * FROM votes WHERE participant_id = ?').all(req.params.id);
-    res.json(votes);
-});
+app.get(
+  '/api/participants/:id/votes',
+  handle((req, res) => res.json(store.getParticipantVotes(db, id(req, 'id')))),
+);
 
 // --- VOTES ---
-app.post('/api/votes', (req: Request, res: Response) => {
-  const { participantId, votedTeamId } = req.body;
-  
-  const participant = db.prepare('SELECT * FROM participants WHERE id = ?').get(participantId) as any;
-  if (!participant) return res.status(404).send('Participant not found');
+app.post(
+  '/api/votes',
+  handle((req, res) => {
+    const participantId = reqInt(req.body?.participantId, 'participantId', { min: 1 });
+    const votedTeamId = reqInt(req.body?.votedTeamId, 'votedTeamId', { min: 1 });
+    res.status(201).json(store.castVote(db, participantId, votedTeamId));
+  }),
+);
 
-  if (participant.team_id === parseInt(votedTeamId)) {
-    return res.status(403).send('Cannot vote for your own team');
-  }
+// --- RANKINGS ---
+app.get(
+  '/api/events/:eventId/ranking/activity/:activityId',
+  handle((req, res) =>
+    res.json(store.rankingByActivity(db, id(req, 'eventId'), id(req, 'activityId'))),
+  ),
+);
 
-  // Count current votes
-  const voteCount = db.prepare('SELECT COUNT(*) as count FROM votes WHERE participant_id = ? AND event_id = ?').get(participantId, participant.event_id) as any;
-  if (voteCount.count >= 3) {
-      return res.status(403).send('You can only vote for up to 3 teams');
-  }
+app.get(
+  '/api/events/:eventId/ranking/votes',
+  handle((req, res) => res.json(store.rankingByVotes(db, id(req, 'eventId')))),
+);
 
-  try {
-    const result = db.prepare('INSERT INTO votes (participant_id, voted_team_id, event_id) VALUES (?, ?, ?)').run(participantId, votedTeamId, participant.event_id);
-    res.status(201).json({ id: result.lastInsertRowid });
-  } catch (err: any) {
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      res.status(403).send('You have already voted for this team');
-    } else {
-      res.status(500).send(err.message);
-    }
-  }
-});
-
-// --- SCORES / CLASSEMENT ---
-
-// Ranking per Activity
-app.get('/api/events/:eventId/ranking/activity/:activityId', (req: Request, res: Response) => {
-    const activity = db.prepare('SELECT name FROM activities WHERE id = ?').get(req.params.activityId);
-    const ranking = db.prepare(`
-    SELECT t.id, t.name, COALESCE(s.points, 0) as score
-    FROM teams t
-    LEFT JOIN activity_scores s ON t.id = s.team_id AND s.activity_id = ?
-    WHERE t.event_id = ?
-    ORDER BY score DESC
-  `).all(req.params.activityId, req.params.eventId);
-  res.json({ ranking, activityName: activity ? activity.name : 'Unknown' });
-});
-
-// Ranking for Votes only
-app.get('/api/events/:eventId/ranking/votes', (req: Request, res: Response) => {
-  const ranking = db.prepare(`
-    SELECT t.id, t.name, (SELECT COUNT(*) FROM votes v WHERE v.voted_team_id = t.id) as score
-    FROM teams t
-    WHERE t.event_id = ?
-    ORDER BY score DESC
-  `).all(req.params.eventId);
-  res.json(ranking);
-});
-
-// Global Ranking
-app.get('/api/events/:eventId/ranking/global', (req: Request, res: Response) => {
-  const ranking = db.prepare(`
-    SELECT t.id, t.name, 
-    (
-        COALESCE((SELECT SUM(points) FROM activity_scores s JOIN activities a ON s.activity_id = a.id WHERE s.team_id = t.id AND a.event_id = ?), 0) + 
-        (SELECT COUNT(*) FROM votes v WHERE v.voted_team_id = t.id)
-    ) as score
-    FROM teams t
-    WHERE t.event_id = ?
-    ORDER BY score DESC
-  `).all(req.params.eventId, req.params.eventId);
-  res.json(ranking);
-});
+app.get(
+  '/api/events/:eventId/ranking/global',
+  handle((req, res) => res.json(store.rankingGlobal(db, id(req, 'eventId')))),
+);
 
 app.listen(port, () => {
   console.log(`BanaScore server running at http://localhost:${port}`);

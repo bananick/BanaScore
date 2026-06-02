@@ -198,3 +198,43 @@ input {
 .icon-btn--danger:hover {
     background: rgba(231, 76, 60, 0.2);
 }
+
+/* TOASTS */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+    width: min(90%, 420px);
+}
+
+.toast {
+    padding: 14px 18px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    animation: toast-in 0.2s ease-out;
+    text-align: center;
+}
+
+.toast--success { background: var(--success); }
+.toast--error { background: var(--error); }
+.toast--info { background: var(--blue); }
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive: stack vote grid on small screens */
+@media (max-width: 420px) {
+    .app-container [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}

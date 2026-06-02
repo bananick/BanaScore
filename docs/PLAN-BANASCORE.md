@@ -58,3 +58,37 @@
 ## Résumé
 
 BanaScore est un **MVP cohérent** pour un atelier ou une soirée (votes + activités + QR). Les leviers principaux : **sécuriser l'admin**, **aligner produit / schéma** (champs inutilisés, date & lieu) et améliorer le **temps réel** / la **maintenabilité** du code (découpage, types, erreurs).
+
+---
+
+## Mise à jour — pistes traitées
+
+Les améliorations ci-dessous ont été implémentées :
+
+### Sécurité & API
+- **Auth admin** par mot de passe (`POST /api/admin/login` → token HMAC), middleware `requireAdmin` sur toutes les routes de mutation, écran de connexion + `AdminGuard` côté UI.
+- **CORS** restreint via `CORS_ORIGIN` (allowlist en production).
+- **Validation** des entrées côté serveur (`validation.ts`) et **erreurs JSON structurées** `{ error: { code, message } }` (`errors.ts`).
+
+### Produit & schéma
+- **Date & lieu** exposés à la création et à l'édition d'événement.
+- **`admin_points`** exploité : bonus manuel par équipe, intégré au classement global.
+- **Cycle de vie** : édition des noms (événement, équipe, activité), **statut** (ouvert/fermé/archivé), suppression d'activités ; votes bloqués si l'événement n'est pas ouvert ; accueil public limité aux événements ouverts.
+- **Migrations** SQLite additives (colonnes `status`, `created_at`, `admin_points`).
+
+### Technique & UX
+- **Serveur homogénéisé** en `import` ESM ; logique extraite dans `store.ts` (testable), routes fines.
+- **Frontend découpé** : `pages/`, `api.ts` typé, `types.ts`, `hooks.ts` (`usePolling`).
+- **Types** : remplacement des `any[]` par des DTOs.
+- **Toasts** (`toast.tsx`) en remplacement des `alert()`.
+- **i18n** : interface en **français** centralisée (`i18n.ts`), `lang="fr"`.
+- **Temps réel** : rafraîchissement auto (5 s) sur la page événement comme sur les classements.
+- **Mobile** : grille de votes repassée en 1 colonne sous 420 px.
+
+### Tests & doc
+- **Tests d'intégration** des règles de vote/scoring (`npm test`, SQLite en mémoire).
+- **README** : démarrage, variables d'environnement, déploiement, sauvegarde de la base.
+
+### Restant / optionnel
+- Reverse proxy HTTPS et secrets en production (documenté, à configurer au déploiement).
+- Modale de confirmation custom (les suppressions utilisent encore `window.confirm`).

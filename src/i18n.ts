@@ -1,0 +1,89 @@
+/**
+ * Centralised French UI strings. Keeping all copy in one place makes the
+ * interface consistent and a future multi-language setup straightforward.
+ */
+export const t = {
+  appTagline: 'La façon la plus fun de voter à vos événements !',
+  openEvents: 'Événements ouverts',
+  noEvents: 'Aucun événement pour le moment.',
+  adminDashboard: 'Espace admin',
+  home: 'Accueil',
+
+  // Admin login
+  adminTitle: 'Administration',
+  password: 'Mot de passe',
+  login: 'Se connecter',
+  logout: 'Se déconnecter',
+  wrongPassword: 'Mot de passe incorrect.',
+  loginRequired: 'Connexion administrateur requise.',
+
+  // Events
+  createEvent: 'Créer un événement',
+  eventName: 'Nom de l’événement',
+  eventDate: 'Date (optionnel)',
+  eventLocation: 'Lieu (optionnel)',
+  create: 'Créer',
+  existingEvents: 'Événements existants',
+  save: 'Enregistrer',
+  cancel: 'Annuler',
+  edit: 'Modifier',
+  status: 'Statut',
+  statusOpen: 'Ouvert',
+  statusClosed: 'Fermé',
+  statusArchived: 'Archivé',
+
+  // Event management
+  eventManagement: 'Gestion de l’événement',
+  addTeam: 'Ajouter une équipe',
+  teamName: 'Nom de l’équipe',
+  addActivity: 'Ajouter une activité',
+  activityName: 'Nom de l’activité (ex. Quiz, Sport)',
+  scoringMode: 'Mode de notation',
+  selectActivity: 'Choisir une activité à noter',
+  distributePoints: (n: number) => `Distribuer les points (1 à ${n})`,
+  selectActivityHint: 'Sélectionnez une activité ci-dessus pour distribuer les points par rang.',
+  assigned: 'Attribué',
+  pts: 'pts',
+  bonus: 'Bonus (points admin)',
+  teamsQr: 'QR codes des équipes',
+  globalRanking: 'Classement global',
+  votesOnly: 'Votes uniquement',
+  dangerZone: 'Zone de danger',
+  deleteEvent: 'Supprimer cet événement',
+  deleteEventDesc:
+    'Supprime cet événement et toutes ses données (équipes, activités, participants, votes).',
+
+  // Register
+  readyToPlay: 'Prêt·e à jouer ?',
+  yourPseudo: 'Votre pseudo',
+  joinTeam: 'Rejoindre l’équipe',
+  registrationError: 'Erreur lors de l’inscription.',
+
+  // Vote
+  hello: (name: string) => `Bonjour, ${name} !`,
+  eventView: 'Vue de l’événement',
+  voteForTeams: 'Votez pour les équipes',
+  votesRemaining: (n: number) => `${n} vote${n > 1 ? 's' : ''} restant${n > 1 ? 's' : ''}`,
+  yourTeam: '(Votre équipe)',
+  liveRankings: 'Classements en direct',
+  voteRanking: 'Classement des votes',
+  voteCast: 'Vote enregistré !',
+  voteFailed: 'Le vote a échoué.',
+  registerFirst: 'Inscrivez-vous d’abord !',
+  eventClosedNotice: 'Les votes sont fermés pour cet événement.',
+
+  // Ranking
+  backToEvent: 'Retour à l’événement',
+  globalScore: 'Score global',
+
+  // Generic
+  confirm: 'Confirmer',
+  deleteTeamConfirm: (name: string) =>
+    `Supprimer l’équipe « ${name} » ? Ses participants, scores et votes associés seront supprimés.`,
+  deleteEventConfirm: (name: string) =>
+    `Supprimer l’événement « ${name} » et toutes ses données ? Action irréversible.`,
+  deleteActivityConfirm: (name: string) =>
+    `Supprimer l’activité « ${name} » et ses scores ?`,
+  couldNotDelete: 'Suppression impossible.',
+  saved: 'Enregistré.',
+};
