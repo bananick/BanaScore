@@ -2,6 +2,8 @@ import axios from 'axios';
 import type {
   ActivityDTO,
   EventDTO,
+  EventReport,
+  EventStats,
   EventStatus,
   ParticipantDTO,
   RankingEntry,
@@ -48,6 +50,8 @@ export function isUnauthorized(err: unknown): boolean {
 export const login = (password: string) =>
   http.post<{ token: string }>('/admin/login', { password }).then((r) => r.data.token);
 export const checkSession = () => http.get('/admin/session').then(() => true);
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  http.post('/admin/password', { currentPassword, newPassword }).then((r) => r.data);
 
 // --- Events ---
 export const getEvents = (all = false) =>
@@ -58,9 +62,23 @@ export const createEvent = (data: { name: string; date?: string; location?: stri
   http.post<{ id: number }>('/events', data).then((r) => r.data);
 export const updateEvent = (
   id: number,
-  data: { name: string; date: string | null; location: string | null; status: EventStatus },
+  data: {
+    name: string;
+    date: string | null;
+    location: string | null;
+    status: EventStatus;
+    maxVotes: number;
+    brandColor: string | null;
+    logoUrl: string | null;
+  },
 ) => http.patch<EventDTO>(`/events/${id}`, data).then((r) => r.data);
 export const deleteEvent = (id: number) => http.delete(`/events/${id}`);
+export const duplicateEvent = (id: number, name?: string) =>
+  http.post<{ id: number }>(`/events/${id}/duplicate`, name ? { name } : {}).then((r) => r.data);
+export const getReport = (id: string | number) =>
+  http.get<EventReport>(`/events/${id}/report`).then((r) => r.data);
+export const getStats = (id: string | number) =>
+  http.get<EventStats>(`/events/${id}/stats`).then((r) => r.data);
 
 // --- Teams ---
 export const getTeams = (eventId: string | number) =>
@@ -70,7 +88,7 @@ export const createTeam = (eventId: string | number, name: string) =>
 export const updateTeam = (
   eventId: string | number,
   teamId: number,
-  data: { name?: string; adminPoints?: number },
+  data: { name?: string; adminPoints?: number; bonusLabel?: string | null },
 ) => http.patch<TeamDTO>(`/events/${eventId}/teams/${teamId}`, data).then((r) => r.data);
 export const deleteTeam = (eventId: string | number, teamId: number) =>
   http.delete(`/events/${eventId}/teams/${teamId}`);
@@ -80,8 +98,10 @@ export const getActivities = (eventId: string | number) =>
   http.get<ActivityDTO[]>(`/events/${eventId}/activities`).then((r) => r.data);
 export const createActivity = (eventId: string | number, name: string) =>
   http.post<{ id: number }>(`/events/${eventId}/activities`, { name }).then((r) => r.data);
-export const updateActivity = (activityId: number, name: string) =>
-  http.patch<ActivityDTO>(`/activities/${activityId}`, { name }).then((r) => r.data);
+export const updateActivity = (
+  activityId: number,
+  data: { name?: string; coefficient?: number },
+) => http.patch<ActivityDTO>(`/activities/${activityId}`, data).then((r) => r.data);
 export const deleteActivity = (activityId: number) => http.delete(`/activities/${activityId}`);
 
 export const getScores = (activityId: number) =>

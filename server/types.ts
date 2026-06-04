@@ -6,6 +6,9 @@ export interface EventRow {
   date: string | null;
   location: string | null;
   status: EventStatus;
+  max_votes: number;
+  brand_color: string | null;
+  logo_url: string | null;
   created_at: string;
 }
 
@@ -15,12 +18,14 @@ export interface TeamRow {
   event_id: number;
   qr_token: string;
   admin_points: number;
+  bonus_label: string | null;
 }
 
 export interface ActivityRow {
   id: number;
   event_id: number;
   name: string;
+  coefficient: number;
 }
 
 export interface ActivityScoreRow {

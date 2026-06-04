@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Copy, Plus, Trash2 } from 'lucide-react';
 import * as api from '../api';
 import type { EventDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { PasswordInput } from '../components/PasswordInput';
 
 const STATUS_LABELS: Record<EventDTO['status'], string> = {
   open: t.statusOpen,
@@ -17,6 +18,8 @@ export const AdminDashboard: React.FC = () => {
   const [date, setDate] = useState('');
   const [location, setLocation] = useState('');
   const [events, setEvents] = useState<EventDTO[]>([]);
+  const [pwd, setPwd] = useState({ current: '', next: '', confirm: '' });
+  const [pwdBusy, setPwdBusy] = useState(false);
   const toast = useToast();
 
   const refresh = () => api.getEvents(true).then(setEvents).catch(() => undefined);
@@ -37,6 +40,17 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const duplicateEvent = async (event: EventDTO) => {
+    if (!window.confirm(t.duplicateConfirm(event.name))) return;
+    try {
+      await api.duplicateEvent(event.id);
+      await refresh();
+      toast.success(t.duplicated);
+    } catch (err) {
+      toast.error(api.apiErrorMessage(err));
+    }
+  };
+
   const deleteEvent = async (event: EventDTO) => {
     if (!window.confirm(t.deleteEventConfirm(event.name))) return;
     try {
@@ -44,6 +58,28 @@ export const AdminDashboard: React.FC = () => {
       refresh();
     } catch (err) {
       toast.error(api.apiErrorMessage(err, t.couldNotDelete));
+    }
+  };
+
+  const submitPassword = async () => {
+    if (pwdBusy) return;
+    if (pwd.next.length < 4) {
+      toast.error(t.passwordTooShort);
+      return;
+    }
+    if (pwd.next !== pwd.confirm) {
+      toast.error(t.passwordsDontMatch);
+      return;
+    }
+    setPwdBusy(true);
+    try {
+      await api.changePassword(pwd.current, pwd.next);
+      setPwd({ current: '', next: '', confirm: '' });
+      toast.success(t.passwordChanged);
+    } catch (err) {
+      toast.error(api.apiErrorMessage(err));
+    } finally {
+      setPwdBusy(false);
     }
   };
 
@@ -104,6 +140,15 @@ export const AdminDashboard: React.FC = () => {
             </Link>
             <button
               type="button"
+              onClick={() => duplicateEvent(e)}
+              className="icon-btn"
+              title={t.duplicate}
+              aria-label={t.duplicate}
+            >
+              <Copy size={18} />
+            </button>
+            <button
+              type="button"
               onClick={() => deleteEvent(e)}
               className="icon-btn icon-btn--danger"
               title={t.deleteEvent}
@@ -113,6 +158,29 @@ export const AdminDashboard: React.FC = () => {
             </button>
           </div>
         ))}
+      </div>
+
+      <div className="card">
+        <h2>{t.changePassword}</h2>
+        <PasswordInput
+          value={pwd.current}
+          onChange={(v) => setPwd({ ...pwd, current: v })}
+          placeholder={t.currentPassword}
+        />
+        <PasswordInput
+          value={pwd.next}
+          onChange={(v) => setPwd({ ...pwd, next: v })}
+          placeholder={t.newPassword}
+        />
+        <PasswordInput
+          value={pwd.confirm}
+          onChange={(v) => setPwd({ ...pwd, confirm: v })}
+          onEnter={submitPassword}
+          placeholder={t.confirmPassword}
+        />
+        <button onClick={submitPassword} className="festive-button" disabled={pwdBusy}>
+          {t.changePassword}
+        </button>
       </div>
     </div>
   );

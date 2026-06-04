@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#16213e"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(256 268) rotate(-18)">
+    <path d="M -120 -70 C -150 30 -60 150 110 120 C 150 112 168 96 150 92
+             C 40 108 -60 40 -78 -64 C -82 -86 -112 -90 -120 -70 Z"
+          fill="#f1c40f" stroke="#caa10a" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M 110 120 C 150 112 168 96 150 92 C 110 100 70 96 36 84
+             C 70 112 96 122 110 120 Z" fill="#caa10a"/>
+    <path d="M -120 -70 C -126 -84 -116 -98 -100 -96 L -86 -78
+             C -98 -84 -112 -82 -120 -70 Z" fill="#6b4f1d"/>
+  </g>
+</svg>

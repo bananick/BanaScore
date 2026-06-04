@@ -7,8 +7,6 @@ import { t } from '../i18n';
 import { useToast } from '../toast';
 import { usePolling } from '../hooks';
 
-const MAX_VOTES = 3;
-
 export const EventView: React.FC = () => {
   const { id } = useParams();
   const toast = useToast();
@@ -57,7 +55,8 @@ export const EventView: React.FC = () => {
 
   const hasVotedFor = (teamId: number) => myVotes.some((v) => v.voted_team_id === teamId);
   const isClosed = event?.status !== 'open';
-  const remaining = MAX_VOTES - myVotes.length;
+  const maxVotes = event?.max_votes ?? 3;
+  const remaining = Math.max(0, maxVotes - myVotes.length);
 
   return (
     <div className="app-container">
@@ -79,7 +78,7 @@ export const EventView: React.FC = () => {
           {teams.map((team) => {
             const voted = hasVotedFor(team.id);
             const isOwnTeam = participant?.team_id === team.id;
-            const disabled = voted || isOwnTeam || myVotes.length >= MAX_VOTES || isClosed;
+            const disabled = voted || isOwnTeam || myVotes.length >= maxVotes || isClosed;
             return (
               <button
                 key={team.id}
@@ -121,6 +120,13 @@ export const EventView: React.FC = () => {
             </Link>
           ))}
         </div>
+        <Link
+          to={`/event/${id}/board`}
+          className="festive-button"
+          style={{ textDecoration: 'none', marginTop: 16, background: 'var(--secondary)' }}
+        >
+          📺 {t.projection}
+        </Link>
       </div>
     </div>
   );

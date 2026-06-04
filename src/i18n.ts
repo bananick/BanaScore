@@ -17,6 +17,15 @@ export const t = {
   wrongPassword: 'Mot de passe incorrect.',
   loginRequired: 'Connexion administrateur requise.',
 
+  // Change password
+  changePassword: 'Changer le mot de passe',
+  currentPassword: 'Mot de passe actuel',
+  newPassword: 'Nouveau mot de passe',
+  confirmPassword: 'Confirmer le nouveau mot de passe',
+  passwordChanged: 'Mot de passe mis à jour.',
+  passwordsDontMatch: 'Les mots de passe ne correspondent pas.',
+  passwordTooShort: 'Le nouveau mot de passe doit faire au moins 4 caractères.',
+
   // Events
   createEvent: 'Créer un événement',
   eventName: 'Nom de l’événement',
@@ -75,6 +84,47 @@ export const t = {
   // Ranking
   backToEvent: 'Retour à l’événement',
   globalScore: 'Score global',
+
+  // Duplicate / report / projection
+  duplicate: 'Dupliquer',
+  duplicated: 'Événement dupliqué.',
+  duplicateConfirm: (name: string) =>
+    `Dupliquer « ${name} » ? Les équipes et activités seront copiées (sans les scores ni les votes).`,
+  report: 'Rapport / Export',
+  exportCsv: 'Exporter en CSV',
+  print: 'Imprimer / PDF',
+  clientReport: 'Rapport de l’événement',
+  generatedOn: 'Généré le',
+  rank: 'Rang',
+  team: 'Équipe',
+  activitiesCol: 'Activités',
+  votesCol: 'Votes',
+  bonusCol: 'Bonus',
+  totalCol: 'Total',
+  podium: 'Podium',
+  participants: 'Participants',
+  projection: 'Mode projection',
+  fullscreen: 'Plein écran',
+  noData: 'Aucune donnée pour le moment.',
+
+  // Advanced scoring / branding / dashboard
+  maxVotes: 'Nombre de votes par participant',
+  coefficient: 'Coefficient (pondération du score global)',
+  brandColor: 'Couleur de marque',
+  logoUrl: 'URL du logo (optionnel)',
+  reset: 'Réinitialiser',
+  bonusLabel: 'Libellé du bonus (ex. fair-play)',
+  liveDashboard: 'Tableau de bord live',
+  teamsCount: 'Équipes',
+  activitiesScored: 'Activités notées',
+
+  // Join + posters
+  posters: 'Affiche QR (impression)',
+  joinEvent: 'Rejoindre l’événement',
+  chooseTeam: 'Choisissez votre équipe',
+  scanToJoin: 'Scannez pour rejoindre',
+  eventQr: 'QR de l’événement',
+  teamQr: 'QR par équipe',
 
   // Generic
   confirm: 'Confirmer',

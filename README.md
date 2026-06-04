@@ -43,6 +43,25 @@ npm run dev      # serveur (3001) + client Vite (5173)
 
 Ouvrir http://localhost:5173. L'espace admin est sur `/admin` (mot de passe requis).
 
+## Fonctionnalités
+
+- **Notation par équipe** : points par rang et par activité, bonus admin, votes des participants.
+- **Notation avancée** : **coefficient par activité** (pondère le score global), **nombre de votes configurable** par événement, **égalités (ex æquo)** dans les classements, **libellé de bonus** (raison affichée dans le rapport).
+- **Tableau de bord live** (admin) : compteurs en temps réel (équipes, inscrits, votes, activités notées) avec auto-refresh.
+- **Branding par événement** : couleur de marque + logo (URL) repris dans le **rapport** et le **mode projection**.
+- **QR « rejoindre l'événement »** (`/join/:eventId`) : un seul QR, choix de l'équipe à l'arrivée — en plus des QR par équipe.
+- **Affiche QR imprimable** (`/admin/event/:id/posters`) : feuille A4 avec tous les QR (équipes + événement) à poser sur les tables.
+- **Anti-doublon** : noms d'équipes et d'activités uniques par événement (insensible à la casse).
+- **Duplication d'événement** (bouton 📋 dans l'admin) : réutilise la structure (équipes + activités, nouveaux QR) sans copier les scores ni les votes — idéal comme modèle récurrent.
+- **Rapport client / export** (`/admin/event/:id/report`) : podium + tableau détaillé par équipe, **export CSV** (séparateur `;`, compatible Excel FR, BOM UTF-8) et **impression / PDF** via la fonction d'impression du navigateur.
+- **Mode projection** (`/event/:id/board`) : tableau de classement plein écran, barres de progression, auto-refresh (5 s), bouton plein écran — pour vidéoprojecteur / TV.
+- **PWA installable** : installable sur tablette/téléphone (icône sur l'écran d'accueil, plein écran). L'installation nécessite le **build de production** (service worker actif uniquement en prod) :
+
+  ```bash
+  npm run build && npm run preview
+  ```
+  Puis, depuis Chrome (mobile ou desktop) : menu → « Installer l'application ».
+
 ## Variables d'environnement
 
 | Variable          | Défaut                | Description |

@@ -19,6 +19,9 @@ export function createDb(dbPath: string): DB {
       date TEXT,
       location TEXT,
       status TEXT NOT NULL DEFAULT 'open',
+      max_votes INTEGER NOT NULL DEFAULT 3,
+      brand_color TEXT,
+      logo_url TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -28,6 +31,7 @@ export function createDb(dbPath: string): DB {
       event_id INTEGER NOT NULL,
       qr_token TEXT UNIQUE NOT NULL,
       admin_points INTEGER NOT NULL DEFAULT 0,
+      bonus_label TEXT,
       FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
     );
 
@@ -35,6 +39,7 @@ export function createDb(dbPath: string): DB {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       event_id INTEGER NOT NULL,
       name TEXT NOT NULL,
+      coefficient REAL NOT NULL DEFAULT 1,
       FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
     );
 
@@ -70,6 +75,11 @@ export function createDb(dbPath: string): DB {
       FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
       UNIQUE(participant_id, voted_team_id)
     );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
 
   migrate(db);
@@ -80,7 +90,12 @@ export function createDb(dbPath: string): DB {
 function migrate(db: DB): void {
   addColumnIfMissing(db, 'events', 'status', `TEXT NOT NULL DEFAULT 'open'`);
   addColumnIfMissing(db, 'events', 'created_at', `TEXT`);
+  addColumnIfMissing(db, 'events', 'max_votes', `INTEGER NOT NULL DEFAULT 3`);
+  addColumnIfMissing(db, 'events', 'brand_color', `TEXT`);
+  addColumnIfMissing(db, 'events', 'logo_url', `TEXT`);
   addColumnIfMissing(db, 'teams', 'admin_points', `INTEGER NOT NULL DEFAULT 0`);
+  addColumnIfMissing(db, 'teams', 'bonus_label', `TEXT`);
+  addColumnIfMissing(db, 'activities', 'coefficient', `REAL NOT NULL DEFAULT 1`);
 }
 
 function addColumnIfMissing(db: DB, table: string, column: string, definition: string): void {

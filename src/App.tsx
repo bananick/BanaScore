@@ -5,9 +5,13 @@ import { Home } from './pages/Home';
 import { AdminGuard } from './pages/AdminGuard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminEventDetail } from './pages/AdminEventDetail';
+import { EventReport } from './pages/EventReport';
+import { Posters } from './pages/Posters';
 import { Register } from './pages/Register';
+import { JoinEvent } from './pages/JoinEvent';
 import { EventView } from './pages/EventView';
 import { Ranking } from './pages/Ranking';
+import { Projection } from './pages/Projection';
 
 function App() {
   return (
@@ -31,8 +35,26 @@ function App() {
               </AdminGuard>
             }
           />
+          <Route
+            path="/admin/event/:id/report"
+            element={
+              <AdminGuard>
+                <EventReport />
+              </AdminGuard>
+            }
+          />
+          <Route
+            path="/admin/event/:id/posters"
+            element={
+              <AdminGuard>
+                <Posters />
+              </AdminGuard>
+            }
+          />
           <Route path="/register/:token" element={<Register />} />
+          <Route path="/join/:eventId" element={<JoinEvent />} />
           <Route path="/event/:id" element={<EventView />} />
+          <Route path="/event/:id/board" element={<Projection />} />
           <Route path="/event/:id/ranking/:type" element={<Ranking />} />
           <Route path="/event/:id/ranking/:type/:activityId" element={<Ranking />} />
         </Routes>

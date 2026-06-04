@@ -44,14 +44,29 @@ export function createEvent(
 export function updateEvent(
   db: DB,
   id: number,
-  data: { name: string; date: string | null; location: string | null; status: EventStatus },
+  data: {
+    name: string;
+    date: string | null;
+    location: string | null;
+    status: EventStatus;
+    maxVotes: number;
+    brandColor: string | null;
+    logoUrl: string | null;
+  },
 ): EventRow {
   getEvent(db, id);
-  db.prepare('UPDATE events SET name = ?, date = ?, location = ?, status = ? WHERE id = ?').run(
+  db.prepare(
+    `UPDATE events
+     SET name = ?, date = ?, location = ?, status = ?, max_votes = ?, brand_color = ?, logo_url = ?
+     WHERE id = ?`,
+  ).run(
     data.name,
     data.date,
     data.location,
     data.status,
+    data.maxVotes,
+    data.brandColor,
+    data.logoUrl,
     id,
   );
   return getEvent(db, id);
@@ -62,6 +77,42 @@ export function deleteEvent(db: DB, id: number): void {
   if (r.changes === 0) throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
 }
 
+/**
+ * Duplicate an event's structure as a fresh "open" event: copies activities and
+ * teams (with new QR tokens, bonus reset). Scores, votes and participants are
+ * NOT copied. Useful to reuse a recurring Banana Events format as a template.
+ */
+export function duplicateEvent(
+  db: DB,
+  id: number,
+  overrides: { name?: string; date?: string | null; location?: string | null } = {},
+): { id: number } {
+  const source = getEvent(db, id);
+  const name = overrides.name?.trim() || `${source.name} (copie)`;
+  const date = overrides.date !== undefined ? overrides.date : source.date;
+  const location = overrides.location !== undefined ? overrides.location : source.location;
+
+  const run = db.transaction(() => {
+    const created = createEvent(db, { name, date, location });
+    for (const activity of listActivities(db, id)) {
+      db.prepare('INSERT INTO activities (name, event_id) VALUES (?, ?)').run(
+        activity.name,
+        created.id,
+      );
+    }
+    for (const team of listTeams(db, id)) {
+      const qrToken = crypto.randomBytes(16).toString('hex');
+      db.prepare('INSERT INTO teams (name, event_id, qr_token) VALUES (?, ?, ?)').run(
+        team.name,
+        created.id,
+        qrToken,
+      );
+    }
+    return created;
+  });
+  return run();
+}
+
 // --- TEAMS ---
 
 export function listTeams(db: DB, eventId: number): TeamRow[] {
@@ -70,8 +121,22 @@ export function listTeams(db: DB, eventId: number): TeamRow[] {
     .all(eventId) as TeamRow[];
 }
 
+/** Throw if another row in `rows` has the same name (case-insensitive, trimmed). */
+function assertUniqueName(
+  rows: Array<{ id: number; name: string }>,
+  name: string,
+  exceptId: number | null,
+  label: string,
+): void {
+  const norm = name.trim().toLowerCase();
+  if (rows.some((r) => r.id !== exceptId && r.name.trim().toLowerCase() === norm)) {
+    throw new AppError(409, 'DUPLICATE_NAME', `A ${label} named "${name}" already exists`);
+  }
+}
+
 export function createTeam(db: DB, eventId: number, name: string): { id: number; qr_token: string } {
   getEvent(db, eventId);
+  assertUniqueName(listTeams(db, eventId), name, null, 'team');
   const qrToken = crypto.randomBytes(16).toString('hex');
   const result = db
     .prepare('INSERT INTO teams (name, event_id, qr_token) VALUES (?, ?, ?)')
@@ -83,15 +148,24 @@ export function updateTeam(
   db: DB,
   eventId: number,
   teamId: number,
-  data: { name?: string; adminPoints?: number },
+  data: { name?: string; adminPoints?: number; bonusLabel?: string | null },
 ): TeamRow {
   const team = db
     .prepare('SELECT * FROM teams WHERE id = ? AND event_id = ?')
     .get(teamId, eventId) as TeamRow | undefined;
   if (!team) throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found');
   const name = data.name ?? team.name;
+  if (data.name !== undefined) {
+    assertUniqueName(listTeams(db, eventId), data.name, teamId, 'team');
+  }
   const adminPoints = data.adminPoints ?? team.admin_points;
-  db.prepare('UPDATE teams SET name = ?, admin_points = ? WHERE id = ?').run(name, adminPoints, teamId);
+  const bonusLabel = data.bonusLabel !== undefined ? data.bonusLabel : team.bonus_label;
+  db.prepare('UPDATE teams SET name = ?, admin_points = ?, bonus_label = ? WHERE id = ?').run(
+    name,
+    adminPoints,
+    bonusLabel,
+    teamId,
+  );
   return db.prepare('SELECT * FROM teams WHERE id = ?').get(teamId) as TeamRow;
 }
 
@@ -113,15 +187,32 @@ export function listActivities(db: DB, eventId: number): ActivityRow[] {
 
 export function createActivity(db: DB, eventId: number, name: string): { id: number } {
   getEvent(db, eventId);
+  assertUniqueName(listActivities(db, eventId), name, null, 'activity');
   const result = db
     .prepare('INSERT INTO activities (name, event_id) VALUES (?, ?)')
     .run(name, eventId);
   return { id: Number(result.lastInsertRowid) };
 }
 
-export function updateActivity(db: DB, activityId: number, name: string): ActivityRow {
-  const r = db.prepare('UPDATE activities SET name = ? WHERE id = ?').run(name, activityId);
-  if (r.changes === 0) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+export function updateActivity(
+  db: DB,
+  activityId: number,
+  data: { name?: string; coefficient?: number },
+): ActivityRow {
+  const activity = db.prepare('SELECT * FROM activities WHERE id = ?').get(activityId) as
+    | ActivityRow
+    | undefined;
+  if (!activity) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+  const name = data.name ?? activity.name;
+  if (data.name !== undefined) {
+    assertUniqueName(listActivities(db, activity.event_id), data.name, activityId, 'activity');
+  }
+  const coefficient = data.coefficient ?? activity.coefficient;
+  db.prepare('UPDATE activities SET name = ?, coefficient = ? WHERE id = ?').run(
+    name,
+    coefficient,
+    activityId,
+  );
   return db.prepare('SELECT * FROM activities WHERE id = ?').get(activityId) as ActivityRow;
 }
 
@@ -236,8 +327,8 @@ export function castVote(db: DB, participantId: number, votedTeamId: number): { 
   const { count } = db
     .prepare('SELECT COUNT(*) as count FROM votes WHERE participant_id = ? AND event_id = ?')
     .get(participantId, participant.event_id) as { count: number };
-  if (count >= MAX_VOTES) {
-    throw new AppError(403, 'VOTE_LIMIT', `You can only vote for up to ${MAX_VOTES} teams`);
+  if (count >= event.max_votes) {
+    throw new AppError(403, 'VOTE_LIMIT', `You can only vote for up to ${event.max_votes} teams`);
   }
 
   try {
@@ -286,13 +377,16 @@ export function rankingByVotes(db: DB, eventId: number): RankingEntry[] {
     .all(eventId) as RankingEntry[];
 }
 
-/** Global score = sum of activity points + votes received + admin bonus points. */
+/**
+ * Global score = sum of (activity points × activity coefficient) + votes
+ * received + admin bonus points.
+ */
 export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
   return db
     .prepare(
       `SELECT t.id, t.name,
         (
-          COALESCE((SELECT SUM(points) FROM activity_scores s JOIN activities a ON s.activity_id = a.id WHERE s.team_id = t.id AND a.event_id = ?), 0)
+          COALESCE((SELECT SUM(s.points * a.coefficient) FROM activity_scores s JOIN activities a ON s.activity_id = a.id WHERE s.team_id = t.id AND a.event_id = ?), 0)
           + (SELECT COUNT(*) FROM votes v WHERE v.voted_team_id = t.id)
           + t.admin_points
         ) as score
@@ -301,4 +395,126 @@ export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
        ORDER BY score DESC, t.name ASC`,
     )
     .all(eventId, eventId) as RankingEntry[];
+}
+
+export interface EventReport {
+  event: EventRow;
+  activities: { id: number; name: string; coefficient: number }[];
+  /** One row per team with a full breakdown, sorted by total desc. */
+  teams: {
+    id: number;
+    name: string;
+    activityPoints: Record<number, number>; // activityId -> raw points
+    activityTotal: number; // coefficient-weighted sum
+    votes: number;
+    bonus: number;
+    bonusLabel: string | null;
+    total: number;
+  }[];
+  participantCount: number;
+  generatedAt: string;
+}
+
+/**
+ * Aggregate everything needed for the client report / CSV export: per-team
+ * breakdown (points per activity, vote count, bonus, total) plus event meta.
+ */
+export function getEventReport(db: DB, eventId: number): EventReport {
+  const event = getEvent(db, eventId);
+  const activities = listActivities(db, eventId).map((a) => ({
+    id: a.id,
+    name: a.name,
+    coefficient: a.coefficient,
+  }));
+  const teams = listTeams(db, eventId);
+
+  const rows = teams.map((team) => {
+    const activityPoints: Record<number, number> = {};
+    let activityTotal = 0;
+    for (const activity of activities) {
+      const row = db
+        .prepare('SELECT points FROM activity_scores WHERE activity_id = ? AND team_id = ?')
+        .get(activity.id, team.id) as { points: number } | undefined;
+      const pts = row?.points ?? 0;
+      activityPoints[activity.id] = pts;
+      activityTotal += pts * activity.coefficient;
+    }
+    const { count: votes } = db
+      .prepare('SELECT COUNT(*) as count FROM votes WHERE voted_team_id = ?')
+      .get(team.id) as { count: number };
+    const bonus = team.admin_points;
+    return {
+      id: team.id,
+      name: team.name,
+      activityPoints,
+      activityTotal,
+      votes,
+      bonus,
+      bonusLabel: team.bonus_label,
+      total: activityTotal + votes + bonus,
+    };
+  });
+
+  rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+
+  const { count: participantCount } = db
+    .prepare('SELECT COUNT(*) as count FROM participants WHERE event_id = ?')
+    .get(eventId) as { count: number };
+
+  return {
+    event,
+    activities,
+    teams: rows,
+    participantCount,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+export interface EventStats {
+  teams: number;
+  participants: number;
+  votes: number;
+  activitiesTotal: number;
+  activitiesScored: number; // activities with at least one score
+  perTeam: { id: number; name: string; participants: number; votes: number }[];
+}
+
+/** Live counters for the organiser dashboard. */
+export function getEventStats(db: DB, eventId: number): EventStats {
+  getEvent(db, eventId);
+  const teams = listTeams(db, eventId);
+  const activities = listActivities(db, eventId);
+
+  const activitiesScored = activities.filter((a) => {
+    const row = db
+      .prepare('SELECT 1 FROM activity_scores WHERE activity_id = ? LIMIT 1')
+      .get(a.id);
+    return !!row;
+  }).length;
+
+  const perTeam = teams.map((team) => {
+    const { count: participants } = db
+      .prepare('SELECT COUNT(*) as count FROM participants WHERE team_id = ?')
+      .get(team.id) as { count: number };
+    const { count: votes } = db
+      .prepare('SELECT COUNT(*) as count FROM votes WHERE voted_team_id = ?')
+      .get(team.id) as { count: number };
+    return { id: team.id, name: team.name, participants, votes };
+  });
+
+  const { count: participants } = db
+    .prepare('SELECT COUNT(*) as count FROM participants WHERE event_id = ?')
+    .get(eventId) as { count: number };
+  const { count: votes } = db
+    .prepare('SELECT COUNT(*) as count FROM votes WHERE event_id = ?')
+    .get(eventId) as { count: number };
+
+  return {
+    teams: teams.length,
+    participants,
+    votes,
+    activitiesTotal: activities.length,
+    activitiesScored,
+    perTeam,
+  };
 }

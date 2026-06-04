@@ -3,9 +3,10 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, Trash2, XCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as api from '../api';
-import type { ActivityDTO, EventDTO, EventStatus, ScoreDTO, TeamDTO } from '../types';
+import type { ActivityDTO, EventDTO, EventStats, EventStatus, ScoreDTO, TeamDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { usePolling } from '../hooks';
 
 export const AdminEventDetail: React.FC = () => {
   const { id } = useParams();
@@ -19,9 +20,28 @@ export const AdminEventDetail: React.FC = () => {
   const [teamName, setTeamName] = useState('');
   const [activityName, setActivityName] = useState('');
   const [selectedActivity, setSelectedActivity] = useState<number | null>(null);
+  const [stats, setStats] = useState<EventStats | null>(null);
+
+  // Live dashboard polling — independent of the edit form so it never clobbers
+  // unsaved changes in the meta/teams inputs.
+  usePolling(
+    () => {
+      api.getStats(id!).then(setStats).catch(() => undefined);
+    },
+    5000,
+    [id],
+  );
 
   // Editable event meta.
-  const [meta, setMeta] = useState({ name: '', date: '', location: '', status: 'open' as EventStatus });
+  const [meta, setMeta] = useState({
+    name: '',
+    date: '',
+    location: '',
+    status: 'open' as EventStatus,
+    maxVotes: 3,
+    brandColor: '',
+    logoUrl: '',
+  });
 
   const refresh = async () => {
     const [ev, tr, ar] = await Promise.all([
@@ -30,7 +50,15 @@ export const AdminEventDetail: React.FC = () => {
       api.getActivities(id!),
     ]);
     setEvent(ev);
-    setMeta({ name: ev.name, date: ev.date ?? '', location: ev.location ?? '', status: ev.status });
+    setMeta({
+      name: ev.name,
+      date: ev.date ?? '',
+      location: ev.location ?? '',
+      status: ev.status,
+      maxVotes: ev.max_votes,
+      brandColor: ev.brand_color ?? '',
+      logoUrl: ev.logo_url ?? '',
+    });
     setTeams(tr);
     setActivities(ar);
     if (selectedActivity) {
@@ -60,6 +88,9 @@ export const AdminEventDetail: React.FC = () => {
       date: meta.date || null,
       location: meta.location || null,
       status: meta.status,
+      maxVotes: meta.maxVotes,
+      brandColor: meta.brandColor || null,
+      logoUrl: meta.logoUrl || null,
     });
     await refresh();
     toast.success(t.saved);
@@ -86,6 +117,21 @@ export const AdminEventDetail: React.FC = () => {
 
   const setBonus = guard(async (teamId: number, adminPoints: number) => {
     await api.updateTeam(id!, teamId, { adminPoints });
+    await refresh();
+  });
+
+  const setBonusLabel = guard(async (teamId: number, bonusLabel: string) => {
+    await api.updateTeam(id!, teamId, { bonusLabel: bonusLabel || null });
+    await refresh();
+  });
+
+  const renameActivity = guard(async (activityId: number, name: string) => {
+    await api.updateActivity(activityId, { name });
+    await refresh();
+  });
+
+  const setCoefficient = guard(async (activityId: number, coefficient: number) => {
+    await api.updateActivity(activityId, { coefficient });
     await refresh();
   });
 
@@ -131,6 +177,33 @@ export const AdminEventDetail: React.FC = () => {
         <h1 style={{ fontSize: '2rem' }}>{t.eventManagement}</h1>
       </header>
 
+      {/* Live dashboard */}
+      {stats && (
+        <div className="card">
+          <h3>📡 {t.liveDashboard}</h3>
+          <div className="stat-grid">
+            <div className="stat">
+              <span className="stat-value">{stats.teams}</span>
+              <span className="stat-label">{t.teamsCount}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{stats.participants}</span>
+              <span className="stat-label">{t.participants}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">{stats.votes}</span>
+              <span className="stat-label">{t.votesCol}</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">
+                {stats.activitiesScored}/{stats.activitiesTotal}
+              </span>
+              <span className="stat-label">{t.activitiesScored}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Event meta */}
       <div className="card">
         <h3>{t.edit}</h3>
@@ -161,6 +234,44 @@ export const AdminEventDetail: React.FC = () => {
           <option value="closed">{t.statusClosed}</option>
           <option value="archived">{t.statusArchived}</option>
         </select>
+
+        <label style={{ display: 'block', textAlign: 'left', margin: '8px 0', opacity: 0.8 }}>
+          {t.maxVotes}
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={50}
+          value={meta.maxVotes}
+          onChange={(e) => setMeta({ ...meta, maxVotes: parseInt(e.target.value, 10) || 1 })}
+        />
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0', opacity: 0.8 }}>
+          {t.brandColor}
+          <input
+            type="color"
+            value={meta.brandColor || '#f1c40f'}
+            onChange={(e) => setMeta({ ...meta, brandColor: e.target.value })}
+            style={{ width: 48, height: 34, padding: 0, margin: 0, cursor: 'pointer' }}
+          />
+          {meta.brandColor && (
+            <button
+              type="button"
+              className="icon-btn"
+              title={t.reset}
+              onClick={() => setMeta({ ...meta, brandColor: '' })}
+            >
+              <XCircle size={16} />
+            </button>
+          )}
+        </label>
+
+        <input
+          value={meta.logoUrl}
+          onChange={(e) => setMeta({ ...meta, logoUrl: e.target.value })}
+          placeholder={t.logoUrl}
+        />
+
         <button onClick={saveMeta} className="festive-button">
           {t.save}
         </button>
@@ -189,9 +300,34 @@ export const AdminEventDetail: React.FC = () => {
             {activities.map((a) => (
               <div
                 key={a.id}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}
               >
-                <span style={{ textAlign: 'left' }}>{a.name}</span>
+                <input
+                  defaultValue={a.name}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    if (v && v !== a.name) renameActivity(a.id, v);
+                  }}
+                  style={{ margin: 0, flex: 1 }}
+                />
+                <label
+                  title={t.coefficient}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: 0.85, fontSize: '0.9rem' }}
+                >
+                  ×
+                  <input
+                    type="number"
+                    min={0.1}
+                    max={100}
+                    step={0.5}
+                    defaultValue={a.coefficient}
+                    onBlur={(e) => {
+                      const v = parseFloat(e.target.value);
+                      if (v > 0 && v !== a.coefficient) setCoefficient(a.id, v);
+                    }}
+                    style={{ width: 64, margin: 0 }}
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={() => deleteActivity(a)}
@@ -285,18 +421,29 @@ export const AdminEventDetail: React.FC = () => {
               <Trash2 size={18} />
             </button>
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-start', fontSize: '0.85rem', opacity: 0.85 }}>
-            {t.bonus}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: '0.85rem', opacity: 0.85 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {t.bonus}
+              <input
+                type="number"
+                defaultValue={team.admin_points}
+                onBlur={(e) => {
+                  const v = parseInt(e.target.value, 10) || 0;
+                  if (v !== team.admin_points) setBonus(team.id, v);
+                }}
+                style={{ width: 80, margin: 0 }}
+              />
+            </label>
             <input
-              type="number"
-              defaultValue={team.admin_points}
+              defaultValue={team.bonus_label ?? ''}
               onBlur={(e) => {
-                const v = parseInt(e.target.value, 10) || 0;
-                if (v !== team.admin_points) setBonus(team.id, v);
+                const v = e.target.value.trim();
+                if (v !== (team.bonus_label ?? '')) setBonusLabel(team.id, v);
               }}
-              style={{ width: 90, margin: 0 }}
+              placeholder={t.bonusLabel}
+              style={{ flex: 1, minWidth: 120, margin: 0 }}
             />
-          </label>
+          </div>
           <div
             style={{
               background: 'white',
@@ -322,6 +469,27 @@ export const AdminEventDetail: React.FC = () => {
           style={{ textDecoration: 'none', background: 'var(--accent)' }}
         >
           🗳️ {t.votesOnly}
+        </Link>
+        <Link
+          to={`/event/${id}/board`}
+          className="festive-button"
+          style={{ textDecoration: 'none', background: 'var(--blue)' }}
+        >
+          📺 {t.projection}
+        </Link>
+        <Link
+          to={`/admin/event/${id}/report`}
+          className="festive-button"
+          style={{ textDecoration: 'none', background: 'var(--success)' }}
+        >
+          📄 {t.report}
+        </Link>
+        <Link
+          to={`/admin/event/${id}/posters`}
+          className="festive-button"
+          style={{ textDecoration: 'none', background: 'var(--secondary)' }}
+        >
+          🖨️ {t.posters}
         </Link>
       </div>
 

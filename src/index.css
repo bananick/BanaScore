@@ -118,19 +118,20 @@ input {
 .score-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
     justify-content: center;
     margin-top: 10px;
 }
 
 .score-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 1px solid var(--primary);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    border: 2px solid var(--primary);
     background: transparent;
     color: var(--primary);
     font-weight: bold;
+    font-size: 1.6rem;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -153,10 +154,10 @@ input {
 }
 
 .clear-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 1px solid var(--error);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    border: 2px solid var(--error);
     background: transparent;
     color: var(--error);
     display: flex;
@@ -199,6 +200,48 @@ input {
     background: rgba(231, 76, 60, 0.2);
 }
 
+/* PASSWORD FIELD WITH EYE TOGGLE */
+.password-field {
+    position: relative;
+    width: 100%;
+}
+
+.password-field input {
+    padding-right: 46px;
+    font-size: 1.5rem;
+    letter-spacing: 0.18em;
+    line-height: 1.2;
+}
+
+/* Keep the placeholder text large but without the wide dot spacing */
+.password-field input::placeholder {
+    letter-spacing: normal;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+}
+
+.password-toggle:hover {
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
 /* TOASTS */
 .toast-container {
     position: fixed;
@@ -230,6 +273,162 @@ input {
 @keyframes toast-in {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* REPORT */
+.report { max-width: 900px; }
+.report-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.report-header {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--primary);
+    margin-bottom: 24px;
+}
+.report-brand { color: var(--primary); font-weight: 700; letter-spacing: 0.04em; }
+
+.podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 14px;
+    margin: 10px 0 28px;
+}
+.podium-spot {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 16px 18px;
+    text-align: center;
+    min-width: 120px;
+}
+.podium-1 { order: 2; transform: translateY(-14px); border-color: var(--primary); }
+.podium-2 { order: 1; }
+.podium-3 { order: 3; }
+.podium-medal { font-size: 2rem; }
+.podium-name { font-weight: 700; margin: 6px 0; }
+.podium-score { color: var(--primary); font-weight: 700; }
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+.report-table th, .report-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    text-align: center;
+}
+.report-table thead th { color: var(--primary); border-bottom: 2px solid var(--primary); }
+.report-table tr.is-first { background: rgba(241, 196, 15, 0.12); }
+
+/* LIVE DASHBOARD */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 12px 8px;
+}
+.stat-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 0.72rem; opacity: 0.75; text-align: center; }
+
+.report-logo, .projection-logo { max-height: 90px; max-width: 70%; object-fit: contain; }
+.projection-logo { max-height: 9vh; }
+.bonus-label { opacity: 0.7; font-size: 0.85em; }
+
+/* POSTERS (printable QR sheet) */
+.posters { max-width: 1000px; }
+.posters-head { text-align: center; margin-bottom: 16px; }
+.posters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+}
+.poster-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    break-inside: avoid;
+}
+.poster-event { border-color: var(--primary); }
+.poster-qr { background: white; border-radius: 12px; padding: 12px; display: inline-block; }
+.poster-name { font-weight: 700; margin-top: 10px; font-size: 1.1rem; }
+.poster-sub { opacity: 0.65; font-size: 0.8rem; }
+
+/* PROJECTION (TV / beamer) */
+.projection {
+    min-height: 100vh;
+    padding: 4vh 5vw;
+    box-sizing: border-box;
+}
+.projection-fs {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    border-radius: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+.projection-head { text-align: center; margin-bottom: 3vh; }
+.projection-brand { color: var(--primary); font-weight: 700; }
+.projection-head h1 { font-size: 4vw; margin: 0.4vh 0; }
+.projection-head p { font-size: 1.6vw; opacity: 0.8; margin: 0; }
+.projection-list { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.4vh; }
+.projection-row {
+    display: grid;
+    grid-template-columns: 5vw 1fr 40% auto;
+    align-items: center;
+    gap: 1.4vw;
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 1.4vh 1.6vw;
+}
+.projection-row.leader { border-color: var(--primary); background: rgba(241,196,15,0.12); }
+.projection-rank { font-size: 2.4vw; text-align: center; }
+.projection-name { font-size: 2.2vw; font-weight: 700; }
+.projection-bar { height: 1.6vh; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; }
+.projection-bar-fill {
+    display: block; height: 100%;
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    transition: width 0.6s ease;
+}
+.projection-score { font-size: 2.6vw; font-weight: 800; color: var(--primary); text-align: right; }
+
+/* PRINT (PDF export of the report) */
+@media print {
+    body { background: white !important; color: black !important; }
+    .no-print { display: none !important; }
+    .app-container { max-width: 100%; }
+    .report-header { border-color: #333; }
+    .report-brand, .report-table thead th { color: #b8860b; }
+    .report-table th, .report-table td { border-color: #ccc; color: black; }
+    .report-table tr.is-first { background: #fff7d6; }
+    h1 { -webkit-text-fill-color: #b8860b; color: #b8860b; }
+
+    .poster-card { border: 1px solid #999; color: black; background: white; }
+    .poster-event { border: 2px solid #b8860b; }
+    .poster-sub { color: #555; }
+    .posters-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
 }
 
 /* Responsive: stack vote grid on small screens */

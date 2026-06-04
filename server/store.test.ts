@@ -64,7 +64,15 @@ test('cannot vote on a closed event', () => {
   const other = store.createTeam(db, eventId, 'Other');
   const me = join(db, mine.qr_token, 'Me', 'd1');
 
-  store.updateEvent(db, eventId, { name: 'Party', date: null, location: null, status: 'closed' });
+  store.updateEvent(db, eventId, {
+    name: 'Party',
+    date: null,
+    location: null,
+    status: 'closed',
+    maxVotes: 3,
+    brandColor: null,
+    logoUrl: null,
+  });
   expectAppError(() => store.castVote(db, me.id, other.id), 'EVENT_CLOSED');
 });
 
@@ -118,4 +126,91 @@ test('global ranking sums activity points + votes + admin bonus', () => {
 test('registering with an invalid QR token fails', () => {
   const { db } = setup();
   expectAppError(() => join(db, 'nope', 'X', 'd1'), 'INVALID_QR');
+});
+
+test('duplicate team and activity names are rejected (case-insensitive)', () => {
+  const { db, eventId } = setup();
+  store.createTeam(db, eventId, 'Alpha');
+  expectAppError(() => store.createTeam(db, eventId, ' alpha '), 'DUPLICATE_NAME');
+  store.createActivity(db, eventId, 'Quiz');
+  expectAppError(() => store.createActivity(db, eventId, 'QUIZ'), 'DUPLICATE_NAME');
+});
+
+test('duplicateEvent copies structure but not scores/votes', () => {
+  const { db, eventId } = setup();
+  const a = store.createTeam(db, eventId, 'A');
+  store.createTeam(db, eventId, 'B');
+  const activity = store.createActivity(db, eventId, 'Quiz');
+  store.setActivityScore(db, activity.id, a.id, 2);
+  store.updateTeam(db, eventId, a.id, { adminPoints: 5 });
+
+  const copy = store.duplicateEvent(db, eventId, { name: 'Copie' });
+  const copyTeams = store.listTeams(db, copy.id);
+  const copyActivities = store.listActivities(db, copy.id);
+
+  assert.equal(copyTeams.length, 2);
+  assert.equal(copyActivities.length, 1);
+  assert.deepEqual(copyTeams.map((t) => t.name).sort(), ['A', 'B']);
+  // New QR tokens, no copied bonus, no copied activity scores.
+  assert.notEqual(copyTeams[0].qr_token, store.listTeams(db, eventId)[0].qr_token);
+  assert.equal(copyTeams.find((t) => t.name === 'A')!.admin_points, 0);
+  assert.equal(store.listScores(db, copyActivities[0].id).length, 0);
+});
+
+test('activity coefficient weights the global ranking', () => {
+  const { db, eventId } = setup();
+  const a = store.createTeam(db, eventId, 'A');
+  const b = store.createTeam(db, eventId, 'B');
+  const quiz = store.createActivity(db, eventId, 'Quiz');
+  const sport = store.createActivity(db, eventId, 'Sport');
+  store.updateActivity(db, quiz.id, { coefficient: 3 });
+  // A wins quiz (rank 2) but loses sport (rank 1); coefficient makes A win overall.
+  store.setActivityScore(db, quiz.id, a.id, 2); // 2 * 3 = 6
+  store.setActivityScore(db, quiz.id, b.id, 1); // 1 * 3 = 3
+  store.setActivityScore(db, sport.id, a.id, 1); // 1 * 1 = 1
+  store.setActivityScore(db, sport.id, b.id, 2); // 2 * 1 = 2
+
+  const ranking = store.rankingGlobal(db, eventId);
+  assert.equal(ranking[0].id, a.id); // 7 vs 5
+  assert.equal(ranking.find((r) => r.id === a.id)!.score, 7);
+  assert.equal(ranking.find((r) => r.id === b.id)!.score, 5);
+});
+
+test('max_votes per event is enforced', () => {
+  const { db, eventId } = setup();
+  const mine = store.createTeam(db, eventId, 'Mine');
+  const others = ['A', 'B'].map((n) => store.createTeam(db, eventId, n));
+  store.updateEvent(db, eventId, {
+    name: 'Party',
+    date: null,
+    location: null,
+    status: 'open',
+    maxVotes: 1,
+    brandColor: null,
+    logoUrl: null,
+  });
+  const me = join(db, mine.qr_token, 'Me', 'd1');
+  store.castVote(db, me.id, others[0].id);
+  expectAppError(() => store.castVote(db, me.id, others[1].id), 'VOTE_LIMIT');
+});
+
+test('getEventReport aggregates per-team breakdown', () => {
+  const { db, eventId } = setup();
+  const a = store.createTeam(db, eventId, 'A');
+  const b = store.createTeam(db, eventId, 'B');
+  const voters = store.createTeam(db, eventId, 'Voters');
+  const activity = store.createActivity(db, eventId, 'Quiz');
+  store.setActivityScore(db, activity.id, a.id, 3);
+  store.updateTeam(db, eventId, a.id, { adminPoints: 2 });
+  const v1 = join(db, voters.qr_token, 'V1', 'd1');
+  store.castVote(db, v1.id, b.id);
+
+  const report = store.getEventReport(db, eventId);
+  const teamA = report.teams.find((t) => t.id === a.id)!;
+  const teamB = report.teams.find((t) => t.id === b.id)!;
+  assert.equal(teamA.total, 5); // 3 activity + 0 votes + 2 bonus
+  assert.equal(teamA.activityPoints[activity.id], 3);
+  assert.equal(teamB.votes, 1);
+  assert.equal(report.teams[0].id, a.id); // sorted by total desc
+  assert.equal(report.participantCount, 1);
 });

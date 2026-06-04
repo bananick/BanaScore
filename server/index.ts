@@ -2,8 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import db from './db';
 import { handle, sendError } from './errors';
-import { requireAdmin, checkPassword, issueToken } from './auth';
-import { optString, reqInt, reqStatus, reqString } from './validation';
+import { requireAdmin, checkPassword, issueToken, setPassword } from './auth';
+import { optString, reqInt, reqNumber, reqStatus, reqString } from './validation';
 import * as store from './store';
 
 const app = express();
@@ -36,6 +36,21 @@ app.post(
 
 // Lightweight check used by the UI to confirm a stored token is still valid.
 app.get('/api/admin/session', requireAdmin, (_req, res) => res.json({ ok: true }));
+
+app.post(
+  '/api/admin/password',
+  requireAdmin,
+  handle((req, res) => {
+    const current = reqString(req.body?.currentPassword, 'currentPassword', { max: 200 });
+    const next = reqString(req.body?.newPassword, 'newPassword', { min: 4, max: 200 });
+    if (!checkPassword(current)) {
+      sendError(res, 401, 'BAD_CREDENTIALS', 'Current password is incorrect');
+      return;
+    }
+    setPassword(next);
+    res.json({ ok: true });
+  }),
+);
 
 // --- EVENTS ---
 app.get(
@@ -71,7 +86,12 @@ app.patch(
     const date = optString(req.body?.date, 'date', 40);
     const location = optString(req.body?.location, 'location', 120);
     const status = reqStatus(req.body?.status ?? 'open');
-    res.json(store.updateEvent(db, id(req, 'id'), { name, date, location, status }));
+    const maxVotes = reqInt(req.body?.maxVotes ?? 3, 'maxVotes', { min: 1, max: 50 });
+    const brandColor = optString(req.body?.brandColor, 'brandColor', 30);
+    const logoUrl = optString(req.body?.logoUrl, 'logoUrl', 500000);
+    res.json(
+      store.updateEvent(db, id(req, 'id'), { name, date, location, status, maxVotes, brandColor, logoUrl }),
+    );
   }),
 );
 
@@ -82,6 +102,27 @@ app.delete(
     store.deleteEvent(db, id(req, 'id'));
     res.sendStatus(204);
   }),
+);
+
+app.post(
+  '/api/events/:id/duplicate',
+  requireAdmin,
+  handle((req, res) => {
+    const name = req.body?.name !== undefined ? reqString(req.body.name, 'name', { max: 80 }) : undefined;
+    res.status(201).json(store.duplicateEvent(db, id(req, 'id'), { name }));
+  }),
+);
+
+app.get(
+  '/api/events/:id/report',
+  requireAdmin,
+  handle((req, res) => res.json(store.getEventReport(db, id(req, 'id')))),
+);
+
+app.get(
+  '/api/events/:id/stats',
+  requireAdmin,
+  handle((req, res) => res.json(store.getEventStats(db, id(req, 'id')))),
 );
 
 // --- TEAMS ---
@@ -108,7 +149,11 @@ app.patch(
       req.body?.adminPoints !== undefined
         ? reqInt(req.body.adminPoints, 'adminPoints', { min: -999, max: 999 })
         : undefined;
-    res.json(store.updateTeam(db, id(req, 'eventId'), id(req, 'teamId'), { name, adminPoints }));
+    const bonusLabel =
+      req.body?.bonusLabel !== undefined ? optString(req.body.bonusLabel, 'bonusLabel', 60) : undefined;
+    res.json(
+      store.updateTeam(db, id(req, 'eventId'), id(req, 'teamId'), { name, adminPoints, bonusLabel }),
+    );
   }),
 );
 
@@ -140,8 +185,12 @@ app.patch(
   '/api/activities/:activityId',
   requireAdmin,
   handle((req, res) => {
-    const name = reqString(req.body?.name, 'name', { max: 60 });
-    res.json(store.updateActivity(db, id(req, 'activityId'), name));
+    const name = req.body?.name !== undefined ? reqString(req.body.name, 'name', { max: 60 }) : undefined;
+    const coefficient =
+      req.body?.coefficient !== undefined
+        ? reqNumber(req.body.coefficient, 'coefficient', { min: 0.1, max: 100 })
+        : undefined;
+    res.json(store.updateActivity(db, id(req, 'activityId'), { name, coefficient }));
   }),
 );
 

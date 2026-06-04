@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import * as api from '../api';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { PasswordInput } from '../components/PasswordInput';
 
 export const AdminLogin: React.FC<{ onAuthed: () => void }> = ({ onAuthed }) => {
   const [password, setPassword] = useState('');
@@ -33,12 +34,12 @@ export const AdminLogin: React.FC<{ onAuthed: () => void }> = ({ onAuthed }) => 
       </header>
       <div className="card">
         <h2>{t.login}</h2>
-        <input
-          type="password"
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          onChange={setPassword}
+          onEnter={submit}
           placeholder={t.password}
+          autoFocus
         />
         <button onClick={submit} className="festive-button" disabled={busy}>
           {t.login}

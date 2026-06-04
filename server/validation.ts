@@ -54,6 +54,25 @@ export function reqInt(
   return n;
 }
 
+/** Validate a required (possibly fractional) number within [min, max]. */
+export function reqNumber(
+  value: unknown,
+  field: string,
+  { min, max }: { min?: number; max?: number } = {},
+): number {
+  const n = typeof value === 'string' ? Number(value) : value;
+  if (typeof n !== 'number' || !Number.isFinite(n)) {
+    throw new AppError(400, INVALID, `"${field}" must be a number`);
+  }
+  if (min !== undefined && n < min) {
+    throw new AppError(400, INVALID, `"${field}" must be >= ${min}`);
+  }
+  if (max !== undefined && n > max) {
+    throw new AppError(400, INVALID, `"${field}" must be <= ${max}`);
+  }
+  return n;
+}
+
 const EVENT_STATUSES = ['open', 'closed', 'archived'] as const;
 export type EventStatus = (typeof EVENT_STATUSES)[number];
 

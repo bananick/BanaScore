@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
+import db from './db';
 import { sendError } from './errors';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'banana';
@@ -24,10 +25,50 @@ function safeEqual(a: string, b: string): boolean {
   return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
 }
 
-/** Constant-time check of a submitted admin password. */
+const PASSWORD_KEY = 'admin_password_hash';
+
+/** Hash a password as `salt:hash` (scrypt) for storage. */
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16);
+  const derived = crypto.scryptSync(password, salt, 64);
+  return `${salt.toString('hex')}:${derived.toString('hex')}`;
+}
+
+/** Verify a password against a stored `salt:hash` value (constant-time). */
+function verifyHashed(password: string, stored: string): boolean {
+  const [saltHex, hashHex] = stored.split(':');
+  if (!saltHex || !hashHex) return false;
+  const salt = Buffer.from(saltHex, 'hex');
+  const expected = Buffer.from(hashHex, 'hex');
+  const actual = crypto.scryptSync(password, salt, expected.length);
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function getStoredHash(): string | null {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(PASSWORD_KEY) as
+    | { value: string }
+    | undefined;
+  return row ? row.value : null;
+}
+
+/**
+ * Constant-time check of a submitted admin password. Uses the password stored
+ * in the database if one has been set, otherwise falls back to ADMIN_PASSWORD.
+ */
 export function checkPassword(password: unknown): boolean {
   if (typeof password !== 'string') return false;
+  const stored = getStoredHash();
+  if (stored) return verifyHashed(password, stored);
   return safeEqual(password, ADMIN_PASSWORD);
+}
+
+/** Persist a new admin password (hashed) in the database. */
+export function setPassword(newPassword: string): void {
+  const hash = hashPassword(newPassword);
+  db.prepare(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+  ).run(PASSWORD_KEY, hash);
 }
 
 /** Verify a submitted admin token. */
