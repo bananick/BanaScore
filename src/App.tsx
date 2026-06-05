@@ -11,7 +11,11 @@ import { Register } from './pages/Register';
 import { JoinEvent } from './pages/JoinEvent';
 import { EventView } from './pages/EventView';
 import { Ranking } from './pages/Ranking';
+import { WorkshopRankings } from './pages/WorkshopRankings';
 import { Projection } from './pages/Projection';
+import { ScorerGuard } from './pages/ScorerGuard';
+import { ScoreHome } from './pages/ScoreHome';
+import { ScoreActivity } from './pages/ScoreActivity';
 
 function App() {
   return (
@@ -54,7 +58,24 @@ function App() {
           <Route path="/register/:token" element={<Register />} />
           <Route path="/join/:eventId" element={<JoinEvent />} />
           <Route path="/event/:id" element={<EventView />} />
+          <Route path="/event/:id/workshops" element={<WorkshopRankings />} />
           <Route path="/event/:id/board" element={<Projection />} />
+          <Route
+            path="/score/:eventId"
+            element={
+              <ScorerGuard>
+                <ScoreHome />
+              </ScorerGuard>
+            }
+          />
+          <Route
+            path="/score/:eventId/a/:activityId"
+            element={
+              <ScorerGuard>
+                <ScoreActivity />
+              </ScorerGuard>
+            }
+          />
           <Route path="/event/:id/ranking/:type" element={<Ranking />} />
           <Route path="/event/:id/ranking/:type/:activityId" element={<Ranking />} />
         </Routes>

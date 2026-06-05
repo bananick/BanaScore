@@ -72,6 +72,7 @@ test('cannot vote on a closed event', () => {
     maxVotes: 3,
     brandColor: null,
     logoUrl: null,
+    scorerCode: null,
   });
   expectAppError(() => store.castVote(db, me.id, other.id), 'EVENT_CLOSED');
 });
@@ -188,10 +189,35 @@ test('max_votes per event is enforced', () => {
     maxVotes: 1,
     brandColor: null,
     logoUrl: null,
+    scorerCode: null,
   });
   const me = join(db, mine.qr_token, 'Me', 'd1');
   store.castVote(db, me.id, others[0].id);
   expectAppError(() => store.castVote(db, me.id, others[1].id), 'VOTE_LIMIT');
+});
+
+test('rankingByWorkshop groups activities by atelier and sums them', () => {
+  const { db, eventId } = setup();
+  const a = store.createTeam(db, eventId, 'A');
+  const b = store.createTeam(db, eventId, 'B');
+  // Sensory atelier with 2 activities, plus a standalone quiz atelier.
+  const taste = store.createActivity(db, eventId, 'Goûter', 'Sensoriel');
+  const smell = store.createActivity(db, eventId, 'Sentir', 'Sensoriel');
+  const quiz = store.createActivity(db, eventId, 'Quiz', 'Quiz');
+
+  store.setActivityScore(db, taste.id, a.id, 2);
+  store.setActivityScore(db, smell.id, a.id, 2); // A sensory = 4
+  store.setActivityScore(db, taste.id, b.id, 1);
+  store.setActivityScore(db, smell.id, b.id, 1); // B sensory = 2
+  store.setActivityScore(db, quiz.id, b.id, 2); // B quiz = 2, A quiz = 0
+
+  const workshops = store.rankingByWorkshop(db, eventId);
+  const sensory = workshops.find((w) => w.workshop === 'Sensoriel')!;
+  const quizW = workshops.find((w) => w.workshop === 'Quiz')!;
+  assert.equal(sensory.ranking[0].id, a.id);
+  assert.equal(sensory.ranking[0].score, 4);
+  assert.equal(quizW.ranking[0].id, b.id);
+  assert.equal(quizW.ranking[0].score, 2);
 });
 
 test('getEventReport aggregates per-team breakdown', () => {

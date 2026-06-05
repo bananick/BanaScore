@@ -79,7 +79,7 @@ export const JoinEvent: React.FC = () => {
           <button
             onClick={() => setTeam(null)}
             className="festive-button"
-            style={{ background: 'var(--secondary)' }}
+            style={{ background: 'var(--secondary)', color: 'white' }}
           >
             ← {t.chooseTeam}
           </button>

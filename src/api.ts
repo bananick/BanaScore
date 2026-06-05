@@ -10,6 +10,7 @@ import type {
   ScoreDTO,
   TeamDTO,
   VoteDTO,
+  WorkshopRanking,
 } from './types';
 
 const TOKEN_KEY = 'banascore_admin_token';
@@ -21,14 +22,33 @@ export const adminToken = {
   isSet: () => !!localStorage.getItem(TOKEN_KEY),
 };
 
+const SCORER_TOKEN_KEY = 'banascore_scorer_token';
+const SCORER_EVENT_KEY = 'banascore_scorer_event';
+
+export const scorerToken = {
+  get: () => localStorage.getItem(SCORER_TOKEN_KEY),
+  eventId: () => Number(localStorage.getItem(SCORER_EVENT_KEY)) || null,
+  setForEvent: (eventId: number, token: string) => {
+    localStorage.setItem(SCORER_TOKEN_KEY, token);
+    localStorage.setItem(SCORER_EVENT_KEY, String(eventId));
+  },
+  clear: () => {
+    localStorage.removeItem(SCORER_TOKEN_KEY);
+    localStorage.removeItem(SCORER_EVENT_KEY);
+  },
+  isSetFor: (eventId: number | string) =>
+    !!localStorage.getItem(SCORER_TOKEN_KEY) &&
+    localStorage.getItem(SCORER_EVENT_KEY) === String(eventId),
+};
+
 const http = axios.create({ baseURL: '/api' });
 
 http.interceptors.request.use((config) => {
+  config.headers = config.headers ?? {};
   const token = adminToken.get();
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers['x-admin-token'] = token;
-  }
+  if (token) config.headers['x-admin-token'] = token;
+  const scorer = scorerToken.get();
+  if (scorer) config.headers['x-scorer-token'] = scorer;
   return config;
 });
 
@@ -70,6 +90,7 @@ export const updateEvent = (
     maxVotes: number;
     brandColor: string | null;
     logoUrl: string | null;
+    scorerCode: string | null;
   },
 ) => http.patch<EventDTO>(`/events/${id}`, data).then((r) => r.data);
 export const deleteEvent = (id: number) => http.delete(`/events/${id}`);
@@ -96,11 +117,13 @@ export const deleteTeam = (eventId: string | number, teamId: number) =>
 // --- Activities ---
 export const getActivities = (eventId: string | number) =>
   http.get<ActivityDTO[]>(`/events/${eventId}/activities`).then((r) => r.data);
-export const createActivity = (eventId: string | number, name: string) =>
-  http.post<{ id: number }>(`/events/${eventId}/activities`, { name }).then((r) => r.data);
+export const createActivity = (eventId: string | number, name: string, workshop?: string) =>
+  http
+    .post<{ id: number }>(`/events/${eventId}/activities`, { name, workshop })
+    .then((r) => r.data);
 export const updateActivity = (
   activityId: number,
-  data: { name?: string; coefficient?: number },
+  data: { name?: string; coefficient?: number; workshop?: string | null },
 ) => http.patch<ActivityDTO>(`/activities/${activityId}`, data).then((r) => r.data);
 export const deleteActivity = (activityId: number) => http.delete(`/activities/${activityId}`);
 
@@ -130,3 +153,11 @@ export const rankingActivity = (eventId: string | number, activityId: string | n
       `/events/${eventId}/ranking/activity/${activityId}`,
     )
     .then((r) => r.data);
+export const rankingWorkshops = (eventId: string | number) =>
+  http.get<WorkshopRanking[]>(`/events/${eventId}/ranking/workshops`).then((r) => r.data);
+
+// --- Scorer ("animateur") access ---
+export const scorerLogin = (eventId: string | number, code: string) =>
+  http.post<{ token: string }>(`/events/${eventId}/scorer-login`, { code }).then((r) => r.data.token);
+export const checkScorerSession = (eventId: string | number) =>
+  http.get(`/events/${eventId}/scorer-session`).then(() => true);

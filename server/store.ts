@@ -10,6 +10,7 @@ import type {
   RankingEntry,
   TeamRow,
   VoteRow,
+  WorkshopRanking,
 } from './types';
 
 export const MAX_VOTES = 3;
@@ -52,12 +53,13 @@ export function updateEvent(
     maxVotes: number;
     brandColor: string | null;
     logoUrl: string | null;
+    scorerCode: string | null;
   },
 ): EventRow {
   getEvent(db, id);
   db.prepare(
     `UPDATE events
-     SET name = ?, date = ?, location = ?, status = ?, max_votes = ?, brand_color = ?, logo_url = ?
+     SET name = ?, date = ?, location = ?, status = ?, max_votes = ?, brand_color = ?, logo_url = ?, scorer_code = ?
      WHERE id = ?`,
   ).run(
     data.name,
@@ -67,6 +69,7 @@ export function updateEvent(
     data.maxVotes,
     data.brandColor,
     data.logoUrl,
+    data.scorerCode,
     id,
   );
   return getEvent(db, id);
@@ -94,11 +97,14 @@ export function duplicateEvent(
 
   const run = db.transaction(() => {
     const created = createEvent(db, { name, date, location });
+    // Carry over event-level configuration (votes, branding, scorer code).
+    db.prepare(
+      'UPDATE events SET max_votes = ?, brand_color = ?, logo_url = ?, scorer_code = ? WHERE id = ?',
+    ).run(source.max_votes, source.brand_color, source.logo_url, source.scorer_code, created.id);
     for (const activity of listActivities(db, id)) {
-      db.prepare('INSERT INTO activities (name, event_id) VALUES (?, ?)').run(
-        activity.name,
-        created.id,
-      );
+      db.prepare(
+        'INSERT INTO activities (name, event_id, coefficient, workshop) VALUES (?, ?, ?, ?)',
+      ).run(activity.name, created.id, activity.coefficient, activity.workshop);
     }
     for (const team of listTeams(db, id)) {
       const qrToken = crypto.randomBytes(16).toString('hex');
@@ -185,35 +191,47 @@ export function listActivities(db: DB, eventId: number): ActivityRow[] {
     .all(eventId) as ActivityRow[];
 }
 
-export function createActivity(db: DB, eventId: number, name: string): { id: number } {
+export function getActivity(db: DB, activityId: number): ActivityRow {
+  const activity = db.prepare('SELECT * FROM activities WHERE id = ?').get(activityId) as
+    | ActivityRow
+    | undefined;
+  if (!activity) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+  return activity;
+}
+
+export function createActivity(
+  db: DB,
+  eventId: number,
+  name: string,
+  workshop: string | null = null,
+): { id: number } {
   getEvent(db, eventId);
   assertUniqueName(listActivities(db, eventId), name, null, 'activity');
   const result = db
-    .prepare('INSERT INTO activities (name, event_id) VALUES (?, ?)')
-    .run(name, eventId);
+    .prepare('INSERT INTO activities (name, event_id, workshop) VALUES (?, ?, ?)')
+    .run(name, eventId, workshop);
   return { id: Number(result.lastInsertRowid) };
 }
 
 export function updateActivity(
   db: DB,
   activityId: number,
-  data: { name?: string; coefficient?: number },
+  data: { name?: string; coefficient?: number; workshop?: string | null },
 ): ActivityRow {
-  const activity = db.prepare('SELECT * FROM activities WHERE id = ?').get(activityId) as
-    | ActivityRow
-    | undefined;
-  if (!activity) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+  const activity = getActivity(db, activityId);
   const name = data.name ?? activity.name;
   if (data.name !== undefined) {
     assertUniqueName(listActivities(db, activity.event_id), data.name, activityId, 'activity');
   }
   const coefficient = data.coefficient ?? activity.coefficient;
-  db.prepare('UPDATE activities SET name = ?, coefficient = ? WHERE id = ?').run(
+  const workshop = data.workshop !== undefined ? data.workshop : activity.workshop;
+  db.prepare('UPDATE activities SET name = ?, coefficient = ?, workshop = ? WHERE id = ?').run(
     name,
     coefficient,
+    workshop,
     activityId,
   );
-  return db.prepare('SELECT * FROM activities WHERE id = ?').get(activityId) as ActivityRow;
+  return getActivity(db, activityId);
 }
 
 export function deleteActivity(db: DB, activityId: number): void {
@@ -395,6 +413,47 @@ export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
        ORDER BY score DESC, t.name ASC`,
     )
     .all(eventId, eventId) as RankingEntry[];
+}
+
+/**
+ * Ranking per "atelier" (workshop): activities are grouped by their `workshop`
+ * label (falling back to the activity's own name when unset). Each group's
+ * score for a team is the coefficient-weighted sum of its activities' points.
+ * Returns groups in activity order, each ranking sorted by score desc.
+ */
+export function rankingByWorkshop(db: DB, eventId: number): WorkshopRanking[] {
+  const activities = listActivities(db, eventId);
+  const teams = listTeams(db, eventId);
+
+  // Preserve first-seen order of workshops.
+  const groups: { key: string; activityIds: number[]; coefs: Map<number, number> }[] = [];
+  const byKey = new Map<string, (typeof groups)[number]>();
+  for (const a of activities) {
+    const key = a.workshop && a.workshop.trim() ? a.workshop.trim() : a.name;
+    let group = byKey.get(key);
+    if (!group) {
+      group = { key, activityIds: [], coefs: new Map() };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    group.activityIds.push(a.id);
+    group.coefs.set(a.id, a.coefficient);
+  }
+
+  return groups.map((group) => {
+    const ranking: RankingEntry[] = teams.map((team) => {
+      let score = 0;
+      for (const activityId of group.activityIds) {
+        const row = db
+          .prepare('SELECT points FROM activity_scores WHERE activity_id = ? AND team_id = ?')
+          .get(activityId, team.id) as { points: number } | undefined;
+        score += (row?.points ?? 0) * (group.coefs.get(activityId) ?? 1);
+      }
+      return { id: team.id, name: team.name, score };
+    });
+    ranking.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+    return { workshop: group.key, ranking };
+  });
 }
 
 export interface EventReport {

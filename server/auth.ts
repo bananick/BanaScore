@@ -86,3 +86,28 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   }
   next();
 }
+
+// --- Scorer ("animateur") access: a per-event code that authorises scoring
+// only, without handing out the admin password on shared tablets. ---
+
+/** Derive a scorer token scoped to a single event. */
+export function issueScorerToken(eventId: number): string {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(`scorer:${eventId}`).digest('hex');
+}
+
+/** Verify a scorer token for a given event. */
+export function verifyScorerToken(token: unknown, eventId: number): boolean {
+  if (typeof token !== 'string' || token.length === 0) return false;
+  return safeEqual(token, issueScorerToken(eventId));
+}
+
+/** Check a submitted scorer code against the event's stored code. */
+export function verifyScorerCode(storedCode: string | null, code: unknown): boolean {
+  if (!storedCode || typeof code !== 'string' || code.length === 0) return false;
+  return safeEqual(code, storedCode);
+}
+
+/** True if the request carries a valid admin token OR a valid scorer token for the event. */
+export function canScore(req: Request, eventId: number): boolean {
+  return verifyToken(req.header('x-admin-token')) || verifyScorerToken(req.header('x-scorer-token'), eventId);
+}

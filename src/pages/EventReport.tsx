@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Download, Printer } from 'lucide-react';
 import * as api from '../api';
-import type { EventReport as Report } from '../types';
+import type { EventReport as Report, WorkshopRanking } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { computeRanks, rankBadge } from '../ranks';
@@ -47,12 +47,17 @@ export const EventReport: React.FC = () => {
   const { id } = useParams();
   const toast = useToast();
   const [report, setReport] = useState<Report | null>(null);
+  const [workshops, setWorkshops] = useState<WorkshopRanking[]>([]);
 
   useEffect(() => {
     api
       .getReport(id!)
       .then(setReport)
       .catch((err) => toast.error(api.apiErrorMessage(err)));
+    api
+      .rankingWorkshops(id!)
+      .then(setWorkshops)
+      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -156,6 +161,39 @@ export const EventReport: React.FC = () => {
               ))}
             </tbody>
           </table>
+
+          {workshops.length > 0 && (
+            <section style={{ marginTop: 28 }}>
+              <h2 style={{ fontSize: '1.3rem' }}>
+                🏅 {t.top3} — {t.workshopRankingsShort}
+              </h2>
+              <div className="workshops-report">
+                {workshops.map((w) => {
+                  const top = w.ranking.slice(0, 3);
+                  const ranks = computeRanks(w.ranking.map((r) => r.score)).slice(0, 3);
+                  return (
+                    <div key={w.workshop} className="workshop-block">
+                      <h3>{w.workshop}</h3>
+                      {top.every((e) => e.score === 0) ? (
+                        <p style={{ opacity: 0.6, margin: 0 }}>{t.noData}</p>
+                      ) : (
+                        top.map((entry, i) => (
+                          <div key={entry.id} className="workshop-row">
+                            <span>
+                              {rankBadge(ranks[i])} {entry.name}
+                            </span>
+                            <strong>
+                              {entry.score} {t.pts}
+                            </strong>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>

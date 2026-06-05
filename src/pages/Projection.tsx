@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Maximize } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Maximize } from 'lucide-react';
 import * as api from '../api';
 import type { EventDTO, RankingEntry } from '../types';
 import { t } from '../i18n';
@@ -40,6 +40,9 @@ export const Projection: React.FC = () => {
 
   return (
     <div className="projection" style={brandStyle}>
+      <Link to={`/event/${id}`} className="projection-back no-print" title={t.backToEvent} aria-label={t.backToEvent}>
+        <ArrowLeft size={22} />
+      </Link>
       <button onClick={goFullscreen} className="projection-fs no-print" title={t.fullscreen}>
         <Maximize size={22} />
       </button>

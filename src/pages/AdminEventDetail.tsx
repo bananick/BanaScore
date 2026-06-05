@@ -19,6 +19,7 @@ export const AdminEventDetail: React.FC = () => {
   const [teamScores, setTeamScores] = useState<ScoreDTO[]>([]);
   const [teamName, setTeamName] = useState('');
   const [activityName, setActivityName] = useState('');
+  const [activityWorkshop, setActivityWorkshop] = useState('');
   const [selectedActivity, setSelectedActivity] = useState<number | null>(null);
   const [stats, setStats] = useState<EventStats | null>(null);
 
@@ -41,6 +42,7 @@ export const AdminEventDetail: React.FC = () => {
     maxVotes: 3,
     brandColor: '',
     logoUrl: '',
+    scorerCode: '',
   });
 
   const refresh = async () => {
@@ -58,6 +60,7 @@ export const AdminEventDetail: React.FC = () => {
       maxVotes: ev.max_votes,
       brandColor: ev.brand_color ?? '',
       logoUrl: ev.logo_url ?? '',
+      scorerCode: ev.scorer_code ?? '',
     });
     setTeams(tr);
     setActivities(ar);
@@ -91,6 +94,7 @@ export const AdminEventDetail: React.FC = () => {
       maxVotes: meta.maxVotes,
       brandColor: meta.brandColor || null,
       logoUrl: meta.logoUrl || null,
+      scorerCode: meta.scorerCode.trim() || null,
     });
     await refresh();
     toast.success(t.saved);
@@ -105,8 +109,14 @@ export const AdminEventDetail: React.FC = () => {
 
   const addActivity = guard(async () => {
     if (!activityName.trim()) return;
-    await api.createActivity(id!, activityName.trim());
+    await api.createActivity(id!, activityName.trim(), activityWorkshop.trim() || undefined);
     setActivityName('');
+    setActivityWorkshop('');
+    await refresh();
+  });
+
+  const setWorkshop = guard(async (activityId: number, workshop: string) => {
+    await api.updateActivity(activityId, { workshop: workshop || null });
     await refresh();
   });
 
@@ -272,6 +282,15 @@ export const AdminEventDetail: React.FC = () => {
           placeholder={t.logoUrl}
         />
 
+        <input
+          value={meta.scorerCode}
+          onChange={(e) => setMeta({ ...meta, scorerCode: e.target.value })}
+          placeholder={t.scorerCode}
+        />
+        <p style={{ textAlign: 'left', fontSize: '0.78rem', opacity: 0.6, margin: '4px 0 0' }}>
+          {t.scorerCodeHint}
+        </p>
+
         <button onClick={saveMeta} className="festive-button">
           {t.save}
         </button>
@@ -292,6 +311,11 @@ export const AdminEventDetail: React.FC = () => {
           onChange={(e) => setActivityName(e.target.value)}
           placeholder={t.activityName}
         />
+        <input
+          value={activityWorkshop}
+          onChange={(e) => setActivityWorkshop(e.target.value)}
+          placeholder={t.workshopOptional}
+        />
         <button onClick={addActivity} className="festive-button">
           {t.addActivity}
         </button>
@@ -308,7 +332,17 @@ export const AdminEventDetail: React.FC = () => {
                     const v = e.target.value.trim();
                     if (v && v !== a.name) renameActivity(a.id, v);
                   }}
-                  style={{ margin: 0, flex: 1 }}
+                  style={{ margin: 0, flex: 1, minWidth: 90 }}
+                />
+                <input
+                  defaultValue={a.workshop ?? ''}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    if (v !== (a.workshop ?? '')) setWorkshop(a.id, v);
+                  }}
+                  placeholder={t.workshop}
+                  title={t.workshop}
+                  style={{ margin: 0, flex: 1, minWidth: 90 }}
                 />
                 <label
                   title={t.coefficient}
@@ -460,6 +494,16 @@ export const AdminEventDetail: React.FC = () => {
       ))}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+        <Link to={`/score/${id}`} className="festive-button" style={{ textDecoration: 'none' }}>
+          ✍️ {t.scoreTablet}
+        </Link>
+        <Link
+          to={`/event/${id}/workshops`}
+          className="festive-button"
+          style={{ textDecoration: 'none', background: 'var(--blue)' }}
+        >
+          🏅 {t.workshopRankings}
+        </Link>
         <Link to={`/event/${id}/ranking/global`} className="festive-button" style={{ textDecoration: 'none' }}>
           🏆 {t.globalRanking}
         </Link>
@@ -487,7 +531,7 @@ export const AdminEventDetail: React.FC = () => {
         <Link
           to={`/admin/event/${id}/posters`}
           className="festive-button"
-          style={{ textDecoration: 'none', background: 'var(--secondary)' }}
+          style={{ textDecoration: 'none', background: 'var(--secondary)', color: 'white' }}
         >
           🖨️ {t.posters}
         </Link>

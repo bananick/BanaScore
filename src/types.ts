@@ -9,6 +9,7 @@ export interface EventDTO {
   max_votes: number;
   brand_color: string | null;
   logo_url: string | null;
+  scorer_code: string | null;
   created_at: string;
 }
 
@@ -26,6 +27,12 @@ export interface ActivityDTO {
   event_id: number;
   name: string;
   coefficient: number;
+  workshop: string | null;
+}
+
+export interface WorkshopRanking {
+  workshop: string;
+  ranking: RankingEntry[];
 }
 
 export interface ScoreDTO {

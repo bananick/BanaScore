@@ -61,10 +61,12 @@ export const EventView: React.FC = () => {
   return (
     <div className="app-container">
       <header style={{ marginBottom: 30 }}>
-        <Link to="/" style={{ color: 'white', textDecoration: 'none' }}>
-          🍌 BanaScore
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <h1>🍌 BanaScore</h1>
         </Link>
-        <h1>{participant ? t.hello(participant.pseudo) : t.eventView}</h1>
+        <h2 style={{ marginTop: 0, opacity: 0.9 }}>
+          {participant ? t.hello(participant.pseudo) : t.eventView}
+        </h2>
       </header>
 
       <div className="card">
@@ -109,6 +111,13 @@ export const EventView: React.FC = () => {
           >
             {t.voteRanking}
           </Link>
+          <Link
+            to={`/event/${id}/workshops`}
+            className="festive-button"
+            style={{ fontSize: '0.9rem', background: 'var(--blue)' }}
+          >
+            {t.workshopRankingsShort}
+          </Link>
           {activities.map((a) => (
             <Link
               key={a.id}
@@ -123,7 +132,7 @@ export const EventView: React.FC = () => {
         <Link
           to={`/event/${id}/board`}
           className="festive-button"
-          style={{ textDecoration: 'none', marginTop: 16, background: 'var(--secondary)' }}
+          style={{ textDecoration: 'none', marginTop: 16, background: 'var(--secondary)', color: 'white' }}
         >
           📺 {t.projection}
         </Link>

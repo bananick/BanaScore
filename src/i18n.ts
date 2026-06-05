@@ -118,6 +118,26 @@ export const t = {
   teamsCount: 'Équipes',
   activitiesScored: 'Activités notées',
 
+  // Ateliers (workshops)
+  workshop: 'Atelier',
+  workshopOptional: 'Atelier (optionnel, ex. Sensoriel)',
+  workshopRankings: 'Classement par atelier',
+  workshopRankingsShort: 'Par atelier',
+  top3: 'Top 3',
+  noActivities: 'Aucune activité notée.',
+
+  // Scoring (animateur / tablette)
+  scoreTablet: 'Noter (tablette)',
+  scoringFor: 'Notation',
+  chooseActivity: 'Choisissez une activité à noter',
+  scorerCode: 'Code animateur (optionnel)',
+  scorerCodeHint: 'Défini un code pour autoriser la notation sur tablette sans le mot de passe admin.',
+  enterScorerCode: 'Entrez le code animateur',
+  scorerAccess: 'Accès notation',
+  scorerLoginFailed: 'Code animateur incorrect.',
+  scoreSaved: 'Note enregistrée.',
+  backToActivities: 'Choisir une autre activité',
+
   // Join + posters
   posters: 'Affiche QR (impression)',
   joinEvent: 'Rejoindre l’événement',

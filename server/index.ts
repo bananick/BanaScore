@@ -2,7 +2,15 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import db from './db';
 import { handle, sendError } from './errors';
-import { requireAdmin, checkPassword, issueToken, setPassword } from './auth';
+import {
+  requireAdmin,
+  checkPassword,
+  issueToken,
+  setPassword,
+  canScore,
+  issueScorerToken,
+  verifyScorerCode,
+} from './auth';
 import { optString, reqInt, reqNumber, reqStatus, reqString } from './validation';
 import * as store from './store';
 
@@ -89,8 +97,18 @@ app.patch(
     const maxVotes = reqInt(req.body?.maxVotes ?? 3, 'maxVotes', { min: 1, max: 50 });
     const brandColor = optString(req.body?.brandColor, 'brandColor', 30);
     const logoUrl = optString(req.body?.logoUrl, 'logoUrl', 500000);
+    const scorerCode = optString(req.body?.scorerCode, 'scorerCode', 40);
     res.json(
-      store.updateEvent(db, id(req, 'id'), { name, date, location, status, maxVotes, brandColor, logoUrl }),
+      store.updateEvent(db, id(req, 'id'), {
+        name,
+        date,
+        location,
+        status,
+        maxVotes,
+        brandColor,
+        logoUrl,
+        scorerCode,
+      }),
     );
   }),
 );
@@ -177,7 +195,8 @@ app.post(
   requireAdmin,
   handle((req, res) => {
     const name = reqString(req.body?.name, 'name', { max: 60 });
-    res.status(201).json(store.createActivity(db, id(req, 'eventId'), name));
+    const workshop = optString(req.body?.workshop, 'workshop', 60);
+    res.status(201).json(store.createActivity(db, id(req, 'eventId'), name, workshop));
   }),
 );
 
@@ -190,7 +209,9 @@ app.patch(
       req.body?.coefficient !== undefined
         ? reqNumber(req.body.coefficient, 'coefficient', { min: 0.1, max: 100 })
         : undefined;
-    res.json(store.updateActivity(db, id(req, 'activityId'), { name, coefficient }));
+    const workshop =
+      req.body?.workshop !== undefined ? optString(req.body.workshop, 'workshop', 60) : undefined;
+    res.json(store.updateActivity(db, id(req, 'activityId'), { name, coefficient, workshop }));
   }),
 );
 
@@ -210,11 +231,16 @@ app.get(
 
 app.patch(
   '/api/activities/:activityId/scores/:teamId',
-  requireAdmin,
   handle((req, res) => {
+    const activityId = id(req, 'activityId');
+    const activity = store.getActivity(db, activityId);
+    if (!canScore(req, activity.event_id)) {
+      sendError(res, 401, 'UNAUTHORIZED', 'Scoring requires admin or scorer access');
+      return;
+    }
     const raw = req.body?.points;
     const points = raw === null ? null : reqInt(raw, 'points', { min: 1, max: 999 });
-    store.setActivityScore(db, id(req, 'activityId'), id(req, 'teamId'), points);
+    store.setActivityScore(db, activityId, id(req, 'teamId'), points);
     res.sendStatus(204);
   }),
 );
@@ -269,6 +295,36 @@ app.get(
 app.get(
   '/api/events/:eventId/ranking/global',
   handle((req, res) => res.json(store.rankingGlobal(db, id(req, 'eventId')))),
+);
+
+app.get(
+  '/api/events/:eventId/ranking/workshops',
+  handle((req, res) => res.json(store.rankingByWorkshop(db, id(req, 'eventId')))),
+);
+
+// --- SCORER ("animateur") AUTH ---
+app.post(
+  '/api/events/:eventId/scorer-login',
+  handle((req, res) => {
+    const event = store.getEvent(db, id(req, 'eventId'));
+    if (!verifyScorerCode(event.scorer_code, req.body?.code)) {
+      sendError(res, 401, 'BAD_CREDENTIALS', 'Invalid scorer code');
+      return;
+    }
+    res.json({ token: issueScorerToken(event.id) });
+  }),
+);
+
+app.get(
+  '/api/events/:eventId/scorer-session',
+  handle((req, res) => {
+    const eventId = id(req, 'eventId');
+    if (!canScore(req, eventId)) {
+      sendError(res, 401, 'UNAUTHORIZED', 'Scorer access required');
+      return;
+    }
+    res.json({ ok: true });
+  }),
 );
 
 app.listen(port, () => {
