@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import db from './db';
 import { handle, sendError } from './errors';
 import {
@@ -33,6 +34,26 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 
 const id = (req: Request, key: string) => reqInt(req.params[key], key, { min: 1 });
+
+/** Best-guess LAN IPv4 of this machine, for building tablet-reachable URLs. */
+function lanBaseUrl(): string {
+  const cands: string[] = [];
+  for (const list of Object.values(os.networkInterfaces())) {
+    for (const ni of list || []) {
+      if (ni.family === 'IPv4' && !ni.internal) cands.push(ni.address);
+    }
+  }
+  const ip =
+    cands.find((a) => a.startsWith('192.168.')) ||
+    cands.find((a) => a.startsWith('10.')) ||
+    cands.find((a) => /^172\.(1[6-9]|2\d|3[01])\./.test(a)) ||
+    cands[0] ||
+    'localhost';
+  return `http://${ip}:${port}`;
+}
+
+// Lets the /access page show a tablet-reachable URL/QR even when opened on the PC.
+app.get('/api/network', (_req: Request, res: Response) => res.json({ baseUrl: lanBaseUrl() }));
 
 // --- LIVE UPDATES (Server-Sent Events) ---
 // Any successful mutating API call broadcasts a "tick" so connected clients
@@ -146,6 +167,17 @@ app.patch(
     const location = optString(req.body?.location, 'location', 120);
     const status = reqStatus(req.body?.status ?? 'open');
     const maxVotes = reqInt(req.body?.maxVotes ?? 3, 'maxVotes', { min: 1, max: 50 });
+    const votingEnabled = req.body?.votingEnabled !== false; // default true
+    const rankingMode = req.body?.rankingMode === 'normalized' ? 'normalized' : 'raw';
+    const rawWeights = req.body?.workshopWeights;
+    let workshopWeights: Record<string, number> | null = null;
+    if (rawWeights && typeof rawWeights === 'object') {
+      workshopWeights = {};
+      for (const [k, v] of Object.entries(rawWeights)) {
+        const n = typeof v === 'string' ? Number(v) : (v as number);
+        if (typeof k === 'string' && Number.isFinite(n) && n > 0) workshopWeights[k] = n;
+      }
+    }
     const brandColor = optString(req.body?.brandColor, 'brandColor', 30);
     const logoUrl = optString(req.body?.logoUrl, 'logoUrl', 500000);
     const scorerCode = optString(req.body?.scorerCode, 'scorerCode', 40);
@@ -156,6 +188,9 @@ app.patch(
         location,
         status,
         maxVotes,
+        votingEnabled,
+        rankingMode,
+        workshopWeights,
         brandColor,
         logoUrl,
         scorerCode,

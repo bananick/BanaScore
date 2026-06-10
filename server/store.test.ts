@@ -70,11 +70,35 @@ test('cannot vote on a closed event', () => {
     location: null,
     status: 'closed',
     maxVotes: 3,
+    votingEnabled: true,
+    rankingMode: 'raw',
+    workshopWeights: null,
     brandColor: null,
     logoUrl: null,
     scorerCode: null,
   });
   expectAppError(() => store.castVote(db, me.id, other.id), 'EVENT_CLOSED');
+});
+
+test('voting can be disabled per event', () => {
+  const { db, eventId } = setup();
+  const mine = store.createTeam(db, eventId, 'Mine');
+  const other = store.createTeam(db, eventId, 'Other');
+  const me = join(db, mine.qr_token, 'Me', 'd1');
+  store.updateEvent(db, eventId, {
+    name: 'Party',
+    date: null,
+    location: null,
+    status: 'open',
+    maxVotes: 3,
+    votingEnabled: false,
+    rankingMode: 'raw',
+    workshopWeights: null,
+    brandColor: null,
+    logoUrl: null,
+    scorerCode: null,
+  });
+  expectAppError(() => store.castVote(db, me.id, other.id), 'VOTING_DISABLED');
 });
 
 test('a rank can only be assigned to one team per activity', () => {
@@ -187,6 +211,9 @@ test('max_votes per event is enforced', () => {
     location: null,
     status: 'open',
     maxVotes: 1,
+    votingEnabled: true,
+    rankingMode: 'raw',
+    workshopWeights: null,
     brandColor: null,
     logoUrl: null,
     scorerCode: null,
@@ -194,6 +221,46 @@ test('max_votes per event is enforced', () => {
   const me = join(db, mine.qr_token, 'Me', 'd1');
   store.castVote(db, me.id, others[0].id);
   expectAppError(() => store.castVote(db, me.id, others[1].id), 'VOTE_LIMIT');
+});
+
+test('normalized ranking: ateliers count equally, weighted differentiator wins', () => {
+  const { db, eventId } = setup();
+  const a = store.createTeam(db, eventId, 'A');
+  const b = store.createTeam(db, eventId, 'B');
+  // Sensoriel atelier = 2 activities; Quiz atelier = 1 activity, weighted ×3.
+  const taste = store.createActivity(db, eventId, 'Goûter', 'Sensoriel');
+  const smell = store.createActivity(db, eventId, 'Sentir', 'Sensoriel');
+  const quiz = store.createActivity(db, eventId, 'Quiz', 'Quiz');
+
+  // B dominates Sensoriel (both activities), A wins the Quiz.
+  store.setActivityScore(db, taste.id, b.id, 2);
+  store.setActivityScore(db, smell.id, b.id, 2); // B sensory raw = 4 → 1st
+  store.setActivityScore(db, taste.id, a.id, 1);
+  store.setActivityScore(db, smell.id, a.id, 1); // A sensory raw = 2 → 2nd
+  store.setActivityScore(db, quiz.id, a.id, 2); // A quiz 1st
+  store.setActivityScore(db, quiz.id, b.id, 1); // B quiz 2nd
+
+  store.updateEvent(db, eventId, {
+    name: 'Stallergix',
+    date: null,
+    location: null,
+    status: 'open',
+    maxVotes: 1,
+    votingEnabled: false,
+    rankingMode: 'normalized',
+    workshopWeights: { Quiz: 3 },
+    brandColor: null,
+    logoUrl: null,
+    scorerCode: null,
+  });
+
+  // N=2 teams → atelier points: 1st = 2×100 = 200, 2nd = 1×100 = 100.
+  // A: Sensoriel 2nd (100) + Quiz 1st (200×3=600) = 700.
+  // B: Sensoriel 1st (200) + Quiz 2nd (100×3=300) = 500.
+  const ranking = store.rankingGlobal(db, eventId);
+  assert.equal(ranking[0].id, a.id, 'Quiz ×3 makes A win overall');
+  assert.equal(ranking.find((r) => r.id === a.id)!.score, 700);
+  assert.equal(ranking.find((r) => r.id === b.id)!.score, 500);
 });
 
 test('rankingByWorkshop groups activities by atelier and sums them', () => {

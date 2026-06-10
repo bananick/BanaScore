@@ -54,6 +54,16 @@ export function streamReportPdf(
       ).toLocaleString('fr-FR')}`,
       { align: 'center' },
     );
+  if (report.rankingMode === 'normalized') {
+    doc
+      .moveDown(0.2)
+      .fillColor(GOLD)
+      .fontSize(8)
+      .text(
+        'Total = classement general normalise par atelier (chaque atelier a poids egal sauf ponderation).',
+        { align: 'center' },
+      );
+  }
   doc.moveDown(0.6);
   doc.moveTo(left, doc.y).lineTo(right, doc.y).strokeColor(GOLD).lineWidth(1.5).stroke();
   doc.moveDown(0.8);

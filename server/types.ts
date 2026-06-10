@@ -7,6 +7,9 @@ export interface EventRow {
   location: string | null;
   status: EventStatus;
   max_votes: number;
+  voting_enabled: number; // 0/1
+  ranking_mode: string; // 'raw' | 'normalized'
+  workshop_weights: string | null; // JSON: { [atelier]: weight }
   brand_color: string | null;
   logo_url: string | null;
   scorer_code: string | null;

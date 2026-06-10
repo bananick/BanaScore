@@ -50,3 +50,12 @@ const server = spawn(npm, ['run', 'server'], {
   env: { ...process.env, PORT: String(PORT) },
 });
 server.on('exit', (code) => process.exit(code || 0));
+
+// Open the QR/access page on this PC once the server has had time to boot, so
+// the organiser just has tablets scan the on-screen QR (no terminal needed).
+const accessUrl = `http://localhost:${PORT}/access`;
+setTimeout(() => {
+  const opener =
+    process.platform === 'win32' ? 'start ""' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+  spawn(`${opener} "${accessUrl}"`, { shell: true, stdio: 'ignore' }).on('error', () => undefined);
+}, 3500);

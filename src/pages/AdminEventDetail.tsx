@@ -8,6 +8,16 @@ import { t } from '../i18n';
 import { useToast } from '../toast';
 import { usePolling } from '../hooks';
 
+function parseWeights(json: string | null): Record<string, number> {
+  if (!json) return {};
+  try {
+    const o = JSON.parse(json);
+    return o && typeof o === 'object' ? (o as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
+
 export const AdminEventDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -41,6 +51,9 @@ export const AdminEventDetail: React.FC = () => {
     location: '',
     status: 'open' as EventStatus,
     maxVotes: 3,
+    votingEnabled: true,
+    rankingMode: 'raw' as 'raw' | 'normalized',
+    workshopWeights: {} as Record<string, number>,
     brandColor: '',
     logoUrl: '',
     scorerCode: '',
@@ -59,6 +72,9 @@ export const AdminEventDetail: React.FC = () => {
       location: ev.location ?? '',
       status: ev.status,
       maxVotes: ev.max_votes,
+      votingEnabled: !!ev.voting_enabled,
+      rankingMode: ev.ranking_mode === 'normalized' ? 'normalized' : 'raw',
+      workshopWeights: parseWeights(ev.workshop_weights),
       brandColor: ev.brand_color ?? '',
       logoUrl: ev.logo_url ?? '',
       scorerCode: ev.scorer_code ?? '',
@@ -93,6 +109,9 @@ export const AdminEventDetail: React.FC = () => {
       location: meta.location || null,
       status: meta.status,
       maxVotes: meta.maxVotes,
+      votingEnabled: meta.votingEnabled,
+      rankingMode: meta.rankingMode,
+      workshopWeights: meta.rankingMode === 'normalized' ? meta.workshopWeights : null,
       brandColor: meta.brandColor || null,
       logoUrl: meta.logoUrl || null,
       scorerCode: meta.scorerCode.trim() || null,
@@ -252,16 +271,31 @@ export const AdminEventDetail: React.FC = () => {
           <option value="archived">{t.statusArchived}</option>
         </select>
 
-        <label style={{ display: 'block', textAlign: 'left', margin: '8px 0', opacity: 0.8 }}>
-          {t.maxVotes}
+        <label
+          style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '12px 0', textAlign: 'left', cursor: 'pointer' }}
+        >
+          <input
+            type="checkbox"
+            checked={meta.votingEnabled}
+            onChange={(e) => setMeta({ ...meta, votingEnabled: e.target.checked })}
+            style={{ width: 18, height: 18, margin: 0 }}
+          />
+          {t.votingEnabled}
         </label>
-        <input
-          type="number"
-          min={1}
-          max={50}
-          value={meta.maxVotes}
-          onChange={(e) => setMeta({ ...meta, maxVotes: parseInt(e.target.value, 10) || 1 })}
-        />
+        {meta.votingEnabled && (
+          <>
+            <label style={{ display: 'block', textAlign: 'left', margin: '8px 0', opacity: 0.8 }}>
+              {t.maxVotes}
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={meta.maxVotes}
+              onChange={(e) => setMeta({ ...meta, maxVotes: parseInt(e.target.value, 10) || 1 })}
+            />
+          </>
+        )}
 
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '8px 0', opacity: 0.8 }}>
           {t.brandColor}
@@ -282,6 +316,42 @@ export const AdminEventDetail: React.FC = () => {
             </button>
           )}
         </label>
+
+        <label style={{ display: 'block', textAlign: 'left', margin: '8px 0', opacity: 0.8 }}>
+          {t.rankingMode}
+        </label>
+        <select
+          value={meta.rankingMode}
+          onChange={(e) => setMeta({ ...meta, rankingMode: e.target.value as 'raw' | 'normalized' })}
+          style={selectStyle}
+        >
+          <option value="raw">{t.rankingRaw}</option>
+          <option value="normalized">{t.rankingNormalized}</option>
+        </select>
+        {meta.rankingMode === 'normalized' && (
+          <div style={{ textAlign: 'left', margin: '10px 0', padding: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 10 }}>
+            <p style={{ fontSize: '0.8rem', opacity: 0.7, margin: '0 0 8px' }}>{t.weightsHint}</p>
+            {[...new Set(activities.map((a) => (a.workshop?.trim() || a.name)))].map((ws) => (
+              <label key={ws} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '4px 0' }}>
+                <span>{ws}</span>
+                <input
+                  type="number"
+                  min={0.1}
+                  step={0.5}
+                  value={meta.workshopWeights[ws] ?? 1}
+                  onChange={(e) =>
+                    setMeta({
+                      ...meta,
+                      workshopWeights: { ...meta.workshopWeights, [ws]: parseFloat(e.target.value) || 1 },
+                    })
+                  }
+                  style={{ width: 80, margin: 0 }}
+                />
+              </label>
+            ))}
+            {activities.length === 0 && <p style={{ opacity: 0.6, margin: 0 }}>{t.noActivitiesYet}</p>}
+          </div>
+        )}
 
         <input
           value={meta.logoUrl}
@@ -420,7 +490,9 @@ export const AdminEventDetail: React.FC = () => {
           ))}
         </select>
 
-        {selectedActivity ? (
+        {teams.length === 0 ? (
+          <p style={{ color: 'var(--accent)' }}>{t.noTeamsHint}</p>
+        ) : selectedActivity ? (
           <div>
             <h4>{t.distributePoints(teams.length)}</h4>
             {teams.map((team) => {

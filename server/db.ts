@@ -20,6 +20,9 @@ export function createDb(dbPath: string): DB {
       location TEXT,
       status TEXT NOT NULL DEFAULT 'open',
       max_votes INTEGER NOT NULL DEFAULT 3,
+      voting_enabled INTEGER NOT NULL DEFAULT 1,
+      ranking_mode TEXT NOT NULL DEFAULT 'raw',
+      workshop_weights TEXT,
       brand_color TEXT,
       logo_url TEXT,
       scorer_code TEXT,
@@ -93,6 +96,9 @@ function migrate(db: DB): void {
   addColumnIfMissing(db, 'events', 'status', `TEXT NOT NULL DEFAULT 'open'`);
   addColumnIfMissing(db, 'events', 'created_at', `TEXT`);
   addColumnIfMissing(db, 'events', 'max_votes', `INTEGER NOT NULL DEFAULT 3`);
+  addColumnIfMissing(db, 'events', 'voting_enabled', `INTEGER NOT NULL DEFAULT 1`);
+  addColumnIfMissing(db, 'events', 'ranking_mode', `TEXT NOT NULL DEFAULT 'raw'`);
+  addColumnIfMissing(db, 'events', 'workshop_weights', `TEXT`);
   addColumnIfMissing(db, 'events', 'brand_color', `TEXT`);
   addColumnIfMissing(db, 'events', 'logo_url', `TEXT`);
   addColumnIfMissing(db, 'events', 'scorer_code', `TEXT`);

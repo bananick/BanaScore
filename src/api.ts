@@ -70,6 +70,8 @@ export function isUnauthorized(err: unknown): boolean {
 export const login = (password: string) =>
   http.post<{ token: string }>('/admin/login', { password }).then((r) => r.data.token);
 export const checkSession = () => http.get('/admin/session').then(() => true);
+export const getNetwork = () =>
+  http.get<{ baseUrl: string }>('/network').then((r) => r.data.baseUrl);
 export const changePassword = (currentPassword: string, newPassword: string) =>
   http.post('/admin/password', { currentPassword, newPassword }).then((r) => r.data);
 
@@ -88,6 +90,9 @@ export const updateEvent = (
     location: string | null;
     status: EventStatus;
     maxVotes: number;
+    votingEnabled: boolean;
+    rankingMode: 'raw' | 'normalized';
+    workshopWeights: Record<string, number> | null;
     brandColor: string | null;
     logoUrl: string | null;
     scorerCode: string | null;

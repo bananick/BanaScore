@@ -10,9 +10,14 @@ if (!process.env.ADMIN_PASSWORD) {
   );
 }
 
-// Server session secret: a fresh random secret each restart (unless provided),
-// so tokens are invalidated on restart. Set SESSION_SECRET to keep them stable.
-const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+// Server session secret. In production, a fresh random secret each restart
+// (unless provided via env) so tokens are invalidated on restart. In dev, a
+// stable secret so you stay logged in across the frequent ts-node-dev reloads.
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  (process.env.NODE_ENV === 'production'
+    ? crypto.randomBytes(32).toString('hex')
+    : 'banascore-dev-secret');
 
 /** Derive the (stateless) admin session token from the server secret. */
 export function issueToken(): string {

@@ -114,6 +114,14 @@ export const t = {
   tabletAccessLink: 'QR accès tablettes',
   tabletAccessHint:
     'Sur chaque tablette (même Wi-Fi), scannez ce QR pour ouvrir l’application.',
+  installSteps: 'Installer sur une tablette (3 étapes)',
+  step1: 'Sur la tablette, scannez le QR ci-dessus (appareil photo) — même Wi-Fi que le PC.',
+  step2: 'Appuyez sur « Installer l’application » (ou menu ⋮ → « Ajouter à l’écran d’accueil »).',
+  step3: 'Ouvrez l’icône BanaScore, allez sur la notation et entrez le code animateur.',
+  installApp: 'Installer l’application',
+  appInstalled: 'Application installée !',
+  tabletScoringQr: 'QR de notation par tablette',
+  scanToScore: 'Scannez pour noter cette activité',
   localhostWarning:
     'Vous êtes sur localhost : les autres appareils ne pourront pas se connecter. Ouvrez cette page via l’adresse réseau du PC (ex. http://192.168.x.x:3001).',
   generateSessions: 'Générer des sessions',
@@ -124,7 +132,17 @@ export const t = {
   eventLocked: 'Notation verrouillée : l’événement n’est pas ouvert.',
 
   // Advanced scoring / branding / dashboard
+  votingEnabled: 'Vote des participants (inscription + votes)',
   maxVotes: 'Nombre de votes par participant',
+  noTeamsHint: 'Ajoutez d’abord des équipes pour pouvoir noter les activités.',
+  rankingMode: 'Mode de classement général',
+  rankingRaw: 'Brut (somme des points)',
+  rankingNormalized: 'Normalisé par atelier (recommandé)',
+  weightsHint:
+    'Chaque atelier est classé puis converti sur une échelle commune (le nombre d’activités n’influe plus). Poids ×N pour qu’un atelier compte davantage.',
+  noActivitiesYet: 'Ajoutez des activités pour définir les poids.',
+  generalNormalizedNote:
+    'Total = classement général normalisé par atelier (chaque atelier à poids égal sauf pondération).',
   coefficient: 'Coefficient (pondération du score global)',
   brandColor: 'Couleur de marque',
   logoUrl: 'URL du logo (optionnel)',

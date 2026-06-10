@@ -7,6 +7,9 @@ export interface EventDTO {
   location: string | null;
   status: EventStatus;
   max_votes: number;
+  voting_enabled: number; // 0/1
+  ranking_mode: string; // 'raw' | 'normalized'
+  workshop_weights: string | null; // JSON
   brand_color: string | null;
   logo_url: string | null;
   scorer_code: string | null;
@@ -68,6 +71,7 @@ export interface RankingEntry {
 
 export interface EventReport {
   event: EventDTO;
+  rankingMode: string;
   activities: { id: number; name: string; coefficient: number }[];
   teams: {
     id: number;

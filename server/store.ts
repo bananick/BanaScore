@@ -51,6 +51,9 @@ export function updateEvent(
     location: string | null;
     status: EventStatus;
     maxVotes: number;
+    votingEnabled: boolean;
+    rankingMode: 'raw' | 'normalized';
+    workshopWeights: Record<string, number> | null;
     brandColor: string | null;
     logoUrl: string | null;
     scorerCode: string | null;
@@ -59,7 +62,7 @@ export function updateEvent(
   getEvent(db, id);
   db.prepare(
     `UPDATE events
-     SET name = ?, date = ?, location = ?, status = ?, max_votes = ?, brand_color = ?, logo_url = ?, scorer_code = ?
+     SET name = ?, date = ?, location = ?, status = ?, max_votes = ?, voting_enabled = ?, ranking_mode = ?, workshop_weights = ?, brand_color = ?, logo_url = ?, scorer_code = ?
      WHERE id = ?`,
   ).run(
     data.name,
@@ -67,6 +70,9 @@ export function updateEvent(
     data.location,
     data.status,
     data.maxVotes,
+    data.votingEnabled ? 1 : 0,
+    data.rankingMode,
+    data.workshopWeights ? JSON.stringify(data.workshopWeights) : null,
     data.brandColor,
     data.logoUrl,
     data.scorerCode,
@@ -99,8 +105,17 @@ export function duplicateEvent(
     const created = createEvent(db, { name, date, location });
     // Carry over event-level configuration (votes, branding, scorer code).
     db.prepare(
-      'UPDATE events SET max_votes = ?, brand_color = ?, logo_url = ?, scorer_code = ? WHERE id = ?',
-    ).run(source.max_votes, source.brand_color, source.logo_url, source.scorer_code, created.id);
+      'UPDATE events SET max_votes = ?, voting_enabled = ?, ranking_mode = ?, workshop_weights = ?, brand_color = ?, logo_url = ?, scorer_code = ? WHERE id = ?',
+    ).run(
+      source.max_votes,
+      source.voting_enabled,
+      source.ranking_mode,
+      source.workshop_weights,
+      source.brand_color,
+      source.logo_url,
+      source.scorer_code,
+      created.id,
+    );
     for (const activity of listActivities(db, id)) {
       db.prepare(
         'INSERT INTO activities (name, event_id, coefficient, workshop) VALUES (?, ?, ?, ?)',
@@ -347,6 +362,9 @@ export function castVote(db: DB, participantId: number, votedTeamId: number): { 
   if (!participant) throw new AppError(404, 'PARTICIPANT_NOT_FOUND', 'Participant not found');
 
   const event = getEvent(db, participant.event_id);
+  if (!event.voting_enabled) {
+    throw new AppError(403, 'VOTING_DISABLED', 'Voting is disabled for this event');
+  }
   if (event.status !== 'open') {
     throw new AppError(403, 'EVENT_CLOSED', 'Voting is closed for this event');
   }
@@ -413,11 +431,8 @@ export function rankingByVotes(db: DB, eventId: number): RankingEntry[] {
     .all(eventId) as RankingEntry[];
 }
 
-/**
- * Global score = sum of (activity points × activity coefficient) + votes
- * received + admin bonus points.
- */
-export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
+/** Raw global score = Σ(activity points × coefficient) + votes + admin bonus. */
+function rankingGlobalRaw(db: DB, eventId: number): RankingEntry[] {
   return db
     .prepare(
       `SELECT t.id, t.name,
@@ -431,6 +446,113 @@ export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
        ORDER BY score DESC, t.name ASC`,
     )
     .all(eventId, eventId) as RankingEntry[];
+}
+
+interface WorkshopGroup {
+  key: string;
+  acts: { id: number; coef: number }[];
+}
+
+/** Group an event's activities by atelier (workshop), preserving order. */
+function getWorkshopGroups(db: DB, eventId: number): WorkshopGroup[] {
+  const groups: WorkshopGroup[] = [];
+  const byKey = new Map<string, WorkshopGroup>();
+  for (const a of listActivities(db, eventId)) {
+    const key = a.workshop && a.workshop.trim() ? a.workshop.trim() : a.name;
+    let g = byKey.get(key);
+    if (!g) {
+      g = { key, acts: [] };
+      byKey.set(key, g);
+      groups.push(g);
+    }
+    g.acts.push({ id: a.id, coef: a.coefficient });
+  }
+  return groups;
+}
+
+/** A team's raw total within an atelier = Σ(points × coefficient). */
+function teamAtelierRaw(db: DB, group: WorkshopGroup, teamId: number): number {
+  let sum = 0;
+  for (const a of group.acts) {
+    const row = db
+      .prepare('SELECT points FROM activity_scores WHERE activity_id = ? AND team_id = ?')
+      .get(a.id, teamId) as { points: number } | undefined;
+    sum += (row?.points ?? 0) * a.coef;
+  }
+  return sum;
+}
+
+/** Standard competition ranking ("1,2,2,4") over values sorted descending. */
+function competitionRanks(values: number[]): number[] {
+  const order = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v);
+  const ranks = new Array<number>(values.length);
+  let lastV: number | null = null;
+  let lastR = 0;
+  order.forEach((e, pos) => {
+    const r = lastV === null || e.v !== lastV ? pos + 1 : lastR;
+    ranks[e.i] = r;
+    lastV = e.v;
+    lastR = r;
+  });
+  return ranks;
+}
+
+export function parseWeights(json: string | null): Record<string, number> {
+  if (!json) return {};
+  try {
+    const o = JSON.parse(json);
+    return o && typeof o === 'object' ? (o as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// Atelier points scale: 1st = (N teams) × STEP, last = 1 × STEP. Keeps numbers
+// coherent across ateliers regardless of activity count or raw scale.
+const NORM_STEP = 100;
+
+/**
+ * Normalized general score: each atelier is ranked internally, converted to
+ * atelier points on a common scale, then multiplied by the atelier's weight.
+ * Makes a 4-activity atelier weigh the same as a 1-activity one, and lets the
+ * Quiz (heavier weight) decide the general ranking while staying coherent.
+ */
+function rankingGlobalNormalized(db: DB, eventId: number): RankingEntry[] {
+  const event = getEvent(db, eventId);
+  const teams = listTeams(db, eventId);
+  const groups = getWorkshopGroups(db, eventId);
+  const weights = parseWeights(event.workshop_weights);
+  const N = teams.length;
+
+  const scores = new Map<number, number>(teams.map((t) => [t.id, 0]));
+  for (const group of groups) {
+    const raws = teams.map((t) => teamAtelierRaw(db, group, t.id));
+    const ranks = competitionRanks(raws);
+    const weight = weights[group.key] ?? 1;
+    teams.forEach((t, i) => {
+      const atelierPoints = (N - ranks[i] + 1) * NORM_STEP;
+      scores.set(t.id, (scores.get(t.id) ?? 0) + atelierPoints * weight);
+    });
+  }
+  // Votes + admin bonus added on top (usually 0 for normalized events).
+  for (const t of teams) {
+    const { count: votes } = db
+      .prepare('SELECT COUNT(*) as count FROM votes WHERE voted_team_id = ?')
+      .get(t.id) as { count: number };
+    scores.set(t.id, (scores.get(t.id) ?? 0) + votes + t.admin_points);
+  }
+
+  return teams
+    .map((t) => ({ id: t.id, name: t.name, score: scores.get(t.id) ?? 0 }))
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+}
+
+/** General ranking, honoring the event's ranking mode ('raw' | 'normalized'). */
+export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
+  const event = getEvent(db, eventId);
+  return event.ranking_mode === 'normalized'
+    ? rankingGlobalNormalized(db, eventId)
+    : rankingGlobalRaw(db, eventId);
 }
 
 /**
@@ -476,6 +598,7 @@ export function rankingByWorkshop(db: DB, eventId: number): WorkshopRanking[] {
 
 export interface EventReport {
   event: EventRow;
+  rankingMode: string;
   activities: { id: number; name: string; coefficient: number }[];
   /** One row per team with a full breakdown, sorted by total desc. */
   teams: {
@@ -532,6 +655,10 @@ export function getEventReport(db: DB, eventId: number): EventReport {
     };
   });
 
+  // The authoritative "total" is the general ranking score (normalized when the
+  // event uses that mode), so the report matches the live ranking & projection.
+  const general = new Map(rankingGlobal(db, eventId).map((r) => [r.id, r.score]));
+  for (const row of rows) row.total = general.get(row.id) ?? row.total;
   rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
   const { count: participantCount } = db
@@ -540,6 +667,7 @@ export function getEventReport(db: DB, eventId: number): EventReport {
 
   return {
     event,
+    rankingMode: event.ranking_mode,
     activities,
     teams: rows,
     participantCount,

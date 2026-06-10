@@ -40,14 +40,25 @@ Toutes les tablettes/téléphones se connectent à **un seul serveur** (ton PC) 
 le **même Wi-Fi** ; les données se synchronisent en temps réel (SSE) avec un
 repli en polling. Il n'y a pas de connexion directe entre tablettes.
 
+**Le plus simple (Windows, sans terminal)** : double-cliquer sur
+**`Lancer-BanaScore.bat`**. Il installe les composants au premier lancement,
+démarre le serveur et **ouvre automatiquement la page QR** (`/access`).
+
+Sinon, en ligne de commande :
+
 ```bash
 npm start
 ```
 
-Cette commande build l'app (si besoin), démarre le serveur sur le réseau local
-et affiche l'adresse à ouvrir sur les tablettes (ex. `http://192.168.1.62:3001`).
-Sur le PC, ouvre **`/access`** pour afficher un **grand QR** que les tablettes
-scannent pour accéder à l'app.
+Cette commande build l'app (si besoin), démarre le serveur sur le réseau local,
+affiche l'adresse à ouvrir sur les tablettes (ex. `http://192.168.1.62:3001`) et
+ouvre la page **`/access`** : un **grand QR** + 3 étapes d'installation que les
+animateurs suivent sur chaque tablette (scanner → « Installer l'application » →
+entrer le code animateur).
+
+> Astuce : la page **Affiche** d'un événement (admin → 🖨️) génère **un QR par
+> activité** ; chaque tablette scanne le QR de son activité pour arriver
+> directement sur l'écran de notation.
 
 - Notation : 1 tablette par activité → `…/score/<id de la session>` → code animateur.
 - Verrouillage : passer une session en **« Fermé »** bloque la notation des

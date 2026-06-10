@@ -56,6 +56,7 @@ export const EventView: React.FC = () => {
 
   const hasVotedFor = (teamId: number) => myVotes.some((v) => v.voted_team_id === teamId);
   const isClosed = event?.status !== 'open';
+  const votingEnabled = event ? !!event.voting_enabled : true;
   const maxVotes = event?.max_votes ?? 3;
   const remaining = Math.max(0, maxVotes - myVotes.length);
 
@@ -73,6 +74,7 @@ export const EventView: React.FC = () => {
         </h2>
       </header>
 
+      {votingEnabled && (
       <div className="card">
         <h2>🗳️ {t.voteForTeams}</h2>
         {isClosed ? (
@@ -101,6 +103,7 @@ export const EventView: React.FC = () => {
           })}
         </div>
       </div>
+      )}
 
       <div className="card">
         <h2>📊 {t.liveRankings}</h2>
@@ -108,13 +111,15 @@ export const EventView: React.FC = () => {
           <Link to={`/event/${id}/ranking/global`} className="festive-button" style={{ fontSize: '0.9rem' }}>
             {t.globalScore}
           </Link>
-          <Link
-            to={`/event/${id}/ranking/votes`}
-            className="festive-button"
-            style={{ fontSize: '0.9rem', background: 'var(--accent)' }}
-          >
-            {t.voteRanking}
-          </Link>
+          {votingEnabled && (
+            <Link
+              to={`/event/${id}/ranking/votes`}
+              className="festive-button"
+              style={{ fontSize: '0.9rem', background: 'var(--accent)' }}
+            >
+              {t.voteRanking}
+            </Link>
+          )}
           <Link
             to={`/event/${id}/workshops`}
             className="festive-button"

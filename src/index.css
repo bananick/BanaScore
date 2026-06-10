@@ -275,6 +275,14 @@ input {
     justify-content: flex-start;
 }
 
+/* ONBOARDING STEPS */
+.steps {
+    margin: 8px 0 16px;
+    padding-left: 22px;
+    line-height: 1.7;
+}
+.steps li { margin-bottom: 8px; }
+
 /* OFFLINE BANNER */
 .offline-banner {
     position: fixed;
