@@ -6,6 +6,7 @@ import type { EventDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { PasswordInput } from '../components/PasswordInput';
+import { Collapsible } from '../components/Collapsible';
 
 const STATUS_LABELS: Record<EventDTO['status'], string> = {
   open: t.statusOpen,
@@ -168,8 +169,7 @@ export const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="card">
-        <h2>{t.changePassword}</h2>
+      <Collapsible title={`🔑 ${t.changePassword}`}>
         <PasswordInput
           value={pwd.current}
           onChange={(v) => setPwd({ ...pwd, current: v })}
@@ -189,7 +189,7 @@ export const AdminDashboard: React.FC = () => {
         <button onClick={submitPassword} className="festive-button" disabled={pwdBusy}>
           {t.changePassword}
         </button>
-      </div>
+      </Collapsible>
     </div>
   );
 };
