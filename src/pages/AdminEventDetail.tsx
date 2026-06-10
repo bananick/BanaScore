@@ -371,9 +371,9 @@ export const AdminEventDetail: React.FC = () => {
         <button onClick={saveMeta} className="festive-button">
           {t.save}
         </button>
-      </Collapsible>
 
-      <Collapsible title={`🗂️ ${t.generateSessions}`}>
+        <hr className="section-sep" />
+        <h3>🗂️ {t.generateSessions}</h3>
         <label style={{ display: 'block', textAlign: 'left', margin: '4px 0', opacity: 0.8 }}>
           {t.sessionsCount}
         </label>
@@ -392,16 +392,16 @@ export const AdminEventDetail: React.FC = () => {
         <button onClick={makeSessions} className="festive-button">
           {t.generate}
         </button>
-      </Collapsible>
 
-      <Collapsible title={t.addTeam}>
+        <hr className="section-sep" />
+        <h3>{t.addTeam}</h3>
         <input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t.teamName} />
         <button onClick={addTeam} className="festive-button">
           {t.addTeam}
         </button>
-      </Collapsible>
 
-      <Collapsible title={t.addActivity}>
+        <hr className="section-sep" />
+        <h3>{t.addActivity}</h3>
         <input
           value={activityName}
           onChange={(e) => setActivityName(e.target.value)}
@@ -470,9 +470,9 @@ export const AdminEventDetail: React.FC = () => {
             ))}
           </div>
         )}
-      </Collapsible>
 
-      <Collapsible title={`🎯 ${t.scoringMode}`}>
+        <hr className="section-sep" />
+        <h3>🎯 {t.scoringMode}</h3>
         <select
           onChange={(e) => setSelectedActivity(parseInt(e.target.value) || null)}
           value={selectedActivity ?? ''}
@@ -592,8 +592,9 @@ export const AdminEventDetail: React.FC = () => {
       {teams.length === 0 && <p style={{ opacity: 0.6 }}>{t.noTeamsHint}</p>}
       </Collapsible>
 
-      <Collapsible title={`🏆 ${t.linksTools}`}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>🏆 {t.linksTools}</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <Link to={`/score/${id}`} className="festive-button" style={{ textDecoration: 'none' }}>
           ✍️ {t.scoreTablet}
         </Link>
@@ -635,8 +636,8 @@ export const AdminEventDetail: React.FC = () => {
         >
           🖨️ {t.posters}
         </Link>
+        </div>
       </div>
-      </Collapsible>
 
       <Collapsible title={`⚠️ ${t.dangerZone}`} danger>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: '0 0 12px' }}>

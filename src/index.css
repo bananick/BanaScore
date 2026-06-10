@@ -426,6 +426,11 @@ input {
 .collapsible-header:hover { color: var(--primary); }
 .collapsible-chevron { transition: transform 0.2s; flex-shrink: 0; opacity: 0.8; }
 .collapsible-body { padding: 0 20px 20px; }
+.section-sep {
+    margin: 24px 0 8px;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
 .collapsible--danger { border-color: var(--error); background: rgba(231, 76, 60, 0.08); }
 .collapsible--danger .collapsible-header { color: var(--error); }
 
