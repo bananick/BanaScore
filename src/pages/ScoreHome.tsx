@@ -31,7 +31,7 @@ export const ScoreHome: React.FC = () => {
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton />
+        <BackButton to="/" label={t.home} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>✍️ {t.scoringFor}</h1>
       {event && <p style={{ opacity: 0.7, marginTop: -8 }}>{event.name}</p>}
