@@ -4,8 +4,12 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",
+    "start": "node scripts/start.mjs",
     "server": "ts-node-dev --project tsconfig.node.json server/index.ts",
     "build": "tsc && vite build",
+    "build:server": "tsc -p tsconfig.node.json",
+    "build:all": "npm run build && npm run build:server",
+    "serve": "node dist-server/index.js",
     "preview": "vite preview",
     "test": "node --require ./server/test-setup.js --test server/store.test.ts",
     "typecheck": "tsc --noEmit"
@@ -16,11 +20,13 @@
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "lucide-react": "^1.7.0",
+    "pdfkit": "^0.19.0",
     "qrcode.react": "^4.2.0",
     "react-router-dom": "^7.13.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/pdfkit": "^0.17.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",

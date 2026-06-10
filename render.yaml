@@ -1,0 +1,24 @@
+# Render.com blueprint. Deploy with: New > Blueprint > point at this repo.
+# Note: persistent disks require a paid instance type. On the free plan the
+# SQLite file is ephemeral (reset on redeploy/restart) — fine for a one-off
+# event, but back it up (download banascore.db) if you need to keep results.
+services:
+  - type: web
+    name: banascore
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/events
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false # set this in the Render dashboard
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: BANASCORE_DB
+        value: /data/banascore.db
+      # Optional: restrict CORS to your domain
+      # - key: CORS_ORIGIN
+      #   value: https://banascore.exemple.fr
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1

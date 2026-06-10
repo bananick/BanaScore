@@ -22,6 +22,7 @@ export const AdminEventDetail: React.FC = () => {
   const [activityWorkshop, setActivityWorkshop] = useState('');
   const [selectedActivity, setSelectedActivity] = useState<number | null>(null);
   const [stats, setStats] = useState<EventStats | null>(null);
+  const [sessions, setSessions] = useState({ count: 5, prefix: '' });
 
   // Live dashboard polling — independent of the edit form so it never clobbers
   // unsaved changes in the meta/teams inputs.
@@ -166,6 +167,12 @@ export const AdminEventDetail: React.FC = () => {
     navigate('/admin');
   });
 
+  const makeSessions = guard(async () => {
+    const prefix = (sessions.prefix.trim() || event?.name || 'Session').replace(/\s*—\s*mod.le$/i, '');
+    const res = await api.generateSessions(Number(id), sessions.count, prefix);
+    toast.success(t.sessionsCreated(res.ids.length));
+  });
+
   const updateScore = (teamId: number, points: number | null) =>
     guard(async () => {
       if (!selectedActivity) return;
@@ -293,6 +300,28 @@ export const AdminEventDetail: React.FC = () => {
 
         <button onClick={saveMeta} className="festive-button">
           {t.save}
+        </button>
+      </div>
+
+      <div className="card">
+        <h3>🗂️ {t.generateSessions}</h3>
+        <label style={{ display: 'block', textAlign: 'left', margin: '4px 0', opacity: 0.8 }}>
+          {t.sessionsCount}
+        </label>
+        <input
+          type="number"
+          min={1}
+          max={20}
+          value={sessions.count}
+          onChange={(e) => setSessions({ ...sessions, count: parseInt(e.target.value, 10) || 1 })}
+        />
+        <input
+          value={sessions.prefix}
+          onChange={(e) => setSessions({ ...sessions, prefix: e.target.value })}
+          placeholder={t.sessionsPrefix}
+        />
+        <button onClick={makeSessions} className="festive-button">
+          {t.generate}
         </button>
       </div>
 

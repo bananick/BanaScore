@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Download, Printer } from 'lucide-react';
+import { Download, FileText, Printer } from 'lucide-react';
 import * as api from '../api';
 import type { EventReport as Report, WorkshopRanking } from '../types';
 import { t } from '../i18n';
@@ -25,14 +25,17 @@ function toCsv(report: Report): string {
   return [head, ...rows].map((r) => r.map(esc).join(';')).join('\r\n');
 }
 
-function download(filename: string, content: string, mime: string) {
-  const blob = new Blob(['﻿' + content], { type: mime });
+function downloadBlob(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function download(filename: string, content: string, mime: string) {
+  downloadBlob(filename, new Blob(['﻿' + content], { type: mime }));
 }
 
 const slug = (s: string) =>
@@ -72,6 +75,13 @@ export const EventReport: React.FC = () => {
   const { event, activities, teams } = report;
   const generated = new Date(report.generatedAt).toLocaleString('fr-FR');
   const exportCsv = () => download(`banascore-${slug(event.name)}.csv`, toCsv(report), 'text/csv;charset=utf-8');
+  const exportPdf = async () => {
+    try {
+      downloadBlob(`banascore-${slug(event.name)}.pdf`, await api.downloadReportPdf(id!));
+    } catch (err) {
+      toast.error(api.apiErrorMessage(err));
+    }
+  };
   const ranks = computeRanks(teams.map((tm) => tm.total));
   const brandStyle = event.brand_color
     ? ({ ['--primary']: event.brand_color } as React.CSSProperties)
@@ -84,13 +94,20 @@ export const EventReport: React.FC = () => {
           ← {t.eventManagement}
         </Link>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={exportCsv} className="festive-button" style={{ width: 'auto', marginTop: 0 }}>
+          <button onClick={exportPdf} className="festive-button" style={{ width: 'auto', marginTop: 0 }}>
+            <FileText size={16} /> {t.downloadPdf}
+          </button>
+          <button
+            onClick={exportCsv}
+            className="festive-button"
+            style={{ width: 'auto', marginTop: 0, background: 'var(--success)', color: 'white' }}
+          >
             <Download size={16} /> {t.exportCsv}
           </button>
           <button
             onClick={() => window.print()}
             className="festive-button"
-            style={{ width: 'auto', marginTop: 0, background: 'var(--blue)' }}
+            style={{ width: 'auto', marginTop: 0, background: 'var(--blue)', color: 'white' }}
           >
             <Printer size={16} /> {t.print}
           </button>

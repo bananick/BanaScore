@@ -4,6 +4,7 @@ import * as api from '../api';
 import type { EventDTO, TeamDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { BackButton } from '../components/BackButton';
 
 /** Public page reached by the event-level QR: pick a team, then register. */
 export const JoinEvent: React.FC = () => {
@@ -45,6 +46,9 @@ export const JoinEvent: React.FC = () => {
 
   return (
     <div className="app-container">
+      <div className="page-top">
+        <BackButton />
+      </div>
       <h1 style={{ fontSize: '2rem' }}>{event?.name ?? t.joinEvent}</h1>
       {!team ? (
         <div className="card">

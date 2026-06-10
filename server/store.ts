@@ -119,6 +119,24 @@ export function duplicateEvent(
   return run();
 }
 
+/**
+ * Generate `count` sessions from a template event, named "<prefix> S1..Sn".
+ * Each is a full duplicate (structure + config, no scores/teams).
+ */
+export function generateSessions(
+  db: DB,
+  id: number,
+  count: number,
+  prefix: string,
+): { ids: number[] } {
+  getEvent(db, id);
+  const ids: number[] = [];
+  for (let i = 1; i <= count; i++) {
+    ids.push(duplicateEvent(db, id, { name: `${prefix} S${i}` }).id);
+  }
+  return { ids };
+}
+
 // --- TEAMS ---
 
 export function listTeams(db: DB, eventId: number): TeamRow[] {

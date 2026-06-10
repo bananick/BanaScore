@@ -96,10 +96,14 @@ export const updateEvent = (
 export const deleteEvent = (id: number) => http.delete(`/events/${id}`);
 export const duplicateEvent = (id: number, name?: string) =>
   http.post<{ id: number }>(`/events/${id}/duplicate`, name ? { name } : {}).then((r) => r.data);
+export const generateSessions = (id: number, count: number, prefix: string) =>
+  http.post<{ ids: number[] }>(`/events/${id}/sessions`, { count, prefix }).then((r) => r.data);
 export const getReport = (id: string | number) =>
   http.get<EventReport>(`/events/${id}/report`).then((r) => r.data);
 export const getStats = (id: string | number) =>
   http.get<EventStats>(`/events/${id}/stats`).then((r) => r.data);
+export const downloadReportPdf = (id: string | number) =>
+  http.get(`/events/${id}/report.pdf`, { responseType: 'blob' }).then((r) => r.data as Blob);
 
 // --- Teams ---
 export const getTeams = (eventId: string | number) =>

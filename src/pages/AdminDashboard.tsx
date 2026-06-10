@@ -100,6 +100,14 @@ export const AdminDashboard: React.FC = () => {
         </button>
       </header>
 
+      <Link
+        to="/access"
+        className="festive-button"
+        style={{ textDecoration: 'none', display: 'block', marginBottom: 16 }}
+      >
+        📲 {t.tabletAccessLink}
+      </Link>
+
       <div className="card">
         <h2>{t.createEvent}</h2>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.eventName} />

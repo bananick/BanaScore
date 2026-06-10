@@ -5,6 +5,7 @@ import type { EventDTO, WorkshopRanking } from '../types';
 import { t } from '../i18n';
 import { usePolling } from '../hooks';
 import { computeRanks, rankBadge } from '../ranks';
+import { BackButton } from '../components/BackButton';
 
 /** Top 3 of each atelier (workshop), with ex-æquo handling. Auto-refreshing. */
 export const WorkshopRankings: React.FC = () => {
@@ -31,6 +32,9 @@ export const WorkshopRankings: React.FC = () => {
 
   return (
     <div className="app-container" style={brandStyle}>
+      <div className="page-top">
+        <BackButton />
+      </div>
       <h1 style={{ fontSize: '2rem' }}>🏅 {t.workshopRankings}</h1>
       {event && <p style={{ opacity: 0.7, marginTop: -8 }}>{event.name}</p>}
 

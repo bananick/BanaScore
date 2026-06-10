@@ -6,6 +6,7 @@ import type { ActivityDTO, EventDTO, ParticipantDTO, TeamDTO, VoteDTO } from '..
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { usePolling } from '../hooks';
+import { BackButton } from '../components/BackButton';
 
 export const EventView: React.FC = () => {
   const { id } = useParams();
@@ -60,6 +61,9 @@ export const EventView: React.FC = () => {
 
   return (
     <div className="app-container">
+      <div className="page-top">
+        <BackButton />
+      </div>
       <header style={{ marginBottom: 30 }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
           <h1>🍌 BanaScore</h1>

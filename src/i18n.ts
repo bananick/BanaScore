@@ -92,7 +92,8 @@ export const t = {
     `Dupliquer « ${name} » ? Les équipes et activités seront copiées (sans les scores ni les votes).`,
   report: 'Rapport / Export',
   exportCsv: 'Exporter en CSV',
-  print: 'Imprimer / PDF',
+  print: 'Imprimer',
+  downloadPdf: 'Télécharger PDF',
   clientReport: 'Rapport de l’événement',
   generatedOn: 'Généré le',
   rank: 'Rang',
@@ -106,6 +107,21 @@ export const t = {
   projection: 'Mode projection',
   fullscreen: 'Plein écran',
   noData: 'Aucune donnée pour le moment.',
+  offline: 'Connexion perdue — reconnexion en cours…',
+
+  // Tablet access + sessions
+  tabletAccess: 'Accès tablettes',
+  tabletAccessLink: 'QR accès tablettes',
+  tabletAccessHint:
+    'Sur chaque tablette (même Wi-Fi), scannez ce QR pour ouvrir l’application.',
+  localhostWarning:
+    'Vous êtes sur localhost : les autres appareils ne pourront pas se connecter. Ouvrez cette page via l’adresse réseau du PC (ex. http://192.168.x.x:3001).',
+  generateSessions: 'Générer des sessions',
+  sessionsCount: 'Nombre de sessions',
+  sessionsPrefix: 'Préfixe (ex. Stallergix)',
+  generate: 'Générer',
+  sessionsCreated: (n: number) => `${n} session(s) créée(s).`,
+  eventLocked: 'Notation verrouillée : l’événement n’est pas ouvert.',
 
   // Advanced scoring / branding / dashboard
   maxVotes: 'Nombre de votes par participant',
@@ -147,6 +163,7 @@ export const t = {
   teamQr: 'QR par équipe',
 
   // Generic
+  back: 'Retour',
   confirm: 'Confirmer',
   deleteTeamConfirm: (name: string) =>
     `Supprimer l’équipe « ${name} » ? Ses participants, scores et votes associés seront supprimés.`,

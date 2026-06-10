@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import * as api from '../api';
 import type { ActivityDTO, EventDTO } from '../types';
 import { t } from '../i18n';
+import { BackButton } from '../components/BackButton';
 
 /** Tablet entry point: pick the activity this tablet will score. */
 export const ScoreHome: React.FC = () => {
@@ -29,6 +30,9 @@ export const ScoreHome: React.FC = () => {
 
   return (
     <div className="app-container">
+      <div className="page-top">
+        <BackButton />
+      </div>
       <h1 style={{ fontSize: '2rem' }}>✍️ {t.scoringFor}</h1>
       {event && <p style={{ opacity: 0.7, marginTop: -8 }}>{event.name}</p>}
       <div className="card">

@@ -16,12 +16,16 @@ import { Projection } from './pages/Projection';
 import { ScorerGuard } from './pages/ScorerGuard';
 import { ScoreHome } from './pages/ScoreHome';
 import { ScoreActivity } from './pages/ScoreActivity';
+import { Access } from './pages/Access';
+import { OfflineBanner } from './components/OfflineBanner';
 
 function App() {
   return (
     <ToastProvider>
+      <OfflineBanner />
       <Router>
         <Routes>
+          <Route path="/access" element={<Access />} />
           <Route path="/" element={<Home />} />
           <Route
             path="/admin"

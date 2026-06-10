@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import db from './db';
 import { handle, sendError } from './errors';
 import {
@@ -8,11 +10,13 @@ import {
   issueToken,
   setPassword,
   canScore,
+  isAdmin,
   issueScorerToken,
   verifyScorerCode,
 } from './auth';
 import { optString, reqInt, reqNumber, reqStatus, reqString } from './validation';
 import * as store from './store';
+import { streamReportPdf } from './pdf';
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
@@ -26,9 +30,56 @@ app.use(
       : undefined, // dev: reflect request origin
   ),
 );
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 
 const id = (req: Request, key: string) => reqInt(req.params[key], key, { min: 1 });
+
+// --- LIVE UPDATES (Server-Sent Events) ---
+// Any successful mutating API call broadcasts a "tick" so connected clients
+// (rankings, projection, scoring, dashboard) refresh near-instantly instead of
+// only on their polling interval.
+const sseClients = new Set<Response>();
+
+function broadcastTick(): void {
+  for (const client of sseClients) {
+    try {
+      client.write('data: tick\n\n');
+    } catch {
+      /* ignore broken pipe */
+    }
+  }
+}
+
+app.use((req: Request, res: Response, next) => {
+  if (req.method !== 'GET' && req.path.startsWith('/api') && req.path !== '/api/stream') {
+    res.on('finish', () => {
+      if (res.statusCode < 400) broadcastTick();
+    });
+  }
+  next();
+});
+
+app.get('/api/stream', (req: Request, res: Response) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.write(': connected\n\n');
+  sseClients.add(res);
+  const ping = setInterval(() => {
+    try {
+      res.write(': ping\n\n');
+    } catch {
+      /* ignore */
+    }
+  }, 25000);
+  req.on('close', () => {
+    clearInterval(ping);
+    sseClients.delete(res);
+  });
+});
 
 // --- ADMIN AUTH ---
 app.post(
@@ -131,6 +182,16 @@ app.post(
   }),
 );
 
+app.post(
+  '/api/events/:id/sessions',
+  requireAdmin,
+  handle((req, res) => {
+    const count = reqInt(req.body?.count, 'count', { min: 1, max: 20 });
+    const prefix = reqString(req.body?.prefix, 'prefix', { max: 60 });
+    res.status(201).json(store.generateSessions(db, id(req, 'id'), count, prefix));
+  }),
+);
+
 app.get(
   '/api/events/:id/report',
   requireAdmin,
@@ -141,6 +202,26 @@ app.get(
   '/api/events/:id/stats',
   requireAdmin,
   handle((req, res) => res.json(store.getEventStats(db, id(req, 'id')))),
+);
+
+app.get(
+  '/api/events/:id/report.pdf',
+  requireAdmin,
+  handle((req, res) => {
+    const eventId = id(req, 'id');
+    const report = store.getEventReport(db, eventId);
+    const workshops = store.rankingByWorkshop(db, eventId);
+    const slug =
+      report.event.name
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .toLowerCase() || 'evenement';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="banascore-${slug}.pdf"`);
+    streamReportPdf(report, workshops, res);
+  }),
 );
 
 // --- TEAMS ---
@@ -238,6 +319,13 @@ app.patch(
       sendError(res, 401, 'UNAUTHORIZED', 'Scoring requires admin or scorer access');
       return;
     }
+    // Once an event is closed/archived, scoring is locked for animateurs
+    // (admins can still correct mistakes).
+    const event = store.getEvent(db, activity.event_id);
+    if (event.status !== 'open' && !isAdmin(req)) {
+      sendError(res, 403, 'EVENT_LOCKED', 'Scoring is locked: the event is not open');
+      return;
+    }
     const raw = req.body?.points;
     const points = raw === null ? null : reqInt(raw, 'points', { min: 1, max: 999 });
     store.setActivityScore(db, activityId, id(req, 'teamId'), points);
@@ -327,8 +415,26 @@ app.get(
   }),
 );
 
-app.listen(port, () => {
-  console.log(`BanaScore server running at http://localhost:${port}`);
+// In production, serve the built frontend (dist/) from this same server so the
+// whole app is reachable at one origin (http://<IP>:PORT) — convenient for
+// running an event from a single machine on the local Wi-Fi network.
+const distDir = path.resolve(__dirname, '../dist');
+if (fs.existsSync(path.join(distDir, 'index.html'))) {
+  app.use(express.static(distDir));
+  // SPA fallback for client-side routes (everything that isn't /api).
+  app.use((req: Request, res: Response, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      res.sendFile(path.join(distDir, 'index.html'));
+    } else {
+      next();
+    }
+  });
+  console.log('[BanaScore] Serving built frontend from dist/');
+}
+
+// Bind 0.0.0.0 so tablets/phones on the same network can connect.
+app.listen(port, '0.0.0.0', () => {
+  console.log(`BanaScore server running on http://0.0.0.0:${port} (reachable on your LAN IP)`);
 });
 
 export {};

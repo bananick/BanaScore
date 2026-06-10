@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import * as api from '../api';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { BackButton } from '../components/BackButton';
 
 export const Register: React.FC = () => {
   const { token } = useParams();
@@ -32,6 +33,9 @@ export const Register: React.FC = () => {
 
   return (
     <div className="app-container">
+      <div className="page-top">
+        <BackButton />
+      </div>
       <h1>{t.readyToPlay}</h1>
       <div className="card">
         <input

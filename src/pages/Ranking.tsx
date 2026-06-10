@@ -5,6 +5,7 @@ import type { RankingEntry } from '../types';
 import { t } from '../i18n';
 import { usePolling } from '../hooks';
 import { computeRanks, rankBadge } from '../ranks';
+import { BackButton } from '../components/BackButton';
 
 export const Ranking: React.FC = () => {
   const { id, type, activityId } = useParams();
@@ -31,6 +32,9 @@ export const Ranking: React.FC = () => {
 
   return (
     <div className="app-container">
+      <div className="page-top">
+        <BackButton />
+      </div>
       <h1 style={{ fontSize: '2rem' }}>{title}</h1>
       <div className="card">
         {(() => {

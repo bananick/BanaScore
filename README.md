@@ -34,6 +34,30 @@ src/
   App.tsx         Routeur + providers
 ```
 
+## Lancer un événement (multi-tablette)
+
+Toutes les tablettes/téléphones se connectent à **un seul serveur** (ton PC) sur
+le **même Wi-Fi** ; les données se synchronisent en temps réel (SSE) avec un
+repli en polling. Il n'y a pas de connexion directe entre tablettes.
+
+```bash
+npm start
+```
+
+Cette commande build l'app (si besoin), démarre le serveur sur le réseau local
+et affiche l'adresse à ouvrir sur les tablettes (ex. `http://192.168.1.62:3001`).
+Sur le PC, ouvre **`/access`** pour afficher un **grand QR** que les tablettes
+scannent pour accéder à l'app.
+
+- Notation : 1 tablette par activité → `…/score/<id de la session>` → code animateur.
+- Verrouillage : passer une session en **« Fermé »** bloque la notation des
+  animateurs (l'admin peut toujours corriger).
+- Une bannière **« Connexion perdue »** s'affiche si le Wi-Fi coupe.
+
+> Pour un accès hors Wi-Fi local (ex. 4G) ou avec HTTPS, héberger sur un service
+> type Render/Railway/VPS et définir `ADMIN_PASSWORD`, `SESSION_SECRET`,
+> `CORS_ORIGIN`. Le serveur sert déjà le frontend compilé (`dist/`).
+
 ## Démarrage (développement)
 
 ```bash
@@ -52,7 +76,11 @@ Ouvrir http://localhost:5173. L'espace admin est sur `/admin` (mot de passe requ
 - **QR « rejoindre l'événement »** (`/join/:eventId`) : un seul QR, choix de l'équipe à l'arrivée — en plus des QR par équipe.
 - **Affiche QR imprimable** (`/admin/event/:id/posters`) : feuille A4 avec tous les QR (équipes + événement) à poser sur les tables.
 - **Anti-doublon** : noms d'équipes et d'activités uniques par événement (insensible à la casse).
-- **Duplication d'événement** (bouton 📋 dans l'admin) : réutilise la structure (équipes + activités, nouveaux QR) sans copier les scores ni les votes — idéal comme modèle récurrent.
+- **Duplication d'événement** (bouton 📋 dans l'admin) : réutilise la structure (équipes + activités, nouveaux QR) sans copier les scores ni les votes — idéal comme modèle récurrent. La config (atelier, coefficient, code animateur, branding) est aussi copiée.
+- **Ateliers** : regrouper des activités sous un même atelier ; **classement par atelier** (top 3) dans une vue dédiée, la projection et le rapport.
+- **Notation tablette** (`/score/:eventId`) : écran focalisé par activité, autorisé par un **code animateur** par événement (sans le mot de passe admin).
+- **Générer des sessions** : créer S1…Sn d'un coup depuis un modèle.
+- **Temps réel (SSE)** : mises à jour quasi instantanées ; **bannière hors-ligne** sur perte de réseau.
 - **Rapport client / export** (`/admin/event/:id/report`) : podium + tableau détaillé par équipe, **export CSV** (séparateur `;`, compatible Excel FR, BOM UTF-8) et **impression / PDF** via la fonction d'impression du navigateur.
 - **Mode projection** (`/event/:id/board`) : tableau de classement plein écran, barres de progression, auto-refresh (5 s), bouton plein écran — pour vidéoprojecteur / TV.
 - **PWA installable** : installable sur tablette/téléphone (icône sur l'écran d'accueil, plein écran). L'installation nécessite le **build de production** (service worker actif uniquement en prod) :
@@ -96,11 +124,42 @@ npm test
 
 ## Déploiement
 
-1. `npm install && npm run build` → sert `dist/` via un hébergeur statique ou via Express.
-2. Lancer le serveur API (`npm run server` ou un build compilé) avec les variables
-   d'environnement définies — **au minimum `ADMIN_PASSWORD` et `SESSION_SECRET`**.
-3. Restreindre `CORS_ORIGIN` à l'origine du frontend.
-4. Servir derrière **HTTPS** (reverse proxy : Nginx/Caddy/etc.).
+### En local / un seul PC (événement)
+
+Voir « Lancer un événement (multi-tablette) » plus haut : `npm start`.
+
+### Production compilée (sans ts-node)
+
+```bash
+npm run build:all   # build frontend (dist/) + serveur compilé (dist-server/)
+npm run serve       # node dist-server/index.js — sert l'app + l'API sur PORT
+```
+
+Le serveur sert le frontend compilé **et** l'API sur le même port → un seul
+service à exposer. Définir au minimum `ADMIN_PASSWORD` et `SESSION_SECRET`,
+restreindre `CORS_ORIGIN`, et servir derrière **HTTPS** (reverse proxy ou
+plateforme managée).
+
+### Docker
+
+```bash
+docker build -t banascore .
+docker run -p 3001:3001 \
+  -e ADMIN_PASSWORD=monsecret \
+  -e SESSION_SECRET=$(openssl rand -hex 32) \
+  -v banascore-data:/data \
+  banascore
+```
+
+La base SQLite est persistée dans le volume monté sur `/data`.
+
+### Render.com
+
+Le fichier `render.yaml` fournit un blueprint (New → Blueprint). Renseigner
+`ADMIN_PASSWORD` dans le dashboard ; `SESSION_SECRET` est généré
+automatiquement. ⚠️ Le **disque persistant** nécessite une offre payante ; sur
+le plan gratuit, la base est réinitialisée à chaque redéploiement (pensez à
+télécharger `banascore.db` pour conserver les résultats).
 
 ### Sauvegarde des données
 

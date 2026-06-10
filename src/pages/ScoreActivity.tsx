@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CheckCircle, XCircle } from 'lucide-react';
 import * as api from '../api';
-import type { ActivityDTO, ScoreDTO, TeamDTO } from '../types';
+import type { ActivityDTO, EventDTO, ScoreDTO, TeamDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 
@@ -14,19 +14,28 @@ export const ScoreActivity: React.FC = () => {
   const [teams, setTeams] = useState<TeamDTO[]>([]);
   const [activity, setActivity] = useState<ActivityDTO | null>(null);
   const [scores, setScores] = useState<ScoreDTO[]>([]);
+  const [event, setEvent] = useState<EventDTO | null>(null);
 
   const reloadScores = async () => setScores(await api.getScores(aId));
 
   useEffect(() => {
-    Promise.all([api.getTeams(eventId!), api.getActivities(eventId!), api.getScores(aId)])
-      .then(([tr, ar, sr]) => {
+    Promise.all([
+      api.getTeams(eventId!),
+      api.getActivities(eventId!),
+      api.getScores(aId),
+      api.getEvent(eventId!),
+    ])
+      .then(([tr, ar, sr, ev]) => {
         setTeams(tr);
         setActivity(ar.find((a) => a.id === aId) ?? null);
         setScores(sr);
+        setEvent(ev);
       })
       .catch((err) => toast.error(api.apiErrorMessage(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, activityId]);
+
+  const locked = !!event && event.status !== 'open';
 
   const isTaken = (pt: number, teamId: number) =>
     scores.some((s) => s.points === pt && s.team_id !== teamId);
@@ -54,6 +63,14 @@ export const ScoreActivity: React.FC = () => {
         {activity && activity.coefficient !== 1 ? ` (×${activity.coefficient})` : ''}
       </h1>
       <p style={{ opacity: 0.7, marginTop: -6 }}>{t.distributePoints(teams.length)}</p>
+      {locked && (
+        <div
+          className="card"
+          style={{ borderColor: 'var(--accent)', background: 'rgba(230,126,34,0.12)', padding: 12 }}
+        >
+          🔒 {t.eventLocked}
+        </div>
+      )}
 
       {teams.map((team) => {
         const currentScore = current(team.id);

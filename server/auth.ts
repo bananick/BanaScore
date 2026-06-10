@@ -107,7 +107,12 @@ export function verifyScorerCode(storedCode: string | null, code: unknown): bool
   return safeEqual(code, storedCode);
 }
 
+/** True if the request carries a valid admin token. */
+export function isAdmin(req: Request): boolean {
+  return verifyToken(req.header('x-admin-token'));
+}
+
 /** True if the request carries a valid admin token OR a valid scorer token for the event. */
 export function canScore(req: Request, eventId: number): boolean {
-  return verifyToken(req.header('x-admin-token')) || verifyScorerToken(req.header('x-scorer-token'), eventId);
+  return isAdmin(req) || verifyScorerToken(req.header('x-scorer-token'), eventId);
 }
