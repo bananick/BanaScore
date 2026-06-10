@@ -43,6 +43,8 @@ export const t = {
 
   // Event management
   eventManagement: 'Gestion de l’événement',
+  eventSettings: 'Paramètres de l’événement',
+  linksTools: 'Classements, projection & outils',
   addTeam: 'Ajouter une équipe',
   teamName: 'Nom de l’équipe',
   addActivity: 'Ajouter une activité',

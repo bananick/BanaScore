@@ -403,6 +403,32 @@ input {
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
+/* COLLAPSIBLE SECTIONS */
+.card.collapsible {
+    padding: 0;
+    overflow: hidden;
+}
+.collapsible-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 18px 20px;
+    cursor: pointer;
+    text-align: left;
+}
+.collapsible-header:hover { color: var(--primary); }
+.collapsible-chevron { transition: transform 0.2s; flex-shrink: 0; opacity: 0.8; }
+.collapsible-body { padding: 0 20px 20px; }
+.collapsible--danger { border-color: var(--error); background: rgba(231, 76, 60, 0.08); }
+.collapsible--danger .collapsible-header { color: var(--error); }
+
 /* LIVE DASHBOARD */
 .stat-grid {
     display: grid;

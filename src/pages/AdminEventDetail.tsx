@@ -7,6 +7,7 @@ import type { ActivityDTO, EventDTO, EventStats, EventStatus, ScoreDTO, TeamDTO 
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { usePolling } from '../hooks';
+import { Collapsible } from '../components/Collapsible';
 
 function parseWeights(json: string | null): Record<string, number> {
   if (!json) return {};
@@ -241,8 +242,7 @@ export const AdminEventDetail: React.FC = () => {
       )}
 
       {/* Event meta */}
-      <div className="card">
-        <h3>{t.edit}</h3>
+      <Collapsible title={`⚙️ ${t.eventSettings}`}>
         <input
           value={meta.name}
           onChange={(e) => setMeta({ ...meta, name: e.target.value })}
@@ -371,10 +371,9 @@ export const AdminEventDetail: React.FC = () => {
         <button onClick={saveMeta} className="festive-button">
           {t.save}
         </button>
-      </div>
+      </Collapsible>
 
-      <div className="card">
-        <h3>🗂️ {t.generateSessions}</h3>
+      <Collapsible title={`🗂️ ${t.generateSessions}`}>
         <label style={{ display: 'block', textAlign: 'left', margin: '4px 0', opacity: 0.8 }}>
           {t.sessionsCount}
         </label>
@@ -393,18 +392,16 @@ export const AdminEventDetail: React.FC = () => {
         <button onClick={makeSessions} className="festive-button">
           {t.generate}
         </button>
-      </div>
+      </Collapsible>
 
-      <div className="card">
-        <h3>{t.addTeam}</h3>
+      <Collapsible title={t.addTeam}>
         <input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder={t.teamName} />
         <button onClick={addTeam} className="festive-button">
           {t.addTeam}
         </button>
-      </div>
+      </Collapsible>
 
-      <div className="card">
-        <h3>{t.addActivity}</h3>
+      <Collapsible title={t.addActivity}>
         <input
           value={activityName}
           onChange={(e) => setActivityName(e.target.value)}
@@ -473,10 +470,9 @@ export const AdminEventDetail: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
+      </Collapsible>
 
-      <div className="card">
-        <h3>🎯 {t.scoringMode}</h3>
+      <Collapsible title={`🎯 ${t.scoringMode}`}>
         <select
           onChange={(e) => setSelectedActivity(parseInt(e.target.value) || null)}
           value={selectedActivity ?? ''}
@@ -531,9 +527,9 @@ export const AdminEventDetail: React.FC = () => {
         ) : (
           <p>{t.selectActivityHint}</p>
         )}
-      </div>
+      </Collapsible>
 
-      <h2>{t.teamsQr}</h2>
+      <Collapsible title={`🏷️ ${t.teamsQr}`}>
       {teams.map((team) => (
         <div key={team.id} className="card">
           <div
@@ -593,8 +589,11 @@ export const AdminEventDetail: React.FC = () => {
           </div>
         </div>
       ))}
+      {teams.length === 0 && <p style={{ opacity: 0.6 }}>{t.noTeamsHint}</p>}
+      </Collapsible>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+      <Collapsible title={`🏆 ${t.linksTools}`}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <Link to={`/score/${id}`} className="festive-button" style={{ textDecoration: 'none' }}>
           ✍️ {t.scoreTablet}
         </Link>
@@ -637,9 +636,9 @@ export const AdminEventDetail: React.FC = () => {
           🖨️ {t.posters}
         </Link>
       </div>
+      </Collapsible>
 
-      <div className="card" style={{ borderColor: 'var(--error)', background: 'rgba(231, 76, 60, 0.08)' }}>
-        <h2 style={{ fontSize: '1.1rem', marginTop: 0 }}>{t.dangerZone}</h2>
+      <Collapsible title={`⚠️ ${t.dangerZone}`} danger>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: '0 0 12px' }}>
           {t.deleteEventDesc}
         </p>
@@ -652,7 +651,7 @@ export const AdminEventDetail: React.FC = () => {
           <Trash2 size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
           {t.deleteEvent}
         </button>
-      </div>
+      </Collapsible>
     </div>
   );
 };
