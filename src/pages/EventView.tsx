@@ -63,7 +63,7 @@ export const EventView: React.FC = () => {
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton />
+        <BackButton to="/" label={t.home} />
       </div>
       <header style={{ marginBottom: 30 }}>
         <Link to="/" style={{ textDecoration: 'none' }}>

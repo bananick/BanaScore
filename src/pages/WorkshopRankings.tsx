@@ -33,7 +33,7 @@ export const WorkshopRankings: React.FC = () => {
   return (
     <div className="app-container" style={brandStyle}>
       <div className="page-top">
-        <BackButton />
+        <BackButton to={`/event/${id}`} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>🏅 {t.workshopRankings}</h1>
       {event && <p style={{ opacity: 0.7, marginTop: -8 }}>{event.name}</p>}

@@ -33,7 +33,7 @@ export const Ranking: React.FC = () => {
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton />
+        <BackButton to={`/event/${id}`} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>{title}</h1>
       <div className="card">

@@ -47,7 +47,7 @@ export const JoinEvent: React.FC = () => {
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton />
+        <BackButton to="/" label={t.home} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>{event?.name ?? t.joinEvent}</h1>
       {!team ? (

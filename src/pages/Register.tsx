@@ -34,7 +34,7 @@ export const Register: React.FC = () => {
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton />
+        <BackButton to="/" label={t.home} />
       </div>
       <h1>{t.readyToPlay}</h1>
       <div className="card">
