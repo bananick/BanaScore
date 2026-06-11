@@ -144,7 +144,7 @@ export const EventReport: React.FC = () => {
             {teams.slice(0, 3).map((team, i) => (
               <div key={team.id} className={`podium-spot podium-${i + 1}`}>
                 <div className="podium-medal">
-                  {ranked && team.total > 0 ? <RankIcon rank={ranks[i]} size={30} /> : `#${ranks[i]}`}
+                  {ranked && team.total > 0 ? <RankIcon rank={ranks[i]} size={30} /> : null}
                 </div>
                 <div className="podium-name">{team.name}</div>
                 <div className="podium-score">
@@ -171,11 +171,7 @@ export const EventReport: React.FC = () => {
               {teams.map((team, i) => (
                 <tr key={team.id} className={ranked && ranks[i] === 1 && team.total > 0 ? 'is-first' : ''}>
                   <td>
-                    {ranked && ranks[i] <= 3 && team.total > 0 ? (
-                      <RankIcon rank={ranks[i]} />
-                    ) : (
-                      `#${ranks[i]}`
-                    )}
+                    {ranked && ranks[i] <= 3 && team.total > 0 ? <RankIcon rank={ranks[i]} /> : null}
                   </td>
                   <td style={{ textAlign: 'left', fontWeight: 600 }}>{team.name}</td>
                   {activities.map((a) => (
@@ -212,7 +208,7 @@ export const EventReport: React.FC = () => {
                         top.map((entry, i) => (
                           <div key={entry.id} className="workshop-row">
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                              {entry.score > 0 ? <RankIcon rank={ranks[i]} size={18} /> : `#${ranks[i]}`}{' '}
+                              {entry.score > 0 ? <RankIcon rank={ranks[i]} size={18} /> : null}{' '}
                               {entry.name}
                             </span>
                             <strong>

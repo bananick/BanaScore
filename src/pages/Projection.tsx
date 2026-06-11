@@ -66,13 +66,7 @@ export const Projection: React.FC = () => {
           return (
           <div key={team.id} className={`projection-row ${isLeader ? 'leader' : ''}`}>
             <span className="projection-rank">
-              {showTrophy ? (
-                <RankIcon rank={ranks[i]} size={46} />
-              ) : ranked ? (
-                `#${ranks[i]}`
-              ) : (
-                ''
-              )}
+              {showTrophy ? <RankIcon rank={ranks[i]} size={46} /> : null}
             </span>
             <span className="projection-name">{team.name}</span>
             <span className="projection-bar">

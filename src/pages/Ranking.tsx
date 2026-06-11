@@ -61,11 +61,9 @@ export const Ranking: React.FC = () => {
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                  {showTrophy ? (
-                    <RankIcon rank={rank} size={isLeader ? 26 : 22} />
-                  ) : ranked ? (
-                    <span style={{ opacity: 0.5 }}>#{rank}</span>
-                  ) : null}
+                  <span style={{ width: 28, display: 'inline-flex', justifyContent: 'center' }}>
+                    {showTrophy ? <RankIcon rank={rank} size={isLeader ? 26 : 22} /> : null}
+                  </span>
                   {team.name}
                 </span>
                 <strong style={{ color: isLeader ? 'var(--primary)' : 'inherit' }}>

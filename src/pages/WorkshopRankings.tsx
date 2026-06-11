@@ -62,11 +62,9 @@ export const WorkshopRankings: React.FC = () => {
                   }}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                    {entry.score > 0 ? (
-                      <RankIcon rank={ranks[i]} size={22} />
-                    ) : (
-                      <span style={{ opacity: 0.5 }}>#{ranks[i]}</span>
-                    )}
+                    <span style={{ width: 26, display: 'inline-flex', justifyContent: 'center' }}>
+                      {entry.score > 0 ? <RankIcon rank={ranks[i]} size={22} /> : null}
+                    </span>
                     {entry.name}
                   </span>
                   <strong style={{ color: 'var(--primary)' }}>

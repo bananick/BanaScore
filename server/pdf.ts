@@ -33,7 +33,7 @@ function hasRanking(scores: number[]): boolean {
 
 /** Rank label for the PDF: medal/number when ranked & scored, else a dash. */
 function rankLabel(rank: number, score: number, ranked: boolean): string {
-  if (!ranked || score <= 0) return '— ';
+  if (!ranked || score <= 0 || rank > 3) return '';
   return medal(rank);
 }
 
