@@ -5,7 +5,8 @@ import * as api from '../api';
 import type { EventReport as Report, WorkshopRanking } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
-import { computeRanks, rankBadge } from '../ranks';
+import { computeRanks, hasRanking } from '../ranks';
+import { RankIcon } from '../components/RankIcon';
 
 const activityLabel = (a: { name: string; coefficient: number }) =>
   a.coefficient !== 1 ? `${a.name} (×${a.coefficient})` : a.name;
@@ -83,6 +84,7 @@ export const EventReport: React.FC = () => {
     }
   };
   const ranks = computeRanks(teams.map((tm) => tm.total));
+  const ranked = hasRanking(teams.map((tm) => tm.total));
   const brandStyle = event.brand_color
     ? ({ ['--primary']: event.brand_color } as React.CSSProperties)
     : undefined;
@@ -141,7 +143,9 @@ export const EventReport: React.FC = () => {
           <div className="podium no-print">
             {teams.slice(0, 3).map((team, i) => (
               <div key={team.id} className={`podium-spot podium-${i + 1}`}>
-                <div className="podium-medal">{rankBadge(ranks[i])}</div>
+                <div className="podium-medal">
+                  {ranked && team.total > 0 ? <RankIcon rank={ranks[i]} size={30} /> : `#${ranks[i]}`}
+                </div>
                 <div className="podium-name">{team.name}</div>
                 <div className="podium-score">
                   {team.total} {t.pts}
@@ -165,8 +169,14 @@ export const EventReport: React.FC = () => {
             </thead>
             <tbody>
               {teams.map((team, i) => (
-                <tr key={team.id} className={ranks[i] === 1 ? 'is-first' : ''}>
-                  <td>{rankBadge(ranks[i])}</td>
+                <tr key={team.id} className={ranked && ranks[i] === 1 && team.total > 0 ? 'is-first' : ''}>
+                  <td>
+                    {ranked && ranks[i] <= 3 && team.total > 0 ? (
+                      <RankIcon rank={ranks[i]} />
+                    ) : (
+                      `#${ranks[i]}`
+                    )}
+                  </td>
                   <td style={{ textAlign: 'left', fontWeight: 600 }}>{team.name}</td>
                   {activities.map((a) => (
                     <td key={a.id}>{team.activityPoints[a.id] || '·'}</td>
@@ -201,8 +211,9 @@ export const EventReport: React.FC = () => {
                       ) : (
                         top.map((entry, i) => (
                           <div key={entry.id} className="workshop-row">
-                            <span>
-                              {rankBadge(ranks[i])} {entry.name}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              {entry.score > 0 ? <RankIcon rank={ranks[i]} size={18} /> : `#${ranks[i]}`}{' '}
+                              {entry.name}
                             </span>
                             <strong>
                               {entry.score} {t.pts}

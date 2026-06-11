@@ -23,3 +23,14 @@ export function computeRanks(scores: number[]): number[] {
 export function rankBadge(rank: number): string {
   return rank <= 3 ? MEDALS[rank - 1] : `#${rank}`;
 }
+
+/**
+ * True only when there is a real ranking to show: at least one positive score
+ * and some differentiation. When everyone is tied (e.g. nothing scored yet),
+ * returns false so we don't crown everyone.
+ */
+export function hasRanking(scores: number[]): boolean {
+  if (scores.length === 0) return false;
+  if (Math.max(...scores) <= 0) return false;
+  return new Set(scores).size > 1;
+}

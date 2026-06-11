@@ -24,6 +24,19 @@ function ranks(scores: number[]): number[] {
 
 const medal = (rank: number) => (rank <= 3 ? `${MEDALS[rank - 1]} ` : `#${rank} `);
 
+/** True only when there is a real ranking (some differentiation, a positive score). */
+function hasRanking(scores: number[]): boolean {
+  if (scores.length === 0) return false;
+  if (Math.max(...scores) <= 0) return false;
+  return new Set(scores).size > 1;
+}
+
+/** Rank label for the PDF: medal/number when ranked & scored, else a dash. */
+function rankLabel(rank: number, score: number, ranked: boolean): string {
+  if (!ranked || score <= 0) return '— ';
+  return medal(rank);
+}
+
 /**
  * Build a client-ready PDF report and pipe it into `res`. Layout: header +
  * general ranking + per-activity breakdown + top 3 per atelier.
@@ -69,13 +82,14 @@ export function streamReportPdf(
   doc.moveDown(0.8);
 
   const teamRanks = ranks(report.teams.map((t) => t.total));
+  const generalRanked = hasRanking(report.teams.map((t) => t.total));
 
   // --- General ranking ---
   sectionTitle(doc, 'Classement général');
   drawTable(
     doc,
     ['Rang', 'Équipe', 'Total'],
-    report.teams.map((t, i) => [medal(teamRanks[i]), t.name, String(t.total)]),
+    report.teams.map((t, i) => [rankLabel(teamRanks[i], t.total, generalRanked), t.name, String(t.total)]),
     [60, width - 60 - 70, 70],
     [{ align: 'left' }, { align: 'left' }, { align: 'right' }],
   );
@@ -114,9 +128,10 @@ export function streamReportPdf(
       ensureSpace(doc, 70);
       doc.fillColor(GOLD).fontSize(12).font('Helvetica-Bold').text(w.workshop);
       const wr = ranks(w.ranking.map((r) => r.score));
+      const wRanked = hasRanking(w.ranking.map((r) => r.score));
       doc.fillColor(DARK).fontSize(10).font('Helvetica');
       w.ranking.slice(0, 3).forEach((entry, i) => {
-        doc.text(`   ${medal(wr[i])}${entry.name} — ${entry.score} pts`);
+        doc.text(`   ${rankLabel(wr[i], entry.score, wRanked)}${entry.name} — ${entry.score} pts`);
       });
       doc.moveDown(0.4);
     }

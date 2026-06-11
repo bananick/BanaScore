@@ -4,8 +4,9 @@ import * as api from '../api';
 import type { RankingEntry } from '../types';
 import { t } from '../i18n';
 import { usePolling } from '../hooks';
-import { computeRanks, rankBadge } from '../ranks';
+import { computeRanks, hasRanking } from '../ranks';
 import { BackButton } from '../components/BackButton';
+import { RankIcon } from '../components/RankIcon';
 
 export const Ranking: React.FC = () => {
   const { id, type, activityId } = useParams();
@@ -38,16 +39,20 @@ export const Ranking: React.FC = () => {
       <h1 style={{ fontSize: '2rem' }}>{title}</h1>
       <div className="card">
         {(() => {
-          const ranks = computeRanks(ranking.map((r) => r.score));
+          const scores = ranking.map((r) => r.score);
+          const ranks = computeRanks(scores);
+          const ranked = hasRanking(scores);
           return ranking.map((team, index) => {
             const rank = ranks[index];
-            const isLeader = rank === 1;
+            const showTrophy = ranked && rank <= 3 && team.score > 0;
+            const isLeader = ranked && rank === 1 && team.score > 0;
             return (
               <div
                 key={team.id}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
+                  alignItems: 'center',
                   padding: 15,
                   borderBottom: '1px solid rgba(255,255,255,0.1)',
                   fontSize: isLeader ? '1.4rem' : '1.1rem',
@@ -55,9 +60,13 @@ export const Ranking: React.FC = () => {
                   borderRadius: isLeader ? 10 : 0,
                 }}
               >
-                <span>
-                  <span style={{ opacity: 0.6, marginRight: 10 }}>{rankBadge(rank)}</span>
-                  {team.name} {isLeader && '👑'}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                  {showTrophy ? (
+                    <RankIcon rank={rank} size={isLeader ? 26 : 22} />
+                  ) : ranked ? (
+                    <span style={{ opacity: 0.5 }}>#{rank}</span>
+                  ) : null}
+                  {team.name}
                 </span>
                 <strong style={{ color: isLeader ? 'var(--primary)' : 'inherit' }}>
                   {team.score} {t.pts}

@@ -4,8 +4,9 @@ import * as api from '../api';
 import type { EventDTO, WorkshopRanking } from '../types';
 import { t } from '../i18n';
 import { usePolling } from '../hooks';
-import { computeRanks, rankBadge } from '../ranks';
+import { computeRanks } from '../ranks';
 import { BackButton } from '../components/BackButton';
+import { RankIcon } from '../components/RankIcon';
 
 /** Top 3 of each atelier (workshop), with ex-æquo handling. Auto-refreshing. */
 export const WorkshopRankings: React.FC = () => {
@@ -55,12 +56,17 @@ export const WorkshopRankings: React.FC = () => {
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
+                    alignItems: 'center',
                     padding: '10px 4px',
                     borderBottom: '1px solid rgba(255,255,255,0.1)',
                   }}
                 >
-                  <span>
-                    <span style={{ marginRight: 10 }}>{rankBadge(ranks[i])}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                    {entry.score > 0 ? (
+                      <RankIcon rank={ranks[i]} size={22} />
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>#{ranks[i]}</span>
+                    )}
                     {entry.name}
                   </span>
                   <strong style={{ color: 'var(--primary)' }}>

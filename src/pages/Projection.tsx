@@ -5,7 +5,8 @@ import * as api from '../api';
 import type { EventDTO, RankingEntry } from '../types';
 import { t } from '../i18n';
 import { usePolling } from '../hooks';
-import { computeRanks, rankBadge } from '../ranks';
+import { computeRanks, hasRanking } from '../ranks';
+import { RankIcon } from '../components/RankIcon';
 
 /** Large, auto-refreshing scoreboard meant to be projected on a screen/TV. */
 export const Projection: React.FC = () => {
@@ -33,7 +34,9 @@ export const Projection: React.FC = () => {
   };
 
   const max = ranking[0]?.score || 1;
-  const ranks = computeRanks(ranking.map((r) => r.score));
+  const scores = ranking.map((r) => r.score);
+  const ranks = computeRanks(scores);
+  const ranked = hasRanking(scores);
   const brandStyle = event?.brand_color
     ? ({ ['--primary']: event.brand_color } as React.CSSProperties)
     : undefined;
@@ -57,16 +60,28 @@ export const Projection: React.FC = () => {
       </header>
 
       <div className="projection-list">
-        {ranking.map((team, i) => (
-          <div key={team.id} className={`projection-row ${ranks[i] === 1 ? 'leader' : ''}`}>
-            <span className="projection-rank">{rankBadge(ranks[i])}</span>
+        {ranking.map((team, i) => {
+          const showTrophy = ranked && ranks[i] <= 3 && team.score > 0;
+          const isLeader = ranked && ranks[i] === 1 && team.score > 0;
+          return (
+          <div key={team.id} className={`projection-row ${isLeader ? 'leader' : ''}`}>
+            <span className="projection-rank">
+              {showTrophy ? (
+                <RankIcon rank={ranks[i]} size={46} />
+              ) : ranked ? (
+                `#${ranks[i]}`
+              ) : (
+                ''
+              )}
+            </span>
             <span className="projection-name">{team.name}</span>
             <span className="projection-bar">
               <span className="projection-bar-fill" style={{ width: `${(team.score / max) * 100}%` }} />
             </span>
             <span className="projection-score">{team.score}</span>
           </div>
-        ))}
+          );
+        })}
         {ranking.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t.noData}</p>}
       </div>
     </div>
