@@ -33,7 +33,12 @@ export const JoinEvent: React.FC = () => {
     const deviceId = localStorage.getItem('deviceId') || Math.random().toString(36).substring(2);
     localStorage.setItem('deviceId', deviceId);
     try {
-      const p = await api.register({ pseudo: pseudo.trim(), qrToken: team.qr_token, deviceId });
+      const p = await api.register({
+        pseudo: pseudo.trim(),
+        teamId: team.id,
+        eventId: Number(eventId),
+        deviceId,
+      });
       const evId = p.eventId ?? p.event_id;
       localStorage.setItem(`participant_event_${evId}`, String(p.id));
       navigate(`/event/${evId}`);

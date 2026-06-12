@@ -3,6 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 import db from './db';
 import { sendError } from './errors';
 
+if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
+  // Fail fast rather than ship the public default password in production.
+  throw new Error('[BanaScore] ADMIN_PASSWORD must be set in production.');
+}
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'banana';
 if (!process.env.ADMIN_PASSWORD) {
   console.warn(

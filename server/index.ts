@@ -18,9 +18,21 @@ import {
 import { optString, reqInt, reqNumber, reqStatus, reqString } from './validation';
 import * as store from './store';
 import { streamReportPdf } from './pdf';
+import { rateLimit } from './rateLimit';
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
+
+// Behind a reverse proxy (prod), trust it so req.ip reflects the real client.
+app.set('trust proxy', 1);
+
+// Basic security headers (cheap hardening; TLS is handled by the reverse proxy).
+app.use((_req: Request, res: Response, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  next();
+});
 
 // CORS: restrict to a comma-separated allowlist in production via CORS_ORIGIN.
 const corsOrigin = process.env.CORS_ORIGIN;
@@ -103,8 +115,11 @@ app.get('/api/stream', (req: Request, res: Response) => {
 });
 
 // --- ADMIN AUTH ---
+const loginLimiter = rateLimit({ windowMs: 5 * 60 * 1000, max: 10 });
+
 app.post(
   '/api/admin/login',
+  loginLimiter,
   handle((req, res) => {
     if (!checkPassword(req.body?.password)) {
       sendError(res, 401, 'BAD_CREDENTIALS', 'Invalid password');
@@ -137,7 +152,8 @@ app.get(
   '/api/events',
   handle((req, res) => {
     // Public listing shows only open events unless the caller is admin (?all=1).
-    const all = req.query.all === '1';
+    // Only admins may list non-open (closed/archived) events.
+    const all = req.query.all === '1' && isAdmin(req);
     res.json(store.listEvents(db, { onlyOpen: !all }));
   }),
 );
@@ -262,7 +278,15 @@ app.get(
 // --- TEAMS ---
 app.get(
   '/api/events/:eventId/teams',
-  handle((req, res) => res.json(store.listTeams(db, id(req, 'eventId')))),
+  handle((req, res) => {
+    const teams = store.listTeams(db, id(req, 'eventId'));
+    // qr_token is sensitive (lets you register as that team) — admins only.
+    if (isAdmin(req)) {
+      res.json(teams);
+    } else {
+      res.json(teams.map(({ qr_token, ...rest }) => rest));
+    }
+  }),
 );
 
 app.post(
@@ -373,9 +397,14 @@ app.post(
   '/api/participants/register',
   handle((req, res) => {
     const pseudo = reqString(req.body?.pseudo, 'pseudo', { max: 40 });
-    const qrToken = reqString(req.body?.qrToken, 'qrToken', { max: 64 });
     const deviceId = reqString(req.body?.deviceId, 'deviceId', { max: 64 });
-    const participant = store.registerParticipant(db, { pseudo, qrToken, deviceId });
+    // Either a per-team QR token, or a teamId+eventId (event-level join flow).
+    const qrToken =
+      req.body?.qrToken !== undefined ? reqString(req.body.qrToken, 'qrToken', { max: 64 }) : undefined;
+    const teamId = req.body?.teamId !== undefined ? reqInt(req.body.teamId, 'teamId', { min: 1 }) : undefined;
+    const eventId =
+      req.body?.eventId !== undefined ? reqInt(req.body.eventId, 'eventId', { min: 1 }) : undefined;
+    const participant = store.registerParticipant(db, { pseudo, deviceId, qrToken, teamId, eventId });
     res
       .status(201)
       .json({ ...participant, teamId: participant.team_id, eventId: participant.event_id });
@@ -428,6 +457,7 @@ app.get(
 // --- SCORER ("animateur") AUTH ---
 app.post(
   '/api/events/:eventId/scorer-login',
+  loginLimiter,
   handle((req, res) => {
     const event = store.getEvent(db, id(req, 'eventId'));
     if (!verifyScorerCode(event.scorer_code, req.body?.code)) {

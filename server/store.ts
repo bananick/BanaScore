@@ -319,12 +319,21 @@ export function setActivityScore(
 
 export function registerParticipant(
   db: DB,
-  data: { pseudo: string; qrToken: string; deviceId: string },
+  data: { pseudo: string; deviceId: string; qrToken?: string; teamId?: number; eventId?: number },
 ): ParticipantRow {
-  const team = db
-    .prepare('SELECT id, event_id FROM teams WHERE qr_token = ?')
-    .get(data.qrToken) as Pick<TeamRow, 'id' | 'event_id'> | undefined;
-  if (!team) throw new AppError(404, 'INVALID_QR', 'Invalid QR code');
+  // Either via a team's QR token (per-team QR) or a teamId within an event
+  // (event-level "join" flow, which doesn't expose tokens publicly).
+  let team: Pick<TeamRow, 'id' | 'event_id'> | undefined;
+  if (data.qrToken) {
+    team = db.prepare('SELECT id, event_id FROM teams WHERE qr_token = ?').get(data.qrToken) as
+      | Pick<TeamRow, 'id' | 'event_id'>
+      | undefined;
+  } else if (data.teamId && data.eventId) {
+    team = db
+      .prepare('SELECT id, event_id FROM teams WHERE id = ? AND event_id = ?')
+      .get(data.teamId, data.eventId) as Pick<TeamRow, 'id' | 'event_id'> | undefined;
+  }
+  if (!team) throw new AppError(404, 'INVALID_QR', 'Invalid QR code or team');
 
   const existing = db
     .prepare('SELECT * FROM participants WHERE event_id = ? AND device_id = ?')

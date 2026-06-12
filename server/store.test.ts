@@ -153,6 +153,19 @@ test('registering with an invalid QR token fails', () => {
   expectAppError(() => join(db, 'nope', 'X', 'd1'), 'INVALID_QR');
 });
 
+test('registering by teamId+eventId works (event-level join, no token exposed)', () => {
+  const { db, eventId } = setup();
+  const team = store.createTeam(db, eventId, 'Reds');
+  const p = store.registerParticipant(db, { pseudo: 'Al', deviceId: 'd9', teamId: team.id, eventId });
+  assert.equal(p.team_id, team.id);
+  assert.equal(p.event_id, eventId);
+  // Wrong event for that team is rejected.
+  expectAppError(
+    () => store.registerParticipant(db, { pseudo: 'X', deviceId: 'd10', teamId: team.id, eventId: 9999 }),
+    'INVALID_QR',
+  );
+});
+
 test('duplicate team and activity names are rejected (case-insensitive)', () => {
   const { db, eventId } = setup();
   store.createTeam(db, eventId, 'Alpha');

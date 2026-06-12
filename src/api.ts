@@ -142,8 +142,13 @@ export const setScore = (activityId: number, teamId: number, points: number | nu
   http.patch(`/activities/${activityId}/scores/${teamId}`, { points });
 
 // --- Participants & votes ---
-export const register = (data: { pseudo: string; qrToken: string; deviceId: string }) =>
-  http.post<ParticipantDTO>('/participants/register', data).then((r) => r.data);
+export const register = (data: {
+  pseudo: string;
+  deviceId: string;
+  qrToken?: string;
+  teamId?: number;
+  eventId?: number;
+}) => http.post<ParticipantDTO>('/participants/register', data).then((r) => r.data);
 export const getParticipant = (id: string | number) =>
   http.get<ParticipantDTO>(`/participants/${id}`).then((r) => r.data);
 export const getMyVotes = (id: string | number) =>

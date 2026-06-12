@@ -20,7 +20,7 @@ export interface TeamDTO {
   id: number;
   name: string;
   event_id: number;
-  qr_token: string;
+  qr_token?: string; // only returned to admin requests
   admin_points: number;
   bonus_label: string | null;
 }
