@@ -189,7 +189,15 @@ Le fichier `.db` est ignoré par Git (voir `.gitignore`).
 
 - L'espace admin est protégé par mot de passe ; toutes les routes de mutation
   (création/édition/suppression, scoring) exigent le header `x-admin-token`.
-- Les entrées sont validées côté serveur ; les erreurs sont renvoyées en JSON
-  structuré `{ error: { code, message } }`.
-- En production : définir `ADMIN_PASSWORD` et `SESSION_SECRET`, restreindre
-  `CORS_ORIGIN`, servir en HTTPS.
+- Mots de passe **hachés** (scrypt + sel) ; comparaisons en temps constant.
+- **Rate-limit** sur les logins admin/animateur (anti brute-force).
+- **`qr_token` privé** : renvoyé uniquement aux requêtes admin ; le flux public
+  « rejoindre l'événement » s'inscrit via `teamId` (aucun token exposé).
+- Les événements fermés/archivés (`?all`) ne sont listés qu'à l'admin.
+- Entrées validées côté serveur ; erreurs JSON `{ error: { code, message } }`.
+- En-têtes de sécurité (`X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`).
+- **En production** : `ADMIN_PASSWORD` est **obligatoire** (le serveur refuse de
+  démarrer sinon avec `NODE_ENV=production`). Définir aussi `SESSION_SECRET`,
+  restreindre `CORS_ORIGIN`, et servir derrière un reverse proxy **HTTPS**
+  (Nginx/Caddy/plateforme managée) — c'est lui qui termine le TLS.
