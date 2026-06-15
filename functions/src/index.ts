@@ -20,6 +20,9 @@ export const api = onRequest(
     memory: '256MiB',
     timeoutSeconds: 60,
     cors: false,
+    // Public HTTP endpoint (Firebase Hosting fronts it); without this the
+    // underlying Cloud Run service rejects unauthenticated calls with 403.
+    invoker: 'public',
   },
   app,
 );
