@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, Trash2, XCircle } from 'lucide-react';
+import { Trash2, XCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as api from '../api';
-import type { ActivityDTO, EventDTO, EventStats, EventStatus, ScoreDTO, TeamDTO } from '../types';
+import type { ActivityDTO, CriterionDTO, EventDTO, EventStats, EventStatus, TeamDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { usePolling } from '../hooks';
 import { Collapsible } from '../components/Collapsible';
+import { ScoringPanel } from '../components/ScoringPanel';
+import { CriteriaEditor } from '../components/CriteriaEditor';
 
 function parseWeights(json: string | null): Record<string, number> {
   if (!json) return {};
@@ -27,7 +29,7 @@ export const AdminEventDetail: React.FC = () => {
   const [event, setEvent] = useState<EventDTO | null>(null);
   const [teams, setTeams] = useState<TeamDTO[]>([]);
   const [activities, setActivities] = useState<ActivityDTO[]>([]);
-  const [teamScores, setTeamScores] = useState<ScoreDTO[]>([]);
+  const [criteriaByActivity, setCriteriaByActivity] = useState<Record<number, CriterionDTO[]>>({});
   const [teamName, setTeamName] = useState('');
   const [activityName, setActivityName] = useState('');
   const [activityWorkshop, setActivityWorkshop] = useState('');
@@ -82,15 +84,21 @@ export const AdminEventDetail: React.FC = () => {
     });
     setTeams(tr);
     setActivities(ar);
-    if (selectedActivity) {
-      setTeamScores(await api.getScores(selectedActivity));
-    }
+    const critMap: Record<number, CriterionDTO[]> = {};
+    await Promise.all(
+      ar
+        .filter((a) => a.scoring_mode === 'criteria')
+        .map(async (a) => {
+          critMap[a.id] = await api.getCriteria(a.id);
+        }),
+    );
+    setCriteriaByActivity(critMap);
   };
 
   useEffect(() => {
     refresh().catch((err) => toast.error(api.apiErrorMessage(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, selectedActivity]);
+  }, [id]);
 
   const guard =
     <A extends unknown[]>(fn: (...args: A) => Promise<void>) =>
@@ -161,9 +169,25 @@ export const AdminEventDetail: React.FC = () => {
     await refresh();
   });
 
-  const setCoefficient = guard(async (activityId: number, coefficient: number) => {
-    await api.updateActivity(activityId, { coefficient });
+  const setActivityMode = guard(async (activityId: number, scoringMode: string) => {
+    await api.updateActivity(activityId, { scoringMode });
     await refresh();
+  });
+
+  const addCriterion = guard(async (activityId: number, label: string, points: number) => {
+    await api.addCriterion(activityId, label, points);
+    await refresh();
+  });
+
+  const removeCriterion = guard(async (criterionId: number) => {
+    await api.deleteCriterion(criterionId);
+    await refresh();
+  });
+
+  const doReset = guard(async () => {
+    if (!window.confirm(t.resetScoresConfirm)) return;
+    await api.resetScores(id!);
+    toast.success(t.scoresReset);
   });
 
   const deleteTeam = (team: TeamDTO) =>
@@ -192,18 +216,6 @@ export const AdminEventDetail: React.FC = () => {
     const res = await api.generateSessions(Number(id), sessions.count, prefix);
     toast.success(t.sessionsCreated(res.ids.length));
   });
-
-  const updateScore = (teamId: number, points: number | null) =>
-    guard(async () => {
-      if (!selectedActivity) return;
-      await api.setScore(selectedActivity, teamId, points);
-      setTeamScores(await api.getScores(selectedActivity));
-    })();
-
-  const isPointTaken = (pt: number, currentTeamId: number) =>
-    teamScores.some((s) => s.points === pt && s.team_id !== currentTeamId);
-  const getTeamScore = (teamId: number) =>
-    teamScores.find((s) => s.team_id === teamId)?.points ?? null;
 
   return (
     <div className="app-container">
@@ -317,42 +329,6 @@ export const AdminEventDetail: React.FC = () => {
           )}
         </label>
 
-        <label style={{ display: 'block', textAlign: 'left', margin: '8px 0', opacity: 0.8 }}>
-          {t.rankingMode}
-        </label>
-        <select
-          value={meta.rankingMode}
-          onChange={(e) => setMeta({ ...meta, rankingMode: e.target.value as 'raw' | 'normalized' })}
-          style={selectStyle}
-        >
-          <option value="raw">{t.rankingRaw}</option>
-          <option value="normalized">{t.rankingNormalized}</option>
-        </select>
-        {meta.rankingMode === 'normalized' && (
-          <div style={{ textAlign: 'left', margin: '10px 0', padding: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 10 }}>
-            <p style={{ fontSize: '0.8rem', opacity: 0.7, margin: '0 0 8px' }}>{t.weightsHint}</p>
-            {[...new Set(activities.map((a) => (a.workshop?.trim() || a.name)))].map((ws) => (
-              <label key={ws} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, margin: '4px 0' }}>
-                <span>{ws}</span>
-                <input
-                  type="number"
-                  min={0.1}
-                  step={0.5}
-                  value={meta.workshopWeights[ws] ?? 1}
-                  onChange={(e) =>
-                    setMeta({
-                      ...meta,
-                      workshopWeights: { ...meta.workshopWeights, [ws]: parseFloat(e.target.value) || 1 },
-                    })
-                  }
-                  style={{ width: 80, margin: 0 }}
-                />
-              </label>
-            ))}
-            {activities.length === 0 && <p style={{ opacity: 0.6, margin: 0 }}>{t.noActivitiesYet}</p>}
-          </div>
-        )}
-
         <input
           value={meta.logoUrl}
           onChange={(e) => setMeta({ ...meta, logoUrl: e.target.value })}
@@ -420,52 +396,52 @@ export const AdminEventDetail: React.FC = () => {
             {activities.map((a) => (
               <div
                 key={a.id}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}
+                style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
               >
-                <input
-                  defaultValue={a.name}
-                  onBlur={(e) => {
-                    const v = e.target.value.trim();
-                    if (v && v !== a.name) renameActivity(a.id, v);
-                  }}
-                  style={{ margin: 0, flex: 1, minWidth: 90 }}
-                />
-                <input
-                  defaultValue={a.workshop ?? ''}
-                  onBlur={(e) => {
-                    const v = e.target.value.trim();
-                    if (v !== (a.workshop ?? '')) setWorkshop(a.id, v);
-                  }}
-                  placeholder={t.workshop}
-                  title={t.workshop}
-                  style={{ margin: 0, flex: 1, minWidth: 90 }}
-                />
-                <label
-                  title={t.coefficient}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: 0.85, fontSize: '0.9rem' }}
-                >
-                  ×
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <input
-                    type="number"
-                    min={0.1}
-                    max={100}
-                    step={0.5}
-                    defaultValue={a.coefficient}
+                    defaultValue={a.name}
                     onBlur={(e) => {
-                      const v = parseFloat(e.target.value);
-                      if (v > 0 && v !== a.coefficient) setCoefficient(a.id, v);
+                      const v = e.target.value.trim();
+                      if (v && v !== a.name) renameActivity(a.id, v);
                     }}
-                    style={{ width: 64, margin: 0 }}
+                    style={{ margin: 0, flex: 1, minWidth: 90 }}
                   />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => deleteActivity(a)}
-                  className="icon-btn icon-btn--danger"
-                  title={t.deleteEvent}
-                >
-                  <Trash2 size={16} />
-                </button>
+                  <input
+                    defaultValue={a.workshop ?? ''}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim();
+                      if (v !== (a.workshop ?? '')) setWorkshop(a.id, v);
+                    }}
+                    placeholder={t.workshop}
+                    title={t.workshop}
+                    style={{ margin: 0, flex: 1, minWidth: 90 }}
+                  />
+                  <select
+                    value={a.scoring_mode}
+                    onChange={(e) => setActivityMode(a.id, e.target.value)}
+                    title={t.scoreModeLabel}
+                    style={{ ...selectStyle, width: 'auto', flex: 1, minWidth: 130 }}
+                  >
+                    <option value="criteria">{t.scoreModeCriteria}</option>
+                    <option value="free">{t.scoreModeFree}</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => deleteActivity(a)}
+                    className="icon-btn icon-btn--danger"
+                    title={t.deleteEvent}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                {a.scoring_mode === 'criteria' && (
+                  <CriteriaEditor
+                    criteria={criteriaByActivity[a.id] || []}
+                    onAdd={(label, points) => addCriterion(a.id, label, points)}
+                    onDelete={removeCriterion}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -489,41 +465,7 @@ export const AdminEventDetail: React.FC = () => {
         {teams.length === 0 ? (
           <p style={{ color: 'var(--accent)' }}>{t.noTeamsHint}</p>
         ) : selectedActivity ? (
-          <div>
-            <h4>{t.distributePoints(teams.length)}</h4>
-            {teams.map((team) => {
-              const currentScore = getTeamScore(team.id);
-              return (
-                <div key={team.id} style={scoreRowStyle}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <strong style={{ color: 'var(--primary)' }}>{team.name}</strong>
-                    {currentScore && (
-                      <span style={{ color: 'var(--success)', fontSize: '0.8rem' }}>
-                        <CheckCircle size={14} /> {t.assigned}: {currentScore} {t.pts}
-                      </span>
-                    )}
-                  </div>
-                  <div className="score-grid">
-                    {Array.from({ length: teams.length }, (_, i) => i + 1).map((pt) => (
-                      <button
-                        key={pt}
-                        className={`score-btn ${currentScore === pt ? 'active' : ''}`}
-                        disabled={isPointTaken(pt, team.id)}
-                        onClick={() => updateScore(team.id, pt)}
-                      >
-                        {pt}
-                      </button>
-                    ))}
-                    {currentScore && (
-                      <button className="clear-btn" onClick={() => updateScore(team.id, null)} title="Effacer">
-                        <XCircle size={18} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <ScoringPanel eventId={id!} activityId={selectedActivity} />
         ) : (
           <p>{t.selectActivityHint}</p>
         )}
@@ -640,6 +582,15 @@ export const AdminEventDetail: React.FC = () => {
       </div>
 
       <Collapsible title={`⚠️ ${t.dangerZone}`} danger>
+        <button
+          type="button"
+          onClick={doReset}
+          className="festive-button"
+          style={{ background: 'var(--accent)', color: 'white', boxShadow: 'none', marginBottom: 16 }}
+        >
+          <XCircle size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
+          {t.resetScores}
+        </button>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: '0 0 12px' }}>
           {t.deleteEventDesc}
         </p>

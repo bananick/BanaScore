@@ -45,7 +45,25 @@ export function createDb(dbPath: string): DB {
       name TEXT NOT NULL,
       coefficient REAL NOT NULL DEFAULT 1,
       workshop TEXT,
+      scoring_mode TEXT NOT NULL DEFAULT 'criteria',
       FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS activity_criteria (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      activity_id INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      points INTEGER NOT NULL DEFAULT 0,
+      position INTEGER NOT NULL DEFAULT 0,
+      FOREIGN KEY (activity_id) REFERENCES activities (id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS team_criteria (
+      team_id INTEGER NOT NULL,
+      criterion_id INTEGER NOT NULL,
+      PRIMARY KEY (team_id, criterion_id),
+      FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
+      FOREIGN KEY (criterion_id) REFERENCES activity_criteria (id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS activity_scores (
@@ -106,6 +124,7 @@ function migrate(db: DB): void {
   addColumnIfMissing(db, 'teams', 'bonus_label', `TEXT`);
   addColumnIfMissing(db, 'activities', 'coefficient', `REAL NOT NULL DEFAULT 1`);
   addColumnIfMissing(db, 'activities', 'workshop', `TEXT`);
+  addColumnIfMissing(db, 'activities', 'scoring_mode', `TEXT NOT NULL DEFAULT 'criteria'`);
 }
 
 function addColumnIfMissing(db: DB, table: string, column: string, definition: string): void {

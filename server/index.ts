@@ -243,6 +243,15 @@ app.post(
   }),
 );
 
+app.post(
+  '/api/events/:id/reset-scores',
+  requireAdmin,
+  handle((req, res) => {
+    store.resetScores(db, id(req, 'id'));
+    res.sendStatus(204);
+  }),
+);
+
 app.get(
   '/api/events/:id/report',
   requireAdmin,
@@ -351,7 +360,74 @@ app.patch(
         : undefined;
     const workshop =
       req.body?.workshop !== undefined ? optString(req.body.workshop, 'workshop', 60) : undefined;
-    res.json(store.updateActivity(db, id(req, 'activityId'), { name, coefficient, workshop }));
+    const scoringMode =
+      req.body?.scoringMode === 'free' || req.body?.scoringMode === 'criteria'
+        ? req.body.scoringMode
+        : undefined;
+    res.json(store.updateActivity(db, id(req, 'activityId'), { name, coefficient, workshop, scoringMode }));
+  }),
+);
+
+// --- CRITERIA (criteria scoring mode) ---
+app.get(
+  '/api/activities/:activityId/criteria',
+  handle((req, res) => res.json(store.listCriteria(db, id(req, 'activityId')))),
+);
+
+app.post(
+  '/api/activities/:activityId/criteria',
+  requireAdmin,
+  handle((req, res) => {
+    const label = reqString(req.body?.label, 'label', { max: 60 });
+    const points = reqInt(req.body?.points, 'points', { min: 0, max: 1000000 });
+    res.status(201).json(store.addCriterion(db, id(req, 'activityId'), label, points));
+  }),
+);
+
+app.patch(
+  '/api/criteria/:criterionId',
+  requireAdmin,
+  handle((req, res) => {
+    const label = req.body?.label !== undefined ? reqString(req.body.label, 'label', { max: 60 }) : undefined;
+    const points =
+      req.body?.points !== undefined ? reqInt(req.body.points, 'points', { min: 0, max: 1000000 }) : undefined;
+    res.json(store.updateCriterion(db, id(req, 'criterionId'), { label, points }));
+  }),
+);
+
+app.delete(
+  '/api/criteria/:criterionId',
+  requireAdmin,
+  handle((req, res) => {
+    store.deleteCriterion(db, id(req, 'criterionId'));
+    res.sendStatus(204);
+  }),
+);
+
+// Combined payload the scoring UI needs for one activity.
+app.get(
+  '/api/activities/:activityId/scoring',
+  handle((req, res) => res.json(store.getActivityScoring(db, id(req, 'activityId')))),
+);
+
+// Toggle a criterion for a team (criteria mode) — admin or scorer, event must be open.
+app.patch(
+  '/api/criteria/:criterionId/teams/:teamId',
+  handle((req, res) => {
+    const criterionId = id(req, 'criterionId');
+    const crit = store.getCriterionActivity(db, criterionId);
+    if (!canScore(req, crit.event_id)) {
+      sendError(res, 401, 'UNAUTHORIZED', 'Scoring requires admin or scorer access');
+      return;
+    }
+    const event = store.getEvent(db, crit.event_id);
+    if (event.status !== 'open' && !isAdmin(req)) {
+      sendError(res, 403, 'EVENT_LOCKED', 'Scoring is locked: the event is not open');
+      return;
+    }
+    const achieved = req.body?.achieved === true;
+    store.toggleCriterion(db, criterionId, id(req, 'teamId'), achieved);
+    res.sendStatus(204);
   }),
 );
 
@@ -386,7 +462,7 @@ app.patch(
       return;
     }
     const raw = req.body?.points;
-    const points = raw === null ? null : reqInt(raw, 'points', { min: 1, max: 999 });
+    const points = raw === null ? null : reqInt(raw, 'points', { min: 0, max: 1000000 });
     store.setActivityScore(db, activityId, id(req, 'teamId'), points);
     res.sendStatus(204);
   }),

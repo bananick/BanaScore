@@ -5,6 +5,7 @@ import type { EventStatus } from './validation';
 import type {
   ActivityRow,
   ActivityScoreRow,
+  CriterionRow,
   EventRow,
   ParticipantRow,
   RankingEntry,
@@ -118,8 +119,17 @@ export function duplicateEvent(
     );
     for (const activity of listActivities(db, id)) {
       db.prepare(
-        'INSERT INTO activities (name, event_id, coefficient, workshop) VALUES (?, ?, ?, ?)',
-      ).run(activity.name, created.id, activity.coefficient, activity.workshop);
+        'INSERT INTO activities (name, event_id, coefficient, workshop, scoring_mode) VALUES (?, ?, ?, ?, ?)',
+      ).run(activity.name, created.id, activity.coefficient, activity.workshop, activity.scoring_mode);
+      const newActivityId = Number(
+        db.prepare('SELECT last_insert_rowid() as id').get() as { id: number },
+      );
+      // Copy the activity's criteria (definitions only, not team selections).
+      for (const c of listCriteria(db, activity.id)) {
+        db.prepare(
+          'INSERT INTO activity_criteria (activity_id, label, points, position) VALUES (?, ?, ?, ?)',
+        ).run(newActivityId, c.label, c.points, c.position);
+      }
     }
     for (const team of listTeams(db, id)) {
       const qrToken = crypto.randomBytes(16).toString('hex');
@@ -249,7 +259,7 @@ export function createActivity(
 export function updateActivity(
   db: DB,
   activityId: number,
-  data: { name?: string; coefficient?: number; workshop?: string | null },
+  data: { name?: string; coefficient?: number; workshop?: string | null; scoringMode?: string },
 ): ActivityRow {
   const activity = getActivity(db, activityId);
   const name = data.name ?? activity.name;
@@ -258,13 +268,167 @@ export function updateActivity(
   }
   const coefficient = data.coefficient ?? activity.coefficient;
   const workshop = data.workshop !== undefined ? data.workshop : activity.workshop;
-  db.prepare('UPDATE activities SET name = ?, coefficient = ?, workshop = ? WHERE id = ?').run(
-    name,
-    coefficient,
-    workshop,
-    activityId,
-  );
+  const scoringMode = data.scoringMode ?? activity.scoring_mode;
+  db.prepare(
+    'UPDATE activities SET name = ?, coefficient = ?, workshop = ?, scoring_mode = ? WHERE id = ?',
+  ).run(name, coefficient, workshop, scoringMode, activityId);
   return getActivity(db, activityId);
+}
+
+// --- CRITERIA (for 'criteria' scoring mode) ---
+
+/** Resolve a criterion to its activity + event (for auth/lock checks). */
+export function getCriterionActivity(db: DB, criterionId: number): { activity_id: number; event_id: number } {
+  const row = db
+    .prepare(
+      `SELECT c.activity_id, a.event_id
+       FROM activity_criteria c JOIN activities a ON a.id = c.activity_id
+       WHERE c.id = ?`,
+    )
+    .get(criterionId) as { activity_id: number; event_id: number } | undefined;
+  if (!row) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  return row;
+}
+
+export function listCriteria(db: DB, activityId: number): CriterionRow[] {
+  return db
+    .prepare('SELECT * FROM activity_criteria WHERE activity_id = ? ORDER BY position, id')
+    .all(activityId) as CriterionRow[];
+}
+
+export function addCriterion(
+  db: DB,
+  activityId: number,
+  label: string,
+  points: number,
+): { id: number } {
+  getActivity(db, activityId);
+  const { max } = db
+    .prepare('SELECT COALESCE(MAX(position), -1) as max FROM activity_criteria WHERE activity_id = ?')
+    .get(activityId) as { max: number };
+  const result = db
+    .prepare('INSERT INTO activity_criteria (activity_id, label, points, position) VALUES (?, ?, ?, ?)')
+    .run(activityId, label, points, max + 1);
+  return { id: Number(result.lastInsertRowid) };
+}
+
+export function updateCriterion(
+  db: DB,
+  criterionId: number,
+  data: { label?: string; points?: number },
+): CriterionRow {
+  const c = db.prepare('SELECT * FROM activity_criteria WHERE id = ?').get(criterionId) as
+    | CriterionRow
+    | undefined;
+  if (!c) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  const label = data.label ?? c.label;
+  const points = data.points ?? c.points;
+  db.prepare('UPDATE activity_criteria SET label = ?, points = ? WHERE id = ?').run(label, points, criterionId);
+  recomputeActivityScores(db, c.activity_id);
+  return db.prepare('SELECT * FROM activity_criteria WHERE id = ?').get(criterionId) as CriterionRow;
+}
+
+export function deleteCriterion(db: DB, criterionId: number): void {
+  const c = db.prepare('SELECT * FROM activity_criteria WHERE id = ?').get(criterionId) as
+    | CriterionRow
+    | undefined;
+  if (!c) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  db.prepare('DELETE FROM activity_criteria WHERE id = ?').run(criterionId);
+  recomputeActivityScores(db, c.activity_id);
+}
+
+/** Recompute the stored activity_scores.points for one team from its checked criteria. */
+function recomputeTeamActivityScore(db: DB, activityId: number, teamId: number): void {
+  const { total } = db
+    .prepare(
+      `SELECT COALESCE(SUM(c.points), 0) as total
+       FROM activity_criteria c
+       JOIN team_criteria tc ON tc.criterion_id = c.id AND tc.team_id = ?
+       WHERE c.activity_id = ?`,
+    )
+    .get(teamId, activityId) as { total: number };
+  if (total > 0) {
+    db.prepare(
+      `INSERT INTO activity_scores (activity_id, team_id, points) VALUES (?, ?, ?)
+       ON CONFLICT(activity_id, team_id) DO UPDATE SET points = excluded.points`,
+    ).run(activityId, teamId, total);
+  } else {
+    db.prepare('DELETE FROM activity_scores WHERE activity_id = ? AND team_id = ?').run(activityId, teamId);
+  }
+}
+
+/** Recompute stored scores for all teams of an activity (after a criterion change). */
+function recomputeActivityScores(db: DB, activityId: number): void {
+  const activity = getActivity(db, activityId);
+  for (const team of listTeams(db, activity.event_id)) {
+    recomputeTeamActivityScore(db, activityId, team.id);
+  }
+}
+
+/** Toggle a criterion for a team (criteria mode). */
+export function toggleCriterion(
+  db: DB,
+  criterionId: number,
+  teamId: number,
+  achieved: boolean,
+): void {
+  const c = db.prepare('SELECT activity_id FROM activity_criteria WHERE id = ?').get(criterionId) as
+    | { activity_id: number }
+    | undefined;
+  if (!c) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  if (achieved) {
+    db.prepare('INSERT OR IGNORE INTO team_criteria (team_id, criterion_id) VALUES (?, ?)').run(
+      teamId,
+      criterionId,
+    );
+  } else {
+    db.prepare('DELETE FROM team_criteria WHERE team_id = ? AND criterion_id = ?').run(teamId, criterionId);
+  }
+  recomputeTeamActivityScore(db, c.activity_id, teamId);
+}
+
+export interface ActivityScoring {
+  activity: { id: number; name: string; scoring_mode: string };
+  criteria: CriterionRow[];
+  scores: { team_id: number; points: number }[];
+  teamCriteria: { team_id: number; criterion_id: number }[];
+}
+
+/** Everything the scoring UI needs for one activity, in a single payload. */
+export function getActivityScoring(db: DB, activityId: number): ActivityScoring {
+  const activity = getActivity(db, activityId);
+  const criteria = listCriteria(db, activityId);
+  const scores = listScores(db, activityId).map((s) => ({ team_id: s.team_id, points: s.points }));
+  const criterionIds = criteria.map((c) => c.id);
+  const teamCriteria = criterionIds.length
+    ? (db
+        .prepare(
+          `SELECT team_id, criterion_id FROM team_criteria WHERE criterion_id IN (${criterionIds
+            .map(() => '?')
+            .join(',')})`,
+        )
+        .all(...criterionIds) as { team_id: number; criterion_id: number }[])
+    : [];
+  return {
+    activity: { id: activity.id, name: activity.name, scoring_mode: activity.scoring_mode },
+    criteria,
+    scores,
+    teamCriteria,
+  };
+}
+
+/** Delete all scores (free points + criteria) for an event — the "reset" button. */
+export function resetScores(db: DB, eventId: number): void {
+  getEvent(db, eventId);
+  const run = db.transaction(() => {
+    for (const a of listActivities(db, eventId)) {
+      db.prepare('DELETE FROM activity_scores WHERE activity_id = ?').run(a.id);
+      db.prepare(
+        `DELETE FROM team_criteria WHERE criterion_id IN (SELECT id FROM activity_criteria WHERE activity_id = ?)`,
+      ).run(a.id);
+    }
+  });
+  run();
 }
 
 export function deleteActivity(db: DB, activityId: number): void {
@@ -291,7 +455,7 @@ export function setActivityScore(
   const activity = db.prepare('SELECT id FROM activities WHERE id = ?').get(activityId);
   if (!activity) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
 
-  if (points === null) {
+  if (points === null || points === 0) {
     db.prepare('DELETE FROM activity_scores WHERE activity_id = ? AND team_id = ?').run(
       activityId,
       teamId,
@@ -299,15 +463,7 @@ export function setActivityScore(
     return;
   }
 
-  const clash = db
-    .prepare(
-      'SELECT team_id FROM activity_scores WHERE activity_id = ? AND points = ? AND team_id != ?',
-    )
-    .get(activityId, points, teamId);
-  if (clash) {
-    throw new AppError(409, 'RANK_TAKEN', `Rank ${points} is already assigned to another team`);
-  }
-
+  // Absolute points (e.g. Kahoot score). No uniqueness — several teams may share a value.
   db.prepare(
     `INSERT INTO activity_scores (activity_id, team_id, points)
      VALUES (?, ?, ?)
@@ -556,12 +712,9 @@ function rankingGlobalNormalized(db: DB, eventId: number): RankingEntry[] {
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 }
 
-/** General ranking, honoring the event's ranking mode ('raw' | 'normalized'). */
+/** General ranking = raw sum of activity points (+ votes + admin bonus). */
 export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
-  const event = getEvent(db, eventId);
-  return event.ranking_mode === 'normalized'
-    ? rankingGlobalNormalized(db, eventId)
-    : rankingGlobalRaw(db, eventId);
+  return rankingGlobalRaw(db, eventId);
 }
 
 /**

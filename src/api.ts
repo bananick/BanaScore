@@ -1,6 +1,8 @@
 import axios from 'axios';
 import type {
   ActivityDTO,
+  ActivityScoring,
+  CriterionDTO,
   EventDTO,
   EventReport,
   EventStats,
@@ -132,8 +134,25 @@ export const createActivity = (eventId: string | number, name: string, workshop?
     .then((r) => r.data);
 export const updateActivity = (
   activityId: number,
-  data: { name?: string; coefficient?: number; workshop?: string | null },
+  data: { name?: string; coefficient?: number; workshop?: string | null; scoringMode?: string },
 ) => http.patch<ActivityDTO>(`/activities/${activityId}`, data).then((r) => r.data);
+
+// --- Criteria (criteria scoring mode) ---
+export const getCriteria = (activityId: number) =>
+  http.get<CriterionDTO[]>(`/activities/${activityId}/criteria`).then((r) => r.data);
+export const addCriterion = (activityId: number, label: string, points: number) =>
+  http.post<{ id: number }>(`/activities/${activityId}/criteria`, { label, points }).then((r) => r.data);
+export const updateCriterion = (criterionId: number, data: { label?: string; points?: number }) =>
+  http.patch<CriterionDTO>(`/criteria/${criterionId}`, data).then((r) => r.data);
+export const deleteCriterion = (criterionId: number) => http.delete(`/criteria/${criterionId}`);
+
+// --- Scoring ---
+export const getActivityScoring = (activityId: number) =>
+  http.get<ActivityScoring>(`/activities/${activityId}/scoring`).then((r) => r.data);
+export const toggleCriterion = (criterionId: number, teamId: number, achieved: boolean) =>
+  http.patch(`/criteria/${criterionId}/teams/${teamId}`, { achieved });
+export const resetScores = (eventId: string | number) =>
+  http.post(`/events/${eventId}/reset-scores`);
 export const deleteActivity = (activityId: number) => http.delete(`/activities/${activityId}`);
 
 export const getScores = (activityId: number) =>

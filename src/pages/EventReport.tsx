@@ -129,11 +129,6 @@ export const EventReport: React.FC = () => {
         <p style={{ opacity: 0.6, fontSize: '0.85rem', marginTop: 4 }}>
           {t.clientReport} — {t.generatedOn} {generated} · {report.participantCount} {t.participants}
         </p>
-        {report.rankingMode === 'normalized' && (
-          <p style={{ opacity: 0.7, fontSize: '0.78rem', marginTop: 4, color: 'var(--primary)' }}>
-            ℹ️ {t.generalNormalizedNote}
-          </p>
-        )}
       </header>
 
       {teams.length === 0 ? (

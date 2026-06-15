@@ -80,8 +80,12 @@ Ouvrir http://localhost:5173. L'espace admin est sur `/admin` (mot de passe requ
 
 ## Fonctionnalités
 
-- **Notation par équipe** : points par rang et par activité, bonus admin, votes des participants.
-- **Notation avancée** : **coefficient par activité** (pondère le score global), **nombre de votes configurable** par événement, **égalités (ex æquo)** dans les classements, **libellé de bonus** (raison affichée dans le rapport).
+- **Notation par points absolus** (par activité, 2 modes au choix) :
+  - **Points libres** (ex. score Kahoot) : on saisit le nombre par équipe.
+  - **Critères** : cases à cocher (libellé + points), score = somme des critères réussis. Critères éditables dans l'admin.
+- Score d'une équipe = **somme** de tous ses points d'activités (+ bonus admin). Classement général + **top 3 par atelier**.
+- **Réinitialiser les scores** d'une session en un bouton (zone de danger).
+- **Égalités (ex æquo)**, **nombre de votes configurable**, **libellé de bonus**.
 - **Tableau de bord live** (admin) : compteurs en temps réel (équipes, inscrits, votes, activités notées) avec auto-refresh.
 - **Branding par événement** : couleur de marque + logo (URL) repris dans le **rapport** et le **mode projection**.
 - **QR « rejoindre l'événement »** (`/join/:eventId`) : un seul QR, choix de l'équipe à l'arrivée — en plus des QR par équipe.

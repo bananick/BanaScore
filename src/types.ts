@@ -31,6 +31,22 @@ export interface ActivityDTO {
   name: string;
   coefficient: number;
   workshop: string | null;
+  scoring_mode: string; // 'criteria' | 'free'
+}
+
+export interface CriterionDTO {
+  id: number;
+  activity_id: number;
+  label: string;
+  points: number;
+  position: number;
+}
+
+export interface ActivityScoring {
+  activity: { id: number; name: string; scoring_mode: string };
+  criteria: CriterionDTO[];
+  scores: { team_id: number; points: number }[];
+  teamCriteria: { team_id: number; criterion_id: number }[];
 }
 
 export interface WorkshopRanking {

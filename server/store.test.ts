@@ -101,22 +101,49 @@ test('voting can be disabled per event', () => {
   expectAppError(() => store.castVote(db, me.id, other.id), 'VOTING_DISABLED');
 });
 
-test('a rank can only be assigned to one team per activity', () => {
+test('criteria scoring: team activity score = sum of achieved criteria', () => {
   const { db, eventId } = setup();
   const a = store.createTeam(db, eventId, 'A');
-  const b = store.createTeam(db, eventId, 'B');
-  const activity = store.createActivity(db, eventId, 'Quiz');
+  const taste = store.createActivity(db, eventId, 'Goûter', 'Sensoriel');
+  store.updateActivity(db, taste.id, { scoringMode: 'criteria' });
+  const eaten = store.addCriterion(db, taste.id, 'Insecte mangé', 1000);
+  const found = store.addCriterion(db, taste.id, 'Goût trouvé', 2000);
 
-  store.setActivityScore(db, activity.id, a.id, 3);
-  expectAppError(() => store.setActivityScore(db, activity.id, b.id, 3), 'RANK_TAKEN');
-  // Reassigning the same team to the same rank is fine.
-  store.setActivityScore(db, activity.id, a.id, 3);
-  // Clearing then assigning to another team works.
-  store.setActivityScore(db, activity.id, a.id, null);
-  store.setActivityScore(db, activity.id, b.id, 3);
-  const scores = store.listScores(db, activity.id);
-  assert.equal(scores.length, 1);
-  assert.equal(scores[0].team_id, b.id);
+  store.toggleCriterion(db, eaten.id, a.id, true);
+  let scores = store.listScores(db, taste.id);
+  assert.equal(scores[0].points, 1000);
+  store.toggleCriterion(db, found.id, a.id, true);
+  scores = store.listScores(db, taste.id);
+  assert.equal(scores[0].points, 3000); // 1000 + 2000
+  // Untoggle one criterion.
+  store.toggleCriterion(db, eaten.id, a.id, false);
+  scores = store.listScores(db, taste.id);
+  assert.equal(scores[0].points, 2000);
+
+  // The scoring payload reflects the checked criterion.
+  const scoring = store.getActivityScoring(db, taste.id);
+  assert.equal(scoring.criteria.length, 2);
+  assert.deepEqual(
+    scoring.teamCriteria.map((tc) => tc.criterion_id),
+    [found.id],
+  );
+});
+
+test('resetScores clears free points and criteria selections', () => {
+  const { db, eventId } = setup();
+  const a = store.createTeam(db, eventId, 'A');
+  const quiz = store.createActivity(db, eventId, 'Quiz');
+  store.updateActivity(db, quiz.id, { scoringMode: 'free' });
+  store.setActivityScore(db, quiz.id, a.id, 3250);
+  const sens = store.createActivity(db, eventId, 'Voir');
+  const found = store.addCriterion(db, sens.id, 'Trouvé', 2000);
+  store.toggleCriterion(db, found.id, a.id, true);
+
+  assert.ok(store.rankingGlobal(db, eventId)[0].score > 0);
+  store.resetScores(db, eventId);
+  assert.equal(store.listScores(db, quiz.id).length, 0);
+  assert.equal(store.getActivityScoring(db, sens.id).teamCriteria.length, 0);
+  assert.equal(store.rankingGlobal(db, eventId)[0].score, 0);
 });
 
 test('global ranking sums activity points + votes + admin bonus', () => {
@@ -236,45 +263,6 @@ test('max_votes per event is enforced', () => {
   expectAppError(() => store.castVote(db, me.id, others[1].id), 'VOTE_LIMIT');
 });
 
-test('normalized ranking: ateliers count equally, weighted differentiator wins', () => {
-  const { db, eventId } = setup();
-  const a = store.createTeam(db, eventId, 'A');
-  const b = store.createTeam(db, eventId, 'B');
-  // Sensoriel atelier = 2 activities; Quiz atelier = 1 activity, weighted ×3.
-  const taste = store.createActivity(db, eventId, 'Goûter', 'Sensoriel');
-  const smell = store.createActivity(db, eventId, 'Sentir', 'Sensoriel');
-  const quiz = store.createActivity(db, eventId, 'Quiz', 'Quiz');
-
-  // B dominates Sensoriel (both activities), A wins the Quiz.
-  store.setActivityScore(db, taste.id, b.id, 2);
-  store.setActivityScore(db, smell.id, b.id, 2); // B sensory raw = 4 → 1st
-  store.setActivityScore(db, taste.id, a.id, 1);
-  store.setActivityScore(db, smell.id, a.id, 1); // A sensory raw = 2 → 2nd
-  store.setActivityScore(db, quiz.id, a.id, 2); // A quiz 1st
-  store.setActivityScore(db, quiz.id, b.id, 1); // B quiz 2nd
-
-  store.updateEvent(db, eventId, {
-    name: 'Stallergix',
-    date: null,
-    location: null,
-    status: 'open',
-    maxVotes: 1,
-    votingEnabled: false,
-    rankingMode: 'normalized',
-    workshopWeights: { Quiz: 3 },
-    brandColor: null,
-    logoUrl: null,
-    scorerCode: null,
-  });
-
-  // N=2 teams → atelier points: 1st = 2×100 = 200, 2nd = 1×100 = 100.
-  // A: Sensoriel 2nd (100) + Quiz 1st (200×3=600) = 700.
-  // B: Sensoriel 1st (200) + Quiz 2nd (100×3=300) = 500.
-  const ranking = store.rankingGlobal(db, eventId);
-  assert.equal(ranking[0].id, a.id, 'Quiz ×3 makes A win overall');
-  assert.equal(ranking.find((r) => r.id === a.id)!.score, 700);
-  assert.equal(ranking.find((r) => r.id === b.id)!.score, 500);
-});
 
 test('rankingByWorkshop groups activities by atelier and sums them', () => {
   const { db, eventId } = setup();

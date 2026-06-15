@@ -31,6 +31,15 @@ export interface ActivityRow {
   name: string;
   coefficient: number;
   workshop: string | null;
+  scoring_mode: string; // 'criteria' | 'free'
+}
+
+export interface CriterionRow {
+  id: number;
+  activity_id: number;
+  label: string;
+  points: number;
+  position: number;
 }
 
 export interface WorkshopRanking {
