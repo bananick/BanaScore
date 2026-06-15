@@ -1,17 +1,21 @@
 import crypto from 'crypto';
 import { Request, Response, NextFunction } from 'express';
-import db from './db';
 import { sendError } from './errors';
+import { getSetting, setSetting } from './store';
 
-if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
-  // Fail fast rather than ship the public default password in production.
-  throw new Error('[BanaScore] ADMIN_PASSWORD must be set in production.');
-}
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'banana';
-if (!process.env.ADMIN_PASSWORD) {
+// Env-provided admin password (may be undefined). NOT thrown at import time:
+// in the cloud the value arrives as a runtime secret, and the Firebase CLI loads
+// this module during deploy before secrets are bound. Instead, `checkPassword`
+// refuses logins in production when no password (stored or env) is configured.
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const IS_PROD = process.env.NODE_ENV === 'production';
+if (IS_PROD && !ADMIN_PASSWORD) {
   console.warn(
-    '[BanaScore] ADMIN_PASSWORD is not set — using default "banana". Set it before deploying.',
+    '[BanaScore] ADMIN_PASSWORD not set in production — admin login needs a stored password ' +
+      'hash or the ADMIN_PASSWORD secret.',
   );
+} else if (!ADMIN_PASSWORD) {
+  console.warn('[BanaScore] ADMIN_PASSWORD not set — using default "banana" (dev only).');
 }
 
 // Server session secret. In production, a fresh random secret each restart
@@ -53,31 +57,28 @@ function verifyHashed(password: string, stored: string): boolean {
   return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
 }
 
-function getStoredHash(): string | null {
-  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(PASSWORD_KEY) as
-    | { value: string }
-    | undefined;
-  return row ? row.value : null;
+function getStoredHash(): Promise<string | null> {
+  return getSetting(PASSWORD_KEY);
 }
 
 /**
  * Constant-time check of a submitted admin password. Uses the password stored
  * in the database if one has been set, otherwise falls back to ADMIN_PASSWORD.
  */
-export function checkPassword(password: unknown): boolean {
+export async function checkPassword(password: unknown): Promise<boolean> {
   if (typeof password !== 'string') return false;
-  const stored = getStoredHash();
+  const stored = await getStoredHash();
   if (stored) return verifyHashed(password, stored);
-  return safeEqual(password, ADMIN_PASSWORD);
+  // No password configured yet: fall back to the env password, or the dev
+  // default. In production with neither set, refuse rather than accept "banana".
+  const fallback = ADMIN_PASSWORD ?? (IS_PROD ? null : 'banana');
+  if (!fallback) return false;
+  return safeEqual(password, fallback);
 }
 
 /** Persist a new admin password (hashed) in the database. */
-export function setPassword(newPassword: string): void {
-  const hash = hashPassword(newPassword);
-  db.prepare(
-    `INSERT INTO settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-  ).run(PASSWORD_KEY, hash);
+export async function setPassword(newPassword: string): Promise<void> {
+  await setSetting(PASSWORD_KEY, hashPassword(newPassword));
 }
 
 /** Verify a submitted admin token. */

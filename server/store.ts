@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { DB } from './db';
+import { db as fs, nextId, type DB } from './db';
 import { AppError } from './errors';
 import type { EventStatus } from './validation';
 import type {
@@ -16,34 +16,70 @@ import type {
 
 export const MAX_VOTES = 3;
 
+// `db` is kept as a parameter for call-site compatibility, but all access goes
+// through the Firestore instance imported as `fs`.
+
+const C = {
+  events: 'events',
+  teams: 'teams',
+  activities: 'activities',
+  criteria: 'activity_criteria',
+  teamCriteria: 'team_criteria',
+  scores: 'activity_scores',
+  participants: 'participants',
+  participantIndex: 'participant_index',
+  votes: 'votes',
+  settings: 'settings',
+};
+
+const byId = <T extends { id: number }>(rows: T[]) => rows.sort((a, b) => a.id - b.id);
+
+async function whereEvent<T>(collection: string, eventId: number): Promise<T[]> {
+  const snap = await fs.collection(collection).where('event_id', '==', eventId).get();
+  return snap.docs.map((d) => d.data() as T);
+}
+
 // --- EVENTS ---
 
-export function listEvents(db: DB, opts: { onlyOpen?: boolean } = {}): EventRow[] {
-  if (opts.onlyOpen) {
-    return db
-      .prepare(`SELECT * FROM events WHERE status = 'open' ORDER BY id DESC`)
-      .all() as EventRow[];
-  }
-  return db.prepare('SELECT * FROM events ORDER BY id DESC').all() as EventRow[];
+export async function listEvents(_db: DB, opts: { onlyOpen?: boolean } = {}): Promise<EventRow[]> {
+  const ref = opts.onlyOpen
+    ? fs.collection(C.events).where('status', '==', 'open')
+    : fs.collection(C.events);
+  const snap = await ref.get();
+  return (snap.docs.map((d) => d.data() as EventRow)).sort((a, b) => b.id - a.id);
 }
 
-export function getEvent(db: DB, id: number): EventRow {
-  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(id) as EventRow | undefined;
-  if (!event) throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
-  return event;
+export async function getEvent(_db: DB, id: number): Promise<EventRow> {
+  const doc = await fs.collection(C.events).doc(String(id)).get();
+  if (!doc.exists) throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
+  return doc.data() as EventRow;
 }
 
-export function createEvent(
-  db: DB,
+export async function createEvent(
+  _db: DB,
   data: { name: string; date: string | null; location: string | null },
-): { id: number } {
-  const result = db
-    .prepare('INSERT INTO events (name, date, location) VALUES (?, ?, ?)')
-    .run(data.name, data.date, data.location);
-  return { id: Number(result.lastInsertRowid) };
+): Promise<{ id: number }> {
+  const id = await nextId(C.events);
+  const event: EventRow = {
+    id,
+    name: data.name,
+    date: data.date,
+    location: data.location,
+    status: 'open',
+    max_votes: 3,
+    voting_enabled: 1,
+    ranking_mode: 'raw',
+    workshop_weights: null,
+    brand_color: null,
+    logo_url: null,
+    scorer_code: null,
+    created_at: new Date().toISOString(),
+  };
+  await fs.collection(C.events).doc(String(id)).set(event);
+  return { id };
 }
 
-export function updateEvent(
+export async function updateEvent(
   db: DB,
   id: number,
   data: {
@@ -59,118 +95,142 @@ export function updateEvent(
     logoUrl: string | null;
     scorerCode: string | null;
   },
-): EventRow {
-  getEvent(db, id);
-  db.prepare(
-    `UPDATE events
-     SET name = ?, date = ?, location = ?, status = ?, max_votes = ?, voting_enabled = ?, ranking_mode = ?, workshop_weights = ?, brand_color = ?, logo_url = ?, scorer_code = ?
-     WHERE id = ?`,
-  ).run(
-    data.name,
-    data.date,
-    data.location,
-    data.status,
-    data.maxVotes,
-    data.votingEnabled ? 1 : 0,
-    data.rankingMode,
-    data.workshopWeights ? JSON.stringify(data.workshopWeights) : null,
-    data.brandColor,
-    data.logoUrl,
-    data.scorerCode,
-    id,
+): Promise<EventRow> {
+  await getEvent(db, id);
+  await fs.collection(C.events).doc(String(id)).set(
+    {
+      name: data.name,
+      date: data.date,
+      location: data.location,
+      status: data.status,
+      max_votes: data.maxVotes,
+      voting_enabled: data.votingEnabled ? 1 : 0,
+      ranking_mode: data.rankingMode,
+      workshop_weights: data.workshopWeights ? JSON.stringify(data.workshopWeights) : null,
+      brand_color: data.brandColor,
+      logo_url: data.logoUrl,
+      scorer_code: data.scorerCode,
+    },
+    { merge: true },
   );
   return getEvent(db, id);
 }
 
-export function deleteEvent(db: DB, id: number): void {
-  const r = db.prepare('DELETE FROM events WHERE id = ?').run(id);
-  if (r.changes === 0) throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
+/** Delete a document collection-query result in batches. */
+async function deleteQuery(query: FirebaseFirestore.Query): Promise<void> {
+  const snap = await query.get();
+  let batch = fs.batch();
+  let n = 0;
+  for (const doc of snap.docs) {
+    batch.delete(doc.ref);
+    if (++n === 450) {
+      await batch.commit();
+      batch = fs.batch();
+      n = 0;
+    }
+  }
+  if (n > 0) await batch.commit();
+}
+
+export async function deleteEvent(db: DB, id: number): Promise<void> {
+  await getEvent(db, id);
+  // Cascade: teams, activities (+criteria), scores, participants, votes.
+  const activities = await listActivities(db, id);
+  for (const a of activities) {
+    await deleteQuery(fs.collection(C.criteria).where('activity_id', '==', a.id));
+    await deleteQuery(fs.collection(C.scores).where('activity_id', '==', a.id));
+  }
+  await deleteQuery(fs.collection(C.activities).where('event_id', '==', id));
+  await deleteQuery(fs.collection(C.teams).where('event_id', '==', id));
+  await deleteQuery(fs.collection(C.participants).where('event_id', '==', id));
+  await deleteQuery(fs.collection(C.votes).where('event_id', '==', id));
+  await deleteQuery(fs.collection(C.participantIndex).where('event_id', '==', id));
+  await fs.collection(C.events).doc(String(id)).delete();
 }
 
 /**
- * Duplicate an event's structure as a fresh "open" event: copies activities and
- * teams (with new QR tokens, bonus reset). Scores, votes and participants are
- * NOT copied. Useful to reuse a recurring Banana Events format as a template.
+ * Duplicate an event's structure as a fresh "open" event: activities (+criteria)
+ * and teams (new QR tokens). Scores, votes and participants are NOT copied.
  */
-export function duplicateEvent(
+export async function duplicateEvent(
   db: DB,
   id: number,
   overrides: { name?: string; date?: string | null; location?: string | null } = {},
-): { id: number } {
-  const source = getEvent(db, id);
+): Promise<{ id: number }> {
+  const source = await getEvent(db, id);
   const name = overrides.name?.trim() || `${source.name} (copie)`;
   const date = overrides.date !== undefined ? overrides.date : source.date;
   const location = overrides.location !== undefined ? overrides.location : source.location;
 
-  const run = db.transaction(() => {
-    const created = createEvent(db, { name, date, location });
-    // Carry over event-level configuration (votes, branding, scorer code).
-    db.prepare(
-      'UPDATE events SET max_votes = ?, voting_enabled = ?, ranking_mode = ?, workshop_weights = ?, brand_color = ?, logo_url = ?, scorer_code = ? WHERE id = ?',
-    ).run(
-      source.max_votes,
-      source.voting_enabled,
-      source.ranking_mode,
-      source.workshop_weights,
-      source.brand_color,
-      source.logo_url,
-      source.scorer_code,
-      created.id,
-    );
-    for (const activity of listActivities(db, id)) {
-      db.prepare(
-        'INSERT INTO activities (name, event_id, coefficient, workshop, scoring_mode) VALUES (?, ?, ?, ?, ?)',
-      ).run(activity.name, created.id, activity.coefficient, activity.workshop, activity.scoring_mode);
-      const newActivityId = Number(
-        db.prepare('SELECT last_insert_rowid() as id').get() as { id: number },
-      );
-      // Copy the activity's criteria (definitions only, not team selections).
-      for (const c of listCriteria(db, activity.id)) {
-        db.prepare(
-          'INSERT INTO activity_criteria (activity_id, label, points, position) VALUES (?, ?, ?, ?)',
-        ).run(newActivityId, c.label, c.points, c.position);
-      }
+  const created = await createEvent(db, { name, date, location });
+  await fs.collection(C.events).doc(String(created.id)).set(
+    {
+      max_votes: source.max_votes,
+      voting_enabled: source.voting_enabled,
+      ranking_mode: source.ranking_mode,
+      workshop_weights: source.workshop_weights,
+      brand_color: source.brand_color,
+      logo_url: source.logo_url,
+      scorer_code: source.scorer_code,
+    },
+    { merge: true },
+  );
+
+  for (const activity of await listActivities(db, id)) {
+    const newId = await nextId(C.activities);
+    await fs.collection(C.activities).doc(String(newId)).set({
+      id: newId,
+      event_id: created.id,
+      name: activity.name,
+      coefficient: activity.coefficient,
+      workshop: activity.workshop,
+      scoring_mode: activity.scoring_mode,
+    });
+    for (const c of await listCriteria(db, activity.id)) {
+      const cid = await nextId(C.criteria);
+      await fs.collection(C.criteria).doc(String(cid)).set({
+        id: cid,
+        activity_id: newId,
+        label: c.label,
+        points: c.points,
+        position: c.position,
+      });
     }
-    for (const team of listTeams(db, id)) {
-      const qrToken = crypto.randomBytes(16).toString('hex');
-      db.prepare('INSERT INTO teams (name, event_id, qr_token) VALUES (?, ?, ?)').run(
-        team.name,
-        created.id,
-        qrToken,
-      );
-    }
-    return created;
-  });
-  return run();
+  }
+  for (const team of await listTeams(db, id)) {
+    const tid = await nextId(C.teams);
+    await fs.collection(C.teams).doc(String(tid)).set({
+      id: tid,
+      event_id: created.id,
+      name: team.name,
+      qr_token: crypto.randomBytes(16).toString('hex'),
+      admin_points: 0,
+      bonus_label: null,
+    });
+  }
+  return created;
 }
 
-/**
- * Generate `count` sessions from a template event, named "<prefix> S1..Sn".
- * Each is a full duplicate (structure + config, no scores/teams).
- */
-export function generateSessions(
+export async function generateSessions(
   db: DB,
   id: number,
   count: number,
   prefix: string,
-): { ids: number[] } {
-  getEvent(db, id);
+): Promise<{ ids: number[] }> {
+  await getEvent(db, id);
   const ids: number[] = [];
   for (let i = 1; i <= count; i++) {
-    ids.push(duplicateEvent(db, id, { name: `${prefix} S${i}` }).id);
+    ids.push((await duplicateEvent(db, id, { name: `${prefix} S${i}` })).id);
   }
   return { ids };
 }
 
 // --- TEAMS ---
 
-export function listTeams(db: DB, eventId: number): TeamRow[] {
-  return db
-    .prepare('SELECT * FROM teams WHERE event_id = ? ORDER BY id')
-    .all(eventId) as TeamRow[];
+export async function listTeams(_db: DB, eventId: number): Promise<TeamRow[]> {
+  return byId(await whereEvent<TeamRow>(C.teams, eventId));
 }
 
-/** Throw if another row in `rows` has the same name (case-insensitive, trimmed). */
 function assertUniqueName(
   rows: Array<{ id: number; name: string }>,
   name: string,
@@ -183,208 +243,225 @@ function assertUniqueName(
   }
 }
 
-export function createTeam(db: DB, eventId: number, name: string): { id: number; qr_token: string } {
-  getEvent(db, eventId);
-  assertUniqueName(listTeams(db, eventId), name, null, 'team');
-  const qrToken = crypto.randomBytes(16).toString('hex');
-  const result = db
-    .prepare('INSERT INTO teams (name, event_id, qr_token) VALUES (?, ?, ?)')
-    .run(name, eventId, qrToken);
-  return { id: Number(result.lastInsertRowid), qr_token: qrToken };
+export async function createTeam(
+  db: DB,
+  eventId: number,
+  name: string,
+): Promise<{ id: number; qr_token: string }> {
+  await getEvent(db, eventId);
+  assertUniqueName(await listTeams(db, eventId), name, null, 'team');
+  const id = await nextId(C.teams);
+  const qr_token = crypto.randomBytes(16).toString('hex');
+  await fs.collection(C.teams).doc(String(id)).set({
+    id,
+    event_id: eventId,
+    name,
+    qr_token,
+    admin_points: 0,
+    bonus_label: null,
+  });
+  return { id, qr_token };
 }
 
-export function updateTeam(
+export async function updateTeam(
   db: DB,
   eventId: number,
   teamId: number,
   data: { name?: string; adminPoints?: number; bonusLabel?: string | null },
-): TeamRow {
-  const team = db
-    .prepare('SELECT * FROM teams WHERE id = ? AND event_id = ?')
-    .get(teamId, eventId) as TeamRow | undefined;
-  if (!team) throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found');
-  const name = data.name ?? team.name;
+): Promise<TeamRow> {
+  const doc = await fs.collection(C.teams).doc(String(teamId)).get();
+  const team = doc.exists ? (doc.data() as TeamRow) : undefined;
+  if (!team || team.event_id !== eventId) throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found');
   if (data.name !== undefined) {
-    assertUniqueName(listTeams(db, eventId), data.name, teamId, 'team');
+    assertUniqueName(await listTeams(db, eventId), data.name, teamId, 'team');
   }
-  const adminPoints = data.adminPoints ?? team.admin_points;
-  const bonusLabel = data.bonusLabel !== undefined ? data.bonusLabel : team.bonus_label;
-  db.prepare('UPDATE teams SET name = ?, admin_points = ?, bonus_label = ? WHERE id = ?').run(
-    name,
-    adminPoints,
-    bonusLabel,
-    teamId,
+  await fs.collection(C.teams).doc(String(teamId)).set(
+    {
+      name: data.name ?? team.name,
+      admin_points: data.adminPoints ?? team.admin_points,
+      bonus_label: data.bonusLabel !== undefined ? data.bonusLabel : team.bonus_label,
+    },
+    { merge: true },
   );
-  return db.prepare('SELECT * FROM teams WHERE id = ?').get(teamId) as TeamRow;
+  return (await fs.collection(C.teams).doc(String(teamId)).get()).data() as TeamRow;
 }
 
-export function deleteTeam(db: DB, eventId: number, teamId: number): void {
-  const team = db
-    .prepare('SELECT id FROM teams WHERE id = ? AND event_id = ?')
-    .get(teamId, eventId);
-  if (!team) throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found');
-  db.prepare('DELETE FROM teams WHERE id = ?').run(teamId);
+export async function deleteTeam(_db: DB, eventId: number, teamId: number): Promise<void> {
+  const doc = await fs.collection(C.teams).doc(String(teamId)).get();
+  const team = doc.exists ? (doc.data() as TeamRow) : undefined;
+  if (!team || team.event_id !== eventId) throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found');
+  await deleteQuery(fs.collection(C.scores).where('team_id', '==', teamId));
+  await deleteQuery(fs.collection(C.teamCriteria).where('team_id', '==', teamId));
+  await deleteQuery(fs.collection(C.votes).where('voted_team_id', '==', teamId));
+  await fs.collection(C.teams).doc(String(teamId)).delete();
 }
 
 // --- ACTIVITIES ---
 
-export function listActivities(db: DB, eventId: number): ActivityRow[] {
-  return db
-    .prepare('SELECT * FROM activities WHERE event_id = ? ORDER BY id')
-    .all(eventId) as ActivityRow[];
+export async function listActivities(_db: DB, eventId: number): Promise<ActivityRow[]> {
+  return byId(await whereEvent<ActivityRow>(C.activities, eventId));
 }
 
-export function getActivity(db: DB, activityId: number): ActivityRow {
-  const activity = db.prepare('SELECT * FROM activities WHERE id = ?').get(activityId) as
-    | ActivityRow
-    | undefined;
-  if (!activity) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
-  return activity;
+export async function getActivity(_db: DB, activityId: number): Promise<ActivityRow> {
+  const doc = await fs.collection(C.activities).doc(String(activityId)).get();
+  if (!doc.exists) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+  return doc.data() as ActivityRow;
 }
 
-export function createActivity(
+export async function createActivity(
   db: DB,
   eventId: number,
   name: string,
   workshop: string | null = null,
-): { id: number } {
-  getEvent(db, eventId);
-  assertUniqueName(listActivities(db, eventId), name, null, 'activity');
-  const result = db
-    .prepare('INSERT INTO activities (name, event_id, workshop) VALUES (?, ?, ?)')
-    .run(name, eventId, workshop);
-  return { id: Number(result.lastInsertRowid) };
+): Promise<{ id: number }> {
+  await getEvent(db, eventId);
+  assertUniqueName(await listActivities(db, eventId), name, null, 'activity');
+  const id = await nextId(C.activities);
+  await fs.collection(C.activities).doc(String(id)).set({
+    id,
+    event_id: eventId,
+    name,
+    coefficient: 1,
+    workshop,
+    scoring_mode: 'criteria',
+  });
+  return { id };
 }
 
-export function updateActivity(
+export async function updateActivity(
   db: DB,
   activityId: number,
   data: { name?: string; coefficient?: number; workshop?: string | null; scoringMode?: string },
-): ActivityRow {
-  const activity = getActivity(db, activityId);
-  const name = data.name ?? activity.name;
+): Promise<ActivityRow> {
+  const activity = await getActivity(db, activityId);
   if (data.name !== undefined) {
-    assertUniqueName(listActivities(db, activity.event_id), data.name, activityId, 'activity');
+    assertUniqueName(await listActivities(db, activity.event_id), data.name, activityId, 'activity');
   }
-  const coefficient = data.coefficient ?? activity.coefficient;
-  const workshop = data.workshop !== undefined ? data.workshop : activity.workshop;
-  const scoringMode = data.scoringMode ?? activity.scoring_mode;
-  db.prepare(
-    'UPDATE activities SET name = ?, coefficient = ?, workshop = ?, scoring_mode = ? WHERE id = ?',
-  ).run(name, coefficient, workshop, scoringMode, activityId);
+  await fs.collection(C.activities).doc(String(activityId)).set(
+    {
+      name: data.name ?? activity.name,
+      coefficient: data.coefficient ?? activity.coefficient,
+      workshop: data.workshop !== undefined ? data.workshop : activity.workshop,
+      scoring_mode: data.scoringMode ?? activity.scoring_mode,
+    },
+    { merge: true },
+  );
   return getActivity(db, activityId);
 }
 
-// --- CRITERIA (for 'criteria' scoring mode) ---
-
-/** Resolve a criterion to its activity + event (for auth/lock checks). */
-export function getCriterionActivity(db: DB, criterionId: number): { activity_id: number; event_id: number } {
-  const row = db
-    .prepare(
-      `SELECT c.activity_id, a.event_id
-       FROM activity_criteria c JOIN activities a ON a.id = c.activity_id
-       WHERE c.id = ?`,
-    )
-    .get(criterionId) as { activity_id: number; event_id: number } | undefined;
-  if (!row) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
-  return row;
+export async function deleteActivity(_db: DB, activityId: number): Promise<void> {
+  const doc = await fs.collection(C.activities).doc(String(activityId)).get();
+  if (!doc.exists) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+  await deleteQuery(fs.collection(C.criteria).where('activity_id', '==', activityId));
+  await deleteQuery(fs.collection(C.scores).where('activity_id', '==', activityId));
+  await fs.collection(C.activities).doc(String(activityId)).delete();
 }
 
-export function listCriteria(db: DB, activityId: number): CriterionRow[] {
-  return db
-    .prepare('SELECT * FROM activity_criteria WHERE activity_id = ? ORDER BY position, id')
-    .all(activityId) as CriterionRow[];
+// --- CRITERIA ---
+
+export async function getCriterionActivity(
+  _db: DB,
+  criterionId: number,
+): Promise<{ activity_id: number; event_id: number }> {
+  const doc = await fs.collection(C.criteria).doc(String(criterionId)).get();
+  if (!doc.exists) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  const activityId = (doc.data() as CriterionRow).activity_id;
+  const act = await fs.collection(C.activities).doc(String(activityId)).get();
+  if (!act.exists) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+  return { activity_id: activityId, event_id: (act.data() as ActivityRow).event_id };
 }
 
-export function addCriterion(
+export async function listCriteria(_db: DB, activityId: number): Promise<CriterionRow[]> {
+  const snap = await fs.collection(C.criteria).where('activity_id', '==', activityId).get();
+  return (snap.docs.map((d) => d.data() as CriterionRow)).sort(
+    (a, b) => a.position - b.position || a.id - b.id,
+  );
+}
+
+export async function addCriterion(
   db: DB,
   activityId: number,
   label: string,
   points: number,
-): { id: number } {
-  getActivity(db, activityId);
-  const { max } = db
-    .prepare('SELECT COALESCE(MAX(position), -1) as max FROM activity_criteria WHERE activity_id = ?')
-    .get(activityId) as { max: number };
-  const result = db
-    .prepare('INSERT INTO activity_criteria (activity_id, label, points, position) VALUES (?, ?, ?, ?)')
-    .run(activityId, label, points, max + 1);
-  return { id: Number(result.lastInsertRowid) };
+): Promise<{ id: number }> {
+  await getActivity(db, activityId);
+  const existing = await listCriteria(db, activityId);
+  const position = existing.length ? Math.max(...existing.map((c) => c.position)) + 1 : 0;
+  const id = await nextId(C.criteria);
+  await fs.collection(C.criteria).doc(String(id)).set({ id, activity_id: activityId, label, points, position });
+  return { id };
 }
 
-export function updateCriterion(
+export async function updateCriterion(
   db: DB,
   criterionId: number,
   data: { label?: string; points?: number },
-): CriterionRow {
-  const c = db.prepare('SELECT * FROM activity_criteria WHERE id = ?').get(criterionId) as
-    | CriterionRow
-    | undefined;
-  if (!c) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
-  const label = data.label ?? c.label;
-  const points = data.points ?? c.points;
-  db.prepare('UPDATE activity_criteria SET label = ?, points = ? WHERE id = ?').run(label, points, criterionId);
-  recomputeActivityScores(db, c.activity_id);
-  return db.prepare('SELECT * FROM activity_criteria WHERE id = ?').get(criterionId) as CriterionRow;
+): Promise<CriterionRow> {
+  const doc = await fs.collection(C.criteria).doc(String(criterionId)).get();
+  if (!doc.exists) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  const c = doc.data() as CriterionRow;
+  await fs.collection(C.criteria).doc(String(criterionId)).set(
+    { label: data.label ?? c.label, points: data.points ?? c.points },
+    { merge: true },
+  );
+  await recomputeActivityScores(db, c.activity_id);
+  return (await fs.collection(C.criteria).doc(String(criterionId)).get()).data() as CriterionRow;
 }
 
-export function deleteCriterion(db: DB, criterionId: number): void {
-  const c = db.prepare('SELECT * FROM activity_criteria WHERE id = ?').get(criterionId) as
-    | CriterionRow
-    | undefined;
-  if (!c) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
-  db.prepare('DELETE FROM activity_criteria WHERE id = ?').run(criterionId);
-  recomputeActivityScores(db, c.activity_id);
+export async function deleteCriterion(db: DB, criterionId: number): Promise<void> {
+  const doc = await fs.collection(C.criteria).doc(String(criterionId)).get();
+  if (!doc.exists) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  const c = doc.data() as CriterionRow;
+  await deleteQuery(fs.collection(C.teamCriteria).where('criterion_id', '==', criterionId));
+  await fs.collection(C.criteria).doc(String(criterionId)).delete();
+  await recomputeActivityScores(db, c.activity_id);
+}
+
+async function scoreDocId(activityId: number, teamId: number) {
+  return `${activityId}_${teamId}`;
 }
 
 /** Recompute the stored activity_scores.points for one team from its checked criteria. */
-function recomputeTeamActivityScore(db: DB, activityId: number, teamId: number): void {
-  const { total } = db
-    .prepare(
-      `SELECT COALESCE(SUM(c.points), 0) as total
-       FROM activity_criteria c
-       JOIN team_criteria tc ON tc.criterion_id = c.id AND tc.team_id = ?
-       WHERE c.activity_id = ?`,
-    )
-    .get(teamId, activityId) as { total: number };
+async function recomputeTeamActivityScore(db: DB, activityId: number, teamId: number): Promise<void> {
+  const criteria = await listCriteria(db, activityId);
+  const critById = new Map(criteria.map((c) => [c.id, c.points]));
+  const tcSnap = await fs.collection(C.teamCriteria).where('team_id', '==', teamId).get();
+  let total = 0;
+  for (const d of tcSnap.docs) {
+    const cid = (d.data() as { criterion_id: number }).criterion_id;
+    if (critById.has(cid)) total += critById.get(cid)!;
+  }
+  const ref = fs.collection(C.scores).doc(await scoreDocId(activityId, teamId));
   if (total > 0) {
-    db.prepare(
-      `INSERT INTO activity_scores (activity_id, team_id, points) VALUES (?, ?, ?)
-       ON CONFLICT(activity_id, team_id) DO UPDATE SET points = excluded.points`,
-    ).run(activityId, teamId, total);
+    await ref.set({ id: 0, activity_id: activityId, team_id: teamId, points: total });
   } else {
-    db.prepare('DELETE FROM activity_scores WHERE activity_id = ? AND team_id = ?').run(activityId, teamId);
+    await ref.delete().catch(() => undefined);
   }
 }
 
-/** Recompute stored scores for all teams of an activity (after a criterion change). */
-function recomputeActivityScores(db: DB, activityId: number): void {
-  const activity = getActivity(db, activityId);
-  for (const team of listTeams(db, activity.event_id)) {
-    recomputeTeamActivityScore(db, activityId, team.id);
+async function recomputeActivityScores(db: DB, activityId: number): Promise<void> {
+  const activity = await getActivity(db, activityId);
+  for (const team of await listTeams(db, activity.event_id)) {
+    await recomputeTeamActivityScore(db, activityId, team.id);
   }
 }
 
-/** Toggle a criterion for a team (criteria mode). */
-export function toggleCriterion(
+export async function toggleCriterion(
   db: DB,
   criterionId: number,
   teamId: number,
   achieved: boolean,
-): void {
-  const c = db.prepare('SELECT activity_id FROM activity_criteria WHERE id = ?').get(criterionId) as
-    | { activity_id: number }
-    | undefined;
-  if (!c) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+): Promise<void> {
+  const doc = await fs.collection(C.criteria).doc(String(criterionId)).get();
+  if (!doc.exists) throw new AppError(404, 'CRITERION_NOT_FOUND', 'Criterion not found');
+  const activityId = (doc.data() as CriterionRow).activity_id;
+  const ref = fs.collection(C.teamCriteria).doc(`${teamId}_${criterionId}`);
   if (achieved) {
-    db.prepare('INSERT OR IGNORE INTO team_criteria (team_id, criterion_id) VALUES (?, ?)').run(
-      teamId,
-      criterionId,
-    );
+    await ref.set({ team_id: teamId, criterion_id: criterionId });
   } else {
-    db.prepare('DELETE FROM team_criteria WHERE team_id = ? AND criterion_id = ?').run(teamId, criterionId);
+    await ref.delete().catch(() => undefined);
   }
-  recomputeTeamActivityScore(db, c.activity_id, teamId);
+  await recomputeTeamActivityScore(db, activityId, teamId);
 }
 
 export interface ActivityScoring {
@@ -394,21 +471,20 @@ export interface ActivityScoring {
   teamCriteria: { team_id: number; criterion_id: number }[];
 }
 
-/** Everything the scoring UI needs for one activity, in a single payload. */
-export function getActivityScoring(db: DB, activityId: number): ActivityScoring {
-  const activity = getActivity(db, activityId);
-  const criteria = listCriteria(db, activityId);
-  const scores = listScores(db, activityId).map((s) => ({ team_id: s.team_id, points: s.points }));
-  const criterionIds = criteria.map((c) => c.id);
-  const teamCriteria = criterionIds.length
-    ? (db
-        .prepare(
-          `SELECT team_id, criterion_id FROM team_criteria WHERE criterion_id IN (${criterionIds
-            .map(() => '?')
-            .join(',')})`,
-        )
-        .all(...criterionIds) as { team_id: number; criterion_id: number }[])
-    : [];
+export async function getActivityScoring(db: DB, activityId: number): Promise<ActivityScoring> {
+  const activity = await getActivity(db, activityId);
+  const criteria = await listCriteria(db, activityId);
+  const scores = (await listScores(db, activityId)).map((s) => ({ team_id: s.team_id, points: s.points }));
+  const critIds = new Set(criteria.map((c) => c.id));
+  const teamCriteria: { team_id: number; criterion_id: number }[] = [];
+  // team_criteria has no activity_id; gather per criterion (few criteria).
+  for (const cid of critIds) {
+    const snap = await fs.collection(C.teamCriteria).where('criterion_id', '==', cid).get();
+    for (const d of snap.docs) {
+      const x = d.data() as { team_id: number; criterion_id: number };
+      teamCriteria.push({ team_id: x.team_id, criterion_id: x.criterion_id });
+    }
+  }
   return {
     activity: { id: activity.id, name: activity.name, scoring_mode: activity.scoring_mode },
     criteria,
@@ -417,146 +493,123 @@ export function getActivityScoring(db: DB, activityId: number): ActivityScoring 
   };
 }
 
-/** Delete all scores (free points + criteria) for an event — the "reset" button. */
-export function resetScores(db: DB, eventId: number): void {
-  getEvent(db, eventId);
-  const run = db.transaction(() => {
-    for (const a of listActivities(db, eventId)) {
-      db.prepare('DELETE FROM activity_scores WHERE activity_id = ?').run(a.id);
-      db.prepare(
-        `DELETE FROM team_criteria WHERE criterion_id IN (SELECT id FROM activity_criteria WHERE activity_id = ?)`,
-      ).run(a.id);
+export async function resetScores(db: DB, eventId: number): Promise<void> {
+  await getEvent(db, eventId);
+  for (const a of await listActivities(db, eventId)) {
+    await deleteQuery(fs.collection(C.scores).where('activity_id', '==', a.id));
+    for (const c of await listCriteria(db, a.id)) {
+      await deleteQuery(fs.collection(C.teamCriteria).where('criterion_id', '==', c.id));
     }
-  });
-  run();
+  }
 }
 
-export function deleteActivity(db: DB, activityId: number): void {
-  const r = db.prepare('DELETE FROM activities WHERE id = ?').run(activityId);
-  if (r.changes === 0) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
+export async function listScores(_db: DB, activityId: number): Promise<ActivityScoreRow[]> {
+  const snap = await fs.collection(C.scores).where('activity_id', '==', activityId).get();
+  return snap.docs.map((d) => d.data() as ActivityScoreRow);
 }
 
-export function listScores(db: DB, activityId: number): ActivityScoreRow[] {
-  return db
-    .prepare('SELECT * FROM activity_scores WHERE activity_id = ?')
-    .all(activityId) as ActivityScoreRow[];
-}
-
-/**
- * Assign rank-based points to a team for an activity. `points === null` clears
- * the score. Enforces that a rank can only be held by one team per activity.
- */
-export function setActivityScore(
+/** Set absolute points for a team on an activity (free mode, e.g. Kahoot). */
+export async function setActivityScore(
   db: DB,
   activityId: number,
   teamId: number,
   points: number | null,
-): void {
-  const activity = db.prepare('SELECT id FROM activities WHERE id = ?').get(activityId);
-  if (!activity) throw new AppError(404, 'ACTIVITY_NOT_FOUND', 'Activity not found');
-
+): Promise<void> {
+  await getActivity(db, activityId);
+  const ref = fs.collection(C.scores).doc(`${activityId}_${teamId}`);
   if (points === null || points === 0) {
-    db.prepare('DELETE FROM activity_scores WHERE activity_id = ? AND team_id = ?').run(
-      activityId,
-      teamId,
-    );
+    await ref.delete().catch(() => undefined);
     return;
   }
-
-  // Absolute points (e.g. Kahoot score). No uniqueness — several teams may share a value.
-  db.prepare(
-    `INSERT INTO activity_scores (activity_id, team_id, points)
-     VALUES (?, ?, ?)
-     ON CONFLICT(activity_id, team_id) DO UPDATE SET points = excluded.points`,
-  ).run(activityId, teamId, points);
+  await ref.set({ id: 0, activity_id: activityId, team_id: teamId, points });
 }
 
 // --- PARTICIPANTS ---
 
-export function registerParticipant(
-  db: DB,
+export async function registerParticipant(
+  _db: DB,
   data: { pseudo: string; deviceId: string; qrToken?: string; teamId?: number; eventId?: number },
-): ParticipantRow {
-  // Either via a team's QR token (per-team QR) or a teamId within an event
-  // (event-level "join" flow, which doesn't expose tokens publicly).
+): Promise<ParticipantRow> {
   let team: Pick<TeamRow, 'id' | 'event_id'> | undefined;
   if (data.qrToken) {
-    team = db.prepare('SELECT id, event_id FROM teams WHERE qr_token = ?').get(data.qrToken) as
-      | Pick<TeamRow, 'id' | 'event_id'>
-      | undefined;
+    const snap = await fs.collection(C.teams).where('qr_token', '==', data.qrToken).limit(1).get();
+    if (!snap.empty) team = snap.docs[0].data() as TeamRow;
   } else if (data.teamId && data.eventId) {
-    team = db
-      .prepare('SELECT id, event_id FROM teams WHERE id = ? AND event_id = ?')
-      .get(data.teamId, data.eventId) as Pick<TeamRow, 'id' | 'event_id'> | undefined;
+    const doc = await fs.collection(C.teams).doc(String(data.teamId)).get();
+    const t = doc.exists ? (doc.data() as TeamRow) : undefined;
+    if (t && t.event_id === data.eventId) team = t;
   }
   if (!team) throw new AppError(404, 'INVALID_QR', 'Invalid QR code or team');
 
-  const existing = db
-    .prepare('SELECT * FROM participants WHERE event_id = ? AND device_id = ?')
-    .get(team.event_id, data.deviceId) as ParticipantRow | undefined;
-  if (existing) return existing;
+  const safeDevice = data.deviceId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const indexRef = fs.collection(C.participantIndex).doc(`${team.event_id}__${safeDevice}`);
+  const indexDoc = await indexRef.get();
+  if (indexDoc.exists) {
+    const pid = (indexDoc.data() as { participant_id: number }).participant_id;
+    const p = await fs.collection(C.participants).doc(String(pid)).get();
+    if (p.exists) return p.data() as ParticipantRow;
+  }
 
-  const result = db
-    .prepare('INSERT INTO participants (pseudo, team_id, event_id, device_id) VALUES (?, ?, ?, ?)')
-    .run(data.pseudo, team.id, team.event_id, data.deviceId);
-  return db.prepare('SELECT * FROM participants WHERE id = ?').get(result.lastInsertRowid) as ParticipantRow;
+  const id = await nextId(C.participants);
+  const participant: ParticipantRow = {
+    id,
+    pseudo: data.pseudo,
+    team_id: team.id,
+    event_id: team.event_id,
+    device_id: data.deviceId,
+  };
+  await fs.collection(C.participants).doc(String(id)).set(participant);
+  await indexRef.set({ participant_id: id, event_id: team.event_id });
+  return participant;
 }
 
-export function getParticipant(db: DB, id: number): ParticipantRow {
-  const p = db.prepare('SELECT * FROM participants WHERE id = ?').get(id) as ParticipantRow | undefined;
-  if (!p) throw new AppError(404, 'PARTICIPANT_NOT_FOUND', 'Participant not found');
-  return p;
+export async function getParticipant(_db: DB, id: number): Promise<ParticipantRow> {
+  const doc = await fs.collection(C.participants).doc(String(id)).get();
+  if (!doc.exists) throw new AppError(404, 'PARTICIPANT_NOT_FOUND', 'Participant not found');
+  return doc.data() as ParticipantRow;
 }
 
-export function getParticipantVotes(db: DB, participantId: number): VoteRow[] {
-  return db
-    .prepare('SELECT * FROM votes WHERE participant_id = ?')
-    .all(participantId) as VoteRow[];
+export async function getParticipantVotes(_db: DB, participantId: number): Promise<VoteRow[]> {
+  const snap = await fs.collection(C.votes).where('participant_id', '==', participantId).get();
+  return snap.docs.map((d) => d.data() as VoteRow);
 }
 
 // --- VOTES ---
 
-/**
- * Cast a vote. Enforces: event is open, not voting for own team, max votes,
- * and no duplicate vote for the same team.
- */
-export function castVote(db: DB, participantId: number, votedTeamId: number): { id: number } {
-  const participant = db
-    .prepare('SELECT * FROM participants WHERE id = ?')
-    .get(participantId) as ParticipantRow | undefined;
-  if (!participant) throw new AppError(404, 'PARTICIPANT_NOT_FOUND', 'Participant not found');
+export async function castVote(
+  db: DB,
+  participantId: number,
+  votedTeamId: number,
+): Promise<{ id: number }> {
+  const participant = await getParticipant(db, participantId);
+  const event = await getEvent(db, participant.event_id);
+  if (!event.voting_enabled) throw new AppError(403, 'VOTING_DISABLED', 'Voting is disabled for this event');
+  if (event.status !== 'open') throw new AppError(403, 'EVENT_CLOSED', 'Voting is closed for this event');
+  if (participant.team_id === votedTeamId) throw new AppError(403, 'OWN_TEAM', 'You cannot vote for your own team');
 
-  const event = getEvent(db, participant.event_id);
-  if (!event.voting_enabled) {
-    throw new AppError(403, 'VOTING_DISABLED', 'Voting is disabled for this event');
-  }
-  if (event.status !== 'open') {
-    throw new AppError(403, 'EVENT_CLOSED', 'Voting is closed for this event');
+  const target = await fs.collection(C.teams).doc(String(votedTeamId)).get();
+  if (!target.exists || (target.data() as TeamRow).event_id !== participant.event_id) {
+    throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found in this event');
   }
 
-  if (participant.team_id === votedTeamId) {
-    throw new AppError(403, 'OWN_TEAM', 'You cannot vote for your own team');
-  }
-
-  const target = db
-    .prepare('SELECT id FROM teams WHERE id = ? AND event_id = ?')
-    .get(votedTeamId, participant.event_id);
-  if (!target) throw new AppError(404, 'TEAM_NOT_FOUND', 'Team not found in this event');
-
-  const { count } = db
-    .prepare('SELECT COUNT(*) as count FROM votes WHERE participant_id = ? AND event_id = ?')
-    .get(participantId, participant.event_id) as { count: number };
-  if (count >= event.max_votes) {
+  const votes = await getParticipantVotes(db, participantId);
+  if (votes.length >= event.max_votes) {
     throw new AppError(403, 'VOTE_LIMIT', `You can only vote for up to ${event.max_votes} teams`);
   }
 
+  const ref = fs.collection(C.votes).doc(`${participantId}_${votedTeamId}`);
   try {
-    const result = db
-      .prepare('INSERT INTO votes (participant_id, voted_team_id, event_id) VALUES (?, ?, ?)')
-      .run(participantId, votedTeamId, participant.event_id);
-    return { id: Number(result.lastInsertRowid) };
+    const id = await nextId(C.votes);
+    await ref.create({
+      id,
+      participant_id: participantId,
+      voted_team_id: votedTeamId,
+      event_id: participant.event_id,
+      timestamp: new Date().toISOString(),
+    });
+    return { id };
   } catch (err) {
-    if ((err as { code?: string }).code === 'SQLITE_CONSTRAINT_UNIQUE') {
+    if ((err as { code?: number }).code === 6 /* ALREADY_EXISTS */) {
       throw new AppError(409, 'ALREADY_VOTED', 'You have already voted for this team');
     }
     throw err;
@@ -565,64 +618,77 @@ export function castVote(db: DB, participantId: number, votedTeamId: number): { 
 
 // --- RANKINGS ---
 
-export function rankingByActivity(
+/** Count votes received by a team. */
+async function votesForTeam(teamId: number): Promise<number> {
+  const snap = await fs.collection(C.votes).where('voted_team_id', '==', teamId).get();
+  return snap.size;
+}
+
+/** Map of activityId/teamId → points for an event, plus helpers. */
+async function eventScores(eventId: number): Promise<Map<string, number>> {
+  const activities = await whereEvent<ActivityRow>(C.activities, eventId);
+  const map = new Map<string, number>();
+  for (const a of activities) {
+    const snap = await fs.collection(C.scores).where('activity_id', '==', a.id).get();
+    for (const d of snap.docs) {
+      const s = d.data() as ActivityScoreRow;
+      map.set(`${s.activity_id}_${s.team_id}`, s.points);
+    }
+  }
+  return map;
+}
+
+export async function rankingByActivity(
   db: DB,
   eventId: number,
   activityId: number,
-): { ranking: RankingEntry[]; activityName: string } {
-  const activity = db.prepare('SELECT name FROM activities WHERE id = ?').get(activityId) as
-    | { name: string }
-    | undefined;
-  const ranking = db
-    .prepare(
-      `SELECT t.id, t.name, COALESCE(s.points, 0) as score
-       FROM teams t
-       LEFT JOIN activity_scores s ON t.id = s.team_id AND s.activity_id = ?
-       WHERE t.event_id = ?
-       ORDER BY score DESC, t.name ASC`,
-    )
-    .all(activityId, eventId) as RankingEntry[];
-  return { ranking, activityName: activity ? activity.name : 'Unknown' };
+): Promise<{ ranking: RankingEntry[]; activityName: string }> {
+  const teams = await listTeams(db, eventId);
+  const scoreSnap = await fs.collection(C.scores).where('activity_id', '==', activityId).get();
+  const points = new Map<number, number>();
+  for (const d of scoreSnap.docs) {
+    const s = d.data() as ActivityScoreRow;
+    points.set(s.team_id, s.points);
+  }
+  const ranking = teams
+    .map((t) => ({ id: t.id, name: t.name, score: points.get(t.id) ?? 0 }))
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  const actDoc = await fs.collection(C.activities).doc(String(activityId)).get();
+  return { ranking, activityName: actDoc.exists ? (actDoc.data() as ActivityRow).name : 'Unknown' };
 }
 
-export function rankingByVotes(db: DB, eventId: number): RankingEntry[] {
-  return db
-    .prepare(
-      `SELECT t.id, t.name, (SELECT COUNT(*) FROM votes v WHERE v.voted_team_id = t.id) as score
-       FROM teams t
-       WHERE t.event_id = ?
-       ORDER BY score DESC, t.name ASC`,
-    )
-    .all(eventId) as RankingEntry[];
+export async function rankingByVotes(db: DB, eventId: number): Promise<RankingEntry[]> {
+  const teams = await listTeams(db, eventId);
+  const entries = await Promise.all(
+    teams.map(async (t) => ({ id: t.id, name: t.name, score: await votesForTeam(t.id) })),
+  );
+  return entries.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 }
 
-/** Raw global score = Σ(activity points × coefficient) + votes + admin bonus. */
-function rankingGlobalRaw(db: DB, eventId: number): RankingEntry[] {
-  return db
-    .prepare(
-      `SELECT t.id, t.name,
-        (
-          COALESCE((SELECT SUM(s.points * a.coefficient) FROM activity_scores s JOIN activities a ON s.activity_id = a.id WHERE s.team_id = t.id AND a.event_id = ?), 0)
-          + (SELECT COUNT(*) FROM votes v WHERE v.voted_team_id = t.id)
-          + t.admin_points
-        ) as score
-       FROM teams t
-       WHERE t.event_id = ?
-       ORDER BY score DESC, t.name ASC`,
-    )
-    .all(eventId, eventId) as RankingEntry[];
+/** General ranking = Σ(activity points × coefficient) + votes + admin bonus. */
+export async function rankingGlobal(db: DB, eventId: number): Promise<RankingEntry[]> {
+  const teams = await listTeams(db, eventId);
+  const activities = await listActivities(db, eventId);
+  const scores = await eventScores(eventId);
+  const entries = await Promise.all(
+    teams.map(async (t) => {
+      let score = 0;
+      for (const a of activities) score += (scores.get(`${a.id}_${t.id}`) ?? 0) * a.coefficient;
+      score += (await votesForTeam(t.id)) + t.admin_points;
+      return { id: t.id, name: t.name, score };
+    }),
+  );
+  return entries.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 }
 
-interface WorkshopGroup {
-  key: string;
-  acts: { id: number; coef: number }[];
-}
+export async function rankingByWorkshop(db: DB, eventId: number): Promise<WorkshopRanking[]> {
+  const activities = await listActivities(db, eventId);
+  const teams = await listTeams(db, eventId);
+  const scores = await eventScores(eventId);
 
-/** Group an event's activities by atelier (workshop), preserving order. */
-function getWorkshopGroups(db: DB, eventId: number): WorkshopGroup[] {
-  const groups: WorkshopGroup[] = [];
-  const byKey = new Map<string, WorkshopGroup>();
-  for (const a of listActivities(db, eventId)) {
+  const groups: { key: string; acts: { id: number; coef: number }[] }[] = [];
+  const byKey = new Map<string, (typeof groups)[number]>();
+  for (const a of activities) {
     const key = a.workshop && a.workshop.trim() ? a.workshop.trim() : a.name;
     let g = byKey.get(key);
     if (!g) {
@@ -632,128 +698,15 @@ function getWorkshopGroups(db: DB, eventId: number): WorkshopGroup[] {
     }
     g.acts.push({ id: a.id, coef: a.coefficient });
   }
-  return groups;
-}
-
-/** A team's raw total within an atelier = Σ(points × coefficient). */
-function teamAtelierRaw(db: DB, group: WorkshopGroup, teamId: number): number {
-  let sum = 0;
-  for (const a of group.acts) {
-    const row = db
-      .prepare('SELECT points FROM activity_scores WHERE activity_id = ? AND team_id = ?')
-      .get(a.id, teamId) as { points: number } | undefined;
-    sum += (row?.points ?? 0) * a.coef;
-  }
-  return sum;
-}
-
-/** Standard competition ranking ("1,2,2,4") over values sorted descending. */
-function competitionRanks(values: number[]): number[] {
-  const order = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v);
-  const ranks = new Array<number>(values.length);
-  let lastV: number | null = null;
-  let lastR = 0;
-  order.forEach((e, pos) => {
-    const r = lastV === null || e.v !== lastV ? pos + 1 : lastR;
-    ranks[e.i] = r;
-    lastV = e.v;
-    lastR = r;
-  });
-  return ranks;
-}
-
-export function parseWeights(json: string | null): Record<string, number> {
-  if (!json) return {};
-  try {
-    const o = JSON.parse(json);
-    return o && typeof o === 'object' ? (o as Record<string, number>) : {};
-  } catch {
-    return {};
-  }
-}
-
-// Atelier points scale: 1st = (N teams) × STEP, last = 1 × STEP. Keeps numbers
-// coherent across ateliers regardless of activity count or raw scale.
-const NORM_STEP = 100;
-
-/**
- * Normalized general score: each atelier is ranked internally, converted to
- * atelier points on a common scale, then multiplied by the atelier's weight.
- * Makes a 4-activity atelier weigh the same as a 1-activity one, and lets the
- * Quiz (heavier weight) decide the general ranking while staying coherent.
- */
-function rankingGlobalNormalized(db: DB, eventId: number): RankingEntry[] {
-  const event = getEvent(db, eventId);
-  const teams = listTeams(db, eventId);
-  const groups = getWorkshopGroups(db, eventId);
-  const weights = parseWeights(event.workshop_weights);
-  const N = teams.length;
-
-  const scores = new Map<number, number>(teams.map((t) => [t.id, 0]));
-  for (const group of groups) {
-    const raws = teams.map((t) => teamAtelierRaw(db, group, t.id));
-    const ranks = competitionRanks(raws);
-    const weight = weights[group.key] ?? 1;
-    teams.forEach((t, i) => {
-      const atelierPoints = (N - ranks[i] + 1) * NORM_STEP;
-      scores.set(t.id, (scores.get(t.id) ?? 0) + atelierPoints * weight);
-    });
-  }
-  // Votes + admin bonus added on top (usually 0 for normalized events).
-  for (const t of teams) {
-    const { count: votes } = db
-      .prepare('SELECT COUNT(*) as count FROM votes WHERE voted_team_id = ?')
-      .get(t.id) as { count: number };
-    scores.set(t.id, (scores.get(t.id) ?? 0) + votes + t.admin_points);
-  }
-
-  return teams
-    .map((t) => ({ id: t.id, name: t.name, score: scores.get(t.id) ?? 0 }))
-    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-}
-
-/** General ranking = raw sum of activity points (+ votes + admin bonus). */
-export function rankingGlobal(db: DB, eventId: number): RankingEntry[] {
-  return rankingGlobalRaw(db, eventId);
-}
-
-/**
- * Ranking per "atelier" (workshop): activities are grouped by their `workshop`
- * label (falling back to the activity's own name when unset). Each group's
- * score for a team is the coefficient-weighted sum of its activities' points.
- * Returns groups in activity order, each ranking sorted by score desc.
- */
-export function rankingByWorkshop(db: DB, eventId: number): WorkshopRanking[] {
-  const activities = listActivities(db, eventId);
-  const teams = listTeams(db, eventId);
-
-  // Preserve first-seen order of workshops.
-  const groups: { key: string; activityIds: number[]; coefs: Map<number, number> }[] = [];
-  const byKey = new Map<string, (typeof groups)[number]>();
-  for (const a of activities) {
-    const key = a.workshop && a.workshop.trim() ? a.workshop.trim() : a.name;
-    let group = byKey.get(key);
-    if (!group) {
-      group = { key, activityIds: [], coefs: new Map() };
-      byKey.set(key, group);
-      groups.push(group);
-    }
-    group.activityIds.push(a.id);
-    group.coefs.set(a.id, a.coefficient);
-  }
 
   return groups.map((group) => {
-    const ranking: RankingEntry[] = teams.map((team) => {
-      let score = 0;
-      for (const activityId of group.activityIds) {
-        const row = db
-          .prepare('SELECT points FROM activity_scores WHERE activity_id = ? AND team_id = ?')
-          .get(activityId, team.id) as { points: number } | undefined;
-        score += (row?.points ?? 0) * (group.coefs.get(activityId) ?? 1);
-      }
-      return { id: team.id, name: team.name, score };
-    });
-    ranking.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+    const ranking = teams
+      .map((team) => {
+        let score = 0;
+        for (const a of group.acts) score += (scores.get(`${a.id}_${team.id}`) ?? 0) * a.coef;
+        return { id: team.id, name: team.name, score };
+      })
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
     return { workshop: group.key, ranking };
   });
 }
@@ -762,12 +715,11 @@ export interface EventReport {
   event: EventRow;
   rankingMode: string;
   activities: { id: number; name: string; coefficient: number }[];
-  /** One row per team with a full breakdown, sorted by total desc. */
   teams: {
     id: number;
     name: string;
-    activityPoints: Record<number, number>; // activityId -> raw points
-    activityTotal: number; // coefficient-weighted sum
+    activityPoints: Record<number, number>;
+    activityTotal: number;
     votes: number;
     bonus: number;
     bonusLabel: string | null;
@@ -777,62 +729,48 @@ export interface EventReport {
   generatedAt: string;
 }
 
-/**
- * Aggregate everything needed for the client report / CSV export: per-team
- * breakdown (points per activity, vote count, bonus, total) plus event meta.
- */
-export function getEventReport(db: DB, eventId: number): EventReport {
-  const event = getEvent(db, eventId);
-  const activities = listActivities(db, eventId).map((a) => ({
+export async function getEventReport(db: DB, eventId: number): Promise<EventReport> {
+  const event = await getEvent(db, eventId);
+  const activities = (await listActivities(db, eventId)).map((a) => ({
     id: a.id,
     name: a.name,
     coefficient: a.coefficient,
   }));
-  const teams = listTeams(db, eventId);
+  const teams = await listTeams(db, eventId);
+  const scores = await eventScores(eventId);
 
-  const rows = teams.map((team) => {
-    const activityPoints: Record<number, number> = {};
-    let activityTotal = 0;
-    for (const activity of activities) {
-      const row = db
-        .prepare('SELECT points FROM activity_scores WHERE activity_id = ? AND team_id = ?')
-        .get(activity.id, team.id) as { points: number } | undefined;
-      const pts = row?.points ?? 0;
-      activityPoints[activity.id] = pts;
-      activityTotal += pts * activity.coefficient;
-    }
-    const { count: votes } = db
-      .prepare('SELECT COUNT(*) as count FROM votes WHERE voted_team_id = ?')
-      .get(team.id) as { count: number };
-    const bonus = team.admin_points;
-    return {
-      id: team.id,
-      name: team.name,
-      activityPoints,
-      activityTotal,
-      votes,
-      bonus,
-      bonusLabel: team.bonus_label,
-      total: activityTotal + votes + bonus,
-    };
-  });
-
-  // The authoritative "total" is the general ranking score (normalized when the
-  // event uses that mode), so the report matches the live ranking & projection.
-  const general = new Map(rankingGlobal(db, eventId).map((r) => [r.id, r.score]));
-  for (const row of rows) row.total = general.get(row.id) ?? row.total;
+  const rows = await Promise.all(
+    teams.map(async (team) => {
+      const activityPoints: Record<number, number> = {};
+      let activityTotal = 0;
+      for (const activity of activities) {
+        const pts = scores.get(`${activity.id}_${team.id}`) ?? 0;
+        activityPoints[activity.id] = pts;
+        activityTotal += pts * activity.coefficient;
+      }
+      const votes = await votesForTeam(team.id);
+      return {
+        id: team.id,
+        name: team.name,
+        activityPoints,
+        activityTotal,
+        votes,
+        bonus: team.admin_points,
+        bonusLabel: team.bonus_label,
+        total: activityTotal + votes + team.admin_points,
+      };
+    }),
+  );
   rows.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
 
-  const { count: participantCount } = db
-    .prepare('SELECT COUNT(*) as count FROM participants WHERE event_id = ?')
-    .get(eventId) as { count: number };
+  const partSnap = await fs.collection(C.participants).where('event_id', '==', eventId).get();
 
   return {
     event,
     rankingMode: event.ranking_mode,
     activities,
     teams: rows,
-    participantCount,
+    participantCount: partSnap.size,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -842,46 +780,48 @@ export interface EventStats {
   participants: number;
   votes: number;
   activitiesTotal: number;
-  activitiesScored: number; // activities with at least one score
+  activitiesScored: number;
   perTeam: { id: number; name: string; participants: number; votes: number }[];
 }
 
-/** Live counters for the organiser dashboard. */
-export function getEventStats(db: DB, eventId: number): EventStats {
-  getEvent(db, eventId);
-  const teams = listTeams(db, eventId);
-  const activities = listActivities(db, eventId);
+export async function getEventStats(db: DB, eventId: number): Promise<EventStats> {
+  await getEvent(db, eventId);
+  const teams = await listTeams(db, eventId);
+  const activities = await listActivities(db, eventId);
 
-  const activitiesScored = activities.filter((a) => {
-    const row = db
-      .prepare('SELECT 1 FROM activity_scores WHERE activity_id = ? LIMIT 1')
-      .get(a.id);
-    return !!row;
-  }).length;
+  let activitiesScored = 0;
+  for (const a of activities) {
+    const snap = await fs.collection(C.scores).where('activity_id', '==', a.id).limit(1).get();
+    if (!snap.empty) activitiesScored++;
+  }
 
-  const perTeam = teams.map((team) => {
-    const { count: participants } = db
-      .prepare('SELECT COUNT(*) as count FROM participants WHERE team_id = ?')
-      .get(team.id) as { count: number };
-    const { count: votes } = db
-      .prepare('SELECT COUNT(*) as count FROM votes WHERE voted_team_id = ?')
-      .get(team.id) as { count: number };
-    return { id: team.id, name: team.name, participants, votes };
-  });
+  const perTeam = await Promise.all(
+    teams.map(async (team) => {
+      const partSnap = await fs.collection(C.participants).where('team_id', '==', team.id).get();
+      return { id: team.id, name: team.name, participants: partSnap.size, votes: await votesForTeam(team.id) };
+    }),
+  );
 
-  const { count: participants } = db
-    .prepare('SELECT COUNT(*) as count FROM participants WHERE event_id = ?')
-    .get(eventId) as { count: number };
-  const { count: votes } = db
-    .prepare('SELECT COUNT(*) as count FROM votes WHERE event_id = ?')
-    .get(eventId) as { count: number };
+  const partSnap = await fs.collection(C.participants).where('event_id', '==', eventId).get();
+  const voteSnap = await fs.collection(C.votes).where('event_id', '==', eventId).get();
 
   return {
     teams: teams.length,
-    participants,
-    votes,
+    participants: partSnap.size,
+    votes: voteSnap.size,
     activitiesTotal: activities.length,
     activitiesScored,
     perTeam,
   };
+}
+
+// --- SETTINGS (admin password hash) ---
+
+export async function getSetting(key: string): Promise<string | null> {
+  const doc = await fs.collection(C.settings).doc(key).get();
+  return doc.exists ? (doc.data() as { value: string }).value : null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await fs.collection(C.settings).doc(key).set({ value });
 }

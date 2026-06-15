@@ -12,6 +12,8 @@ dist-server/
 .env
 .env.*
 /.env.*
+# ...but the hosted-build flag (no secrets) is committed:
+!.env.production
 
 # OS / IDE
 .DS_Store
@@ -24,17 +26,16 @@ yarn-error.log*
 # Firebase build and deployment files
 /firebase-debug.log
 /firebase-debug.*.log
-.firebaserc
 
 # Firebase Hosting
-/firebase.json
 *.cache
 hosting/.cache
 
 # Firebase Functions
 /functions/node_modules/
+/functions/lib/
 /functions/.env
-/functions/package-lock.json
+/functions/.secret.local
 
 # Firebase Emulators
 /firebase-*.zip

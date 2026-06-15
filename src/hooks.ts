@@ -14,12 +14,16 @@ export function usePolling(fn: () => void, intervalMs: number, deps: unknown[] =
     saved.current();
     const interval = setInterval(() => saved.current(), intervalMs);
 
+    // SSE is disabled on the hosted (Firebase) build — there is no persistent
+    // connection on serverless, so polling above is the update mechanism.
     let es: EventSource | null = null;
-    try {
-      es = new EventSource('/api/stream');
-      es.onmessage = () => saved.current();
-    } catch {
-      /* SSE unsupported — polling still covers it */
+    if (!import.meta.env.VITE_DISABLE_SSE) {
+      try {
+        es = new EventSource('/api/stream');
+        es.onmessage = () => saved.current();
+      } catch {
+        /* SSE unsupported — polling still covers it */
+      }
     }
 
     return () => {

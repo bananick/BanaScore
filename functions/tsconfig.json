@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2021",
+    "moduleResolution": "node",
+    "rootDir": "..",
+    "outDir": "lib",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "../server/**/*.ts"],
+  "exclude": ["../server/store.test.ts", "lib", "node_modules", "../node_modules"]
+}

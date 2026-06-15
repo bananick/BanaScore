@@ -20,8 +20,13 @@ import * as store from './store';
 import { streamReportPdf } from './pdf';
 import { rateLimit } from './rateLimit';
 
-const app = express();
+export const app = express();
 const port = Number(process.env.PORT) || 3001;
+
+// True when running inside Cloud Functions / Cloud Run (managed by Firebase).
+// There we must not bind a port or serve static files (Hosting does that), and
+// long-lived SSE connections are disabled (clients fall back to polling).
+const inCloud = Boolean(process.env.K_SERVICE || process.env.FUNCTION_TARGET);
 
 // Behind a reverse proxy (prod), trust it so req.ip reflects the real client.
 app.set('trust proxy', 1);
@@ -93,6 +98,12 @@ app.use((req: Request, res: Response, next) => {
 });
 
 app.get('/api/stream', (req: Request, res: Response) => {
+  // No persistent SSE in the cloud: end immediately so the client relies on
+  // its polling interval instead of holding an instance open.
+  if (inCloud) {
+    res.sendStatus(204);
+    return;
+  }
   res.set({
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache, no-transform',
@@ -120,8 +131,8 @@ const loginLimiter = rateLimit({ windowMs: 5 * 60 * 1000, max: 10 });
 app.post(
   '/api/admin/login',
   loginLimiter,
-  handle((req, res) => {
-    if (!checkPassword(req.body?.password)) {
+  handle(async (req, res) => {
+    if (!(await checkPassword(req.body?.password))) {
       sendError(res, 401, 'BAD_CREDENTIALS', 'Invalid password');
       return;
     }
@@ -135,14 +146,14 @@ app.get('/api/admin/session', requireAdmin, (_req, res) => res.json({ ok: true }
 app.post(
   '/api/admin/password',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const current = reqString(req.body?.currentPassword, 'currentPassword', { max: 200 });
     const next = reqString(req.body?.newPassword, 'newPassword', { min: 4, max: 200 });
-    if (!checkPassword(current)) {
+    if (!(await checkPassword(current))) {
       sendError(res, 401, 'BAD_CREDENTIALS', 'Current password is incorrect');
       return;
     }
-    setPassword(next);
+    await setPassword(next);
     res.json({ ok: true });
   }),
 );
@@ -150,34 +161,34 @@ app.post(
 // --- EVENTS ---
 app.get(
   '/api/events',
-  handle((req, res) => {
+  handle(async (req, res) => {
     // Public listing shows only open events unless the caller is admin (?all=1).
     // Only admins may list non-open (closed/archived) events.
     const all = req.query.all === '1' && isAdmin(req);
-    res.json(store.listEvents(db, { onlyOpen: !all }));
+    res.json(await store.listEvents(db, { onlyOpen: !all }));
   }),
 );
 
 app.get(
   '/api/events/:id',
-  handle((req, res) => res.json(store.getEvent(db, id(req, 'id')))),
+  handle(async (req, res) => res.json(await store.getEvent(db, id(req, 'id')))),
 );
 
 app.post(
   '/api/events',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = reqString(req.body?.name, 'name', { max: 80 });
     const date = optString(req.body?.date, 'date', 40);
     const location = optString(req.body?.location, 'location', 120);
-    res.status(201).json(store.createEvent(db, { name, date, location }));
+    res.status(201).json(await store.createEvent(db, { name, date, location }));
   }),
 );
 
 app.patch(
   '/api/events/:id',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = reqString(req.body?.name, 'name', { max: 80 });
     const date = optString(req.body?.date, 'date', 40);
     const location = optString(req.body?.location, 'location', 120);
@@ -198,7 +209,7 @@ app.patch(
     const logoUrl = optString(req.body?.logoUrl, 'logoUrl', 500000);
     const scorerCode = optString(req.body?.scorerCode, 'scorerCode', 40);
     res.json(
-      store.updateEvent(db, id(req, 'id'), {
+      await store.updateEvent(db, id(req, 'id'), {
         name,
         date,
         location,
@@ -218,8 +229,8 @@ app.patch(
 app.delete(
   '/api/events/:id',
   requireAdmin,
-  handle((req, res) => {
-    store.deleteEvent(db, id(req, 'id'));
+  handle(async (req, res) => {
+    await store.deleteEvent(db, id(req, 'id'));
     res.sendStatus(204);
   }),
 );
@@ -227,27 +238,27 @@ app.delete(
 app.post(
   '/api/events/:id/duplicate',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = req.body?.name !== undefined ? reqString(req.body.name, 'name', { max: 80 }) : undefined;
-    res.status(201).json(store.duplicateEvent(db, id(req, 'id'), { name }));
+    res.status(201).json(await store.duplicateEvent(db, id(req, 'id'), { name }));
   }),
 );
 
 app.post(
   '/api/events/:id/sessions',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const count = reqInt(req.body?.count, 'count', { min: 1, max: 20 });
     const prefix = reqString(req.body?.prefix, 'prefix', { max: 60 });
-    res.status(201).json(store.generateSessions(db, id(req, 'id'), count, prefix));
+    res.status(201).json(await store.generateSessions(db, id(req, 'id'), count, prefix));
   }),
 );
 
 app.post(
   '/api/events/:id/reset-scores',
   requireAdmin,
-  handle((req, res) => {
-    store.resetScores(db, id(req, 'id'));
+  handle(async (req, res) => {
+    await store.resetScores(db, id(req, 'id'));
     res.sendStatus(204);
   }),
 );
@@ -255,22 +266,22 @@ app.post(
 app.get(
   '/api/events/:id/report',
   requireAdmin,
-  handle((req, res) => res.json(store.getEventReport(db, id(req, 'id')))),
+  handle(async (req, res) => res.json(await store.getEventReport(db, id(req, 'id')))),
 );
 
 app.get(
   '/api/events/:id/stats',
   requireAdmin,
-  handle((req, res) => res.json(store.getEventStats(db, id(req, 'id')))),
+  handle(async (req, res) => res.json(await store.getEventStats(db, id(req, 'id')))),
 );
 
 app.get(
   '/api/events/:id/report.pdf',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const eventId = id(req, 'id');
-    const report = store.getEventReport(db, eventId);
-    const workshops = store.rankingByWorkshop(db, eventId);
+    const report = await store.getEventReport(db, eventId);
+    const workshops = await store.rankingByWorkshop(db, eventId);
     const slug =
       report.event.name
         .normalize('NFD')
@@ -287,8 +298,8 @@ app.get(
 // --- TEAMS ---
 app.get(
   '/api/events/:eventId/teams',
-  handle((req, res) => {
-    const teams = store.listTeams(db, id(req, 'eventId'));
+  handle(async (req, res) => {
+    const teams = await store.listTeams(db, id(req, 'eventId'));
     // qr_token is sensitive (lets you register as that team) — admins only.
     if (isAdmin(req)) {
       res.json(teams);
@@ -301,16 +312,16 @@ app.get(
 app.post(
   '/api/events/:eventId/teams',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = reqString(req.body?.name, 'name', { max: 60 });
-    res.status(201).json(store.createTeam(db, id(req, 'eventId'), name));
+    res.status(201).json(await store.createTeam(db, id(req, 'eventId'), name));
   }),
 );
 
 app.patch(
   '/api/events/:eventId/teams/:teamId',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = req.body?.name !== undefined ? reqString(req.body.name, 'name', { max: 60 }) : undefined;
     const adminPoints =
       req.body?.adminPoints !== undefined
@@ -319,7 +330,7 @@ app.patch(
     const bonusLabel =
       req.body?.bonusLabel !== undefined ? optString(req.body.bonusLabel, 'bonusLabel', 60) : undefined;
     res.json(
-      store.updateTeam(db, id(req, 'eventId'), id(req, 'teamId'), { name, adminPoints, bonusLabel }),
+      await store.updateTeam(db, id(req, 'eventId'), id(req, 'teamId'), { name, adminPoints, bonusLabel }),
     );
   }),
 );
@@ -327,8 +338,8 @@ app.patch(
 app.delete(
   '/api/events/:eventId/teams/:teamId',
   requireAdmin,
-  handle((req, res) => {
-    store.deleteTeam(db, id(req, 'eventId'), id(req, 'teamId'));
+  handle(async (req, res) => {
+    await store.deleteTeam(db, id(req, 'eventId'), id(req, 'teamId'));
     res.sendStatus(204);
   }),
 );
@@ -336,23 +347,23 @@ app.delete(
 // --- ACTIVITIES ---
 app.get(
   '/api/events/:eventId/activities',
-  handle((req, res) => res.json(store.listActivities(db, id(req, 'eventId')))),
+  handle(async (req, res) => res.json(await store.listActivities(db, id(req, 'eventId')))),
 );
 
 app.post(
   '/api/events/:eventId/activities',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = reqString(req.body?.name, 'name', { max: 60 });
     const workshop = optString(req.body?.workshop, 'workshop', 60);
-    res.status(201).json(store.createActivity(db, id(req, 'eventId'), name, workshop));
+    res.status(201).json(await store.createActivity(db, id(req, 'eventId'), name, workshop));
   }),
 );
 
 app.patch(
   '/api/activities/:activityId',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const name = req.body?.name !== undefined ? reqString(req.body.name, 'name', { max: 60 }) : undefined;
     const coefficient =
       req.body?.coefficient !== undefined
@@ -364,42 +375,42 @@ app.patch(
       req.body?.scoringMode === 'free' || req.body?.scoringMode === 'criteria'
         ? req.body.scoringMode
         : undefined;
-    res.json(store.updateActivity(db, id(req, 'activityId'), { name, coefficient, workshop, scoringMode }));
+    res.json(await store.updateActivity(db, id(req, 'activityId'), { name, coefficient, workshop, scoringMode }));
   }),
 );
 
 // --- CRITERIA (criteria scoring mode) ---
 app.get(
   '/api/activities/:activityId/criteria',
-  handle((req, res) => res.json(store.listCriteria(db, id(req, 'activityId')))),
+  handle(async (req, res) => res.json(await store.listCriteria(db, id(req, 'activityId')))),
 );
 
 app.post(
   '/api/activities/:activityId/criteria',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const label = reqString(req.body?.label, 'label', { max: 60 });
     const points = reqInt(req.body?.points, 'points', { min: 0, max: 1000000 });
-    res.status(201).json(store.addCriterion(db, id(req, 'activityId'), label, points));
+    res.status(201).json(await store.addCriterion(db, id(req, 'activityId'), label, points));
   }),
 );
 
 app.patch(
   '/api/criteria/:criterionId',
   requireAdmin,
-  handle((req, res) => {
+  handle(async (req, res) => {
     const label = req.body?.label !== undefined ? reqString(req.body.label, 'label', { max: 60 }) : undefined;
     const points =
       req.body?.points !== undefined ? reqInt(req.body.points, 'points', { min: 0, max: 1000000 }) : undefined;
-    res.json(store.updateCriterion(db, id(req, 'criterionId'), { label, points }));
+    res.json(await store.updateCriterion(db, id(req, 'criterionId'), { label, points }));
   }),
 );
 
 app.delete(
   '/api/criteria/:criterionId',
   requireAdmin,
-  handle((req, res) => {
-    store.deleteCriterion(db, id(req, 'criterionId'));
+  handle(async (req, res) => {
+    await store.deleteCriterion(db, id(req, 'criterionId'));
     res.sendStatus(204);
   }),
 );
@@ -407,26 +418,26 @@ app.delete(
 // Combined payload the scoring UI needs for one activity.
 app.get(
   '/api/activities/:activityId/scoring',
-  handle((req, res) => res.json(store.getActivityScoring(db, id(req, 'activityId')))),
+  handle(async (req, res) => res.json(await store.getActivityScoring(db, id(req, 'activityId')))),
 );
 
 // Toggle a criterion for a team (criteria mode) — admin or scorer, event must be open.
 app.patch(
   '/api/criteria/:criterionId/teams/:teamId',
-  handle((req, res) => {
+  handle(async (req, res) => {
     const criterionId = id(req, 'criterionId');
-    const crit = store.getCriterionActivity(db, criterionId);
+    const crit = await store.getCriterionActivity(db, criterionId);
     if (!canScore(req, crit.event_id)) {
       sendError(res, 401, 'UNAUTHORIZED', 'Scoring requires admin or scorer access');
       return;
     }
-    const event = store.getEvent(db, crit.event_id);
+    const event = await store.getEvent(db, crit.event_id);
     if (event.status !== 'open' && !isAdmin(req)) {
       sendError(res, 403, 'EVENT_LOCKED', 'Scoring is locked: the event is not open');
       return;
     }
     const achieved = req.body?.achieved === true;
-    store.toggleCriterion(db, criterionId, id(req, 'teamId'), achieved);
+    await store.toggleCriterion(db, criterionId, id(req, 'teamId'), achieved);
     res.sendStatus(204);
   }),
 );
@@ -434,36 +445,36 @@ app.patch(
 app.delete(
   '/api/activities/:activityId',
   requireAdmin,
-  handle((req, res) => {
-    store.deleteActivity(db, id(req, 'activityId'));
+  handle(async (req, res) => {
+    await store.deleteActivity(db, id(req, 'activityId'));
     res.sendStatus(204);
   }),
 );
 
 app.get(
   '/api/activities/:activityId/scores',
-  handle((req, res) => res.json(store.listScores(db, id(req, 'activityId')))),
+  handle(async (req, res) => res.json(await store.listScores(db, id(req, 'activityId')))),
 );
 
 app.patch(
   '/api/activities/:activityId/scores/:teamId',
-  handle((req, res) => {
+  handle(async (req, res) => {
     const activityId = id(req, 'activityId');
-    const activity = store.getActivity(db, activityId);
+    const activity = await store.getActivity(db, activityId);
     if (!canScore(req, activity.event_id)) {
       sendError(res, 401, 'UNAUTHORIZED', 'Scoring requires admin or scorer access');
       return;
     }
     // Once an event is closed/archived, scoring is locked for animateurs
     // (admins can still correct mistakes).
-    const event = store.getEvent(db, activity.event_id);
+    const event = await store.getEvent(db, activity.event_id);
     if (event.status !== 'open' && !isAdmin(req)) {
       sendError(res, 403, 'EVENT_LOCKED', 'Scoring is locked: the event is not open');
       return;
     }
     const raw = req.body?.points;
     const points = raw === null ? null : reqInt(raw, 'points', { min: 0, max: 1000000 });
-    store.setActivityScore(db, activityId, id(req, 'teamId'), points);
+    await store.setActivityScore(db, activityId, id(req, 'teamId'), points);
     res.sendStatus(204);
   }),
 );
@@ -471,7 +482,7 @@ app.patch(
 // --- PARTICIPANTS ---
 app.post(
   '/api/participants/register',
-  handle((req, res) => {
+  handle(async (req, res) => {
     const pseudo = reqString(req.body?.pseudo, 'pseudo', { max: 40 });
     const deviceId = reqString(req.body?.deviceId, 'deviceId', { max: 64 });
     // Either a per-team QR token, or a teamId+eventId (event-level join flow).
@@ -480,7 +491,7 @@ app.post(
     const teamId = req.body?.teamId !== undefined ? reqInt(req.body.teamId, 'teamId', { min: 1 }) : undefined;
     const eventId =
       req.body?.eventId !== undefined ? reqInt(req.body.eventId, 'eventId', { min: 1 }) : undefined;
-    const participant = store.registerParticipant(db, { pseudo, deviceId, qrToken, teamId, eventId });
+    const participant = await store.registerParticipant(db, { pseudo, deviceId, qrToken, teamId, eventId });
     res
       .status(201)
       .json({ ...participant, teamId: participant.team_id, eventId: participant.event_id });
@@ -489,53 +500,53 @@ app.post(
 
 app.get(
   '/api/participants/:id',
-  handle((req, res) => res.json(store.getParticipant(db, id(req, 'id')))),
+  handle(async (req, res) => res.json(await store.getParticipant(db, id(req, 'id')))),
 );
 
 app.get(
   '/api/participants/:id/votes',
-  handle((req, res) => res.json(store.getParticipantVotes(db, id(req, 'id')))),
+  handle(async (req, res) => res.json(await store.getParticipantVotes(db, id(req, 'id')))),
 );
 
 // --- VOTES ---
 app.post(
   '/api/votes',
-  handle((req, res) => {
+  handle(async (req, res) => {
     const participantId = reqInt(req.body?.participantId, 'participantId', { min: 1 });
     const votedTeamId = reqInt(req.body?.votedTeamId, 'votedTeamId', { min: 1 });
-    res.status(201).json(store.castVote(db, participantId, votedTeamId));
+    res.status(201).json(await store.castVote(db, participantId, votedTeamId));
   }),
 );
 
 // --- RANKINGS ---
 app.get(
   '/api/events/:eventId/ranking/activity/:activityId',
-  handle((req, res) =>
-    res.json(store.rankingByActivity(db, id(req, 'eventId'), id(req, 'activityId'))),
+  handle(async (req, res) =>
+    res.json(await store.rankingByActivity(db, id(req, 'eventId'), id(req, 'activityId'))),
   ),
 );
 
 app.get(
   '/api/events/:eventId/ranking/votes',
-  handle((req, res) => res.json(store.rankingByVotes(db, id(req, 'eventId')))),
+  handle(async (req, res) => res.json(await store.rankingByVotes(db, id(req, 'eventId')))),
 );
 
 app.get(
   '/api/events/:eventId/ranking/global',
-  handle((req, res) => res.json(store.rankingGlobal(db, id(req, 'eventId')))),
+  handle(async (req, res) => res.json(await store.rankingGlobal(db, id(req, 'eventId')))),
 );
 
 app.get(
   '/api/events/:eventId/ranking/workshops',
-  handle((req, res) => res.json(store.rankingByWorkshop(db, id(req, 'eventId')))),
+  handle(async (req, res) => res.json(await store.rankingByWorkshop(db, id(req, 'eventId')))),
 );
 
 // --- SCORER ("animateur") AUTH ---
 app.post(
   '/api/events/:eventId/scorer-login',
   loginLimiter,
-  handle((req, res) => {
-    const event = store.getEvent(db, id(req, 'eventId'));
+  handle(async (req, res) => {
+    const event = await store.getEvent(db, id(req, 'eventId'));
     if (!verifyScorerCode(event.scorer_code, req.body?.code)) {
       sendError(res, 401, 'BAD_CREDENTIALS', 'Invalid scorer code');
       return;
@@ -556,26 +567,30 @@ app.get(
   }),
 );
 
-// In production, serve the built frontend (dist/) from this same server so the
-// whole app is reachable at one origin (http://<IP>:PORT) — convenient for
-// running an event from a single machine on the local Wi-Fi network.
-const distDir = path.resolve(__dirname, '../dist');
-if (fs.existsSync(path.join(distDir, 'index.html'))) {
-  app.use(express.static(distDir));
-  // SPA fallback for client-side routes (everything that isn't /api).
-  app.use((req: Request, res: Response, next) => {
-    if (req.method === 'GET' && !req.path.startsWith('/api')) {
-      res.sendFile(path.join(distDir, 'index.html'));
-    } else {
-      next();
-    }
+// Local / LAN mode only — runs when this file is the entrypoint (e.g.
+// `ts-node-dev server/index.ts`). When the module is *imported* (by Cloud
+// Functions, or by the Firebase CLI during deploy-time export discovery) this
+// block is skipped, so no port is bound and Hosting serves the frontend.
+if (require.main === module) {
+  // Serve the built frontend (dist/) from this same server so the whole app is
+  // reachable at one origin (http://<IP>:PORT) — convenient for running an
+  // event from a single machine on the local Wi-Fi network.
+  const distDir = path.resolve(__dirname, '../dist');
+  if (fs.existsSync(path.join(distDir, 'index.html'))) {
+    app.use(express.static(distDir));
+    // SPA fallback for client-side routes (everything that isn't /api).
+    app.use((req: Request, res: Response, next) => {
+      if (req.method === 'GET' && !req.path.startsWith('/api')) {
+        res.sendFile(path.join(distDir, 'index.html'));
+      } else {
+        next();
+      }
+    });
+    console.log('[BanaScore] Serving built frontend from dist/');
+  }
+
+  // Bind 0.0.0.0 so tablets/phones on the same network can connect.
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`BanaScore server running on http://0.0.0.0:${port} (reachable on your LAN IP)`);
   });
-  console.log('[BanaScore] Serving built frontend from dist/');
 }
-
-// Bind 0.0.0.0 so tablets/phones on the same network can connect.
-app.listen(port, '0.0.0.0', () => {
-  console.log(`BanaScore server running on http://0.0.0.0:${port} (reachable on your LAN IP)`);
-});
-
-export {};

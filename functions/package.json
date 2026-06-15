@@ -1,0 +1,28 @@
+{
+  "name": "banascore-functions",
+  "private": true,
+  "description": "Cloud Functions (2nd gen) wrapping the BanaScore Express API.",
+  "main": "lib/functions/src/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "firebase-admin": "^14.0.0",
+    "firebase-functions": "^6.5.0",
+    "pdfkit": "^0.19.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.0.0",
+    "@types/pdfkit": "^0.17.6",
+    "typescript": "^5.9.0"
+  }
+}
