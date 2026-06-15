@@ -29,7 +29,7 @@ function lanIp() {
 // Build the frontend if it hasn't been built yet.
 if (!fs.existsSync(path.resolve('dist', 'index.html'))) {
   console.log("Construction de l'application (npm run build)…");
-  const build = spawnSync(npm, ['run', 'build'], { stdio: 'inherit' });
+  const build = spawnSync(npm, ['run', 'build'], { stdio: 'inherit', shell: true });
   if (build.status !== 0) process.exit(build.status || 1);
 }
 
@@ -45,9 +45,11 @@ console.log('  QR d’accès à afficher sur le PC pour les tablettes :');
 console.log(`    ${url}/access`);
 console.log(`${line}\n`);
 
+// shell: true is required on Windows/Node 22+ to spawn npm.cmd.
 const server = spawn(npm, ['run', 'server'], {
   stdio: 'inherit',
   env: { ...process.env, PORT: String(PORT) },
+  shell: true,
 });
 server.on('exit', (code) => process.exit(code || 0));
 
@@ -55,7 +57,15 @@ server.on('exit', (code) => process.exit(code || 0));
 // the organiser just has tablets scan the on-screen QR (no terminal needed).
 const accessUrl = `http://localhost:${PORT}/access`;
 setTimeout(() => {
-  const opener =
-    process.platform === 'win32' ? 'start ""' : process.platform === 'darwin' ? 'open' : 'xdg-open';
-  spawn(`${opener} "${accessUrl}"`, { shell: true, stdio: 'ignore' }).on('error', () => undefined);
+  try {
+    const [cmd, args] =
+      process.platform === 'win32'
+        ? ['cmd', ['/c', 'start', '', accessUrl]]
+        : process.platform === 'darwin'
+          ? ['open', [accessUrl]]
+          : ['xdg-open', [accessUrl]];
+    spawn(cmd, args, { stdio: 'ignore', detached: true }).on('error', () => undefined);
+  } catch {
+    // Opening the browser is best-effort — never let it crash the server.
+  }
 }, 3500);
