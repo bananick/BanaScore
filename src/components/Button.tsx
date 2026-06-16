@@ -18,6 +18,8 @@ export type ButtonVariant =
   | 'primary'
   | 'secondary'
   | 'blue'
+  | 'teal'
+  | 'purple'
   | 'success'
   | 'accent'
   | 'danger'

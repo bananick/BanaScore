@@ -176,7 +176,7 @@ export const t = {
   noActivities: 'Aucune activité notée.',
 
   // Scoring (animateur / tablette)
-  scoreTablet: 'Noter (tablette)',
+  scoreTablet: 'Noter',
   scoringFor: 'Notation',
   chooseActivity: 'Choisissez une activité à noter',
   scorerCode: 'Code animateur (optionnel)',

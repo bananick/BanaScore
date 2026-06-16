@@ -31,10 +31,13 @@ export const WorkshopRankings: React.FC = () => {
     ? ({ ['--primary']: event.brand_color } as React.CSSProperties)
     : undefined;
 
+  const isAdmin = api.adminToken.isSet();
+  const backTo = isAdmin ? `/admin/event/${id}` : `/event/${id}`;
+
   return (
     <div className="app-container" style={brandStyle}>
       <div className="page-top">
-        <BackButton to={`/event/${id}`} />
+        <BackButton to={backTo} label={isAdmin ? t.eventManagement : undefined} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>🏅 {t.workshopRankings}</h1>
       {event && <p style={{ opacity: 0.7, marginTop: -8 }}>{event.name}</p>}
@@ -78,11 +81,11 @@ export const WorkshopRankings: React.FC = () => {
       })}
 
       <Link
-        to={`/event/${id}`}
+        to={backTo}
         className="festive-button"
         style={{ textDecoration: 'none', display: 'block' }}
       >
-        {t.backToEvent}
+        {isAdmin ? t.eventManagement : t.backToEvent}
       </Link>
     </div>
   );

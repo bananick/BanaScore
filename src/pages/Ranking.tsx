@@ -31,10 +31,15 @@ export const Ranking: React.FC = () => {
     fetchRanking().catch(() => undefined);
   }, 5000, [id, type, activityId]);
 
+  // From the admin event page, "back" returns there; participants go to the
+  // public event view.
+  const isAdmin = api.adminToken.isSet();
+  const backTo = isAdmin ? `/admin/event/${id}` : `/event/${id}`;
+
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton to={`/event/${id}`} />
+        <BackButton to={backTo} label={isAdmin ? t.eventManagement : undefined} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>{title}</h1>
       <div className="card">
@@ -75,11 +80,11 @@ export const Ranking: React.FC = () => {
         })()}
       </div>
       <Link
-        to={`/event/${id}`}
+        to={backTo}
         className="festive-button"
         style={{ textDecoration: 'none', display: 'block' }}
       >
-        {t.backToEvent}
+        {isAdmin ? t.eventManagement : t.backToEvent}
       </Link>
     </div>
   );

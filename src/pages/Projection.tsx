@@ -41,9 +41,13 @@ export const Projection: React.FC = () => {
     ? ({ ['--primary']: event.brand_color } as React.CSSProperties)
     : undefined;
 
+  const isAdmin = api.adminToken.isSet();
+  const backTo = isAdmin ? `/admin/event/${id}` : `/event/${id}`;
+  const backLabel = isAdmin ? t.eventManagement : t.backToEvent;
+
   return (
     <div className="projection" style={brandStyle}>
-      <Link to={`/event/${id}`} className="projection-back no-print" title={t.backToEvent} aria-label={t.backToEvent}>
+      <Link to={backTo} className="projection-back no-print" title={backLabel} aria-label={backLabel}>
         <ArrowLeft size={22} />
       </Link>
       <button onClick={goFullscreen} className="projection-fs no-print" title={t.fullscreen}>

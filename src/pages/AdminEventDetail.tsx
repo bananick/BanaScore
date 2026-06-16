@@ -541,16 +541,16 @@ export const AdminEventDetail: React.FC = () => {
         <ButtonLink to={`/score/${id}`} variant="primary" block>
           ✍️ {t.scoreTablet}
         </ButtonLink>
-        <ButtonLink to={`/event/${id}/workshops`} variant="blue" block>
-          🏅 {t.workshopRankings}
-        </ButtonLink>
-        <ButtonLink to={`/event/${id}/ranking/global`} variant="primary" block>
+        <ButtonLink to={`/event/${id}/ranking/global`} variant="blue" block>
           🏆 {t.globalRanking}
+        </ButtonLink>
+        <ButtonLink to={`/event/${id}/workshops`} variant="teal" block>
+          🏅 {t.workshopRankings}
         </ButtonLink>
         <ButtonLink to={`/event/${id}/ranking/votes`} variant="accent" block>
           🗳️ {t.votesOnly}
         </ButtonLink>
-        <ButtonLink to={`/event/${id}/board`} variant="blue" block>
+        <ButtonLink to={`/event/${id}/board`} variant="purple" block>
           📺 {t.projection}
         </ButtonLink>
         <ButtonLink to={`/admin/event/${id}/report`} variant="success" block>

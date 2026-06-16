@@ -28,10 +28,16 @@ export const ScoreHome: React.FC = () => {
     groups.get(key)!.push(a);
   }
 
+  // Reached from the admin event page (the logical "previous" page) when admin;
+  // animateurs arriving via a tablet QR fall back to home.
+  const isAdmin = api.adminToken.isSet();
+  const backTo = isAdmin ? `/admin/event/${eventId}` : '/';
+  const backLabel = isAdmin ? t.eventManagement : t.home;
+
   return (
     <div className="app-container">
       <div className="page-top">
-        <BackButton to="/" label={t.home} />
+        <BackButton to={backTo} label={backLabel} />
       </div>
       <h1 style={{ fontSize: '2rem' }}>✍️ {t.scoringFor}</h1>
       {event && <p style={{ opacity: 0.7, marginTop: -8 }}>{event.name}</p>}

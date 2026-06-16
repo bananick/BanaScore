@@ -11,7 +11,13 @@ export default defineConfig({
     // Dev port (5173 is used by another app here). Override with VITE_PORT.
     port: Number(process.env.VITE_PORT) || 5180,
     proxy: {
-      '/api': 'http://localhost:3001'
+      // Local API by default; point at any backend (e.g. the deployed one) with
+      // VITE_API_PROXY=https://banascore.web.app to test the UI against real data.
+      '/api': {
+        target: process.env.VITE_API_PROXY || 'http://localhost:3001',
+        changeOrigin: true,
+        secure: true,
+      },
     }
   }
 })
