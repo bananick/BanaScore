@@ -1,6 +1,9 @@
 // BanaScore service worker — app-shell caching for installable PWA / offline UI.
 // API responses are never cached (always fetched fresh).
-const CACHE = 'banascore-v1';
+// Bump this version on each release that must invalidate cached shells: the
+// `activate` handler deletes every cache whose name differs, purging stale
+// (e.g. half-deployed) app shells from all devices on their next visit.
+const CACHE = 'banascore-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.add('/')));
