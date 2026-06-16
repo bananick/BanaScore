@@ -61,7 +61,7 @@ h1 svg, h1 img {
 }
 
 .vote-card:not(:disabled):hover {
-    background: rgba(255, 255, 15, 0.2);
+    background: rgba(241, 196, 15, 0.2);
     border-color: var(--primary);
     transform: translateY(-2px);
 }
@@ -71,6 +71,13 @@ h1 svg, h1 img {
     color: var(--secondary);
     border-color: white;
     font-weight: bold;
+}
+
+/* Non-votable cards (own team, limit reached, closed) read as disabled,
+   but a card you already voted for stays highlighted (.selected). */
+.vote-card:disabled:not(.selected) {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .festive-button {
@@ -101,6 +108,88 @@ h1 svg, h1 img {
   background: var(--disabled);
   cursor: not-allowed;
   box-shadow: none;
+}
+
+/* UNIFIED BUTTON SYSTEM (Button / ButtonLink component).
+   One base + colour variants so buttons and button-links stay consistent
+   without ad-hoc inline styles. `secondary`/coloured variants force white
+   text; `ghost` matches the discreet .back-button look. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 11px 20px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, filter 0.2s, transform 0.1s;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.08); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+.btn--block { width: 100%; }
+
+.btn--primary {
+  background: linear-gradient(45deg, var(--primary), var(--accent));
+  color: var(--secondary);
+  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+}
+.btn--primary:hover:not(:disabled) { transform: scale(1.02); filter: brightness(1.1); }
+.btn--primary:disabled { background: var(--disabled); box-shadow: none; }
+
+.btn--secondary { background: var(--secondary); color: #fff; border-color: rgba(255, 255, 255, 0.12); }
+.btn--blue { background: var(--blue); color: #fff; }
+.btn--success { background: var(--success); color: #fff; }
+.btn--accent { background: var(--accent); color: #fff; }
+.btn--danger { background: var(--error); color: #fff; }
+
+.btn--ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-height: 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+}
+.btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--primary);
+  filter: none;
+}
+
+/* Visible keyboard focus on dark theme (excludes the fullscreen projection
+   controls, which keep their own minimal look). */
+.btn:focus-visible,
+.festive-button:focus-visible,
+.back-button:focus-visible,
+.icon-btn:focus-visible,
+.clear-btn:focus-visible,
+.score-btn:focus-visible,
+.criterion-btn:focus-visible,
+.vote-card:focus-visible,
+.collapsible-header:focus-visible,
+.password-toggle:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.icon-btn:disabled,
+.clear-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 input {

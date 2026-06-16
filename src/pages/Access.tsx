@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download } from 'lucide-react';
 import * as api from '../api';
 import { t } from '../i18n';
+import { ButtonLink } from '../components/Button';
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -81,9 +81,9 @@ export const Access: React.FC = () => {
         )}
       </div>
 
-      <Link to="/admin" className="festive-button" style={{ textDecoration: 'none', display: 'block', background: 'var(--secondary)', color: 'white' }}>
-        ← {t.adminDashboard}
-      </Link>
+      <ButtonLink to="/admin" variant="secondary" block>
+        <ArrowLeft size={18} /> {t.adminDashboard}
+      </ButtonLink>
     </div>
   );
 };

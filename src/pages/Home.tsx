@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import * as api from '../api';
 import type { EventDTO } from '../types';
 import { t } from '../i18n';
+import { ButtonLink } from '../components/Button';
 
 export const Home: React.FC = () => {
   const [events, setEvents] = useState<EventDTO[]>([]);
@@ -35,9 +36,9 @@ export const Home: React.FC = () => {
           </ul>
         )}
         <hr />
-        <Link to="/admin" style={{ color: 'var(--accent)' }}>
+        <ButtonLink to="/admin" variant="ghost">
           {t.adminDashboard}
-        </Link>
+        </ButtonLink>
       </div>
     </div>
   );

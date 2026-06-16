@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import * as api from '../api';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { PasswordInput } from '../components/PasswordInput';
+import { ButtonLink } from '../components/Button';
 
 export const AdminLogin: React.FC<{ onAuthed: () => void }> = ({ onAuthed }) => {
   const [password, setPassword] = useState('');
@@ -27,9 +28,9 @@ export const AdminLogin: React.FC<{ onAuthed: () => void }> = ({ onAuthed }) => 
   return (
     <div className="app-container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/" style={{ color: 'white' }}>
-          ← {t.home}
-        </Link>
+        <ButtonLink to="/" variant="ghost">
+          <ArrowLeft size={16} /> {t.home}
+        </ButtonLink>
         <h1>{t.adminTitle}</h1>
       </header>
       <div className="card">

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Printer } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { ArrowLeft, Printer } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as api from '../api';
 import type { ActivityDTO, EventDTO, TeamDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { Button, ButtonLink } from '../components/Button';
 
 /**
  * Print-friendly A4 sheet of QR codes for the event. Two kinds:
@@ -38,12 +39,12 @@ export const Posters: React.FC = () => {
   return (
     <div className="app-container posters">
       <div className="report-actions no-print">
-        <Link to={`/admin/event/${id}`} style={{ color: 'white' }}>
-          ← {t.eventManagement}
-        </Link>
-        <button onClick={() => window.print()} className="festive-button" style={{ width: 'auto', marginTop: 0 }}>
+        <ButtonLink to={`/admin/event/${id}`} variant="ghost">
+          <ArrowLeft size={16} /> {t.eventManagement}
+        </ButtonLink>
+        <Button onClick={() => window.print()} variant="blue">
           <Printer size={16} /> {t.print}
-        </button>
+        </Button>
       </div>
 
       <header className="posters-head">

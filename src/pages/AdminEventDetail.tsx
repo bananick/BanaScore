@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Trash2, XCircle } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Trash2, XCircle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as api from '../api';
 import type { ActivityDTO, CriterionDTO, EventDTO, EventStats, EventStatus, TeamDTO } from '../types';
@@ -10,6 +10,7 @@ import { usePolling } from '../hooks';
 import { Collapsible } from '../components/Collapsible';
 import { ScoringPanel } from '../components/ScoringPanel';
 import { CriteriaEditor } from '../components/CriteriaEditor';
+import { Button, ButtonLink } from '../components/Button';
 
 function parseWeights(json: string | null): Record<string, number> {
   if (!json) return {};
@@ -220,9 +221,9 @@ export const AdminEventDetail: React.FC = () => {
   return (
     <div className="app-container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/admin" style={{ color: 'white' }}>
-          ← {t.adminTitle}
-        </Link>
+        <ButtonLink to="/admin" variant="ghost">
+          <ArrowLeft size={16} /> {t.adminTitle}
+        </ButtonLink>
         <h1 style={{ fontSize: '2rem' }}>{t.eventManagement}</h1>
       </header>
 
@@ -537,72 +538,47 @@ export const AdminEventDetail: React.FC = () => {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>🏆 {t.linksTools}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <Link to={`/score/${id}`} className="festive-button" style={{ textDecoration: 'none' }}>
+        <ButtonLink to={`/score/${id}`} variant="primary" block>
           ✍️ {t.scoreTablet}
-        </Link>
-        <Link
-          to={`/event/${id}/workshops`}
-          className="festive-button"
-          style={{ textDecoration: 'none', background: 'var(--blue)' }}
-        >
+        </ButtonLink>
+        <ButtonLink to={`/event/${id}/workshops`} variant="blue" block>
           🏅 {t.workshopRankings}
-        </Link>
-        <Link to={`/event/${id}/ranking/global`} className="festive-button" style={{ textDecoration: 'none' }}>
+        </ButtonLink>
+        <ButtonLink to={`/event/${id}/ranking/global`} variant="primary" block>
           🏆 {t.globalRanking}
-        </Link>
-        <Link
-          to={`/event/${id}/ranking/votes`}
-          className="festive-button"
-          style={{ textDecoration: 'none', background: 'var(--accent)' }}
-        >
+        </ButtonLink>
+        <ButtonLink to={`/event/${id}/ranking/votes`} variant="accent" block>
           🗳️ {t.votesOnly}
-        </Link>
-        <Link
-          to={`/event/${id}/board`}
-          className="festive-button"
-          style={{ textDecoration: 'none', background: 'var(--blue)' }}
-        >
+        </ButtonLink>
+        <ButtonLink to={`/event/${id}/board`} variant="blue" block>
           📺 {t.projection}
-        </Link>
-        <Link
-          to={`/admin/event/${id}/report`}
-          className="festive-button"
-          style={{ textDecoration: 'none', background: 'var(--success)' }}
-        >
+        </ButtonLink>
+        <ButtonLink to={`/admin/event/${id}/report`} variant="success" block>
           📄 {t.report}
-        </Link>
-        <Link
-          to={`/admin/event/${id}/posters`}
-          className="festive-button"
-          style={{ textDecoration: 'none', background: 'var(--secondary)', color: 'white' }}
-        >
+        </ButtonLink>
+        <ButtonLink to={`/admin/event/${id}/posters`} variant="secondary" block>
           🖨️ {t.posters}
-        </Link>
+        </ButtonLink>
         </div>
       </div>
 
       <Collapsible title={`⚠️ ${t.dangerZone}`} danger>
-        <button
-          type="button"
+        <Button
           onClick={doReset}
-          className="festive-button"
-          style={{ background: 'var(--accent)', color: 'white', boxShadow: 'none', marginBottom: 16 }}
+          variant="accent"
+          block
+          style={{ marginBottom: 16 }}
         >
-          <XCircle size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
+          <XCircle size={18} />
           {t.resetScores}
-        </button>
+        </Button>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', margin: '0 0 12px' }}>
           {t.deleteEventDesc}
         </p>
-        <button
-          type="button"
-          onClick={deleteEvent}
-          className="festive-button"
-          style={{ background: 'var(--error)', color: 'white', boxShadow: 'none' }}
-        >
-          <Trash2 size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
+        <Button onClick={deleteEvent} variant="danger" block>
+          <Trash2 size={18} />
           {t.deleteEvent}
-        </button>
+        </Button>
       </Collapsible>
     </div>
   );
@@ -612,9 +588,9 @@ const selectStyle: React.CSSProperties = {
   padding: 12,
   borderRadius: 10,
   width: '100%',
-  background: '#333',
+  background: 'rgba(0, 0, 0, 0.3)',
   color: 'white',
-  border: '1px solid var(--primary)',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
 };
 
 const scoreRowStyle: React.CSSProperties = {

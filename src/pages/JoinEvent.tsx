@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as api from '../api';
 import type { EventDTO, TeamDTO } from '../types';
+import { ArrowLeft } from 'lucide-react';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { BackButton } from '../components/BackButton';
+import { Button } from '../components/Button';
 
 /** Public page reached by the event-level QR: pick a team, then register. */
 export const JoinEvent: React.FC = () => {
@@ -85,13 +87,9 @@ export const JoinEvent: React.FC = () => {
           <button onClick={register} className="festive-button" disabled={busy}>
             {t.joinTeam}
           </button>
-          <button
-            onClick={() => setTeam(null)}
-            className="festive-button"
-            style={{ background: 'var(--secondary)', color: 'white' }}
-          >
-            ← {t.chooseTeam}
-          </button>
+          <Button onClick={() => setTeam(null)} variant="secondary" block style={{ marginTop: 10 }}>
+            <ArrowLeft size={18} /> {t.chooseTeam}
+          </Button>
         </div>
       )}
     </div>

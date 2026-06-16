@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Download, FileText, Printer } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { ArrowLeft, Download, FileText, Printer } from 'lucide-react';
 import * as api from '../api';
 import type { EventReport as Report, WorkshopRanking } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { computeRanks, hasRanking } from '../ranks';
 import { RankIcon } from '../components/RankIcon';
+import { Button, ButtonLink } from '../components/Button';
 
 const activityLabel = (a: { name: string; coefficient: number }) =>
   a.coefficient !== 1 ? `${a.name} (×${a.coefficient})` : a.name;
@@ -92,27 +93,19 @@ export const EventReport: React.FC = () => {
   return (
     <div className="app-container report" style={brandStyle}>
       <div className="report-actions no-print">
-        <Link to={`/admin/event/${id}`} style={{ color: 'white' }}>
-          ← {t.eventManagement}
-        </Link>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={exportPdf} className="festive-button" style={{ width: 'auto', marginTop: 0 }}>
+        <ButtonLink to={`/admin/event/${id}`} variant="ghost">
+          <ArrowLeft size={16} /> {t.eventManagement}
+        </ButtonLink>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Button onClick={exportPdf} variant="primary">
             <FileText size={16} /> {t.downloadPdf}
-          </button>
-          <button
-            onClick={exportCsv}
-            className="festive-button"
-            style={{ width: 'auto', marginTop: 0, background: 'var(--success)', color: 'white' }}
-          >
+          </Button>
+          <Button onClick={exportCsv} variant="success">
             <Download size={16} /> {t.exportCsv}
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="festive-button"
-            style={{ width: 'auto', marginTop: 0, background: 'var(--blue)', color: 'white' }}
-          >
+          </Button>
+          <Button onClick={() => window.print()} variant="blue">
             <Printer size={16} /> {t.print}
-          </button>
+          </Button>
         </div>
       </div>
 

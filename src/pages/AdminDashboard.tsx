@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Copy, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, LogOut, Plus, Trash2 } from 'lucide-react';
 import * as api from '../api';
 import type { EventDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { PasswordInput } from '../components/PasswordInput';
 import { Collapsible } from '../components/Collapsible';
+import { Button, ButtonLink } from '../components/Button';
 
 const STATUS_LABELS: Record<EventDTO['status'], string> = {
   open: t.statusOpen,
@@ -92,22 +93,24 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="app-container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/" style={{ color: 'white' }}>
-          ← {t.home}
-        </Link>
+        <ButtonLink to="/" variant="ghost">
+          <ArrowLeft size={16} /> {t.home}
+        </ButtonLink>
         <h1>{t.adminTitle}</h1>
-        <button type="button" className="icon-btn" onClick={logout} title={t.logout}>
-          ⎋
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={logout}
+          title={t.logout}
+          aria-label={t.logout}
+        >
+          <LogOut size={18} />
         </button>
       </header>
 
-      <Link
-        to="/access"
-        className="festive-button"
-        style={{ textDecoration: 'none', display: 'block', marginBottom: 16 }}
-      >
+      <ButtonLink to="/access" variant="primary" block style={{ marginBottom: 16 }}>
         📲 {t.tabletAccessLink}
-      </Link>
+      </ButtonLink>
 
       <div className="card">
         <h2>{t.createEvent}</h2>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 import * as api from '../api';
 import type { ActivityDTO, EventDTO, ParticipantDTO, TeamDTO, VoteDTO } from '../types';
@@ -7,6 +7,7 @@ import { t } from '../i18n';
 import { useToast } from '../toast';
 import { usePolling } from '../hooks';
 import { BackButton } from '../components/BackButton';
+import { ButtonLink } from '../components/Button';
 
 export const EventView: React.FC = () => {
   const { id } = useParams();
@@ -66,9 +67,7 @@ export const EventView: React.FC = () => {
         <BackButton to="/" label={t.home} />
       </div>
       <header style={{ marginBottom: 30 }}>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <h1>🍌 BanaScore</h1>
-        </Link>
+        <h1>🍌 BanaScore</h1>
         <h2 style={{ marginTop: 0, opacity: 0.9 }}>
           {participant ? t.hello(participant.pseudo) : t.eventView}
         </h2>
@@ -108,43 +107,32 @@ export const EventView: React.FC = () => {
       <div className="card">
         <h2>📊 {t.liveRankings}</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-          <Link to={`/event/${id}/ranking/global`} className="festive-button" style={{ fontSize: '0.9rem' }}>
+          <ButtonLink to={`/event/${id}/ranking/global`} variant="primary" block style={{ fontSize: '0.9rem' }}>
             {t.globalScore}
-          </Link>
+          </ButtonLink>
           {votingEnabled && (
-            <Link
-              to={`/event/${id}/ranking/votes`}
-              className="festive-button"
-              style={{ fontSize: '0.9rem', background: 'var(--accent)' }}
-            >
+            <ButtonLink to={`/event/${id}/ranking/votes`} variant="accent" block style={{ fontSize: '0.9rem' }}>
               {t.voteRanking}
-            </Link>
+            </ButtonLink>
           )}
-          <Link
-            to={`/event/${id}/workshops`}
-            className="festive-button"
-            style={{ fontSize: '0.9rem', background: 'var(--blue)' }}
-          >
+          <ButtonLink to={`/event/${id}/workshops`} variant="blue" block style={{ fontSize: '0.9rem' }}>
             {t.workshopRankingsShort}
-          </Link>
+          </ButtonLink>
           {activities.map((a) => (
-            <Link
+            <ButtonLink
               key={a.id}
               to={`/event/${id}/ranking/activity/${a.id}`}
-              className="festive-button"
-              style={{ fontSize: '0.9rem', background: 'var(--blue)' }}
+              variant="blue"
+              block
+              style={{ fontSize: '0.9rem' }}
             >
               {a.name}
-            </Link>
+            </ButtonLink>
           ))}
         </div>
-        <Link
-          to={`/event/${id}/board`}
-          className="festive-button"
-          style={{ textDecoration: 'none', marginTop: 16, background: 'var(--secondary)', color: 'white' }}
-        >
+        <ButtonLink to={`/event/${id}/board`} variant="secondary" block style={{ marginTop: 16 }}>
           📺 {t.projection}
-        </Link>
+        </ButtonLink>
       </div>
     </div>
   );

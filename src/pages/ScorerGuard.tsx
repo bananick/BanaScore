@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import * as api from '../api';
 import { t } from '../i18n';
 import { useToast } from '../toast';
+import { ButtonLink } from '../components/Button';
 
 type State = 'checking' | 'ok' | 'need-code';
 
@@ -59,9 +60,11 @@ export const ScorerGuard: React.FC<{ children: React.ReactNode }> = ({ children 
           <button onClick={submit} className="festive-button" disabled={busy}>
             {t.login}
           </button>
-          <Link to="/admin" style={{ color: 'var(--accent)', display: 'inline-block', marginTop: 8 }}>
-            {t.adminDashboard}
-          </Link>
+          <div style={{ marginTop: 12 }}>
+            <ButtonLink to="/admin" variant="ghost">
+              {t.adminDashboard}
+            </ButtonLink>
+          </div>
         </div>
       </div>
     );

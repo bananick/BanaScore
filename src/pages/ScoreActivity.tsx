@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import * as api from '../api';
 import type { ActivityDTO, EventDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { ScoringPanel } from '../components/ScoringPanel';
+import { ButtonLink } from '../components/Button';
 
 /** Focused, touch-friendly scoring of a single activity (one tablet per activity). */
 export const ScoreActivity: React.FC = () => {
@@ -29,9 +31,9 @@ export const ScoreActivity: React.FC = () => {
   return (
     <div className="app-container">
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <Link to={`/score/${eventId}`} style={{ color: 'white' }}>
-          ← {t.backToActivities}
-        </Link>
+        <ButtonLink to={`/score/${eventId}`} variant="ghost">
+          <ArrowLeft size={16} /> {t.backToActivities}
+        </ButtonLink>
       </header>
       <h1 style={{ fontSize: '1.8rem' }}>{activity?.name ?? '…'}</h1>
       {locked && (
