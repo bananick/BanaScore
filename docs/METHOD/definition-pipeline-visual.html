@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>METHOD — Definition Pipeline & FOCUS Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--surface3:#22222f;
+--border:#2a2a3a;--text:#e8e8f0;--text2:#9898a8;--text3:#68687a;
+--yellow:#fbbf24;--yellow-dim:#fbbf2420;--orange:#f97316;--orange-dim:#f9731620;
+--green:#34d399;--green-dim:#34d39920;--blue:#60a5fa;--blue-dim:#60a5fa20;
+--purple:#a78bfa;--purple-dim:#a78bfa20;--red:#f87171;--red-dim:#f8717120;
+--cyan:#22d3ee;--cyan-dim:#22d3ee15;
+--grad1:linear-gradient(135deg,#fbbf24,#f97316);
+--grad2:linear-gradient(135deg,#60a5fa,#a78bfa);
+--grad3:linear-gradient(135deg,#34d399,#22d3ee);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 0}
+nav .container{display:flex;align-items:center;gap:16px;justify-content:space-between}
+nav .logo{font-weight:800;font-size:1.1rem;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+nav .tabs{display:flex;gap:4px}
+nav .tab{padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:500;cursor:pointer;color:var(--text2);transition:.2s;border:none;background:none}
+nav .tab:hover{color:var(--text);background:var(--surface2)}
+nav .tab.active{color:var(--yellow);background:var(--yellow-dim)}
+.version{font-size:.75rem;color:var(--text3);font-family:'JetBrains Mono',monospace;background:var(--surface2);padding:4px 10px;border-radius:6px}
+
+/* SECTIONS */
+.section{display:none;padding:48px 0 80px;animation:fadeIn .4s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{text-align:center;padding:80px 0 60px}
+.hero .badge{display:inline-block;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);background:var(--yellow-dim);padding:6px 16px;border-radius:20px;margin-bottom:20px}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.15;margin-bottom:16px}
+.hero h1 .grad{background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:1.1rem;color:var(--text2);max-width:640px;margin:0 auto}
+
+/* PIPELINE VIZ */
+.pipeline{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:48px 0}
+.phase-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;position:relative;overflow:hidden;transition:.3s;cursor:pointer}
+.phase-card:hover{transform:translateY(-4px);border-color:var(--text3)}
+.phase-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.phase-card.discover::before{background:var(--grad1)}
+.phase-card.specify::before{background:var(--grad2)}
+.phase-card.prototype::before{background:var(--grad3)}
+.phase-num{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.phase-card.discover .phase-num{color:var(--yellow)}
+.phase-card.specify .phase-num{color:var(--blue)}
+.phase-card.prototype .phase-num{color:var(--green)}
+.phase-card h3{font-size:1.3rem;font-weight:700;margin-bottom:12px}
+.phase-card p{font-size:.9rem;color:var(--text2);margin-bottom:16px}
+.phase-items{list-style:none;display:flex;flex-direction:column;gap:6px}
+.phase-items li{font-size:.85rem;color:var(--text2);padding:6px 10px;background:var(--surface2);border-radius:6px;display:flex;align-items:center;gap:8px}
+.phase-items li .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.discover .dot{background:var(--yellow)}
+.specify .dot{background:var(--blue)}
+.prototype .dot{background:var(--green)}
+
+/* ARROWS between cards */
+.pipeline-arrows{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:-12px 0 0;pointer-events:none}
+.arrow-slot{display:flex;justify-content:flex-end;align-items:center;padding-right:0}
+.arrow-slot:last-child{display:none}
+.arrow{color:var(--text3);font-size:1.5rem;margin-right:-36px}
+
+/* FOLDER TREE */
+.tree-section{margin:48px 0}
+.tree-section h2{font-size:1.5rem;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:10px}
+.tree{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 28px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:1.9}
+.tree .dir{color:var(--yellow);font-weight:500}
+.tree .file{color:var(--text2)}
+.tree .new{color:var(--green);font-weight:500}
+.tree .comment{color:var(--text3);font-style:italic}
+
+/* FOCUS SECTION */
+.focus-demo{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:32px 0}
+.focus-col{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.focus-col.full{grid-column:1/-1}
+.focus-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem}
+.focus-header .icon{font-size:1.2rem}
+.focus-body{padding:20px}
+.focus-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:6px;font-size:.88rem;transition:.2s}
+.focus-item:hover{background:var(--surface2)}
+.focus-item .check{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;margin-top:1px}
+.focus-item.done .check{background:var(--green);border-color:var(--green);color:#000}
+.focus-item.active .check{background:var(--yellow-dim);border-color:var(--yellow)}
+.focus-item .label{flex:1}
+.focus-item .tag{font-size:.7rem;padding:2px 8px;border-radius:4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.tag-now{background:var(--red-dim);color:var(--red)}
+.tag-next{background:var(--yellow-dim);color:var(--yellow)}
+.tag-later{background:var(--blue-dim);color:var(--blue)}
+.tag-done{background:var(--green-dim);color:var(--green)}
+
+/* TAQUET */
+.taquet-viz{display:flex;align-items:stretch;gap:2px;margin:32px 0;height:120px}
+.taquet-block{flex:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:12px;transition:.3s;cursor:pointer;position:relative}
+.taquet-block.locked{background:var(--surface);border:1px solid var(--border);opacity:.5}
+.taquet-block.current{background:var(--yellow-dim);border:2px solid var(--yellow);opacity:1;transform:scale(1.05)}
+.taquet-block.completed{background:var(--green-dim);border:1px solid var(--green);opacity:.8}
+.taquet-block .t-icon{font-size:1.5rem;margin-bottom:4px}
+.taquet-block .t-label{font-size:.75rem;font-weight:600}
+.taquet-block .t-sub{font-size:.65rem;color:var(--text3);margin-top:2px}
+.taquet-connector{width:24px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.9rem;flex-shrink:0}
+
+/* INTEGRATION */
+.method-integration{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin:32px 0}
+.method-row{display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.method-row:last-child{border:none}
+.method-row .m-label{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px}
+.method-row .m-value{font-size:.85rem;color:var(--text2)}
+.method-row .m-file{font-family:'JetBrains Mono',monospace;font-size:.8rem;background:var(--surface2);padding:4px 10px;border-radius:4px;color:var(--cyan);display:inline-block;margin:2px}
+
+/* SUBTITLE / DIVIDERS */
+.sub-title{font-size:1.3rem;font-weight:700;margin:40px 0 16px;display:flex;align-items:center;gap:10px}
+.sub-title .emoji{font-size:1.4rem}
+.sub-desc{color:var(--text2);font-size:.92rem;margin-bottom:24px;max-width:700px}
+
+/* DETAIL CARDS */
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:24px 0}
+.detail-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;transition:.3s}
+.detail-card:hover{border-color:var(--text3);transform:translateY(-2px)}
+.detail-card h4{font-size:.95rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.detail-card p{font-size:.83rem;color:var(--text2);line-height:1.5}
+.detail-card .card-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:4px;display:inline-block;margin-top:10px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+.pipeline{grid-template-columns:1fr}
+.focus-demo{grid-template-columns:1fr}
+.taquet-viz{flex-direction:column;height:auto}
+.taquet-connector{height:20px;width:100%}
+.method-row{grid-template-columns:1fr}
+nav .tabs{overflow-x:auto;flex-wrap:nowrap}
+}
+</style>
+</head>
+<body>
+
+<nav>
+<div class="container">
+<div class="logo">🦢 METHOD Definition Pipeline</div>
+<div class="tabs">
+<div class="tab active" onclick="showSection('overview',this)">Vue Globale</div>
+<div class="tab" onclick="showSection('discover',this)">① Discover</div>
+<div class="tab" onclick="showSection('specify',this)">② Specify</div>
+<div class="tab" onclick="showSection('prototype',this)">③ Prototype</div>
+<div class="tab" onclick="showSection('focus',this)">🎯 FOCUS</div>
+<div class="tab" onclick="showSection('integration',this)">⚡ Intégration</div>
+</div>
+<div class="version">v306.c</div>
+</div>
+</nav>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="overview" class="section active">
+<div class="container">
+<div class="hero">
+<div class="badge">Nouveau dans METHOD</div>
+<h1>Le Pipeline de <span class="grad">Définition</span></h1>
+<p>3 phases pour transformer une idée brute en spécification actionnable avec prototype interactif — avant d'écrire une seule ligne de code.</p>
+</div>
+
+<div class="pipeline">
+<div class="phase-card discover" onclick="showSection('discover',document.querySelectorAll('.tab')[1])">
+<div class="phase-num">Phase 1</div>
+<h3>🔍 Discover</h3>
+<p>Explorer, comprendre, cadrer le problème et la vision produit</p>
+<ul class="phase-items">
+<li><span class="dot"></span>Brief produit brut</li>
+<li><span class="dot"></span>Analyse compétitive</li>
+<li><span class="dot"></span>Personas & JTBD</li>
+<li><span class="dot"></span>CUJ / User Journeys</li>
+<li><span class="dot"></span>Vision draft</li>
+</ul>
+</div>
+<div class="phase-card specify" onclick="showSection('specify',document.querySelectorAll('.tab')[2])">
+<div class="phase-num">Phase 2</div>
+<h3>📐 Specify</h3>
+<p>Produire un Specs Book exhaustif pour chaque dimension du produit</p>
+<ul class="phase-items">
+<li><span class="dot"></span>Specs modulaires (14+ chapitres)</li>
+<li><span class="dot"></span>Data models & architecture</li>
+<li><span class="dot"></span>AI stack & agents</li>
+<li><span class="dot"></span>Design system & navigation</li>
+<li><span class="dot"></span>Business model & roadmap</li>
+</ul>
+</div>
+<div class="phase-card prototype" onclick="showSection('prototype',document.querySelectorAll('.tab')[3])">
+<div class="phase-num">Phase 3</div>
+<h3>🎨 Prototype</h3>
+<p>Construire des protos HTML interactifs pour valider l'UI et la navigation</p>
+<ul class="phase-items">
+<li><span class="dot"></span>Proto HTML statiques</li>
+<li><span class="dot"></span>Navigation complète</li>
+<li><span class="dot"></span>Écrans clés avec états</li>
+<li><span class="dot"></span>Design tokens live</li>
+<li><span class="dot"></span>Clickable, partageable</li>
+</ul>
+</div>
+</div>
+
+<div class="sub-title"><span class="emoji">📁</span> Structure standard par app</div>
+<div class="tree">
+<span class="dir">docs/definition/</span><br>
+├── <span class="file">README.md</span> <span class="comment"># Statut, index, liens</span><br>
+├── <span class="dir">fundations/</span><br>
+│   ├── <span class="file">brief.md</span> <span class="comment"># Brief produit brut</span><br>
+│   ├── <span class="file">master-prompt.md</span> <span class="comment"># Prompt pour générer le specs book</span><br>
+│   └── <span class="file">competitive-analysis.md</span><br>
+├── <span class="file">SPECIFICATIONS_BOOK.md</span> <span class="comment"># Index → specs/</span><br>
+├── <span class="dir">specs/</span><br>
+│   ├── <span class="file">01-vision.md</span><br>
+│   ├── <span class="file">02-personas.md</span><br>
+│   ├── <span class="file">03-architecture.md</span><br>
+│   ├── <span class="file">04-journeys.md</span><br>
+│   ├── <span class="file">05-data-models.md</span><br>
+│   ├── <span class="file">06-navigation.md</span><br>
+│   ├── <span class="file">07-page-specs.md</span><br>
+│   ├── <span class="file">08-design-system.md</span><br>
+│   ├── <span class="file">09-ai-stack.md</span><br>
+│   ├── <span class="file">10-business-model.md</span><br>
+│   ├── <span class="file">…</span> <span class="comment"># Extensible par app</span><br>
+├── <span class="dir">prototypes/</span><br>
+│   ├── <span class="file">index.html</span> <span class="comment"># Hub de navigation</span><br>
+│   ├── <span class="file">home.html</span><br>
+│   └── <span class="file">dashboard.html</span><br>
+└── <span class="new">FOCUS.md</span> <span class="comment"># 🎯 Focus tool (NEW)</span>
+</div>
+</div>
+</div>
+
+<!-- ==================== DISCOVER ==================== -->
+<div id="discover" class="section">
+<div class="container">
+<div class="sub-title"><span class="emoji">🔍</span> Phase 1 — DISCOVER</div>
+<div class="sub-desc">Explorer le territoire, comprendre l'utilisateur, cadrer la vision. Cette phase produit les fondations nécessaires au Specs Book.</div>
+
+<div class="detail-grid">
+<div class="detail-card">
+<h4>📝 Brief Produit</h4>
+<p>Le brief brut : idée, problème, marché cible, intuitions business. Pas besoin d'être parfait — c'est le point de départ.</p>
+<div class="card-tag" style="background:var(--yellow-dim);color:var(--yellow)">Input</div>
+</div>
+<div class="detail-card">
+<h4>🏆 Analyse Compétitive</h4>
+<p>Positionnement vs concurrents. Forces, faiblesses, opportunités. Ce que le produit fait mieux ou différemment.</p>
+<div class="card-tag" style="background:var(--orange-dim);color:var(--orange)">Recherche</div>
+</div>
+<div class="detail-card">
+<h4>👥 Personas & JTBD</h4>
+<p>Qui sont les utilisateurs ? Quels jobs-to-be-done ? Quels pain points ? Noms, contextes, objectifs concrets.</p>
+<div class="card-tag" style="background:var(--purple-dim);color:var(--purple)">UX Research</div>
+</div>
+<div class="detail-card">
+<h4>🗺️ User Journeys / CUJ</h4>
+<p>Les parcours critiques end-to-end. Actor → Trigger → Steps → States → AI interventions → Success outcome.</p>
+<div class="card-tag" style="background:var(--blue-dim);color:var(--blue)">UX Design</div>
+</div>
+<div class="detail-card">
+<h4>🎯 Vision Draft</h4>
+<p>Mission, marché, proposition de valeur, différenciation. Premier jet qui sera affiné pendant SPECIFY.</p>
+<div class="card-tag" style="background:var(--green-dim);color:var(--green)">Vision</div>
+</div>
+<div class="detail-card">
+<h4>⚡ Master Prompt</h4>
+<p>Le prompt calibré pour un modèle puissant (Gemini 2.5 Pro, Claude Opus) qui génère le Specs Book complet en une passe.</p>
+<div class="card-tag" style="background:var(--red-dim);color:var(--red)">AI-Powered</div>
+</div>
+</div>
+
+<div class="method-integration" style="margin-top:40px">
+<h4 style="margin-bottom:16px">📂 Fichiers produits</h4>
+<div class="method-row"><div class="m-label">Brief</div><div class="m-value"><span class="m-file">fundations/brief.md</span></div></div>
+<div class="method-row"><div class="m-label">Compétition</div><div class="m-value"><span class="m-file">fundations/competitive-analysis.md</span></div></div>
+<div class="method-row"><div class="m-label">Master prompt</div><div class="m-value"><span class="m-file">fundations/master-prompt.md</span></div></div>
+<div class="method-row"><div class="m-label">Gate</div><div class="m-value">✅ Brief validé → on peut lancer la Phase 2</div></div>
+</div>
+</div>
+</div>
+
+<!-- ==================== SPECIFY ==================== -->
+<div id="specify" class="section">
+<div class="container">
+<div class="sub-title"><span class="emoji">📐</span> Phase 2 — SPECIFY</div>
+<div class="sub-desc">Produire un Specifications Book exhaustif. Chaque chapitre couvre une dimension du produit avec assez de détail pour qu'un dev puisse builder sans deviner.</div>
+
+<div class="detail-grid">
+<div class="detail-card"><h4>📖 01 — Vision & Strategy</h4><p>Mission, ICP, wedge, pricing, scope MVP/P2/P3, non-goals</p></div>
+<div class="detail-card"><h4>👥 02 — Personas</h4><p>Personas nommées avec contextes, pain points, success states, JTBD</p></div>
+<div class="detail-card"><h4>🏗️ 03 — Architecture</h4><p>Stack technique, services, data flow, modules backend/frontend</p></div>
+<div class="detail-card"><h4>🗺️ 04 — Journeys & CUJ</h4><p>Parcours critiques : actor, trigger, steps, states, AI touchpoints</p></div>
+<div class="detail-card"><h4>💾 05 — Data Models</h4><p>Entités, schéma Firestore/SQL, relations, audit model, events</p></div>
+<div class="detail-card"><h4>🧭 06 — Navigation</h4><p>App map, IA, rail behavior, mobile nav, Double Drawer</p></div>
+<div class="detail-card"><h4>📱 07 — Page Specs</h4><p>Screen-by-screen : layout, zones, états (loading/empty/error/success)</p></div>
+<div class="detail-card"><h4>🎨 08 — Design System</h4><p>Couleurs, typo, spacing, composants, motion, a11y, dark mode</p></div>
+<div class="detail-card"><h4>🤖 09 — AI Stack</h4><p>Agents, orchestration, MCP/A2A, guardrails, model routing</p></div>
+<div class="detail-card"><h4>💰 10 — Business Model</h4><p>Pricing tiers, unit economics, competitive strategy, growth</p></div>
+<div class="detail-card"><h4>📢 11 — Marketing</h4><p>Landing pages, SEO, campaigns, growth loops</p></div>
+<div class="detail-card"><h4>🔐 12 — Admin & Security</h4><p>RBAC, GDPR, audit logs, tenant isolation, compliance</p></div>
+<div class="detail-card"><h4>📊 13 — Analytics</h4><p>KPIs, dashboards, feedback loops, success metrics</p></div>
+<div class="detail-card"><h4>🛣️ 14 — Roadmap</h4><p>Foundation → MVP → Phase 2 → Phase 3 avec milestones</p></div>
+</div>
+</div>
+</div>
+
+<!-- ==================== PROTOTYPE ==================== -->
+<div id="prototype" class="section">
+<div class="container">
+<div class="sub-title"><span class="emoji">🎨</span> Phase 3 — PROTOTYPE</div>
+<div class="sub-desc">Construire des protos HTML statiques, interactifs et partageables. Zéro dépendance, 100% visuel.</div>
+
+<div class="detail-grid">
+<div class="detail-card">
+<h4>🏠 Home / Landing</h4>
+<p>Hero, search bar, discovery, CTA principal. Version guest et logged-in.</p>
+<div class="card-tag" style="background:var(--green-dim);color:var(--green)">HTML Proto</div>
+</div>
+<div class="detail-card">
+<h4>📊 Dashboard</h4>
+<p>KPIs, quick actions, feed d'activité, état du système. Version admin.</p>
+<div class="card-tag" style="background:var(--green-dim);color:var(--green)">HTML Proto</div>
+</div>
+<div class="detail-card">
+<h4>🧭 Navigation Shell</h4>
+<p>Rail + panels, Double Drawer en action, transitions A↔B.</p>
+<div class="card-tag" style="background:var(--green-dim);color:var(--green)">HTML Proto</div>
+</div>
+<div class="detail-card">
+<h4>📱 Mobile Shell</h4>
+<p>Bottom nav, drawer, sheets. Même design language, adapté mobile.</p>
+<div class="card-tag" style="background:var(--green-dim);color:var(--green)">HTML Proto</div>
+</div>
+<div class="detail-card">
+<h4>🔑 Key Flows</h4>
+<p>Les flux critiques CUJ : onboarding, booking, création, etc.</p>
+<div class="card-tag" style="background:var(--cyan-dim);color:var(--cyan)">Interactif</div>
+</div>
+<div class="detail-card">
+<h4>🗂️ Proto Hub</h4>
+<p><code>index.html</code> — page d'accueil qui liste et donne accès à tous les protos.</p>
+<div class="card-tag" style="background:var(--purple-dim);color:var(--purple)">Navigation</div>
+</div>
+</div>
+
+<div class="method-integration" style="margin-top:40px">
+<h4 style="margin-bottom:16px">💡 Principes des protos</h4>
+<div class="method-row"><div class="m-label">📂 Format</div><div class="m-value">HTML/CSS/JS statique — aucune dépendance, ouvrable dans un navigateur</div></div>
+<div class="method-row"><div class="m-label">🎨 Design</div><div class="m-value">Applique les design tokens du Specs Book (couleurs, typo, spacing)</div></div>
+<div class="method-row"><div class="m-label">🧭 Navigation</div><div class="m-value">Clickable — les liens entre protos fonctionnent</div></div>
+<div class="method-row"><div class="m-label">📱 Responsive</div><div class="m-value">Desktop + Mobile viewport (pas de framework nécessaire)</div></div>
+<div class="method-row"><div class="m-label">🔄 Itératif</div><div class="m-value">Les protos évoluent avec les specs — living prototypes</div></div>
+</div>
+</div>
+</div>
+
+<!-- ==================== FOCUS ==================== -->
+<div id="focus" class="section">
+<div class="container">
+<div class="sub-title"><span class="emoji">🎯</span> FOCUS Tool — L'effet taquet</div>
+<div class="sub-desc">Un fichier <code>FOCUS.md</code> par app pour garder un ultra-focus sur le prochain objectif. Le principe du taquet : on ne passe pas au suivant tant que le courant n'est pas terminé.</div>
+
+<h4 style="margin:32px 0 16px;font-weight:600">⚡ Mécanisme Taquet — Visualisation</h4>
+<div class="taquet-viz">
+<div class="taquet-block completed"><div class="t-icon">✅</div><div class="t-label">DISCOVER</div><div class="t-sub">Terminé</div></div>
+<div class="taquet-connector">→</div>
+<div class="taquet-block completed"><div class="t-icon">✅</div><div class="t-label">Vision</div><div class="t-sub">Specs ch.01</div></div>
+<div class="taquet-connector">→</div>
+<div class="taquet-block completed"><div class="t-icon">✅</div><div class="t-label">Personas</div><div class="t-sub">Specs ch.02</div></div>
+<div class="taquet-connector">→</div>
+<div class="taquet-block current"><div class="t-icon">🔴</div><div class="t-label">Pages UI</div><div class="t-sub">NOW ← Focus ici</div></div>
+<div class="taquet-connector">→</div>
+<div class="taquet-block locked"><div class="t-icon">🔒</div><div class="t-label">AI Stack</div><div class="t-sub">Verrouillé</div></div>
+<div class="taquet-connector">→</div>
+<div class="taquet-block locked"><div class="t-icon">🔒</div><div class="t-label">Proto</div><div class="t-sub">Verrouillé</div></div>
+</div>
+
+<h4 style="margin:40px 0 16px;font-weight:600">📋 Aperçu du FOCUS.md</h4>
+<div class="focus-demo">
+<div class="focus-col">
+<div class="focus-header" style="background:var(--red-dim)"><span class="icon">🔴</span> NOW — Ultra Focus</div>
+<div class="focus-body">
+<div class="focus-item active">
+<div class="check">⚡</div>
+<div class="label"><strong>Finaliser les specs pages UI</strong><br><span style="color:var(--text3);font-size:.8rem">Chapitres 07-08 du Specs Book</span></div>
+<div class="tag tag-now">NOW</div>
+</div>
+<div class="focus-item" style="padding:8px 12px;font-size:.8rem;color:var(--text3);font-style:italic">
+⚡ Règle : ne pas passer au suivant tant que ✅
+</div>
+</div>
+</div>
+<div class="focus-col">
+<div class="focus-header" style="background:var(--yellow-dim)"><span class="icon">🟡</span> NEXT — File d'attente (3 max)</div>
+<div class="focus-body">
+<div class="focus-item"><div class="check">1</div><div class="label">Proto HTML des pages spécifiées</div><div class="tag tag-next">NEXT</div></div>
+<div class="focus-item"><div class="check">2</div><div class="label">Spec AI agents (chapitre 09)</div><div class="tag tag-next">NEXT</div></div>
+<div class="focus-item"><div class="check">3</div><div class="label">Review complète avec April</div><div class="tag tag-next">NEXT</div></div>
+</div>
+</div>
+<div class="focus-col full">
+<div class="focus-header" style="background:var(--blue-dim)"><span class="icon">🟢</span> LATER — Big Picture (pipeline complet)</div>
+<div class="focus-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">
+<div>
+<div class="focus-item done"><div class="check">✓</div><div class="label">DISCOVER</div><div class="tag tag-done">DONE</div></div>
+<div class="focus-item done"><div class="check">✓</div><div class="label">Vision & personas</div><div class="tag tag-done">DONE</div></div>
+<div class="focus-item done"><div class="check">✓</div><div class="label">Architecture & data</div><div class="tag tag-done">DONE</div></div>
+<div class="focus-item active"><div class="check">⚡</div><div class="label">Pages UI & design</div><div class="tag tag-now">NOW</div></div>
+</div>
+<div>
+<div class="focus-item"><div class="check"></div><div class="label">AI stack</div><div class="tag tag-later">LATER</div></div>
+<div class="focus-item"><div class="check"></div><div class="label">Business model</div><div class="tag tag-later">LATER</div></div>
+<div class="focus-item"><div class="check"></div><div class="label">PROTOTYPE</div><div class="tag tag-later">LATER</div></div>
+<div class="focus-item"><div class="check"></div><div class="label">BUILD (Sprint 001)</div><div class="tag tag-later">LATER</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="method-integration" style="margin-top:32px">
+<h4 style="margin-bottom:16px">📝 Parking Lot — (idées capturées, pas maintenant)</h4>
+<div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 0">
+<span style="background:var(--surface2);padding:6px 12px;border-radius:6px;font-size:.82rem;color:var(--text2)">Intégration HQ3 billing</span>
+<span style="background:var(--surface2);padding:6px 12px;border-radius:6px;font-size:.82rem;color:var(--text2)">Mobile native vs PWA</span>
+<span style="background:var(--surface2);padding:6px 12px;border-radius:6px;font-size:.82rem;color:var(--text2)">API marketplace</span>
+<span style="background:var(--surface2);padding:6px 12px;border-radius:6px;font-size:.82rem;color:var(--text2)">White-label portal</span>
+<span style="background:var(--surface2);padding:6px 12px;border-radius:6px;font-size:.82rem;color:var(--text2)">Analytics dashboard v2</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ==================== INTEGRATION ==================== -->
+<div id="integration" class="section">
+<div class="container">
+<div class="sub-title"><span class="emoji">⚡</span> Intégration dans METHOD v306.c</div>
+<div class="sub-desc">Comment le Definition Pipeline et FOCUS s'intègrent dans le METHOD existant sans rien casser.</div>
+
+<div class="method-integration">
+<h4 style="margin-bottom:16px">📦 Nouveaux fichiers METHOD (synced)</h4>
+<div class="method-row"><div class="m-label" style="color:var(--green)">🆕 Nouveau</div><div class="m-value"><span class="m-file">definition-method.md</span> Pipeline de définition, phases, gates, templates</div></div>
+<div class="method-row"><div class="m-label" style="color:var(--green)">🆕 Template</div><div class="m-value"><span class="m-file">templates/MASTER-PROMPT-TEMPLATE.md</span> Template réutilisable pour chaque app</div></div>
+<div class="method-row"><div class="m-label" style="color:var(--green)">🆕 Template</div><div class="m-value"><span class="m-file">templates/DEFINITION-README-TEMPLATE.md</span> README pour docs/definition/</div></div>
+<div class="method-row"><div class="m-label" style="color:var(--green)">🆕 Template</div><div class="m-value"><span class="m-file">templates/FOCUS-TEMPLATE.md</span> Template FOCUS.md par app</div></div>
+</div>
+
+<div class="method-integration" style="margin-top:24px">
+<h4 style="margin-bottom:16px">🔗 Routing — Qui utilise quoi</h4>
+<div class="method-row"><div class="m-label">🎯 April (Vision)</div><div class="m-value">DISCOVER : brief, personas, vision draft, CUJ</div></div>
+<div class="method-row"><div class="m-label">📐 Nova (Design)</div><div class="m-value">SPECIFY : design system, page specs, navigation → PROTOTYPE : protos HTML</div></div>
+<div class="method-row"><div class="m-label">🤖 Aiko (AI)</div><div class="m-value">SPECIFY : AI stack, agents, orchestration</div></div>
+<div class="method-row"><div class="m-label">📊 Gordon (Growth)</div><div class="m-value">SPECIFY : business model, marketing, analytics</div></div>
+<div class="method-row"><div class="m-label">📋 Junia (Planning)</div><div class="m-value">FOCUS.md : maintient le focus, met à jour NOW/NEXT/LATER</div></div>
+<div class="method-row"><div class="m-label">👩‍🔬 Lucia (Method)</div><div class="m-value">definition-method.md : curate le pipeline, sync avec METHOD</div></div>
+</div>
+
+<div class="method-integration" style="margin-top:24px">
+<h4 style="margin-bottom:16px">📐 Flow complet : Definition → Sprints</h4>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0">
+<span style="background:var(--yellow-dim);color:var(--yellow);padding:8px 16px;border-radius:8px;font-weight:600;font-size:.85rem">DISCOVER</span>
+<span style="color:var(--text3)">→</span>
+<span style="background:var(--blue-dim);color:var(--blue);padding:8px 16px;border-radius:8px;font-weight:600;font-size:.85rem">SPECIFY</span>
+<span style="color:var(--text3)">→</span>
+<span style="background:var(--green-dim);color:var(--green);padding:8px 16px;border-radius:8px;font-weight:600;font-size:.85rem">PROTOTYPE</span>
+<span style="color:var(--text3)">→</span>
+<span style="background:var(--purple-dim);color:var(--purple);padding:8px 16px;border-radius:8px;font-weight:600;font-size:.85rem">project/ files</span>
+<span style="color:var(--text3)">→</span>
+<span style="background:var(--orange-dim);color:var(--orange);padding:8px 16px;border-radius:8px;font-weight:600;font-size:.85rem">Sprint 001</span>
+<span style="color:var(--text3)">→</span>
+<span style="background:var(--cyan-dim);color:var(--cyan);padding:8px 16px;border-radius:8px;font-weight:600;font-size:.85rem">BUILD</span>
+</div>
+<p style="margin-top:16px;font-size:.85rem;color:var(--text2)">Le pipeline de définition produit les <code>docs/definition/</code>. Quand le proto est validé, on extrait les fichiers <code>project/</code> (VISION.md, DESIGN.md, ROADMAP.md, etc.) et on lance le premier sprint avec Junia.</p>
+</div>
+
+<div class="method-integration" style="margin-top:24px">
+<h4 style="margin-bottom:16px">📊 État actuel de tes apps</h4>
+<div class="method-row"><div class="m-label">🦢 SwaniflyEvents</div><div class="m-value">✅ DISCOVER — ✅ SPECIFY (16 chapitres) — ✅ PROTOTYPE (7 protos) — 🔄 BUILD</div></div>
+<div class="method-row"><div class="m-label">⚡ HQ3</div><div class="m-value">✅ DISCOVER — ✅ SPECIFY (1 monolithe 223KB) — ✅ PROTOTYPE (9 protos) — 🔄 BUILD</div></div>
+<div class="method-row"><div class="m-label">🎪 BanAventures</div><div class="m-value">✅ DISCOVER — ✅ SPECIFY (1 fichier 63KB) — ✅ PROTOTYPE (app complète) — 🔄 BUILD</div></div>
+</div>
+</div>
+</div>
+
+<script>
+function showSection(id, tabEl) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (tabEl) tabEl.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>

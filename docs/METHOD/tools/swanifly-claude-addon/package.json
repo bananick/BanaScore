@@ -1,0 +1,14 @@
+{
+  "name": "swanifly-claude-addon",
+  "version": "1.0.0",
+  "description": "Claude Code integration for the Swanifly METHOD — SOUL.md, CLAUDE.md, skills, and the no-mock-data guard. Installed into each app by sync-method.",
+  "type": "module",
+  "bin": {
+    "swanifly-claude-addon": "./install.mjs"
+  },
+  "scripts": {
+    "install-into": "node install.mjs"
+  },
+  "owner": "Lucia (Method Curator)",
+  "private": true
+}

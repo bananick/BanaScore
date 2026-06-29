@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucia Analytics — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Foundations ─────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a26;--bg4:#222233;
+  --text:#e4e4ef;--text2:#9d9db5;--text3:#6a6a80;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+  --pri:#a855f7;--pri2:#6366f1;--pri3:#3b82f6;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--cyan:#06b6d4;
+  --gradient:linear-gradient(135deg,var(--pri),var(--pri2),var(--pri3));
+  --radius:16px;--radius-sm:10px;--radius-xs:6px;
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --transition:0.25s cubic-bezier(0.4,0,0.2,1);
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+/* ── Layout ──────────────────────────────────────────── */
+.app{max-width:1280px;margin:0 auto;padding:24px 20px 80px}
+header{text-align:center;padding:40px 0 32px;position:relative}
+header h1{
+  font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;
+  background:var(--gradient);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:-0.02em;
+}
+header p{color:var(--text2);font-size:0.9rem;margin-top:6px;font-weight:400}
+.badge{
+  display:inline-block;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:20px;padding:3px 12px;font-size:0.72rem;
+  color:var(--text2);margin-top:10px;
+}
+/* ── Loader ──────────────────────────────────────────── */
+.loader-zone{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:50vh;gap:20px;
+}
+.loader-zone p{color:var(--text2);font-size:0.95rem}
+.loader-zone label{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--gradient);color:#fff;font-weight:600;
+  padding:12px 28px;border-radius:40px;cursor:pointer;
+  font-size:0.95rem;transition:transform var(--transition),box-shadow var(--transition);
+}
+.loader-zone label:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(168,85,247,0.3)}
+.loader-zone input[type="file"]{display:none}
+.auto-fail{color:var(--text3);font-size:0.8rem;margin-top:4px}
+/* ── Tabs ────────────────────────────────────────────── */
+.tabs{
+  display:flex;gap:4px;overflow-x:auto;padding:0 0 2px;
+  border-bottom:1px solid var(--border);position:relative;
+  margin-bottom:28px;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{
+  padding:10px 18px;font-size:0.85rem;font-weight:500;
+  background:none;border:none;color:var(--text3);cursor:pointer;
+  white-space:nowrap;position:relative;transition:color var(--transition);
+  border-radius:var(--radius-xs) var(--radius-xs) 0 0;
+}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--text)}
+.tab-indicator{
+  position:absolute;bottom:-1px;height:2px;
+  background:var(--gradient);border-radius:2px;
+  transition:left var(--transition),width var(--transition);
+}
+.tab-content{display:none;animation:fadeIn 0.3s ease}
+.tab-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── Cards ───────────────────────────────────────────── */
+.card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;
+  transition:border-color var(--transition),box-shadow var(--transition);
+}
+.card:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.card-title{
+  font-size:0.78rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.06em;color:var(--text3);margin-bottom:12px;
+}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{text-align:center;padding:28px 16px}
+.stat-value{
+  font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;
+  background:var(--gradient);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.1;
+}
+.stat-label{font-size:0.8rem;color:var(--text2);margin-top:6px;font-weight:500}
+.stat-sub{font-size:0.72rem;color:var(--text3);margin-top:2px}
+/* ── Grids ───────────────────────────────────────────── */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,500px),1fr));gap:16px;margin-bottom:24px}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;margin-bottom:24px}
+/* ── Bar Charts (SVG) ────────────────────────────────── */
+.bar-chart{width:100%;overflow:visible}
+.bar-chart rect{transition:opacity var(--transition)}
+.bar-chart rect:hover{opacity:0.85}
+.bar-label{font-family:'Inter',sans-serif;fill:var(--text2);font-size:12px}
+.bar-value{font-family:'Inter',sans-serif;fill:var(--text);font-size:11px;font-weight:600}
+/* ── Table ───────────────────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse;font-size:0.82rem}
+.data-table th{
+  text-align:left;padding:10px 12px;font-weight:600;font-size:0.72rem;
+  text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);
+  border-bottom:1px solid var(--border2);
+}
+.data-table td{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  color:var(--text2);vertical-align:top;
+}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.data-table .mono{font-family:'JetBrains Mono','Fira Code',monospace;font-size:0.78rem}
+.data-table .truncate{max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.data-table .num{text-align:right;font-variant-numeric:tabular-nums}
+/* ── Pie Chart ───────────────────────────────────────── */
+.pie-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* ── Heatmap ─────────────────────────────────────────── */
+.heatmap-container{overflow-x:auto}
+.heatmap{width:100%;min-width:600px}
+.heatmap rect{rx:3;ry:3;transition:opacity var(--transition)}
+.heatmap rect:hover{opacity:0.8;stroke:var(--text2);stroke-width:1}
+.heatmap text{font-family:'Inter',sans-serif;fill:var(--text3);font-size:11px}
+/* ── Sparkline ───────────────────────────────────────── */
+.sparkline-card{padding:24px 24px 16px}
+.sparkline-card .card-title{margin-bottom:16px}
+/* ── Cost Cards ──────────────────────────────────────── */
+.cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:24px}
+.cost-card{padding:24px;position:relative;overflow:hidden}
+.cost-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--gradient);
+}
+.cost-model{font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.cost-subtitle{font-size:0.75rem;color:var(--text3);margin-bottom:16px}
+.cost-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.82rem}
+.cost-row .label{color:var(--text2)}
+.cost-row .value{font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.cost-total{
+  margin-top:12px;padding-top:12px;border-top:1px solid var(--border2);
+  font-size:0.95rem;font-weight:700;
+}
+.cost-total .value{
+  background:var(--gradient);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;
+}
+/* ── Responsive ──────────────────────────────────────── */
+@media(max-width:640px){
+  .app{padding:16px 12px 60px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .tab-btn{padding:8px 12px;font-size:0.8rem}
+  .stat-value{font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1>🍌 Lucia Analytics</h1>
+    <p>AI Agent Conversation Intelligence</p>
+    <div class="badge" id="generated-at"></div>
+  </header>
+
+  <!-- Loader -->
+  <div class="loader-zone" id="loader-zone">
+    <p>Load analytics data to begin</p>
+    <label>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Load analytics.json
+      <input type="file" id="file-input" accept=".json">
+    </label>
+    <span class="auto-fail" id="auto-fail"></span>
+  </div>
+
+  <!-- Dashboard (hidden until data loads) -->
+  <div id="dashboard" style="display:none">
+    <!-- Tabs -->
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="overview">Overview</button>
+      <button class="tab-btn" data-tab="tools">Tools</button>
+      <button class="tab-btn" data-tab="patterns">Patterns</button>
+      <button class="tab-btn" data-tab="timeline">Timeline</button>
+      <button class="tab-btn" data-tab="top">Top Conversations</button>
+      <button class="tab-btn" data-tab="tokens">Tokens &amp; Cost</button>
+      <div class="tab-indicator" id="tab-indicator"></div>
+    </nav>
+
+    <!-- Overview -->
+    <div class="tab-content active" id="tab-overview"></div>
+    <!-- Tools -->
+    <div class="tab-content" id="tab-tools"></div>
+    <!-- Patterns -->
+    <div class="tab-content" id="tab-patterns"></div>
+    <!-- Timeline -->
+    <div class="tab-content" id="tab-timeline"></div>
+    <!-- Top -->
+    <div class="tab-content" id="tab-top"></div>
+    <!-- Tokens -->
+    <div class="tab-content" id="tab-tokens"></div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   Lucia Analytics — Dashboard
+   Pure vanilla JS, SVG charts, zero dependencies
+   ================================================================ */
+
+let DATA = null;
+
+// ── Palette ──────────────────────────────────────────────
+const COLORS = [
+  '#a855f7','#6366f1','#3b82f6','#06b6d4','#22c55e',
+  '#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6',
+  '#f97316','#84cc16','#e879f9','#38bdf8','#fb923c',
+];
+
+// ── Helpers ──────────────────────────────────────────────
+const fmt = (n) => Number(n).toLocaleString('en-US');
+const fmtPct = (n) => `${n}%`;
+const fmtDollars = (n) => `$${n.toFixed(2)}`;
+const esc = (s) => {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+};
+const shortId = (id) => id.slice(0, 8);
+
+// ── SVG Helpers ──────────────────────────────────────────
+function svgEl(tag, attrs = {}) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function createGradientDef(svg, id) {
+  let defs = svg.querySelector('defs');
+  if (!defs) { defs = svgEl('defs'); svg.prepend(defs); }
+  const grad = svgEl('linearGradient', { id, x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
+  const s1 = svgEl('stop', { offset: '0%', 'stop-color': '#a855f7' });
+  const s2 = svgEl('stop', { offset: '50%', 'stop-color': '#6366f1' });
+  const s3 = svgEl('stop', { offset: '100%', 'stop-color': '#3b82f6' });
+  grad.append(s1, s2, s3);
+  defs.append(grad);
+}
+
+// ── Horizontal Bar Chart ─────────────────────────────────
+function renderBarChart(container, items, { maxItems = 15, valueKey = 'count', labelKey = 'tool', showPct = true } = {}) {
+  const data = items.slice(0, maxItems);
+  if (data.length === 0) { container.textContent = 'No data'; return; }
+
+  const barH = 28, gap = 6, labelW = 160, valueW = 80, padR = 16;
+  const h = data.length * (barH + gap) + 16;
+  const svg = svgEl('svg', { class: 'bar-chart', viewBox: `0 0 800 ${h}`, preserveAspectRatio: 'xMinYMin meet' });
+  svg.style.width = '100%';
+  svg.style.height = `${h}px`;
+  createGradientDef(svg, 'barGrad');
+
+  const maxVal = Math.max(...data.map((d) => d[valueKey]));
+  const barAreaW = 800 - labelW - valueW - padR;
+
+  data.forEach((d, i) => {
+    const y = i * (barH + gap) + 8;
+    const w = maxVal > 0 ? (d[valueKey] / maxVal) * barAreaW : 0;
+
+    // label
+    const label = svgEl('text', { x: labelW - 8, y: y + barH / 2 + 4, 'text-anchor': 'end', class: 'bar-label' });
+    label.textContent = d[labelKey];
+    svg.append(label);
+
+    // bar
+    const rect = svgEl('rect', {
+      x: labelW, y, width: Math.max(w, 2), height: barH, rx: 4, ry: 4,
+      fill: `url(#barGrad)`, opacity: 0.9 - (i * 0.03),
+    });
+    svg.append(rect);
+
+    // value
+    const valText = showPct && d.percentage !== undefined
+      ? `${fmt(d[valueKey])} (${d.percentage}%)`
+      : fmt(d[valueKey]);
+    const val = svgEl('text', { x: labelW + Math.max(w, 2) + 8, y: y + barH / 2 + 4, class: 'bar-value' });
+    val.textContent = valText;
+    svg.append(val);
+  });
+
+  container.append(svg);
+}
+
+// ── Pie Chart ────────────────────────────────────────────
+function renderPieChart(container, items, { labelKey = 'label', valueKey = 'count' } = {}) {
+  const total = items.reduce((s, d) => s + d[valueKey], 0);
+  if (total === 0) { container.textContent = 'No data'; return; }
+
+  const size = 220, cx = size / 2, cy = size / 2, r = 85, ir = 50;
+  const svg = svgEl('svg', { viewBox: `0 0 ${size} ${size}`, width: size, height: size });
+  svg.style.display = 'block';
+  svg.style.margin = '0 auto';
+
+  let angle = -Math.PI / 2;
+  items.forEach((d, i) => {
+    const slice = (d[valueKey] / total) * Math.PI * 2;
+    if (slice < 0.001) return;
+    const x1 = cx + r * Math.cos(angle);
+    const y1 = cy + r * Math.sin(angle);
+    const x2 = cx + r * Math.cos(angle + slice);
+    const y2 = cy + r * Math.sin(angle + slice);
+    const ix1 = cx + ir * Math.cos(angle);
+    const iy1 = cy + ir * Math.sin(angle);
+    const ix2 = cx + ir * Math.cos(angle + slice);
+    const iy2 = cy + ir * Math.sin(angle + slice);
+    const large = slice > Math.PI ? 1 : 0;
+    const pathD = `M ${ix1} ${iy1} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${ir} ${ir} 0 ${large} 0 ${ix1} ${iy1} Z`;
+    const path = svgEl('path', { d: pathD, fill: COLORS[i % COLORS.length], opacity: '0.85' });
+    const title = svgEl('title');
+    title.textContent = `${d[labelKey]}: ${fmt(d[valueKey])} (${d.percentage || Math.round(d[valueKey] / total * 100)}%)`;
+    path.append(title);
+    svg.append(path);
+    angle += slice;
+  });
+
+  // Center text
+  const centerText = svgEl('text', {
+    x: cx, y: cy - 6, 'text-anchor': 'middle', fill: '#e4e4ef',
+    'font-size': '22', 'font-weight': '800', 'font-family': 'Inter'
+  });
+  centerText.textContent = fmt(total);
+  svg.append(centerText);
+  const subText = svgEl('text', {
+    x: cx, y: cy + 14, 'text-anchor': 'middle', fill: '#9d9db5',
+    'font-size': '10', 'font-family': 'Inter'
+  });
+  subText.textContent = 'total';
+  svg.append(subText);
+
+  container.append(svg);
+
+  // Legend
+  const legend = document.createElement('div');
+  legend.className = 'pie-legend';
+  items.forEach((d, i) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-dot" style="background:${COLORS[i % COLORS.length]}"></span>${esc(d[labelKey])} (${d.percentage || Math.round(d[valueKey] / total * 100)}%)`;
+    legend.append(item);
+  });
+  container.append(legend);
+}
+
+// ── Sparkline ────────────────────────────────────────────
+function renderSparkline(container, data, { valueKey = 'steps', labelKey = 'date' } = {}) {
+  if (!data.length) { container.textContent = 'No data'; return; }
+
+  const w = 800, h = 120, padT = 16, padB = 24, padL = 8, padR = 8;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxVal = Math.max(...data.map((d) => d[valueKey]), 1);
+
+  const svg = svgEl('svg', { class: 'bar-chart', viewBox: `0 0 ${w} ${h}`, preserveAspectRatio: 'xMinYMin meet' });
+  svg.style.width = '100%';
+  svg.style.height = `${h}px`;
+  createGradientDef(svg, 'sparkGrad');
+
+  // Area + line
+  const points = data.map((d, i) => {
+    const x = padL + (i / Math.max(data.length - 1, 1)) * plotW;
+    const y = padT + plotH - (d[valueKey] / maxVal) * plotH;
+    return { x, y };
+  });
+
+  // Area fill
+  let areaD = `M ${points[0].x} ${padT + plotH}`;
+  points.forEach((p) => { areaD += ` L ${p.x} ${p.y}`; });
+  areaD += ` L ${points[points.length - 1].x} ${padT + plotH} Z`;
+  const area = svgEl('path', { d: areaD, fill: 'url(#sparkGrad)', opacity: '0.15' });
+  svg.append(area);
+
+  // Line
+  let lineD = `M ${points[0].x} ${points[0].y}`;
+  points.slice(1).forEach((p) => { lineD += ` L ${p.x} ${p.y}`; });
+  const line = svgEl('path', { d: lineD, fill: 'none', stroke: 'url(#sparkGrad)', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  svg.append(line);
+
+  // Dots
+  points.forEach((p, i) => {
+    const circle = svgEl('circle', { cx: p.x, cy: p.y, r: 3, fill: '#a855f7' });
+    const title = svgEl('title');
+    title.textContent = `${data[i][labelKey]}: ${fmt(data[i][valueKey])}`;
+    circle.append(title);
+    svg.append(circle);
+  });
+
+  container.append(svg);
+}
+
+// ── Heatmap ──────────────────────────────────────────────
+function renderHeatmap(container, heatmap) {
+  if (!heatmap) { container.textContent = 'No data'; return; }
+
+  const { days, hours, data: cells, maxValue } = heatmap;
+  const cellW = 28, cellH = 28, gap = 3, labelW = 90, labelH = 28;
+  const w = labelW + hours.length * (cellW + gap);
+  const h = labelH + days.length * (cellH + gap) + 20;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'heatmap-container';
+  const svg = svgEl('svg', { class: 'heatmap', viewBox: `0 0 ${w} ${h}`, preserveAspectRatio: 'xMinYMin meet' });
+  svg.style.width = '100%';
+  svg.style.maxWidth = `${w}px`;
+
+  // Hour labels
+  hours.forEach((hr, hi) => {
+    if (hi % 3 !== 0) return;
+    const lbl = svgEl('text', { x: labelW + hi * (cellW + gap) + cellW / 2, y: labelH - 6, 'text-anchor': 'middle' });
+    lbl.textContent = hr;
+    svg.append(lbl);
+  });
+
+  // Rows
+  days.forEach((day, di) => {
+    const y = labelH + di * (cellH + gap);
+    const lbl = svgEl('text', { x: labelW - 8, y: y + cellH / 2 + 4, 'text-anchor': 'end' });
+    lbl.textContent = day.slice(0, 3);
+    svg.append(lbl);
+
+    hours.forEach((_, hi) => {
+      const x = labelW + hi * (cellW + gap);
+      const val = cells[di][hi] || 0;
+      const intensity = maxValue > 0 ? val / maxValue : 0;
+      const fill = val === 0
+        ? 'rgba(255,255,255,0.03)'
+        : `rgba(168, 85, 247, ${0.15 + intensity * 0.75})`;
+      const rect = svgEl('rect', { x, y, width: cellW, height: cellH, fill });
+      const title = svgEl('title');
+      title.textContent = `${day} ${hours[hi]}: ${val} conversations`;
+      rect.append(title);
+      svg.append(rect);
+    });
+  });
+
+  wrapper.append(svg);
+  container.append(wrapper);
+}
+
+// ── Tab System ───────────────────────────────────────────
+function initTabs() {
+  const tabs = document.querySelectorAll('.tab-btn');
+  const indicator = document.getElementById('tab-indicator');
+
+  function activate(btn) {
+    tabs.forEach((t) => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
+    const target = document.getElementById(`tab-${btn.dataset.tab}`);
+    if (target) target.classList.add('active');
+    updateIndicator(btn);
+  }
+
+  function updateIndicator(btn) {
+    const tabsRect = document.getElementById('tabs').getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    indicator.style.left = `${btnRect.left - tabsRect.left}px`;
+    indicator.style.width = `${btnRect.width}px`;
+  }
+
+  tabs.forEach((btn) => btn.addEventListener('click', () => activate(btn)));
+
+  // Initial
+  requestAnimationFrame(() => {
+    const active = document.querySelector('.tab-btn.active');
+    if (active) updateIndicator(active);
+  });
+
+  window.addEventListener('resize', () => {
+    const active = document.querySelector('.tab-btn.active');
+    if (active) updateIndicator(active);
+  });
+}
+
+// ── Render Sections ──────────────────────────────────────
+
+function renderOverview() {
+  const { overview, dailyActivity, errorAnalysis, sourceDistribution } = DATA;
+  const el = document.getElementById('tab-overview');
+  el.innerHTML = '';
+
+  // Stat cards
+  const statsHtml = `
+    <div class="stats-grid">
+      <div class="card stat-card">
+        <div class="stat-value">${fmt(overview.totalConversations)}</div>
+        <div class="stat-label">Conversations</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${fmt(overview.totalSteps)}</div>
+        <div class="stat-label">Total Steps</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${overview.totalDurationHours}h</div>
+        <div class="stat-label">Total Duration</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${overview.avgStepsPerConversation}</div>
+        <div class="stat-label">Avg Steps / Conv</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${overview.avgDurationMinutes}m</div>
+        <div class="stat-label">Avg Duration</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${errorAnalysis.errorRate}%</div>
+        <div class="stat-label">Error Rate</div>
+        <div class="stat-sub">${errorAnalysis.totalErrors} errors total</div>
+      </div>
+    </div>
+  `;
+  el.insertAdjacentHTML('beforeend', statsHtml);
+
+  // Source distribution (inline)
+  if (sourceDistribution && sourceDistribution.length > 0) {
+    const srcHtml = `<div class="card" style="margin-bottom:24px;padding:16px 24px">
+      <span style="font-size:0.78rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Sources: </span>
+      ${sourceDistribution.map((s) => `<span style="margin-left:12px;font-size:0.85rem;color:var(--text2)">${esc(s.source)} <strong style="color:var(--text)">${s.count}</strong> (${s.percentage}%)</span>`).join('')}
+    </div>`;
+    el.insertAdjacentHTML('beforeend', srcHtml);
+  }
+
+  // Sparkline
+  if (dailyActivity && dailyActivity.length > 0) {
+    const sparkCard = document.createElement('div');
+    sparkCard.className = 'card sparkline-card';
+    sparkCard.innerHTML = '<div class="card-title">Daily Activity (steps)</div>';
+    renderSparkline(sparkCard, dailyActivity.slice(-30), { valueKey: 'steps', labelKey: 'date' });
+    el.append(sparkCard);
+  }
+}
+
+function renderTools() {
+  const { toolUsage } = DATA;
+  const el = document.getElementById('tab-tools');
+  el.innerHTML = '';
+
+  // Bar chart
+  const chartCard = document.createElement('div');
+  chartCard.className = 'card';
+  chartCard.style.marginBottom = '24px';
+  chartCard.innerHTML = '<div class="card-title">Tool Usage (Top 15)</div>';
+  renderBarChart(chartCard, toolUsage, { maxItems: 15, labelKey: 'tool' });
+  el.append(chartCard);
+
+  // Table
+  const tableCard = document.createElement('div');
+  tableCard.className = 'card';
+  let tableHtml = '<div class="card-title">All Tools</div><table class="data-table"><thead><tr><th>#</th><th>Tool</th><th class="num">Count</th><th class="num">%</th></tr></thead><tbody>';
+  toolUsage.forEach((t, i) => {
+    tableHtml += `<tr><td class="num">${i + 1}</td><td class="mono">${esc(t.tool)}</td><td class="num">${fmt(t.count)}</td><td class="num">${t.percentage}%</td></tr>`;
+  });
+  tableHtml += '</tbody></table>';
+  tableCard.innerHTML = tableHtml;
+  el.append(tableCard);
+}
+
+function renderPatterns() {
+  const { complexityBuckets, stepTypeDistribution, thinkingUsage } = DATA;
+  const el = document.getElementById('tab-patterns');
+  el.innerHTML = '';
+
+  const grid = document.createElement('div');
+  grid.className = 'grid-2';
+
+  // Pie chart — complexity
+  const pieCard = document.createElement('div');
+  pieCard.className = 'card';
+  pieCard.innerHTML = '<div class="card-title">Complexity Distribution</div>';
+  renderPieChart(pieCard, complexityBuckets, { labelKey: 'label', valueKey: 'count' });
+  grid.append(pieCard);
+
+  // Thinking usage card
+  const thinkCard = document.createElement('div');
+  thinkCard.className = 'card';
+  thinkCard.innerHTML = `
+    <div class="card-title">Thinking Model Usage</div>
+    <div style="display:flex;align-items:center;justify-content:center;min-height:200px;flex-direction:column">
+      <div class="stat-value" style="font-size:3rem">${thinkingUsage.percentage}%</div>
+      <div class="stat-label" style="margin-top:8px">${thinkingUsage.count} of ${thinkingUsage.total} conversations</div>
+      <div style="margin-top:20px;width:200px;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+        <div style="width:${thinkingUsage.percentage}%;height:100%;background:var(--gradient);border-radius:4px"></div>
+      </div>
+    </div>
+  `;
+  grid.append(thinkCard);
+  el.append(grid);
+
+  // Step type bars
+  const typeCard = document.createElement('div');
+  typeCard.className = 'card';
+  typeCard.innerHTML = '<div class="card-title">Step Type Distribution</div>';
+  renderBarChart(typeCard, stepTypeDistribution, { labelKey: 'type', maxItems: 20 });
+  el.append(typeCard);
+}
+
+function renderTimeline() {
+  const { activityHeatmap, timeDistribution, dailyActivity } = DATA;
+  const el = document.getElementById('tab-timeline');
+  el.innerHTML = '';
+
+  // Heatmap
+  const heatCard = document.createElement('div');
+  heatCard.className = 'card';
+  heatCard.style.marginBottom = '24px';
+  heatCard.innerHTML = '<div class="card-title">Activity Heatmap (Hour × Day of Week, UTC)</div>';
+  renderHeatmap(heatCard, activityHeatmap);
+  el.append(heatCard);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid-2';
+
+  // By hour
+  const hourCard = document.createElement('div');
+  hourCard.className = 'card';
+  hourCard.innerHTML = '<div class="card-title">Conversations by Hour (UTC)</div>';
+  renderBarChart(hourCard, timeDistribution.byHour, { labelKey: 'label', valueKey: 'conversations', showPct: false });
+  grid.append(hourCard);
+
+  // By day of week
+  const dowCard = document.createElement('div');
+  dowCard.className = 'card';
+  dowCard.innerHTML = '<div class="card-title">Conversations by Day of Week</div>';
+  renderBarChart(dowCard, timeDistribution.byDayOfWeek, { labelKey: 'label', valueKey: 'conversations', showPct: false });
+  grid.append(dowCard);
+
+  el.append(grid);
+
+  // Daily conversations sparkline
+  if (dailyActivity && dailyActivity.length > 0) {
+    const sparkCard = document.createElement('div');
+    sparkCard.className = 'card sparkline-card';
+    sparkCard.innerHTML = '<div class="card-title">Daily Conversations</div>';
+    renderSparkline(sparkCard, dailyActivity.slice(-30), { valueKey: 'conversations', labelKey: 'date' });
+    el.append(sparkCard);
+  }
+}
+
+function renderTop() {
+  const { topConversations } = DATA;
+  const el = document.getElementById('tab-top');
+  el.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  let html = '<div class="card-title">Top 10 Most Complex Conversations</div>';
+  html += '<div style="overflow-x:auto"><table class="data-table"><thead><tr>';
+  html += '<th>#</th><th>ID</th><th>Source</th><th class="num">Steps</th><th class="num">Duration</th><th class="num">Files R</th><th class="num">Files W</th><th class="num">Cmds</th><th class="num">Errors</th><th>Preview</th>';
+  html += '</tr></thead><tbody>';
+
+  topConversations.forEach((c, i) => {
+    html += `<tr>
+      <td class="num">${i + 1}</td>
+      <td class="mono">${esc(shortId(c.conversationId))}</td>
+      <td>${esc(c.source)}</td>
+      <td class="num"><strong>${fmt(c.totalSteps)}</strong></td>
+      <td class="num">${c.durationMinutes}m</td>
+      <td class="num">${c.filesRead}</td>
+      <td class="num">${c.filesWritten}</td>
+      <td class="num">${c.commandsRun}</td>
+      <td class="num" style="color:${c.errorSteps > 0 ? 'var(--red)' : 'var(--text3)'}">${c.errorSteps}</td>
+      <td class="truncate" title="${esc(c.userPromptPreview)}">${esc(c.userPromptPreview.slice(0, 80))}${c.userPromptPreview.length > 80 ? '…' : ''}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  card.innerHTML = html;
+  el.append(card);
+}
+
+function renderTokens() {
+  const { estimatedTokens } = DATA;
+  const el = document.getElementById('tab-tokens');
+  el.innerHTML = '';
+
+  // Token stats
+  const statsHtml = `
+    <div class="stats-grid" style="margin-bottom:24px">
+      <div class="card stat-card">
+        <div class="stat-value">${fmt(estimatedTokens.totalInputChars)}</div>
+        <div class="stat-label">Input Characters</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${fmt(estimatedTokens.totalOutputChars)}</div>
+        <div class="stat-label">Output Characters</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${fmt(estimatedTokens.estimatedInputTokens)}</div>
+        <div class="stat-label">Est. Input Tokens</div>
+        <div class="stat-sub">chars ÷ 4</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">${fmt(estimatedTokens.estimatedOutputTokens)}</div>
+        <div class="stat-label">Est. Output Tokens</div>
+        <div class="stat-sub">chars ÷ 4</div>
+      </div>
+    </div>
+  `;
+  el.insertAdjacentHTML('beforeend', statsHtml);
+
+  // Cost models
+  const inM = estimatedTokens.estimatedInputTokens / 1_000_000;
+  const outM = estimatedTokens.estimatedOutputTokens / 1_000_000;
+
+  const models = [
+    { name: 'Claude Opus', subtitle: '$3/M input · $15/M output', inRate: 3, outRate: 15, color: '#f59e0b' },
+    { name: 'Claude Sonnet', subtitle: '$3/M input · $15/M output', inRate: 3, outRate: 15, color: '#a855f7' },
+    { name: 'Gemini 2.5 Pro', subtitle: '$1.25/M input · $10/M output', inRate: 1.25, outRate: 10, color: '#3b82f6' },
+    { name: 'Gemini 2.5 Flash', subtitle: '$0.15/M input · $0.60/M output', inRate: 0.15, outRate: 0.60, color: '#22c55e' },
+  ];
+
+  const costGrid = document.createElement('div');
+  costGrid.className = 'cost-grid';
+
+  for (const m of models) {
+    const inCost = inM * m.inRate;
+    const outCost = outM * m.outRate;
+    const total = inCost + outCost;
+
+    const card = document.createElement('div');
+    card.className = 'card cost-card';
+    card.innerHTML = `
+      <div class="cost-model">${esc(m.name)}</div>
+      <div class="cost-subtitle">${m.subtitle}</div>
+      <div class="cost-row"><span class="label">Input cost</span><span class="value">${fmtDollars(inCost)}</span></div>
+      <div class="cost-row"><span class="label">Output cost</span><span class="value">${fmtDollars(outCost)}</span></div>
+      <div class="cost-row cost-total"><span class="label">Total estimate</span><span class="value">${fmtDollars(total)}</span></div>
+    `;
+    costGrid.append(card);
+  }
+
+  el.append(costGrid);
+
+  // Disclaimer
+  el.insertAdjacentHTML('beforeend', `
+    <div class="card" style="margin-top:8px;padding:16px 24px;text-align:center">
+      <p style="font-size:0.78rem;color:var(--text3)">
+        ⚠️ Token estimates use chars÷4 approximation. Actual costs depend on model, caching, and pricing tier.
+        Character counts only include user (input) and model (output) step content — system/tool results are excluded.
+      </p>
+    </div>
+  `);
+}
+
+// ── Data Loading ─────────────────────────────────────────
+function loadData(json) {
+  DATA = json;
+  document.getElementById('loader-zone').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+
+  if (DATA.generatedAt) {
+    document.getElementById('generated-at').textContent = `Generated ${new Date(DATA.generatedAt).toLocaleString()}`;
+  }
+
+  renderOverview();
+  renderTools();
+  renderPatterns();
+  renderTimeline();
+  renderTop();
+  renderTokens();
+  initTabs();
+}
+
+// File input
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    loadData(JSON.parse(text));
+  } catch (err) {
+    alert(`Failed to parse JSON: ${err.message}`);
+  }
+});
+
+// Auto-load from relative path
+(async () => {
+  try {
+    const resp = await fetch('data/analytics.json');
+    if (resp.ok) {
+      const json = await resp.json();
+      loadData(json);
+    } else {
+      document.getElementById('auto-fail').textContent = 'Auto-load failed — use the button above or serve via HTTP';
+    }
+  } catch {
+    document.getElementById('auto-fail').textContent = 'Auto-load failed — use the button above or serve via HTTP';
+  }
+})();
+</script>
+</body>
+</html>

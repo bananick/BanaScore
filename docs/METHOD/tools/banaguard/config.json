@@ -1,0 +1,47 @@
+{
+  "// BANAGUARD CONFIG": "Edit this file to customize behavior. Changes apply on next check cycle.",
+
+  "pollIntervalSeconds": 30,
+  "ramAlertThresholdPercent": 80,
+  "ramCriticalThresholdPercent": 90,
+
+  "// AUTO-KILL": "These processes are ALWAYS killed on sight, no questions asked.",
+  "autoKill": [
+    "LockApp",
+    "CanvaAutoLaunchAvailabilityCheckAgent"
+  ],
+
+  "// CONDITIONAL KILL": "These are killed ONLY when RAM exceeds the alert threshold.",
+  "conditionalKill": [
+    "ChatGPT",
+    "msedgewebview2",
+    "Teams",
+    "AdobeCollabSync"
+  ],
+
+  "// PROTECTED": "These processes are NEVER killed, even if they use lots of RAM.",
+  "protected": [
+    "Antigravity",
+    "chrome",
+    "node",
+    "explorer",
+    "dwm",
+    "svchost",
+    "powershell",
+    "cmd",
+    "code",
+    "devenv"
+  ],
+
+  "// NOTIFY ONLY": "Show a popup about these hogs but don't kill them. Threshold in MB.",
+  "notifyIfAboveMB": {
+    "chrome": 1500,
+    "node": 3000,
+    "Antigravity": 5000
+  },
+
+  "showBalloonNotifications": true,
+  "logToFile": true,
+  "logFile": "c:\\Users\\BananOffice\\Apps\\Bana-Share\\docs\\METHOD\\tools\\banaguard\\banaguard.log"
+}
+

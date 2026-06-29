@@ -1,0 +1,289 @@
+# METHOD Versioning & Sync Protocol
+
+**Owner:** Lucia  
+**Version:** 309.a  
+**Purpose:** Version scheme, sync protocol, migration policy
+
+---
+
+## Version Scheme
+
+**Format:** `MAJOR.LETTER`
+
+- **MAJOR**: Epoch or significant release (300, 301, 400...)
+- **LETTER**: Minor revision (a, b, c...)
+
+**Current:** 309.a (Epoch 3: Modular & Multi-Entry)
+
+### Epochs
+
+- `100-199`: Epoch 1 (Prototype)
+- `200-299`: Epoch 2 (Production-ready)
+- `300-399`: Epoch 3 (Modular & Multi-Entry) ← **Current**
+- `400-499`: Epoch 4 (Future: Advanced Orchestration)
+
+---
+
+## When to Increment
+
+### Minor (300.a → 300.b)
+- Documentation clarification
+- Bug template improvement
+- Typo fixes
+- Cross-link corrections
+
+### Major (300.z → 301.a)
+- New METHOD file added
+- Significant process change
+- New agent in cohort
+- DoD changes
+- Breaking file structure changes
+- **New native sub-agent** added to `.claude/agents/` (delegatable persona)
+- **New slash-command ritual** added to `.claude/commands/` (e.g. `/plan-sprint`, `/review`, `/port`)
+- **New enforcement hook** wired in `.claude/settings.json` (gate-as-hook)
+
+### Epoch (399.z → 400.a)
+- Foundational overhaul
+- New orchestration paradigm
+- Complete METHOD rewrite
+
+---
+
+## Sync Protocol
+
+### Direction of Truth
+
+> **Source of truth = `Bana-Share`.** METHOD files are authored here and pushed out to all
+> apps. (`SprintOS` was the legacy name of this hub; the repo is now `Bana-Share`.)
+
+| Content | Truth Source | Direction | Frequency |
+|---------|-------------|-----------|-----------|
+| METHOD files | Bana-Share | Bana-Share → apps | On demand |
+| project/ | Each app | Apps → Bana-Share | Daily |
+| sprints/ | Each app | Apps → Bana-Share | Daily |
+| bugs/ | Each app | Apps → Bana-Share | Real-time |
+
+### Rules
+
+1. **METHOD is read-only in apps** (except app-settings.json)
+2. **Apps push project files to Bana-Share**
+3. **Bana-Share never modifies app project files**
+
+---
+
+## Sync Tools
+
+METHOD is authored in **Bana-Share** (the source of truth) and pushed out to all apps.
+
+### Push METHOD → all apps (from Bana-Share root)
+```bash
+npm run sync-method:all          # → node scripts/sync-method-to-all-apps.mjs
+npm run sync-method:all:dry      # preview without writing
+```
+
+### Push METHOD → GitHub (from Bana-Share root)
+```bash
+npm run sync-method              # → node Apps/script/sync-method-to-github.mjs
+npm run sync-method:dry-run      # preview
+```
+
+> Older docs referenced `docs/METHOD/script/sync-method.mjs` — that path does not exist in
+> Bana-Share. Use the `npm run sync-method*` scripts above.
+
+---
+
+## Migration to v303.a
+
+1. Backup: `cp -r docs/METHOD docs/METHOD-backup`
+2. Pull: `npm run sync-method:all` (from Bana-Share root)
+3. Update `app-settings.json`: `"methodVersion": "303.a"`
+4. Remove any mode references in project files
+5. Test with small sprint task
+6. Commit
+
+---
+
+## Version History
+
+**309.a** (2026-06-16) — **Major: Native Orchestration + Reconciliation Refresh**
+- **NEW — Runners & Orchestration layer:** documented the native execution stack in `METHOD.md` / `README.md` — native sub-agents (`.claude/agents/`, **default**) → Agent Teams (parallel) → Cowork (desktop) → Swanifly (**one runner, not THE engine**). Reframed every "Swanifly is the engine" line across the docs.
+- **REWRITE — `routing-method.md` (306.c → 309.a):** replaced the manual "[Switching to Brian]" role-switching worked example with a native flow (`/plan-sprint` → Junia delegates to sub-agents → build → `sage` → `watson` if red → `/review` Vera → merge) + an Agent-Teams parallel variant; added sub-agent and slash-command routing rows; purged retired agents from the routing tables.
+- **CHANGED — Cohort 10 → 12 executable agents:** promoted **Gordon** (Sales/Marketing) and **Kasper** (Security) to native sub-agents (`.claude/agents/`) + Skills. **Riley** (API/automation) remains a demoted advisory hat (not executable). Agents now run in Claude Code (web + Cowork's local Code tab) as sub-agents AND in Claude Desktop as Skills.
+- **NEW — Parallel + fleet model:** worktree isolation, fan-out on independent tasks, dependency gates and merge policy; the multi-repo (~30-app) dimension (shared cohort vs per-app sync).
+- **NEW — Gates as hooks:** DoD / Kill-Gate / write-path scoping (sage→tests, vera→review-only) wired as `.claude/settings.json` PreToolUse hooks instead of honor-system prose.
+- **NEW — Design Port Loop:** promoted `docs/porting/PORTING-PLAYBOOK.md` into the design method — directive-as-file, PORT-MAP-first, one-screen-per-PR, reconcile-don't-overwrite, plus the multi-stack token bridge (incl. the **MUI-hex** rule).
+- **CHANGED — AI infra model refresh:** `ai-infra-method.md` re-owned to **Aiko**; model lineup refreshed to the 2026 baseline (Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5 + 1M context) with prompt-caching cost levers.
+- **CHANGED — Stack drift caveat:** `method-core.md` / `method-core-lite.md` / `code-rules.md` now state **declared stack = TARGET**; detect the app's actual stack first (e.g. `Apps/web` = Next 14 + MUI flat; BanAventures = Vite + Tailwind). `code-rules.md` folder-structure rule made conditional (target `src/features/` vs legacy flat `app/`+`components/`) and re-owned **Kasper → Brian (+ Kasper security review)**.
+- **FIX — Retired-agent purge:** removed Gordon/Riley/Kasper residue from owner lines, routing trees and worked examples across the reconciliation sweep.
+- **FIX — Hygiene:** resolved the `versioning.md` truth-source contradiction (**Bana-Share** is the source of truth) and extended "When to Increment" to cover new sub-agents / slash-commands / hooks; unified the sprint-folder scheme to `docs/sprints/{NNN} {status} {name}/` (purged `{year}/week-##`); removed "(FULL)" / "FULL" mode residue and restored the orphaned debugging-section heading in `method-core.md`; fixed the "mixutils" typo; corrected stale file counts to include `.claude/agents/` + `.claude/commands/`.
+- Version bumped from 308.a → 309.a; synced to the fleet via `npm run sync-method:all`.
+
+**308.a** (2026-06-01) — **Major: Claude Suite Migration**
+- **REWRITE:** `agents-engineering-method.md` — replaced the Cursor + Antigravity 2.0 dual-tool model with the **Claude suite**: Claude Desktop (cockpit/plan/review/design), Claude Code (autonomous executor + Swanifly engine), Claude Design/Artifacts (prototyping)
+- **NEW FILE:** root `CLAUDE.md` — canonical project context, auto-loaded by Claude Code and pasted into Desktop Projects (merges the useful content of `AGENTS.md` + `GEMINI.md`)
+- **NEW:** `.claude/skills/` — the agent cohort as Claude Skills (10 personas), mirroring `Swanifly/web/lib/engine/agent-personas.ts` as source of truth
+- **NEW:** Claude Desktop settings section — Projects, Skills, MCP connectors, custom instructions, model selection
+- **CHANGED:** Prototyping moved to **Claude Artifacts** (Nova), replacing the home-made proto-kit live tuner
+- **CHANGED:** Agent cohort pruned 13 → **10** to match what the engine can actually spawn; Gordon, Riley, Kasper reframed as advisory hats (not executable Skills)
+- **FIX:** `method-core.md` DoD corrected from a stale 15-item list to the streamlined 9 items (as 305.a intended)
+- **FIX:** duplicate/misnumbered `306.c` changelog entry relabeled to `304.b`
+- **DEPRECATED:** `GEMINI.md` (→ redirect stub), `.cursor/rules/`, `proto-kit/`, `tools/banabooster/`, `tools/swanifly-antigravity-addon/`
+- Version bumped from 307.a → 308.a
+
+**307.a** (2026-05-21) — **Major: Antigravity 2.0 Tool-Tier Overhaul**
+- **REWRITE:** `agents-engineering-method.md` (formerly `vibe-coding-method.md`) — replaced 3-tier model (Ollama/Cline Kanban/Antigravity) with 2-tool model (Cursor + Antigravity 2.0)
+- **NEW:** Cursor vs Antigravity decision tree — practical guidance for dual-tool workflow
+- **NEW:** Antigravity subagent patterns for Brian, Sage, Watson — parallel sprint execution without Cline Kanban
+- **NEW:** Updated sprint execution loop diagram for AG 2.0 (subagents, browser tool, background tasks)
+- **CHANGED:** Agent→tool mapping table rewritten — all agents now map to Antigravity (primary) or Cursor (quick edits); Cline Kanban removed
+- **CHANGED:** `agents-method.md` — refreshed all 14 agent model preferences: Claude Opus 4.6 for deep reasoning/review, Gemini 2.5 Pro for fast iteration, removed GPT-5 Codex references
+- **CHANGED:** `agents-method.md` — added **Tool** field to every agent's Model Preference section
+- **DEPRECATED:** `.clinerules`, `kanban-templates/` — kept for compatibility but no longer actively maintained
+- Version bumped from 306.c → 307.a
+
+**306.c** (2026-04-16) — **Minor: BanaBooster Auto-Retry Watcher**
+- **NEW TOOL:** `docs/METHOD/tools/banabooster/patch.js` — added Auto-Retry Watcher: a `MutationObserver` IIFE injected into Antigravity's workbench that automatically clicks **Retry** on the "Agent terminated due to error" dialog (e.g. HTTP 400 from Claude's Vertex endpoint)
+- **CHANGED:** Retry watcher injected independently of the AutoRun patch — works even when autorun pattern-match fails for a given AG version
+- **CHANGED:** `--check` now reports `+retry` / `(no retry)` status; `--revert` strips both patches cleanly
+- Version bumped from 306.b → 306.c
+
+**306.b** (2026-04-16) — **Minor: Emoji Status Tags + PowerShell Fix**
+- **CHANGED:** Replaced bracket-based sprint status tags (`[ ]`, `[x]`, `[v]`, `[!]`) with emoji equivalents (`⬜`, `✅`, `☑️`, `⚠️`) in all METHOD files, templates, and workflow scripts
+- **CHANGED:** `sprints-method.md`, `METHOD.md`, `TASK-TEMPLATE.md`, `sprint-plan.md`, `sprint-close.md`, `task-start.md` — updated all filename format examples and status references
+- **FIX:** PowerShell treats `[ ]` as wildcard pattern matchers in paths, causing errors when referencing sprint task files; emojis are safe
+- Version bumped from 306.a → 306.b; synced to all repos
+
+
+**306.a** (2026-04-11) — **Major: Process-First AI Architecture**
+- **NEW FILE:** `process-method.md` — Process architecture standard: delegation types (manual→autonomous), trust progression, ProcessRun/ProcessStepRun schemas, process health monitoring, continuous improvement loops
+- **NEW TEMPLATE:** `PROCESS-TEMPLATE.md` — Reusable template for defining business processes in `project/PROCESSES.md`
+- **NEW TEMPLATE:** `AGENT-CONTRACT-TEMPLATE.md` — Formal agent contract template targeting `project/AI-INFRA.md`
+- **CHANGED:** `definition-method.md` — Added Chapter 13 (`13-processes.md`, required for AI-native apps) to the Specification Book
+- **CHANGED:** `ai-infra-method.md` — Added Process Execution Tracing section with `ProcessTraceLogger` utility (Admin SDK, subcollection-based steps, atomic counters, costUsd per step)
+- **CHANGED:** `agents-method.md` — Added ProcessOps rituals: Watson (bi-weekly Process Health Check), Lucia (monthly Process Review)
+- **CHANGED:** `METHOD.md` — Process-First added to core principles, file count 14→15, Quick Start entry, innovations 16-18
+- Total METHOD files: 14 → 15 (added `process-method.md`), templates: 9 → 11
+
+**305.b** (2026-03-28) — **Minor: Antigravity Update Stability**
+- **NEW:** Explicit requirement to re-run `ag-autorun` patch after Antigravity IDE updates to prevent UI regressions (blank screens) and restore checksum-bypassed auto-execution.
+- Documentation sync with current repo state.
+
+**305.a** (2026-03-21) — **Major: Definition Pipeline + Focus + Cross-App Governance**
+- **NEW FILE:** `definition-method.md` — 3-phase pipeline (DISCOVER → SPECIFY → PROTOTYPE) with templates, gates, anti-patterns
+- **NEW:** Focus System — single-objective taquet (NOW/NEXT/LATER) per app via `project/FOCUS.md`
+- **NEW:** Cross-App Governance — BanaPilot visual sync, drift detection, health scoring
+- **NEW:** M3 Design Standard — Material Design 3 made mandatory baseline for all apps
+- **CHANGED:** DoD streamlined from 15 → 9 items (removed redundant schema/state checks, folded into task-specific gates)
+- **CHANGED:** METHOD.md rewritten with table-first formatting for fast scanning
+- **CHANGED:** Context loading rule added: max 3 METHOD files per chat session
+- **CHANGED:** Quick Start table replaces triple entry-point sections
+- Total METHOD files: 12 → 14 (added `definition-method.md`, kept all existing)
+
+**304.b** (2026-03-14) — **Minor: Consistency & Cleanup**
+- Added `**Version:**` headers to `prompting-method.md` and `cursor-rules.md`
+- Fixed stale `v303.a` and `MODE` references in `cursor-rules.md`
+- All 12 METHOD files now carry consistent version headers
+- *(Note: previously mislabeled `306.c`; corrected in 308.a — it predates 305.a.)*
+
+**304.a** (2026-03-11) — **Major: Data Governance + AI Agent Management + Automation**
+- **NEW:** Data Structure Governance — `SCHEMA-TEMPLATE.md` (schema registry with collections, fields, relationships, migration log, Zod spec); `method-core.md` adds 5 governance rules (docs-first, Zod required, no untyped writes, migration protocol, schema review)
+- **NEW:** DoD extended from 8 → 15 items: +Zod schemas, +SCHEMA.md updates, +empty states, +error states, +loading states, +pushed to GitHub
+- **NEW:** `REVIEW-TEMPLATE.md` now includes Data & Schema checklist for Vera
+- **NEW:** `STRUCTURE-TEMPLATE.md` now includes Data Model quick reference section
+- **NEW:** Antigravity Workflow Automation — 3 workflow files created (`_agents/workflows/sprint-plan.md`, `sprint-close.md`, `task-start.md`) for METHOD rituals triggered by slash commands
+- **NEW:** AI Agent Management overhaul in `ai-infra-method.md` — Gemini-first task-type routing (8 task types: fast-text, fast-vision, emotion, copy-review, logic, design, embedding, batch), Mistral adapter, Vertex AI integration, A2A pipeline pattern, AI-native app design guidelines, vectorization strategy
+- Fixed stale `FULL Mode` label in `agents-method.md`
+- Removed obsolete Next Steps from `ai-infra-method.md`
+- Updated pricing table with Mistral models
+- Updated `agents-project.json` to use task-type routing
+
+**303.f** (2026-03-11) — **Minor: MODE Cleanup + Firebase + Visual Testing**
+- **BREAKING:** Removed FAST/FORTH and all remaining Orchestration Mode references (Single-LLM, Multi-Agent, Hybrid, SplitOS) from active documentation across all METHOD files
+- Renamed "Agent Interaction Patterns" section → Mono-Conversation pattern only (`agents-method.md`)
+- Updated Riley's role description and responsibilities to remove SplitOS; now references ADK/MCP (`agents-method.md`)
+- Removed Core Innovations items 5 (Three Orchestration Modes) and 8 (SplitOS Readiness); renumbered to 12 items (`METHOD.md`, `README.md`)
+- **NEW:** `Firebase Deployment Readiness` checklist section added (`method-core.md`) — env, rules, build, hosting, staging → prod flow
+- **NEW:** Git Sync Cadence made explicit — commit + push required after every `[x]` task, not only at sprint end (`method-core.md`)
+- **NEW:** Visual Snapshot Testing section — Antigravity browser tool captures screenshots at sprint end, saved to `docs/sprints/{sprint}/screenshots/` (`tests-method.md`)
+- Junia Consolidation ritual updated: added step 7 (Visual Snapshot), step 8 (Firebase deploy), renumbered to 10 steps (`sprints-method.md`)
+- **design-method.md:** Added Reference Models table (MD3, Google Play Store, Apple HIG with URLs); added Logo & Brand Identity section (gradient inline icon/favicon, mono variant, favicon sizes); dark mode marked **required**; removed Next Steps
+- Epoch 4 label updated: "Advanced Orchestration" (was "SplitOS native") (`versioning.md`)
+
+**303.e** (2026-03-08) — **Minor: Riley Reorientation + CUJ-First Motion**
+- Reoriented Riley from No-code Automation → API & Multi-Agent Architecture
+- Added CUJ-First Motion / Precision Gate ritual (April, Junia) to `sprints-method.md`
+- Added CUJ-TEMPLATE.md updates and Sprint Launch Prompt requirement
+
+**303.d** (2026-03-05) — **Minor: Core Innovations + i18n**
+- Added Commit & Sync per Task rule to Core Innovations
+- Added Sprint Folder Status tagging convention
+- Hardened i18n requirements (EN/FR baseline for all apps)
+
+**303.c** (2026-03-01) — **Minor: Navigation Behaviour Characterization**
+- Added **Mutual Exclusivity Rule** (State A: Expanded Drawer ↔ State B: Collapsed Rail + Panel) to `design-method.md` and `NAVIGATION-TEMPLATE.md`
+- Added **Content-push layout** rule: nav never overlays page content on desktop (no z-index layering)
+- Added **Transition choreography** documentation (concurrent drawer shrink + panel slide, 200ms)
+- Updated rail item click behavior to explain visual consequence of `route` vs `panel` types
+- Added **Restore-on-close** behavior preference field to `NAVIGATION-TEMPLATE.md`
+- Expanded **Mobile Navigation** spec: icon-only bottom nav style, full-screen search takeover, gesture nav, center FAB slot, 5-item option
+- Updated ASCII visual specs in `design-method.md` to show both State A and State B diagrams
+
+**303.b** (2026-02-12) — **Minor: Sprint Launch Prompts**
+- Added Sprint Launch Prompt requirement to `METHOD.md` and `sprints-method.md`
+
+**303.a** (2026-01-31) — **Major version: Design Baselines + Navigation Spec**
+- Added **Swanifly Design Philosophy** (minimalism, efficiency, empowerment, clear structure) to `design-method.md`
+- Expanded **Navigation Patterns** to formalize the canonical “mono-rail + secondary panels” + sales/guest header variant + mobile matrix
+- Added `templates/NAVIGATION-TEMPLATE.md` for app-level navigation maps in `project/DESIGN.md`
+
+**302.a** (2026-01-28) — **Major version: Governance & Simplification**
+- **BREAKING:** Removed FAST/FORTH/FULL modes entirely → single standard DoD
+- Added Hierarchy of Truth: METHOD > VISION > PLAN > TASK > CODE
+- Added Document States: [LIVING] and [FROZEN]
+- Restructured agent roster: Core Loop (4) vs On-Demand (9)
+- Added Human Executive (Agent 0) clarification
+- Added Pre-Flight checklist, Vera Fast-Track, Kill Gate rituals
+- Created project/STATE.md as single source of truth
+- Cleaned up unused templates (4) and scripts (5)
+
+**301.b** (2026-01-28)
+- Multitenancy-by-default baseline (Teams as tenants) documented in `method-core.md`
+- Tenant-aware examples across METHOD (routing, sprints, review template, AI infra MCP example)
+- `app-settings.json` updated with `multitenant` + `tenantNoun` defaults
+
+**301.a** (2026-01-24)
+- Added `project/STRUCTURE.md` as a first-class planning surface (routing + agent info surfaces)
+- Added `templates/STRUCTURE-TEMPLATE.md`
+- Added Double Drawer navigation pattern in `design-method.md`
+
+**300.d** (2026-01-07)
+- Added Review Gate (Vera high-model Analyzer) and `[v]` validation workflow
+- Added `templates/REVIEW-TEMPLATE.md` for task + sprint reviews
+- Expanded cohort to 13 agents (added Vera)
+
+**300.b** (2025-11-30)
+- Corrected agent roles to match v207.j historical definitions
+- 12 agents: 4 Managers, 2 Developers, 6 Experts
+- Gordon = Marketing & Growth (not QA)
+- Teddy = Mobile Development (restored)
+- Aiko = AI Integration (not Mobile)
+- Sage = Test Architect (not Architect)
+- Riley = No-code Automation (not AI Engineer)
+- Kasper = Security (added)
+
+**300.a** (2025-11-15)
+- Initial modular METHOD release
+- 10 focused files
+- Multi-entry routing
+- Global agent cohort (10 agents)
+- Bug tracking loop
+- SplitOS readiness
+
+**207.j** (2025-11-10)
+- Last monolithic METHOD
+
+---
+
+**Owner:** Lucia  
+**Last Updated:** 2026-06-16
+

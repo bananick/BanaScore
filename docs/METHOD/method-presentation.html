@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le METHOD v307.a — Présentation Interactive</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.06);--surface3:rgba(255,255,255,0.09);
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.12);
+  --text:#e8e8f0;--text2:#9898a8;--text3:#58586a;
+  --purple:#a78bfa;--indigo:#818cf8;--blue:#60a5fa;--cyan:#22d3ee;
+  --green:#34d399;--yellow:#fbbf24;--orange:#f97316;--red:#f87171;--pink:#f472b6;
+  --grad:linear-gradient(135deg,#a78bfa,#818cf8,#60a5fa);
+  --grad2:linear-gradient(135deg,#f472b6,#a78bfa,#818cf8);
+  --grad-text:linear-gradient(135deg,#c4b5fd,#93c5fd);
+  --radius:16px;--radius-sm:10px;--radius-xs:6px;
+}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(167,139,250,0.3)}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.82);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);transition:box-shadow .3s}
+.nav.scrolled{box-shadow:0 4px 30px rgba(0,0,0,0.4)}
+.nav-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;height:56px;gap:8px}
+.nav-logo{font-weight:800;font-size:1rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;flex-shrink:0}
+.nav-links{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-left:auto;padding:4px 0}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:500;color:var(--text3);cursor:pointer;transition:.2s;white-space:nowrap;border:none;background:none;text-decoration:none}
+.nav-link:hover{color:var(--text2);background:var(--surface2)}
+.nav-link.active{color:var(--purple);background:rgba(167,139,250,0.1)}
+
+/* SECTIONS */
+.section{padding:100px 0 60px;opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.section.visible{opacity:1;transform:translateY(0)}
+.container{max-width:1120px;margin:0 auto;padding:0 24px}
+.section-badge{display:inline-flex;align-items:center;gap:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--purple);background:rgba(167,139,250,0.1);padding:6px 14px;border-radius:20px;margin-bottom:16px}
+.section-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;line-height:1.2;margin-bottom:12px}
+.section-subtitle{font-size:1.05rem;color:var(--text2);max-width:640px;margin-bottom:40px;line-height:1.7}
+.grad-text{background:var(--grad-text);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden;padding:0}
+#hero .section-title{font-size:clamp(2.4rem,6vw,4rem);margin-bottom:16px}
+#hero .section-subtitle{margin:0 auto 32px;max-width:700px}
+.hero-bg{position:absolute;inset:0;z-index:0}
+.hero-bg canvas{width:100%;height:100%}
+.hero-content{position:relative;z-index:1}
+.hero-version{display:inline-block;font-size:.8rem;font-weight:600;color:var(--text2);background:var(--surface2);border:1px solid var(--border);padding:6px 16px;border-radius:20px;margin-top:16px;font-family:monospace}
+.hero-stats{display:flex;gap:32px;justify-content:center;margin-top:32px;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat-num{font-size:2rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-stat-label{font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:transform .3s,border-color .3s,box-shadow .3s;cursor:default;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.card-grid{display:grid;gap:16px}
+.card-grid-2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card-grid-3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card-grid-4{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card p{font-size:.88rem;color:var(--text2);line-height:1.6}
+.card-accent{position:absolute;top:0;left:0;right:0;height:2px}
+.tag{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:3px 8px;border-radius:4px;margin-top:10px}
+
+/* PYRAMID */
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:40px 0}
+.pyramid-level{display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;border-radius:var(--radius-sm);padding:12px;transition:.3s;cursor:default;border:1px solid transparent}
+.pyramid-level:hover{transform:scale(1.03);border-color:var(--border2)}
+
+/* AGENTS */
+.agent-card{cursor:pointer;transition:transform .3s,border-color .3s,box-shadow .3s}
+.agent-card:hover{transform:translateY(-4px);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+.agent-emoji{font-size:2rem;margin-bottom:8px;display:block}
+.agent-name{font-size:1.1rem;font-weight:800}
+.agent-role{font-size:.82rem;color:var(--text2);margin-top:2px}
+.agent-details{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;padding:0 0}
+.agent-card.expanded .agent-details{max-height:300px;padding:16px 0 0}
+.agent-details p{font-size:.82rem;color:var(--text2);margin-bottom:6px}
+.agent-details .detail-label{font-weight:600;color:var(--text)}
+.group-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin:32px 0 12px;display:flex;align-items:center;gap:8px}
+.group-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* SPRINT LOOP */
+.sprint-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:40px 0;padding:20px 0}
+.sprint-step{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:110px;transition:.3s;position:relative}
+.sprint-step:hover{transform:translateY(-3px);border-color:var(--purple);box-shadow:0 8px 30px rgba(167,139,250,0.15)}
+.sprint-step-icon{font-size:1.6rem}
+.sprint-step-label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.sprint-step-agent{font-size:.65rem;color:var(--text3);font-weight:500}
+.sprint-arrow{color:var(--text3);font-size:1.2rem;animation:pulseArrow 2s infinite}
+@keyframes pulseArrow{0%,100%{opacity:.3}50%{opacity:1}}
+.sprint-step.active-step{border-color:var(--purple);background:rgba(167,139,250,0.05)}
+
+/* TOOLS */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:32px 0}
+.tool-card{padding:32px;text-align:center}
+.tool-icon{font-size:3rem;margin-bottom:16px}
+.tool-name{font-size:1.4rem;font-weight:800;margin-bottom:4px}
+.tool-tagline{font-size:.9rem;color:var(--text2);font-style:italic;margin-bottom:20px}
+.tool-features{list-style:none;text-align:left;display:flex;flex-direction:column;gap:8px}
+.tool-features li{font-size:.85rem;color:var(--text2);display:flex;align-items:flex-start;gap:8px}
+.tool-features li::before{content:'→';color:var(--purple);font-weight:700;flex-shrink:0}
+.decision-tree{margin:40px 0}
+.decision-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:8px 0}
+.decision-item{padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.85rem;color:var(--text2)}
+.decision-header{font-weight:700;color:var(--text);margin-bottom:4px;font-size:.8rem}
+
+/* FILE TREE */
+.file-tree{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;font-family:'Courier New',monospace;font-size:.8rem;line-height:2}
+.file-tree .dir{color:var(--purple);font-weight:600;cursor:pointer}
+.file-tree .dir:hover{text-decoration:underline}
+.file-tree .file{color:var(--text2);cursor:pointer;transition:color .2s}
+.file-tree .file:hover{color:var(--text)}
+.file-tree .comment{color:var(--text3);font-style:italic}
+.file-tree .ns{display:inline-block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.ns-synced{background:rgba(167,139,250,0.15);color:var(--purple)}
+.ns-local{background:rgba(52,211,153,0.15);color:var(--green)}
+.file-tooltip{position:fixed;background:rgba(10,10,15,0.95);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 16px;font-size:.8rem;color:var(--text);z-index:200;pointer-events:none;opacity:0;transition:opacity .2s;max-width:300px;font-family:'Inter',sans-serif;backdrop-filter:blur(12px)}
+
+/* PIPELINE */
+.pipeline-phases{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:32px 0}
+.phase-card{text-align:center;padding:24px 16px;cursor:pointer;position:relative}
+.phase-card .phase-num{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.phase-card h3{font-size:1.1rem;margin-bottom:8px}
+.phase-deliverables{max-height:0;overflow:hidden;transition:max-height .4s}
+.phase-card.expanded .phase-deliverables{max-height:200px}
+.phase-deliverables ul{list-style:none;text-align:left;padding-top:12px}
+.phase-deliverables li{font-size:.8rem;color:var(--text2);padding:4px 0;display:flex;align-items:center;gap:6px}
+.phase-deliverables li::before{content:'•';font-weight:700}
+
+/* FOCUS */
+.focus-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:32px 0}
+.focus-item{text-align:center;padding:20px 12px;border-radius:var(--radius);cursor:default}
+.focus-icon{font-size:2rem;margin-bottom:8px}
+.focus-label{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.focus-desc{font-size:.75rem;color:var(--text2)}
+.ratchet{display:flex;align-items:center;gap:2px;justify-content:center;margin:40px 0;flex-wrap:wrap}
+.ratchet-tooth{width:48px;height:48px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;transition:.3s}
+.ratchet-tooth.done{background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
+.ratchet-tooth.current{background:rgba(248,113,113,0.15);color:var(--red);border:2px solid var(--red);transform:scale(1.15);animation:ratchetPulse 2s infinite}
+.ratchet-tooth.locked{background:var(--surface);color:var(--text3);border:1px solid var(--border);opacity:.5}
+.ratchet-connector{color:var(--text3);font-size:.8rem;padding:0 2px}
+@keyframes ratchetPulse{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,0.3)}50%{box-shadow:0 0 0 8px rgba(248,113,113,0)}}
+
+/* APPS */
+.apps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:32px 0}
+.app-card{padding:16px;text-align:center;cursor:default}
+.app-card:hover{transform:translateY(-2px)}
+.app-emoji{font-size:1.5rem;margin-bottom:6px;display:block}
+.app-name{font-size:.85rem;font-weight:700}
+.app-desc{font-size:.7rem;color:var(--text3);margin-top:2px;line-height:1.4}
+.app-tech{display:inline-block;font-size:.6rem;font-weight:600;color:var(--indigo);background:rgba(129,140,248,0.1);padding:2px 8px;border-radius:3px;margin-top:6px}
+
+/* SWANIFLY */
+.swanifly-hero{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;margin:32px 0}
+.swanifly-stat{display:flex;gap:24px;flex-wrap:wrap;margin:20px 0}
+.swanifly-stat-item{text-align:center}
+.swanifly-stat-num{font-size:1.8rem;font-weight:800;background:var(--grad2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.swanifly-stat-label{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+
+/* GAUGE */
+.gauge{margin:32px 0;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.gauge-bar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--yellow),var(--orange),var(--red));margin:12px 0;position:relative}
+.gauge-labels{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text3)}
+.gauge-markers{display:flex;justify-content:space-around;margin-top:16px;flex-wrap:wrap;gap:8px}
+.gauge-marker{font-size:.78rem;color:var(--text2);padding:6px 12px;background:var(--surface2);border-radius:var(--radius-xs)}
+
+/* TIMELINE */
+.timeline{position:relative;margin:32px 0;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;margin-bottom:24px;padding-left:20px}
+.timeline-item::before{content:'';position:absolute;left:-25px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--purple);background:var(--bg)}
+.timeline-item.major::before{background:var(--purple);box-shadow:0 0 12px rgba(167,139,250,0.4)}
+.timeline-date{font-size:.7rem;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px}
+.timeline-version{font-size:1rem;font-weight:700;margin:4px 0}
+.timeline-desc{font-size:.82rem;color:var(--text2);line-height:1.5}
+
+/* EVOLUTION AGENTS ICONS */
+.lucia-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);padding:8px 16px;border-radius:20px;font-size:.85rem;font-weight:600;color:var(--purple);margin:16px 0}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .tools-grid,.swanifly-hero{grid-template-columns:1fr}
+  .decision-row{grid-template-columns:1fr}
+  .pipeline-phases{grid-template-columns:repeat(2,1fr)}
+  .focus-grid{grid-template-columns:repeat(2,1fr)}
+  .sprint-flow{gap:6px}
+  .sprint-step{min-width:80px;padding:12px}
+  .sprint-step-label{font-size:.65rem}
+  .hero-stats{gap:20px}
+}
+@media(max-width:600px){
+  .pipeline-phases,.focus-grid{grid-template-columns:1fr}
+  .apps-grid{grid-template-columns:repeat(2,1fr)}
+  .nav-link{padding:6px 8px;font-size:.7rem}
+}
+
+/* SCROLL ANIMATIONS */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:20px 0}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">🍌 METHOD</div>
+    <div class="nav-links">
+      <a class="nav-link active" href="#hero">Accueil</a>
+      <a class="nav-link" href="#philosophie">Philosophie</a>
+      <a class="nav-link" href="#agents">Agents</a>
+      <a class="nav-link" href="#sprint-loop">Sprint Loop</a>
+      <a class="nav-link" href="#outils">Outils</a>
+      <a class="nav-link" href="#fichiers">Fichiers</a>
+      <a class="nav-link" href="#pipeline">Pipeline</a>
+      <a class="nav-link" href="#focus">Focus</a>
+      <a class="nav-link" href="#apps">Apps</a>
+      <a class="nav-link" href="#swanifly">Swanifly</a>
+      <a class="nav-link" href="#hors-methode">Hors-Méthode</a>
+      <a class="nav-link" href="#evolution">Évolution</a>
+      <a class="nav-link" href="#comparisons">Comparaisons</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="section visible" id="hero">
+  <div class="hero-bg"><canvas id="heroCanvas"></canvas></div>
+  <div class="hero-content">
+    <div class="section-badge">Méthodologie d'Ingénierie par Agents</div>
+    <h1 class="section-title">Le <span class="grad-text">METHOD</span> v307.a</h1>
+    <p class="section-subtitle">15 fichiers, 13 agents, 40 apps — un système modulaire pour construire des produits SaaS avec des agents IA, du premier brief jusqu'au lancement.</p>
+    <div class="hero-version">Epoch 3 · Modular & Multi-Entry · Mai 2026</div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">15</div><div class="hero-stat-label">Fichiers</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">13</div><div class="hero-stat-label">Agents</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">40</div><div class="hero-stat-label">Apps</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">4</div><div class="hero-stat-label">Epochs</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHIE -->
+<section class="section" id="philosophie">
+  <div class="container">
+    <div class="section-badge">01 · Principes</div>
+    <h2 class="section-title">La <span class="grad-text">Philosophie</span></h2>
+    <p class="section-subtitle">Six principes fondateurs et une hiérarchie de vérité pour guider chaque décision.</p>
+
+    <div class="card-grid card-grid-3 reveal">
+      <div class="card"><div class="card-accent" style="background:var(--grad)"></div><h3>📄 Docs-First</h3><p>Écrire la documentation avant le code. Mettre à jour la doc avec le code. Les docs sont la vérité ; le code est l'implémentation.</p></div>
+      <div class="card"><div class="card-accent" style="background:linear-gradient(135deg,var(--red),var(--orange))"></div><h3>🎯 Focus-First</h3><p>Un seul objectif à la fois. Le mécanisme du taquet empêche de passer au suivant tant que le courant n'est pas terminé.</p></div>
+      <div class="card"><div class="card-accent" style="background:linear-gradient(135deg,var(--green),var(--cyan))"></div><h3>⚙️ Process-First</h3><p>Les processus métier sont des citoyens de première classe. Chaque processus a un type de délégation, un niveau de confiance, et des métriques.</p></div>
+      <div class="card"><div class="card-accent" style="background:linear-gradient(135deg,var(--yellow),var(--orange))"></div><h3>🔄 Adaptive</h3><p>Un standard de travail avec qualité intégrée. Le Core Loop gère la majorité ; les spécialistes interviennent quand leur domaine est touché.</p></div>
+      <div class="card"><div class="card-accent" style="background:linear-gradient(135deg,var(--cyan),var(--blue))"></div><h3>🪶 Lightweight</h3><p>Pas de processus lourd sauf nécessité. Les gates de qualité sont intégrés au workflow : Pre-Flight, Review Gate, Kill Gate.</p></div>
+      <div class="card"><div class="card-accent" style="background:linear-gradient(135deg,var(--pink),var(--purple))"></div><h3>📍 Local-First</h3><p>Tout vit dans le repo. Pas de dashboards externes obligatoires. Les fichiers Markdown sont la source de vérité universelle.</p></div>
+    </div>
+
+    <h3 style="font-size:1.2rem;font-weight:700;margin:48px 0 16px;text-align:center" class="reveal">La Pyramide de Vérité</h3>
+    <p style="text-align:center;color:var(--text2);font-size:.88rem;margin-bottom:24px" class="reveal">Quand il y a conflit, le niveau supérieur prévaut toujours.</p>
+    <div class="pyramid reveal">
+      <div class="pyramid-level" style="width:180px;background:rgba(167,139,250,0.2);color:var(--purple);font-size:.85rem">🏛 METHOD</div>
+      <div class="pyramid-level" style="width:240px;background:rgba(129,140,248,0.15);color:var(--indigo);font-size:.82rem">🔭 VISION</div>
+      <div class="pyramid-level" style="width:300px;background:rgba(96,165,250,0.12);color:var(--blue);font-size:.8rem">📋 PLAN</div>
+      <div class="pyramid-level" style="width:370px;background:rgba(34,211,238,0.1);color:var(--cyan);font-size:.78rem">🎯 FOCUS</div>
+      <div class="pyramid-level" style="width:440px;background:rgba(52,211,153,0.08);color:var(--green);font-size:.76rem">📝 TASK</div>
+      <div class="pyramid-level" style="width:520px;background:rgba(251,191,36,0.06);color:var(--yellow);font-size:.74rem">💻 CODE</div>
+    </div>
+
+    <div class="card reveal" style="margin-top:40px;border-left:3px solid var(--purple);padding:24px 28px">
+      <h3 style="margin-bottom:12px">🤖 Agents Engineering</h3>
+      <p>Le METHOD traite les agents IA comme des membres d'équipe avec des <strong>rôles définis</strong>, des <strong>surfaces d'information</strong> (ce qu'ils lisent/écrivent), des <strong>rituels</strong> (quand ils agissent), et des <strong>préférences de modèle</strong>. Chaque agent a un contrat clair : pas d'ambiguïté sur qui fait quoi, quand, et avec quels fichiers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section class="section" id="agents">
+  <div class="container">
+    <div class="section-badge">02 · La Cohorte</div>
+    <h2 class="section-title">13 <span class="grad-text">Agents</span></h2>
+    <p class="section-subtitle">Une cohorte complète organisée en Core Loop, Managers, et Spécialistes. Cliquez sur un agent pour voir ses détails.</p>
+
+    <div class="group-label">⚡ Core Loop — Toujours engagés</div>
+    <div class="card-grid card-grid-3" id="core-agents"></div>
+
+    <div class="group-label">📐 Managers — Avant chaque sprint</div>
+    <div class="card-grid card-grid-3" id="manager-agents"></div>
+
+    <div class="group-label">🔬 Spécialistes — À la demande</div>
+    <div class="card-grid card-grid-4" id="specialist-agents"></div>
+  </div>
+</section>
+
+<!-- SPRINT LOOP -->
+<section class="section" id="sprint-loop">
+  <div class="container">
+    <div class="section-badge">03 · Le Cycle</div>
+    <h2 class="section-title">Le <span class="grad-text">Sprint Loop</span></h2>
+    <p class="section-subtitle">7 étapes pour chaque sprint, du planning à la clôture. Les agents se relaient à chaque phase.</p>
+
+    <div class="sprint-flow reveal" id="sprintFlow">
+      <div class="sprint-step" data-step="0"><div class="sprint-step-icon">📋</div><div class="sprint-step-label">Plan</div><div class="sprint-step-agent">Junia</div></div>
+      <div class="sprint-arrow">→</div>
+      <div class="sprint-step" data-step="1"><div class="sprint-step-icon">🎯</div><div class="sprint-step-label">Scope</div><div class="sprint-step-agent">April + Junia</div></div>
+      <div class="sprint-arrow">→</div>
+      <div class="sprint-step" data-step="2"><div class="sprint-step-icon">🛠</div><div class="sprint-step-label">Execute</div><div class="sprint-step-agent">Brian / Teddy</div></div>
+      <div class="sprint-arrow">→</div>
+      <div class="sprint-step" data-step="3"><div class="sprint-step-icon">🧪</div><div class="sprint-step-label">Test</div><div class="sprint-step-agent">Sage + Watson</div></div>
+      <div class="sprint-arrow">→</div>
+      <div class="sprint-step" data-step="4"><div class="sprint-step-icon">✅</div><div class="sprint-step-label">Verify</div><div class="sprint-step-agent">Vera</div></div>
+      <div class="sprint-arrow">→</div>
+      <div class="sprint-step" data-step="5"><div class="sprint-step-icon">📊</div><div class="sprint-step-label">Review</div><div class="sprint-step-agent">Vera + Junia</div></div>
+      <div class="sprint-arrow">→</div>
+      <div class="sprint-step" data-step="6"><div class="sprint-step-icon">🔒</div><div class="sprint-step-label">Close</div><div class="sprint-step-agent">Junia</div></div>
+    </div>
+
+    <div class="card-grid card-grid-3 reveal">
+      <div class="card"><h3>🚦 Pre-Flight Gate</h3><p>Vérifier la clarté avant de commencer. CUJ Precision Gate validé ? Managers synced ? Incertitude &lt; 5% ?</p></div>
+      <div class="card"><h3>✅ Review Gate</h3><p>Vera valide chaque tâche après exécution. Modèle haut (Claude Opus 4.6). Résultat : ☑️ (validé) ou ⚠️ (rejeté).</p></div>
+      <div class="card"><h3>🔐 Kill Gate</h3><p>Junia vérifie avant de fermer : toutes les tâches ☑️ ? Pas de ⚠️ non traités ? Smoke test OK ? Alors on close.</p></div>
+    </div>
+
+    <div class="card reveal" style="margin-top:24px;border-left:3px solid var(--yellow)">
+      <h3>📂 Convention de fichiers</h3>
+      <p style="font-family:monospace;font-size:.82rem;margin-top:8px;color:var(--text2)">
+        docs/sprints/{NNN}/<br>
+        &nbsp;&nbsp;{sprint}-{seq} {status} {Agent} - {title}.md<br><br>
+        <span style="color:var(--yellow)">⬜</span> Todo &nbsp;·&nbsp; <span style="color:var(--green)">✅</span> Done &nbsp;·&nbsp; <span style="color:var(--cyan)">☑️</span> Validated &nbsp;·&nbsp; <span style="color:var(--red)">⚠️</span> Problem
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- OUTILS -->
+<section class="section" id="outils">
+  <div class="container">
+    <div class="section-badge">04 · Les Outils</div>
+    <h2 class="section-title">Deux <span class="grad-text">Outils</span></h2>
+    <p class="section-subtitle">Cursor et Antigravity se complètent. Le bon outil au bon moment.</p>
+
+    <div class="tools-grid reveal">
+      <div class="card tool-card">
+        <div class="tool-icon">🔪</div>
+        <div class="tool-name">Cursor</div>
+        <div class="tool-tagline">« Précis, rapide, vous pilotez »</div>
+        <ul class="tool-features">
+          <li>Éditions chirurgicales multi-fichiers</li>
+          <li>Refactoring avec contexte codebase</li>
+          <li>Itérations rapides en mode Chat/Composer</li>
+          <li>Feedback visuel instantané</li>
+          <li>Vous gardez le contrôle total</li>
+        </ul>
+      </div>
+      <div class="card tool-card" style="border-color:rgba(167,139,250,0.2)">
+        <div class="tool-icon">🚀</div>
+        <div class="tool-name">Antigravity</div>
+        <div class="tool-tagline">« Autonome, contextuel, piloté par agents »</div>
+        <ul class="tool-features">
+          <li>Sprints complets en autonomie</li>
+          <li>Subagents parallèles pour les tâches</li>
+          <li>Browser tool pour smoke tests</li>
+          <li>Contexte METHOD chargé automatiquement</li>
+          <li>L'agent pilote, vous validez</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:32px 0 16px" class="reveal">Arbre de Décision</h3>
+    <div class="decision-tree reveal">
+      <div class="decision-row">
+        <div class="decision-item"><div class="decision-header">🔪 Utilisez Cursor quand…</div>Vous savez exactement quoi changer. Quick fix, refactor précis, exploration rapide, pair programming.</div>
+        <div class="decision-item"><div class="decision-header">🚀 Utilisez Antigravity quand…</div>Vous voulez un sprint complet. Planification, exécution multi-tâches, reviews, commits automatisés.</div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-item"><div class="decision-header">🔪 Cursor excelle pour…</div>Modifications < 30 min, debugging interactif, refactoring de code existant, prototypage rapide.</div>
+        <div class="decision-item"><div class="decision-header">🚀 AG excelle pour…</div>Features complètes, sprints structurés, reviews Vera, consolidation Junia, tâches > 1h.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FICHIERS -->
+<section class="section" id="fichiers">
+  <div class="container">
+    <div class="section-badge">05 · Architecture</div>
+    <h2 class="section-title">Architecture des <span class="grad-text">Fichiers</span></h2>
+    <p class="section-subtitle">15 fichiers core + fichiers projet. Deux namespaces : <code style="color:var(--purple)">method/</code> (synced) et <code style="color:var(--green)">project/</code> (local).</p>
+
+    <div class="file-tree reveal">
+      <span class="dir">docs/METHOD/</span> <span class="ns ns-synced">Synced</span><br>
+      ├── <span class="file" data-desc="Index principal — vue d'ensemble du METHOD, 15 fichiers, innovations">METHOD.md</span> <span class="comment"># Index principal</span><br>
+      ├── <span class="file" data-desc="Principes, tech stack, DoD, i18n, sécurité, performance">method-core.md</span> <span class="comment"># Principes & DoD</span><br>
+      ├── <span class="file" data-desc="13 agents, rôles, surfaces, rituels, modèles préférés">agents-method.md</span> <span class="comment"># 13 agents</span><br>
+      ├── <span class="file" data-desc="Dual-tool workflow: Cursor + Antigravity 2.0">agents-engineering-method.md</span> <span class="comment"># Outils & workflow</span><br>
+      ├── <span class="file" data-desc="Sprint structure, DoD, Review Gate, rituals, consolidation">sprints-method.md</span> <span class="comment"># Sprint structure</span><br>
+      ├── <span class="file" data-desc="Design tokens, navigation, a11y, M3, composants">design-method.md</span> <span class="comment"># Design system</span><br>
+      ├── <span class="file" data-desc="Multi-provider AI, model routing, ADK, MCP, evals">ai-infra-method.md</span> <span class="comment"># AI infrastructure</span><br>
+      ├── <span class="file" data-desc="Agent routing, entry files, orchestration patterns">routing-method.md</span> <span class="comment"># Routing agents</span><br>
+      ├── <span class="file" data-desc="Test strategy, Vitest, Playwright, coverage, fixtures">tests-method.md</span> <span class="comment"># Testing</span><br>
+      ├── <span class="file" data-desc="Prompting best practices, system prompts, few-shot">prompting-method.md</span> <span class="comment"># Prompting</span><br>
+      ├── <span class="file" data-desc="3-phase pipeline: DISCOVER → SPECIFY → PROTOTYPE">definition-method.md</span> <span class="comment"># Définition pipeline</span><br>
+      ├── <span class="file" data-desc="Process-First: délégation, trust, ProcessRun schemas">process-method.md</span> <span class="comment"># Processus</span><br>
+      ├── <span class="file" data-desc="Cursor rules, .cursorrules generation">cursor-rules.md</span> <span class="comment"># Cursor config</span><br>
+      ├── <span class="file" data-desc="Code quality rules, TypeScript strict, no any, Zod">code-rules.md</span> <span class="comment"># Code rules</span><br>
+      └── <span class="file" data-desc="Version scheme, sync protocol, migration, changelog">versioning.md</span> <span class="comment"># Versioning</span><br>
+      <br>
+      <span class="dir">docs/project/</span> <span class="ns ns-local">Local</span><br>
+      ├── <span class="file" data-desc="Product vision, personas, JTBD, scope">VISION.md</span><br>
+      ├── <span class="file" data-desc="Design tokens, palette, typography, components">DESIGN.md</span><br>
+      ├── <span class="file" data-desc="Firestore schema, collections, fields, Zod">SCHEMA.md</span><br>
+      ├── <span class="file" data-desc="Objectif unique NOW, NEXT queue, LATER backlog">FOCUS.md</span><br>
+      ├── <span class="file" data-desc="Current state, blockers, recent decisions">STATE.md</span><br>
+      ├── <span class="file" data-desc="Web roadmap, milestones, features">ROADMAP.web.md</span><br>
+      └── <span class="file" data-desc="AI agents, models, evals, process configs">AI-INFRA.md</span>
+    </div>
+    <div class="file-tooltip" id="fileTooltip"></div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section class="section" id="pipeline">
+  <div class="container">
+    <div class="section-badge">06 · Définition</div>
+    <h2 class="section-title">Le <span class="grad-text">Definition Pipeline</span></h2>
+    <p class="section-subtitle">4 phases pour transformer une idée brute en produit buildable. Cliquez pour voir les livrables.</p>
+
+    <div class="pipeline-phases reveal">
+      <div class="card phase-card" onclick="this.classList.toggle('expanded')" style="border-top:3px solid var(--yellow)">
+        <div class="phase-num" style="color:var(--yellow)">Phase 1</div>
+        <h3>🔍 Discover</h3>
+        <p style="font-size:.82rem;color:var(--text2)">Explorer, comprendre, cadrer</p>
+        <div class="phase-deliverables"><ul>
+          <li>Brief produit brut</li>
+          <li>Analyse compétitive</li>
+          <li>Personas & JTBD</li>
+          <li>CUJ / User Journeys</li>
+          <li>Vision draft</li>
+        </ul></div>
+      </div>
+      <div class="card phase-card" onclick="this.classList.toggle('expanded')" style="border-top:3px solid var(--blue)">
+        <div class="phase-num" style="color:var(--blue)">Phase 2</div>
+        <h3>📐 Specify</h3>
+        <p style="font-size:.82rem;color:var(--text2)">Specs Book exhaustif (14+ ch.)</p>
+        <div class="phase-deliverables"><ul>
+          <li>Vision & Strategy</li>
+          <li>Architecture & Data</li>
+          <li>Page Specs & Navigation</li>
+          <li>Design System</li>
+          <li>AI Stack & Business Model</li>
+        </ul></div>
+      </div>
+      <div class="card phase-card" onclick="this.classList.toggle('expanded')" style="border-top:3px solid var(--green)">
+        <div class="phase-num" style="color:var(--green)">Phase 3</div>
+        <h3>🎨 Prototype</h3>
+        <p style="font-size:.82rem;color:var(--text2)">Protos HTML interactifs</p>
+        <div class="phase-deliverables"><ul>
+          <li>Protos HTML statiques</li>
+          <li>Navigation complète</li>
+          <li>Écrans clés avec états</li>
+          <li>Design tokens live</li>
+          <li>Clickable, partageable</li>
+        </ul></div>
+      </div>
+      <div class="card phase-card" onclick="this.classList.toggle('expanded')" style="border-top:3px solid var(--purple)">
+        <div class="phase-num" style="color:var(--purple)">Phase 4</div>
+        <h3>🏗 Build</h3>
+        <p style="font-size:.82rem;color:var(--text2)">Sprint 001 → Production</p>
+        <div class="phase-deliverables"><ul>
+          <li>project/ files extraits</li>
+          <li>Sprint planning (Junia)</li>
+          <li>Exécution (Brian/Teddy)</li>
+          <li>Review (Vera)</li>
+          <li>Deploy & iterate</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="card reveal" style="margin-top:16px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="background:rgba(251,191,36,0.15);color:var(--yellow);padding:8px 16px;border-radius:8px;font-weight:700;font-size:.82rem">DISCOVER</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(96,165,250,0.12);color:var(--blue);padding:8px 16px;border-radius:8px;font-weight:700;font-size:.82rem">SPECIFY</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(52,211,153,0.1);color:var(--green);padding:8px 16px;border-radius:8px;font-weight:700;font-size:.82rem">PROTOTYPE</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(167,139,250,0.1);color:var(--purple);padding:8px 16px;border-radius:8px;font-weight:700;font-size:.82rem">project/ files</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(249,115,22,0.12);color:var(--orange);padding:8px 16px;border-radius:8px;font-weight:700;font-size:.82rem">Sprint 001</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(34,211,238,0.1);color:var(--cyan);padding:8px 16px;border-radius:8px;font-weight:700;font-size:.82rem">BUILD</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOCUS -->
+<section class="section" id="focus">
+  <div class="container">
+    <div class="section-badge">07 · Focus</div>
+    <h2 class="section-title">Le Système <span class="grad-text">Focus</span></h2>
+    <p class="section-subtitle">Un fichier FOCUS.md par app. Le principe du taquet : on ne passe pas au suivant tant que le courant n'est pas terminé.</p>
+
+    <div class="focus-grid reveal">
+      <div class="focus-item" style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.15)">
+        <div class="focus-icon">🔴</div>
+        <div class="focus-label">NOW</div>
+        <div class="focus-desc">Ultra focus. Un seul objectif. Tout le reste attend.</div>
+      </div>
+      <div class="focus-item" style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15)">
+        <div class="focus-icon">🟡</div>
+        <div class="focus-label">NEXT</div>
+        <div class="focus-desc">File d'attente. 3 items max. Prêts à passer en NOW.</div>
+      </div>
+      <div class="focus-item" style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.15)">
+        <div class="focus-icon">🟢</div>
+        <div class="focus-label">LATER</div>
+        <div class="focus-desc">Big picture. Pipeline complet. Pas de limite.</div>
+      </div>
+      <div class="focus-item" style="background:rgba(255,255,255,0.03);border:1px solid var(--border)">
+        <div class="focus-icon">📝</div>
+        <div class="focus-label">PARKING LOT</div>
+        <div class="focus-desc">Idées capturées. Pas maintenant. Jamais perdues.</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:32px 0 16px;text-align:center" class="reveal">⚡ Le Taquet (Ratchet) — Ne recule jamais</h3>
+    <div class="ratchet reveal">
+      <div class="ratchet-tooth done">✓</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth done">✓</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth done">✓</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth done">✓</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth current">NOW</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth locked">🔒</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth locked">🔒</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth locked">🔒</div><div class="ratchet-connector">→</div>
+      <div class="ratchet-tooth locked">🔒</div>
+    </div>
+    <p style="text-align:center;color:var(--text3);font-size:.82rem;margin-top:8px" class="reveal">Chaque cran complété est verrouillé. Impossible de régresser. Le focus avance uniquement vers l'avant.</p>
+  </div>
+</section>
+
+<!-- APPS -->
+<section class="section" id="apps">
+  <div class="container">
+    <div class="section-badge">08 · Portfolio</div>
+    <h2 class="section-title">40 <span class="grad-text">Applications</span></h2>
+    <p class="section-subtitle">Chaque app suit le METHOD — même structure, mêmes agents, même qualité.</p>
+    <div class="apps-grid reveal" id="appsGrid"></div>
+  </div>
+</section>
+
+<!-- SWANIFLY -->
+<section class="section" id="swanifly">
+  <div class="container">
+    <div class="section-badge">09 · Deep Dive</div>
+    <h2 class="section-title"><span class="grad-text">Swanifly</span> — L'Expérience Terrain</h2>
+    <p class="section-subtitle">La plateforme d'orchestration multi-agents qui pousse le METHOD à ses limites.</p>
+
+    <div class="swanifly-hero reveal">
+      <div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:12px">Qu'est-ce que Swanifly ?</h3>
+        <p style="color:var(--text2);font-size:.9rem;line-height:1.7">Swanifly est une plateforme d'orchestration de sprints multi-agents. Elle combine un client desktop (Electron), une app web (Next.js), et un CLI (SprintOS) pour gérer le cycle de vie complet d'un produit SaaS — du brief à la production.</p>
+        <div class="swanifly-stat">
+          <div class="swanifly-stat-item"><div class="swanifly-stat-num">8</div><div class="swanifly-stat-label">Agents</div></div>
+          <div class="swanifly-stat-item"><div class="swanifly-stat-num">336+</div><div class="swanifly-stat-label">Modèles</div></div>
+          <div class="swanifly-stat-item"><div class="swanifly-stat-num">4</div><div class="swanifly-stat-label">Providers</div></div>
+          <div class="swanifly-stat-item"><div class="swanifly-stat-num">3</div><div class="swanifly-stat-label">Plateformes</div></div>
+        </div>
+      </div>
+      <div class="card-grid" style="gap:12px">
+        <div class="card" style="padding:16px"><h3 style="font-size:.85rem">🖥 Desktop (Electron)</h3><p style="font-size:.78rem">Accès fichiers local, workspace réel, orchestration offline.</p></div>
+        <div class="card" style="padding:16px"><h3 style="font-size:.85rem">🌐 Web (Next.js)</h3><p style="font-size:.78rem">Dashboard, monitoring, collaboration, analytics.</p></div>
+        <div class="card" style="padding:16px"><h3 style="font-size:.85rem">⌨️ CLI (SprintOS)</h3><p style="font-size:.78rem">Automatisation, scripts, CI/CD, sync METHOD.</p></div>
+      </div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:32px 0 16px" class="reveal">Les 8 agents Swanifly</h3>
+    <div class="card-grid card-grid-4 reveal">
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">🛠</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Brian</div><div style="font-size:.72rem;color:var(--text3)">Web Dev</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">🎯</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">April</div><div style="font-size:.72rem;color:var(--text3)">Vision</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">✅</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Vera</div><div style="font-size:.72rem;color:var(--text3)">Review</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">🌙</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Luna</div><div style="font-size:.72rem;color:var(--text3)">UX/UI</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">👑</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Rex</div><div style="font-size:.72rem;color:var(--text3)">Backend</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">⚡</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Max</div><div style="font-size:.72rem;color:var(--text3)">Perf</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">🧪</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Sage</div><div style="font-size:.72rem;color:var(--text3)">Tests</div></div>
+      <div class="card" style="padding:16px;text-align:center"><div style="font-size:1.5rem">🗺</div><div style="font-weight:700;font-size:.85rem;margin-top:4px">Atlas</div><div style="font-size:.72rem;color:var(--text3)">Orchestration</div></div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:32px 0 16px" class="reveal">La Question : Comment coexistent-ils ?</h3>
+    <div class="card-grid card-grid-3 reveal">
+      <div class="card"><h3 style="font-size:.9rem">🦢 Swanifly</h3><p>Orchestration visuelle. Dashboard projet. Exécution multi-agent avec UI riche. Pour les projets complexes multi-sprints.</p></div>
+      <div class="card"><h3 style="font-size:.9rem">🚀 Antigravity</h3><p>Agent autonome dans l'IDE. Contexte METHOD natif. Subagents pour parallélisme. Pour le développement quotidien.</p></div>
+      <div class="card"><h3 style="font-size:.9rem">🔪 Cursor</h3><p>Éditions chirurgicales. Chat rapide. Composer pour multi-fichiers. Pour les modifications précises et immédiates.</p></div>
+    </div>
+
+    <div class="card reveal" style="margin-top:24px;border-left:3px solid var(--pink)">
+      <h3>💡 Leçons apprises</h3>
+      <p style="margin-top:8px">Les frictions entre outils révèlent les gaps du METHOD. Chaque outil a son contexte optimal. La convergence viendra de l'unification des fichiers projet, pas de l'unification des outils.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HORS METHODE -->
+<section class="section" id="hors-methode">
+  <div class="container">
+    <div class="section-badge">10 · Pragmatisme</div>
+    <h2 class="section-title"><span class="grad-text">Hors-Méthode</span></h2>
+    <p class="section-subtitle">Quand (et comment) dévier du METHOD. Parce que la rigidité est l'ennemi de la productivité.</p>
+
+    <div class="gauge reveal">
+      <div style="font-size:.85rem;font-weight:700;margin-bottom:8px">Distance par rapport au METHOD</div>
+      <div class="gauge-bar"></div>
+      <div class="gauge-labels">
+        <span>✅ 100% METHOD</span>
+        <span>🟡 Allégé</span>
+        <span>🟠 Minimal</span>
+        <span>🔴 Freestyle</span>
+      </div>
+    </div>
+
+    <div class="card-grid card-grid-3 reveal">
+      <div class="card">
+        <div class="card-accent" style="background:linear-gradient(135deg,var(--green),var(--cyan))"></div>
+        <h3>🧪 Prototypage / Hackathon</h3>
+        <p>Pas de sprints formels. Pas de Review Gate. Un fichier FOCUS.md suffit. Validez l'idée d'abord, structurez ensuite.</p>
+        <div class="tag" style="background:rgba(52,211,153,0.15);color:var(--green)">Distance : Faible</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:linear-gradient(135deg,var(--yellow),var(--orange))"></div>
+        <h3>🏚 Code Legacy</h3>
+        <p>Intégrer du code existant sans forcer toute la structure METHOD. Gardez le DoD, ignorez le sprint loop complet.</p>
+        <div class="tag" style="background:rgba(251,191,36,0.15);color:var(--yellow)">Distance : Moyenne</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:linear-gradient(135deg,var(--orange),var(--red))"></div>
+        <h3>🚨 Hotfix Client</h3>
+        <p>Watson intervient directement. Minimal fix → test → deploy. Le bug file documente après coup. Rapidité &gt; processus.</p>
+        <div class="tag" style="background:rgba(249,115,22,0.15);color:var(--orange)">Distance : Élevée</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:linear-gradient(135deg,var(--cyan),var(--blue))"></div>
+        <h3>📜 Scripts One-Off</h3>
+        <p>Scripts de migration, outils internes, automation. Pas de i18n, pas de review formelle. Un README suffit.</p>
+        <div class="tag" style="background:rgba(34,211,238,0.15);color:var(--cyan)">Distance : Faible</div>
+      </div>
+      <div class="card">
+        <div class="card-accent" style="background:linear-gradient(135deg,var(--pink),var(--purple))"></div>
+        <h3>🔬 Features Expérimentales</h3>
+        <p>Feature flags, A/B tests. Suivez le sprint loop mais avec un DoD allégé. Si l'expérience échoue, supprimez sans remords.</p>
+        <div class="tag" style="background:rgba(244,114,182,0.15);color:var(--pink)">Distance : Faible</div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h3>⚠️ Règle d'or</h3>
+        <p>Même hors-méthode, <strong>trois choses restent obligatoires</strong> : TypeScript strict (no <code>any</code>), Zod schemas pour Firestore, et un commit descriptif. Le reste est négociable.</p>
+        <div class="tag" style="background:rgba(248,113,113,0.15);color:var(--red)">Non-négociable</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EVOLUTION -->
+<section class="section" id="evolution">
+  <div class="container">
+    <div class="section-badge">11 · Histoire</div>
+    <h2 class="section-title"><span class="grad-text">Évolution</span></h2>
+    <p class="section-subtitle">Du monolithe v207.j au système modulaire v307.a — guidée par Lucia et les données terrain.</p>
+
+    <div class="lucia-badge reveal">📚 Lucia — Method Curator — Gardienne du METHOD depuis Epoch 3</div>
+
+    <div class="card reveal" style="margin-bottom:32px">
+      <h3>🔄 Comment le METHOD évolue</h3>
+      <p style="margin-top:8px">Chaque bug, chaque friction, chaque retour terrain est une opportunité. Watson fait un Process Health Check bi-hebdomadaire. Lucia fait un Process Review mensuel. Les données conduisent les changements — pas les opinions.</p>
+      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+        <span style="font-size:.78rem;padding:6px 12px;background:var(--surface2);border-radius:6px;color:var(--text2)">Bug terrain → Watson triage</span>
+        <span style="font-size:.78rem;color:var(--text3)">→</span>
+        <span style="font-size:.78rem;padding:6px 12px;background:var(--surface2);border-radius:6px;color:var(--text2)">Lucia évalue</span>
+        <span style="font-size:.78rem;color:var(--text3)">→</span>
+        <span style="font-size:.78rem;padding:6px 12px;background:var(--surface2);border-radius:6px;color:var(--text2)">Mini-RFC si majeur</span>
+        <span style="font-size:.78rem;color:var(--text3)">→</span>
+        <span style="font-size:.78rem;padding:6px 12px;background:var(--surface2);border-radius:6px;color:var(--text2)">Update upstream</span>
+        <span style="font-size:.78rem;color:var(--text3)">→</span>
+        <span style="font-size:.78rem;padding:6px 12px;background:var(--surface2);border-radius:6px;color:var(--text2)">Sync all apps</span>
+      </div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:24px" class="reveal">Timeline des Versions</h3>
+    <div class="timeline reveal">
+      <div class="timeline-item major">
+        <div class="timeline-date">Mai 2026</div>
+        <div class="timeline-version">v307.a — Antigravity 2.0 Tool-Tier Overhaul</div>
+        <div class="timeline-desc">Remplacement du modèle 3-tiers (Ollama/Cline/AG) par le dual-tool (Cursor + Antigravity 2.0). Subagent patterns. Claude Opus 4.6 + Gemini 2.5 Pro.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Avril 2026</div>
+        <div class="timeline-version">v306.a–c — Process-First + BanaBooster</div>
+        <div class="timeline-desc">Nouveau fichier process-method.md. Délégation types (manual→autonomous). Auto-Retry Watcher. Emoji status tags.</div>
+      </div>
+      <div class="timeline-item major">
+        <div class="timeline-date">Mars 2026</div>
+        <div class="timeline-version">v305.a — Definition Pipeline + Focus</div>
+        <div class="timeline-desc">3-phase pipeline (DISCOVER→SPECIFY→PROTOTYPE). Système Focus avec taquet. M3 Design Standard obligatoire. DoD simplifié de 15→9 items.</div>
+      </div>
+      <div class="timeline-item major">
+        <div class="timeline-date">Mars 2026</div>
+        <div class="timeline-version">v304.a — Data Governance + AI Agent Management</div>
+        <div class="timeline-desc">SCHEMA-TEMPLATE.md. Zod obligatoire. DoD étendu à 15 items. Antigravity Workflow Automation. Gemini-first task routing.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Janvier–Mars 2026</div>
+        <div class="timeline-version">v303.a–f — Design + Navigation + CUJ-First</div>
+        <div class="timeline-desc">Swanifly Design Philosophy. Mono-rail + panels. Riley reoriented vers API & Multi-Agent. CUJ Precision Gate. Firebase deploy checklist.</div>
+      </div>
+      <div class="timeline-item major">
+        <div class="timeline-date">Janvier 2026</div>
+        <div class="timeline-version">v302.a — Governance & Simplification</div>
+        <div class="timeline-desc">BREAKING: Suppression FAST/FORTH/FULL modes → single DoD. Hierarchy of Truth. Core Loop (4) vs On-Demand (9). Human Executive (Agent 0).</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Janvier 2026</div>
+        <div class="timeline-version">v301.a–b — STRUCTURE + Multitenancy</div>
+        <div class="timeline-desc">STRUCTURE.md comme surface de planning. Double Drawer navigation. Multitenancy-by-default baseline.</div>
+      </div>
+      <div class="timeline-item major">
+        <div class="timeline-date">Novembre 2025</div>
+        <div class="timeline-version">v300.a — Epoch 3 : Modular & Multi-Entry</div>
+        <div class="timeline-desc">Premier release modulaire. 10 fichiers focalisés. Multi-entry routing. 10 agents. Bug tracking loop.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date">Novembre 2025</div>
+        <div class="timeline-version">v207.j — Dernier monolithe</div>
+        <div class="timeline-desc">Fin de l'Epoch 2. Un seul fichier METHOD massif. La complexité a forcé la modularisation.</div>
+      </div>
+    </div>
+
+    <div class="card-grid card-grid-3 reveal" style="margin-top:32px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:8px">📊</div>
+        <h3 style="justify-content:center">Epoch 1</h3>
+        <p>Prototype (100-199). Expérimentation libre. Pas de structure formelle.</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:8px">🏭</div>
+        <h3 style="justify-content:center">Epoch 2</h3>
+        <p>Production-ready (200-299). Monolithe. Modes FAST/FORTH/FULL.</p>
+      </div>
+      <div class="card" style="text-align:center;border-color:rgba(167,139,250,0.2)">
+        <div style="font-size:2rem;margin-bottom:8px">⚡</div>
+        <h3 style="justify-content:center">Epoch 3 ← Actuel</h3>
+        <p>Modular & Multi-Entry (300-399). 15 fichiers. 13 agents. Dual-tool.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISONS -->
+<section class="section" id="comparisons">
+  <div class="container">
+    <div class="section-badge">12 · Positionnement</div>
+    <h2 class="section-title">METHOD vs <span class="grad-text">Agentic Engineering</span></h2>
+    <p class="section-subtitle">Comment le METHOD se positionne face aux méthodologies AI-natives émergentes — notamment l'approche de Peter Steinberger (steipete).</p>
+
+    <div class="card-grid card-grid-2 reveal">
+      <div class="card" style="border-top:3px solid var(--purple)">
+        <h3>🍌 METHOD v307.a</h3>
+        <p style="font-style:italic;margin-bottom:12px;color:var(--text3)">"Docs are truth; code is implementation"</p>
+        <ul class="tool-features">
+          <li>13 agents nommés avec contrats et rituels</li>
+          <li>Triple gate : Pre-Flight → Vera → Kill Gate</li>
+          <li>15 fichiers METHOD synchronisés sur 40 apps</li>
+          <li>Sprints structurés, commits par tâche</li>
+          <li>Pyramide de vérité (METHOD > VISION > CODE)</li>
+          <li>Optimisé pour : qualité reproductible à l'échelle</li>
+        </ul>
+      </div>
+      <div class="card" style="border-top:3px solid var(--cyan)">
+        <h3>🦢 Agentic Engineering (Steinberger)</h3>
+        <p style="font-style:italic;margin-bottom:12px;color:var(--text3)">"Architecture over syntax; taste over code"</p>
+        <ul class="tool-features">
+          <li>Agents anonymes en parallèle (3-8 en grille tmux)</li>
+          <li>Pas de Review Gate — "Fix Forward"</li>
+          <li>CLAUDE.md minimal comme seule documentation</li>
+          <li>Direct-to-main, centaines de commits/jour</li>
+          <li>Human = architecte + couche de goût (taste layer)</li>
+          <li>Optimisé pour : vélocité maximale, 1 personne</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:32px 0 16px;text-align:center" class="reveal">Points de convergence</h3>
+    <div class="card-grid card-grid-3 reveal">
+      <div class="card" style="padding:16px;text-align:center">
+        <div style="font-size:1.5rem">🤝</div>
+        <div style="font-weight:700;font-size:.85rem;margin-top:4px">Vision Humaine</div>
+        <div style="font-size:.72rem;color:var(--text3)">Les humains fournissent la vision, les agents exécutent</div>
+      </div>
+      <div class="card" style="padding:16px;text-align:center">
+        <div style="font-size:1.5rem">📄</div>
+        <div style="font-weight:700;font-size:.85rem;margin-top:4px">Docs = Interface Agent</div>
+        <div style="font-size:.72rem;color:var(--text3)">La documentation est le contrat entre humain et agents</div>
+      </div>
+      <div class="card" style="padding:16px;text-align:center">
+        <div style="font-size:1.5rem">🏗</div>
+        <div style="font-weight:700;font-size:.85rem;margin-top:4px">Architecture > Code</div>
+        <div style="font-size:.72rem;color:var(--text3)">Le design système prime sur les lignes de code individuelles</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:1rem;font-weight:700;margin:32px 0 16px;text-align:center" class="reveal">Emprunts croisés</h3>
+    <div class="card-grid card-grid-2 reveal">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h3 style="font-size:.9rem">✅ Ce que METHOD emprunte</h3>
+        <p><strong>Closed-Loop Execution</strong> — Brian fait des boucles write→test→fix autonomes avant le Review Gate. <strong>Vera Fast-Track</strong> — auto-close des tâches à faible risque (&lt;50 LOC, tests OK, lint clean).</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--yellow)">
+        <h3 style="font-size:.9rem">🔄 Ce que Steinberger gagnerait</h3>
+        <p><strong>Review Gate</strong> — un seul pass de validation éviterait l'accumulation de dette technique. <strong>Mémoire institutionnelle</strong> — FOCUS.md éviterait la surcharge cognitive qu'il reconnaît lui-même.</p>
+      </div>
+    </div>
+
+    <div class="card reveal" style="margin-top:24px;border-left:3px solid var(--purple)">
+      <h3>💡 Positionnement</h3>
+      <p style="margin-top:8px">Le METHOD est la bonne approche quand : SaaS multi-tenant, données client, 40 apps, fondateur solo qui a besoin de mémoire institutionnelle. L'approche Steinberger est la bonne quand : un ingénieur expert expédie un outil personnel le plus vite possible. La meilleure stratégie : <strong>hybridation</strong> — la vélocité de Steinberger <em>entre</em> les gates, la rigueur du METHOD <em>aux</em> gates.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="padding:60px 0 40px;text-align:center;border-top:1px solid var(--border)">
+  <div class="container">
+    <div style="font-size:2rem;margin-bottom:12px">🦢</div>
+    <div style="font-weight:800;font-size:1.1rem;margin-bottom:4px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-block">Le METHOD v307.a</div>
+    <p style="color:var(--text3);font-size:.82rem;margin-top:4px">Méthodologie d'Ingénierie par Agents · Epoch 3 · Swanifly Engineering</p>
+    <p style="color:var(--text3);font-size:.72rem;margin-top:16px">Owner: Lucia · Dernière mise à jour: Mai 2026</p>
+  </div>
+</footer>
+
+<script>
+// ============ HERO CANVAS ANIMATION ============
+(function(){
+  const canvas=document.getElementById('heroCanvas');
+  const ctx=canvas.getContext('2d');
+  let w,h,particles=[];
+  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  class P{
+    constructor(){this.reset()}
+    reset(){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;this.r=Math.random()*1.5+.5;this.a=Math.random()*.3+.05}
+    update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>w)this.vx*=-1;if(this.y<0||this.y>h)this.vy*=-1}
+    draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=`rgba(167,139,250,${this.a})`;ctx.fill()}
+  }
+  for(let i=0;i<60;i++)particles.push(new P());
+  function drawGrid(){
+    ctx.strokeStyle='rgba(167,139,250,0.03)';ctx.lineWidth=1;
+    const s=60;
+    for(let x=0;x<w;x+=s){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+    for(let y=0;y<h;y+=s){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+  }
+  function animate(){
+    ctx.clearRect(0,0,w,h);
+    drawGrid();
+    particles.forEach(p=>{p.update();p.draw()});
+    // Draw connections
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(129,140,248,${(1-d/120)*0.08})`;ctx.stroke()}
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ============ SCROLL REVEALS ============
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible')}});
+},{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.section,.reveal').forEach(el=>observer.observe(el));
+
+// ============ NAV SCROLL ============
+const nav=document.getElementById('nav');
+const sections=document.querySelectorAll('.section');
+const navLinks=document.querySelectorAll('.nav-link');
+window.addEventListener('scroll',()=>{
+  nav.classList.toggle('scrolled',window.scrollY>20);
+  let current='';
+  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-200)current=s.id});
+  navLinks.forEach(l=>{l.classList.toggle('active',l.getAttribute('href')==='#'+current)});
+});
+
+// ============ AGENTS DATA ============
+const agents=[
+  {name:'Junia',emoji:'📋',role:'Planning & Orchestration',group:'core',model:'Claude Opus 4.6',tool:'Antigravity',entry:'sprints-method.md → project/',desc:'Planifie les sprints, séquence les tâches, coordonne les agents, consolide les rapports.'},
+  {name:'Brian',emoji:'🛠',role:'Web Development',group:'core',model:'Claude Sonnet 4.5',tool:'Antigravity / Cursor',entry:'method-core.md → DESIGN.md → task',desc:'Implémente les features web (React, Next.js). Tests, i18n, smoke test.'},
+  {name:'Vera',emoji:'✅',role:'Review & Validation',group:'core',model:'Claude Opus 4.6',tool:'Antigravity',entry:'method-core.md → task → review',desc:'Review Gate. Valide chaque tâche : sécurité, design, a11y, tests, docs.'},
+  {name:'April',emoji:'🎯',role:'Vision, Copy, CUJ',group:'manager',model:'Claude Opus 4.6',tool:'Antigravity',entry:'agents-method.md → VISION.md',desc:'Définit les personas, JTBD, scope. CUJ Precision Gate. Copy review.'},
+  {name:'Nova',emoji:'🎨',role:'Design System',group:'manager',model:'Claude Opus 4.6',tool:'Antigravity',entry:'design-method.md → DESIGN.md',desc:'Maintient le design system, tokens, a11y baselines, thèmes.'},
+  {name:'Lucia',emoji:'📚',role:'Method Curator',group:'manager',model:'Claude Opus 4.6',tool:'Antigravity',entry:'ALL method/ files',desc:'Maintient le METHOD. Mini-RFCs. Version management. Sync cross-apps.'},
+  {name:'Teddy',emoji:'📱',role:'Mobile Dev',group:'specialist',model:'Claude Sonnet 4.5',tool:'Cursor + Antigravity',entry:'method-core.md → mobile docs',desc:'Implémente les features mobile (React Native, Expo). iOS + Android.'},
+  {name:'Aiko',emoji:'🤖',role:'AI Integration',group:'specialist',model:'Claude Opus 4.6',tool:'Antigravity',entry:'ai-infra-method.md → AI-INFRA.md',desc:'Features IA, model integration, prompt engineering, evals.'},
+  {name:'Watson',emoji:'🔧',role:'Reliability & Ops',group:'specialist',model:'Claude Opus 4.6',tool:'Antigravity',entry:'method-core.md → tests-method.md',desc:'Debugging, smoke tests, bug triage, déploiements, Process Health Check.'},
+  {name:'Sage',emoji:'🧪',role:'Test Architect',group:'specialist',model:'Claude Sonnet 4.5',tool:'Antigravity',entry:'tests-method.md',desc:'Stratégie de test, fixtures, coverage, tests as contracts.'},
+  {name:'Riley',emoji:'🔗',role:'API & Multi-Agent',group:'specialist',model:'Gemini 2.5 Pro',tool:'Antigravity',entry:'routing-method.md → ai-infra-method.md',desc:'Intégrations API, webhooks, pipelines multi-agents, ADK/MCP.'},
+  {name:'Kasper',emoji:'🛡',role:'Security',group:'specialist',model:'Claude Opus 4.6',tool:'Antigravity',entry:'Security project files',desc:'Audits sécurité, auth, secrets, RBAC, GDPR, compliance.'},
+  {name:'Gordon',emoji:'📈',role:'Marketing & Growth',group:'specialist',model:'Claude Opus 4.6',tool:'Antigravity',entry:'VISION.md → analytics',desc:'Growth loops, funnels, SEA/SEO, expérimentations, pricing.'}
+];
+
+function renderAgents(){
+  const groups={core:document.getElementById('core-agents'),manager:document.getElementById('manager-agents'),specialist:document.getElementById('specialist-agents')};
+  agents.forEach(a=>{
+    const card=document.createElement('div');
+    card.className='card agent-card reveal';
+    card.innerHTML=`
+      <span class="agent-emoji">${a.emoji}</span>
+      <div class="agent-name">${a.name}</div>
+      <div class="agent-role">${a.role}</div>
+      <div class="agent-details">
+        <p>${a.desc}</p>
+        <p style="margin-top:8px"><span class="detail-label">Modèle :</span> ${a.model}</p>
+        <p><span class="detail-label">Outil :</span> ${a.tool}</p>
+        <p><span class="detail-label">Entry :</span> <code style="font-size:.75rem;color:var(--purple)">${a.entry}</code></p>
+      </div>`;
+    card.addEventListener('click',()=>card.classList.toggle('expanded'));
+    groups[a.group].appendChild(card);
+    observer.observe(card);
+  });
+}
+renderAgents();
+
+// ============ SPRINT LOOP ANIMATION ============
+(function(){
+  const steps=document.querySelectorAll('.sprint-step');
+  let current=0;
+  function animateLoop(){
+    steps.forEach((s,i)=>s.classList.toggle('active-step',i===current));
+    current=(current+1)%steps.length;
+  }
+  setInterval(animateLoop,2000);
+})();
+
+// ============ FILE TREE TOOLTIPS ============
+(function(){
+  const tooltip=document.getElementById('fileTooltip');
+  document.querySelectorAll('.file-tree .file').forEach(f=>{
+    f.addEventListener('mouseenter',e=>{
+      const desc=f.dataset.desc;
+      if(!desc)return;
+      tooltip.textContent=desc;
+      tooltip.style.opacity='1';
+    });
+    f.addEventListener('mousemove',e=>{
+      tooltip.style.left=e.clientX+12+'px';
+      tooltip.style.top=e.clientY-8+'px';
+    });
+    f.addEventListener('mouseleave',()=>{tooltip.style.opacity='0'});
+  });
+})();
+
+// ============ APPS DATA ============
+const apps=[
+  {name:'BanaShare',emoji:'🍌',desc:'Event venue management SaaS',tech:'Next.js'},
+  {name:'SwaniflyEvents',emoji:'🎪',desc:'Gestion d\'événements',tech:'Next.js'},
+  {name:'HarryQuoter3',emoji:'⚡',desc:'Devis & facturation',tech:'Next.js'},
+  {name:'Scapience',emoji:'🧬',desc:'Scientific knowledge platform',tech:'Next.js'},
+  {name:'Comulia',emoji:'💇',desc:'Gestion de salon (AuSalon)',tech:'Next.js'},
+  {name:'Josephine2',emoji:'👩‍🍳',desc:'Cuisine & recettes sociales',tech:'Next.js'},
+  {name:'MeetMyBiz',emoji:'🤝',desc:'Networking professionnel',tech:'Next.js'},
+  {name:'Swanifly',emoji:'🦢',desc:'Sprint orchestration platform',tech:'Electron + Next.js'},
+  {name:'ACOSH',emoji:'🏥',desc:'Coordination santé',tech:'Next.js'},
+  {name:'Assumind',emoji:'🧠',desc:'Assurance intelligente',tech:'Next.js'},
+  {name:'AssuMindIA',emoji:'🤖',desc:'AI pour assurance',tech:'Next.js'},
+  {name:'Banadoo',emoji:'🔍',desc:'Moteur de recherche local',tech:'Next.js'},
+  {name:'BanaGuard',emoji:'🛡',desc:'Sécurité & monitoring',tech:'Next.js'},
+  {name:'BananOps',emoji:'⚙️',desc:'Operations dashboard',tech:'Next.js'},
+  {name:'Banapics',emoji:'📸',desc:'Galerie photo partagée',tech:'Next.js'},
+  {name:'BanAventures',emoji:'🎪',desc:'Aventures & activités',tech:'Next.js'},
+  {name:'BatiflexAI',emoji:'🏗',desc:'Construction & BTP',tech:'Next.js'},
+  {name:'BuildApp',emoji:'📱',desc:'App builder no-code',tech:'Next.js'},
+  {name:'C2I',emoji:'🎓',desc:'Compétences numériques',tech:'Next.js'},
+  {name:'EspaceMusic',emoji:'🎵',desc:'Espace musical partagé',tech:'Next.js'},
+  {name:'Finasup',emoji:'💰',desc:'Finance & budget',tech:'Next.js'},
+  {name:'Firedance',emoji:'🔥',desc:'Réseau social professionnel',tech:'Next.js'},
+  {name:'Fleads',emoji:'📊',desc:'Lead management',tech:'Next.js'},
+  {name:'FocusFlow',emoji:'🎯',desc:'Productivité & focus',tech:'Next.js'},
+  {name:'FunFlasher',emoji:'🃏',desc:'Flashcards ludiques',tech:'React Native'},
+  {name:'IAcademy',emoji:'🎓',desc:'Formation IA',tech:'Next.js'},
+  {name:'MarketScope',emoji:'📈',desc:'Analyse de marché',tech:'Next.js'},
+  {name:'Obvino2',emoji:'🍷',desc:'Gestion vinicole',tech:'Next.js'},
+  {name:'Particiter',emoji:'🏛',desc:'Participation citoyenne',tech:'Next.js'},
+  {name:'Popcornia',emoji:'🍿',desc:'Cinéma & divertissement',tech:'Next.js'},
+  {name:'Postarget',emoji:'📬',desc:'Email marketing ciblé',tech:'Next.js'},
+  {name:'Quickeat',emoji:'🍔',desc:'Commande rapide food',tech:'React Native'},
+  {name:'SocialPulse',emoji:'💬',desc:'Social media analytics',tech:'Next.js'},
+  {name:'SprintOS2',emoji:'🖥',desc:'OS de sprint CLI',tech:'Node.js'},
+  {name:'Storya',emoji:'📖',desc:'Storytelling & narration',tech:'Next.js'},
+  {name:'VanGliss',emoji:'🎿',desc:'Sports & glisse',tech:'Next.js'},
+  {name:'Versation',emoji:'💬',desc:'Conversations IA',tech:'Next.js'},
+  {name:'Worldiz',emoji:'🌍',desc:'Découverte mondiale',tech:'Next.js'},
+  {name:'Youflow',emoji:'🔄',desc:'Workflow automation',tech:'Next.js'},
+  {name:'BanaScore',emoji:'🏆',desc:'Scoring app',tech:'TypeScript'}
+];
+
+function renderApps(){
+  const grid=document.getElementById('appsGrid');
+  apps.forEach(a=>{
+    const card=document.createElement('div');
+    card.className='card app-card';
+    card.innerHTML=`<span class="app-emoji">${a.emoji}</span><div class="app-name">${a.name}</div><div class="app-desc">${a.desc}</div><div class="app-tech">${a.tech}</div>`;
+    grid.appendChild(card);
+  });
+}
+renderApps();
+</script>
+</body>
+</html>

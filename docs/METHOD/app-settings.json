@@ -1,0 +1,24 @@
+{
+  "_about": "App-specific settings. This file can be edited locally (exception to METHOD read-only rule).",
+  "app": "BanaScore",
+  "methodVersion": "309.a",
+  "mode": "FORTH",
+  "_mode_values": [
+    "FAST",
+    "FORTH",
+    "FULL"
+  ],
+  "mobileEnabled": false,
+  "_mobileEnabled_note": "true when native mobile (Expo) development has started",
+  "web": {
+    "uiLibrary": {
+      "mui": false,
+      "_mui_note": "Enable if this app uses MUI (Material UI) on web"
+    }
+  },
+  "sync": {
+    "sprintosRepo": "https://github.com/bananick/Bana-Share.git",
+    "autoSync": false,
+    "_autoSync_note": "Enable GitHub Actions for automatic sync"
+  }
+}

@@ -1,0 +1,141 @@
+# METHOD CI Gate Template — v307.a
+#
+# Copy this file to your app's `.github/workflows/ci.yml`
+# and customize the steps as needed.
+#
+# This template enforces the METHOD CI Gate:
+# - Lint (ESLint)
+# - Typecheck (TypeScript)
+# - Unit + Integration tests (Vitest/Jest)
+# - Production build
+# - E2E tests (Playwright) — optional until first CUJ spec exists
+#
+# See: docs/METHOD/method-core.md § CI Gate
+# See: docs/METHOD/tests-method.md § E2E Tests
+
+name: CI Gate
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**', 'chore/**']
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Quality Gate (required — blocks merge to main)
+  # ──────────────────────────────────────────────
+  quality:
+    name: Lint + Typecheck + Tests + Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Lint ──
+      - name: Lint
+        run: npm run lint
+
+      # ── Typecheck ──
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # ── Unit + Integration tests ──
+      - name: Tests
+        run: npm test -- --passWithNoTests --reporter=verbose
+
+      # ── Production build ──
+      - name: Build
+        run: npm run build
+
+  # ──────────────────────────────────────────────
+  # E2E Tests (add when first Playwright spec exists)
+  # ──────────────────────────────────────────────
+  # Uncomment this job when you have tests/e2e/*.spec.ts files:
+  #
+  # e2e:
+  #   name: E2E Tests (Playwright)
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 20
+  #   needs: quality  # Only run E2E if quality gate passes
+  #
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: 'npm'
+  #
+  #     - name: Install dependencies
+  #       run: npm ci
+  #
+  #     - name: Install Playwright browsers
+  #       run: npx playwright install --with-deps chromium
+  #
+  #     - name: Start dev server
+  #       run: npm run dev &
+  #
+  #     - name: Wait for server
+  #       run: npx wait-on http://localhost:3000 --timeout 30000
+  #
+  #     - name: Run E2E tests
+  #       run: npx playwright test
+  #
+  #     - name: Upload test results
+  #       if: always()
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: playwright-report
+  #         path: playwright-report/
+  #         retention-days: 7
+
+  # ──────────────────────────────────────────────
+  # Preview Deploy (optional — for Firebase Hosting)
+  # ──────────────────────────────────────────────
+  # Uncomment and configure for automatic preview deploys on PRs:
+  #
+  # preview:
+  #   name: Firebase Preview Deploy
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'pull_request'
+  #   needs: quality
+  #
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: 'npm'
+  #
+  #     - name: Install and build
+  #       run: npm ci && npm run build
+  #
+  #     - name: Deploy to preview channel
+  #       uses: FirebaseExtended/action-hosting-deploy@v0
+  #       with:
+  #         repoToken: ${{ secrets.GITHUB_TOKEN }}
+  #         firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+  #         projectId: YOUR_PROJECT_ID  # ← Replace with your Firebase project ID
+  #         # channelId: live  # Uncomment for production deploy
