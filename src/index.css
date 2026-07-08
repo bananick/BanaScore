@@ -246,6 +246,29 @@ input {
     color: var(--disabled);
 }
 
+/* PRESET POINT BUTTONS (preset scoring mode) */
+.preset-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.preset-btn {
+    min-width: 58px;
+    min-height: 46px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 2px solid var(--primary);
+    background: transparent;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.preset-btn:hover:not(:disabled) { background: rgba(241, 196, 15, 0.15); }
+.preset-btn.active { background: var(--primary); color: var(--secondary); }
+.preset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* CRITERIA TOGGLES (criteria scoring mode) */
 .criteria-grid {
     display: flex;

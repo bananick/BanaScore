@@ -10,6 +10,7 @@ import { usePolling } from '../hooks';
 import { Collapsible } from '../components/Collapsible';
 import { ScoringPanel } from '../components/ScoringPanel';
 import { CriteriaEditor } from '../components/CriteriaEditor';
+import { PresetEditor } from '../components/PresetEditor';
 import { Button, ButtonLink } from '../components/Button';
 
 function parseWeights(json: string | null): Record<string, number> {
@@ -172,6 +173,11 @@ export const AdminEventDetail: React.FC = () => {
 
   const setActivityMode = guard(async (activityId: number, scoringMode: string) => {
     await api.updateActivity(activityId, { scoringMode });
+    await refresh();
+  });
+
+  const setActivityPreset = guard(async (activityId: number, presetPoints: number[]) => {
+    await api.updateActivity(activityId, { presetPoints });
     await refresh();
   });
 
@@ -426,6 +432,7 @@ export const AdminEventDetail: React.FC = () => {
                   >
                     <option value="criteria">{t.scoreModeCriteria}</option>
                     <option value="free">{t.scoreModeFree}</option>
+                    <option value="preset">{t.scoreModePreset}</option>
                   </select>
                   <button
                     type="button"
@@ -441,6 +448,12 @@ export const AdminEventDetail: React.FC = () => {
                     criteria={criteriaByActivity[a.id] || []}
                     onAdd={(label, points) => addCriterion(a.id, label, points)}
                     onDelete={removeCriterion}
+                  />
+                )}
+                {a.scoring_mode === 'preset' && (
+                  <PresetEditor
+                    values={a.preset_points ?? []}
+                    onSave={(vals) => setActivityPreset(a.id, vals)}
                   />
                 )}
               </div>

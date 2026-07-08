@@ -185,6 +185,7 @@ export async function duplicateEvent(
       coefficient: activity.coefficient,
       workshop: activity.workshop,
       scoring_mode: activity.scoring_mode,
+      preset_points: activity.preset_points ?? null,
     });
     for (const c of await listCriteria(db, activity.id)) {
       const cid = await nextId(C.criteria);
@@ -324,6 +325,7 @@ export async function createActivity(
     coefficient: 1,
     workshop,
     scoring_mode: 'criteria',
+    preset_points: null,
   });
   return { id };
 }
@@ -331,7 +333,13 @@ export async function createActivity(
 export async function updateActivity(
   db: DB,
   activityId: number,
-  data: { name?: string; coefficient?: number; workshop?: string | null; scoringMode?: string },
+  data: {
+    name?: string;
+    coefficient?: number;
+    workshop?: string | null;
+    scoringMode?: string;
+    presetPoints?: number[] | null;
+  },
 ): Promise<ActivityRow> {
   const activity = await getActivity(db, activityId);
   if (data.name !== undefined) {
@@ -343,6 +351,8 @@ export async function updateActivity(
       coefficient: data.coefficient ?? activity.coefficient,
       workshop: data.workshop !== undefined ? data.workshop : activity.workshop,
       scoring_mode: data.scoringMode ?? activity.scoring_mode,
+      preset_points:
+        data.presetPoints !== undefined ? data.presetPoints : (activity.preset_points ?? null),
     },
     { merge: true },
   );
@@ -465,7 +475,7 @@ export async function toggleCriterion(
 }
 
 export interface ActivityScoring {
-  activity: { id: number; name: string; scoring_mode: string };
+  activity: { id: number; name: string; scoring_mode: string; preset_points: number[] | null };
   criteria: CriterionRow[];
   scores: { team_id: number; points: number }[];
   teamCriteria: { team_id: number; criterion_id: number }[];
@@ -486,7 +496,12 @@ export async function getActivityScoring(db: DB, activityId: number): Promise<Ac
     }
   }
   return {
-    activity: { id: activity.id, name: activity.name, scoring_mode: activity.scoring_mode },
+    activity: {
+      id: activity.id,
+      name: activity.name,
+      scoring_mode: activity.scoring_mode,
+      preset_points: activity.preset_points ?? null,
+    },
     criteria,
     scores,
     teamCriteria,

@@ -305,6 +305,24 @@ test('rankingByWorkshop groups activities by atelier and sums them', async () =>
   assert.equal(quizW.ranking[0].score, 2);
 });
 
+test('preset mode stores a point ladder and scores like free points', async () => {
+  const { db, eventId } = await setup();
+  const rougeA = await store.createTeam(db, eventId, 'Rouge A');
+  const nerf = await store.createActivity(db, eventId, 'Nerf');
+  await store.updateActivity(db, nerf.id, {
+    scoringMode: 'preset',
+    presetPoints: [600, 500, 400, 300, 200, 100, 0],
+  });
+
+  const scoring = await store.getActivityScoring(db, nerf.id);
+  assert.equal(scoring.activity.scoring_mode, 'preset');
+  assert.deepEqual(scoring.activity.preset_points, [600, 500, 400, 300, 200, 100, 0]);
+
+  await store.setActivityScore(db, nerf.id, rougeA.id, 500);
+  const ranking = await store.rankingGlobal(db, eventId);
+  assert.equal(ranking.find((r) => r.id === rougeA.id)!.score, 500);
+});
+
 test('getEventReport aggregates per-team breakdown', async () => {
   const { db, eventId } = await setup();
   const a = await store.createTeam(db, eventId, 'A');

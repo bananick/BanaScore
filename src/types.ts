@@ -31,7 +31,8 @@ export interface ActivityDTO {
   name: string;
   coefficient: number;
   workshop: string | null;
-  scoring_mode: string; // 'criteria' | 'free'
+  scoring_mode: string; // 'criteria' | 'free' | 'preset'
+  preset_points: number[] | null;
 }
 
 export interface CriterionDTO {
@@ -43,7 +44,7 @@ export interface CriterionDTO {
 }
 
 export interface ActivityScoring {
-  activity: { id: number; name: string; scoring_mode: string };
+  activity: { id: number; name: string; scoring_mode: string; preset_points: number[] | null };
   criteria: CriterionDTO[];
   scores: { team_id: number; points: number }[];
   teamCriteria: { team_id: number; criterion_id: number }[];

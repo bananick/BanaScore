@@ -31,7 +31,8 @@ export interface ActivityRow {
   name: string;
   coefficient: number;
   workshop: string | null;
-  scoring_mode: string; // 'criteria' | 'free'
+  scoring_mode: string; // 'criteria' | 'free' | 'preset'
+  preset_points: number[] | null; // ladder of tappable point values (preset mode)
 }
 
 export interface CriterionRow {

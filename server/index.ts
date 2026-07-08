@@ -372,10 +372,32 @@ app.patch(
     const workshop =
       req.body?.workshop !== undefined ? optString(req.body.workshop, 'workshop', 60) : undefined;
     const scoringMode =
-      req.body?.scoringMode === 'free' || req.body?.scoringMode === 'criteria'
+      req.body?.scoringMode === 'free' ||
+      req.body?.scoringMode === 'criteria' ||
+      req.body?.scoringMode === 'preset'
         ? req.body.scoringMode
         : undefined;
-    res.json(await store.updateActivity(db, id(req, 'activityId'), { name, coefficient, workshop, scoringMode }));
+    let presetPoints: number[] | null | undefined;
+    if (req.body?.presetPoints !== undefined) {
+      const raw = req.body.presetPoints;
+      if (raw === null) {
+        presetPoints = null;
+      } else if (Array.isArray(raw)) {
+        presetPoints = raw
+          .map((v: unknown) => (typeof v === 'string' ? parseInt(v, 10) : (v as number)))
+          .filter((n: number) => Number.isFinite(n) && n >= 0 && n <= 1000000)
+          .slice(0, 20);
+      }
+    }
+    res.json(
+      await store.updateActivity(db, id(req, 'activityId'), {
+        name,
+        coefficient,
+        workshop,
+        scoringMode,
+        presetPoints,
+      }),
+    );
   }),
 );
 

@@ -134,7 +134,13 @@ export const createActivity = (eventId: string | number, name: string, workshop?
     .then((r) => r.data);
 export const updateActivity = (
   activityId: number,
-  data: { name?: string; coefficient?: number; workshop?: string | null; scoringMode?: string },
+  data: {
+    name?: string;
+    coefficient?: number;
+    workshop?: string | null;
+    scoringMode?: string;
+    presetPoints?: number[] | null;
+  },
 ) => http.patch<ActivityDTO>(`/activities/${activityId}`, data).then((r) => r.data);
 
 // --- Criteria (criteria scoring mode) ---
