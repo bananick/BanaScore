@@ -75,6 +75,7 @@ export const t = {
   bonus: 'Bonus (points admin)',
   teamsQr: 'QR codes des équipes',
   globalRanking: 'Classement global',
+  colorRanking: 'Classement par couleur',
   votesOnly: 'Votes uniquement',
   dangerZone: 'Zone de danger',
   deleteEvent: 'Supprimer cet événement',

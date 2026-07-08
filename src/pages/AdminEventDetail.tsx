@@ -224,6 +224,9 @@ export const AdminEventDetail: React.FC = () => {
     toast.success(t.sessionsCreated(res.ids.length));
   });
 
+  // Teams grouped by colour (first word) → offer a per-colour ranking.
+  const multiColor = new Set(teams.map((tm) => tm.name.trim().split(/\s+/)[0])).size >= 2;
+
   return (
     <div className="app-container">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -557,6 +560,11 @@ export const AdminEventDetail: React.FC = () => {
         <ButtonLink to={`/event/${id}/ranking/global`} variant="blue" block>
           🏆 {t.globalRanking}
         </ButtonLink>
+        {multiColor && (
+          <ButtonLink to={`/event/${id}/ranking/colors`} variant="purple" block>
+            🎨 {t.colorRanking}
+          </ButtonLink>
+        )}
         <ButtonLink to={`/event/${id}/workshops`} variant="teal" block>
           🏅 {t.workshopRankings}
         </ButtonLink>

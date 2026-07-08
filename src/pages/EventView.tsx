@@ -60,6 +60,7 @@ export const EventView: React.FC = () => {
   const votingEnabled = event ? !!event.voting_enabled : true;
   const maxVotes = event?.max_votes ?? 3;
   const remaining = Math.max(0, maxVotes - myVotes.length);
+  const multiColor = new Set(teams.map((tm) => tm.name.trim().split(/\s+/)[0])).size >= 2;
 
   return (
     <div className="app-container">
@@ -110,6 +111,11 @@ export const EventView: React.FC = () => {
           <ButtonLink to={`/event/${id}/ranking/global`} variant="primary" block style={{ fontSize: '0.9rem' }}>
             {t.globalScore}
           </ButtonLink>
+          {multiColor && (
+            <ButtonLink to={`/event/${id}/ranking/colors`} variant="purple" block style={{ fontSize: '0.9rem' }}>
+              🎨 {t.colorRanking}
+            </ButtonLink>
+          )}
           {votingEnabled && (
             <ButtonLink to={`/event/${id}/ranking/votes`} variant="accent" block style={{ fontSize: '0.9rem' }}>
               {t.voteRanking}
