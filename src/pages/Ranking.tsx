@@ -8,20 +8,6 @@ import { computeRanks, hasRanking } from '../ranks';
 import { BackButton } from '../components/BackButton';
 import { RankIcon } from '../components/RankIcon';
 
-const COLOR_DOT: Record<string, string> = {
-  rouge: '🔴',
-  bleu: '🔵',
-  bleue: '🔵',
-  vert: '🟢',
-  verte: '🟢',
-  jaune: '🟡',
-  orange: '🟠',
-  violet: '🟣',
-  rose: '🩷',
-  noir: '⚫',
-  blanc: '⚪',
-};
-
 export const Ranking: React.FC = () => {
   const { id, type, activityId } = useParams();
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
@@ -35,22 +21,6 @@ export const Ranking: React.FC = () => {
       const data = await api.rankingActivity(id!, activityId);
       setRanking(data.ranking);
       setTitle(`🎯 ${data.activityName}`);
-    } else if (type === 'colors') {
-      // Sum each colour's teams (colour = first word of the team name).
-      const global = await api.rankingGlobal(id!);
-      const totals = new Map<string, number>();
-      for (const team of global) {
-        const color = team.name.trim().split(/\s+/)[0] || team.name;
-        totals.set(color, (totals.get(color) ?? 0) + team.score);
-      }
-      const entries = [...totals.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .map(([color, score], i) => {
-          const dot = COLOR_DOT[color.toLowerCase()] ?? '';
-          return { id: i, name: dot ? `${dot} ${color}` : color, score };
-        });
-      setRanking(entries);
-      setTitle(`🎨 ${t.colorRanking}`);
     } else {
       setRanking(await api.rankingGlobal(id!));
       setTitle(`🏆 ${t.globalScore}`);

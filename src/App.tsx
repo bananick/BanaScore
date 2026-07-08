@@ -11,6 +11,7 @@ import { Register } from './pages/Register';
 import { JoinEvent } from './pages/JoinEvent';
 import { EventView } from './pages/EventView';
 import { Ranking } from './pages/Ranking';
+import { ColorRankings } from './pages/ColorRankings';
 import { WorkshopRankings } from './pages/WorkshopRankings';
 import { Projection } from './pages/Projection';
 import { ScorerGuard } from './pages/ScorerGuard';
@@ -80,6 +81,7 @@ function App() {
               </ScorerGuard>
             }
           />
+          <Route path="/event/:id/ranking/colors" element={<ColorRankings />} />
           <Route path="/event/:id/ranking/:type" element={<Ranking />} />
           <Route path="/event/:id/ranking/:type/:activityId" element={<Ranking />} />
         </Routes>
