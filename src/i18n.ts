@@ -57,6 +57,7 @@ export const t = {
   scoreModePreset: 'Points prédéfinis (boutons)',
   presetPointsLabel: 'Paliers de points (séparés par des virgules)',
   presetPointsHint: 'Ex. 600, 500, 400, 300, 200, 100, 0 — l’animateur tape le palier d’un doigt.',
+  presetTaken: 'Déjà attribué dans ce groupe',
   criteria: 'Critères',
   addCriterion: 'Ajouter un critère',
   criterionLabel: 'Libellé (ex. Goût trouvé)',

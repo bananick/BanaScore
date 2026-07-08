@@ -24,11 +24,26 @@ const COLOR_DOT: Record<string, string> = {
   blanc: '⚪',
 };
 
+const chunk = <T,>(arr: T[], size: number): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+};
+
+const byName = (a: TeamDTO, b: TeamDTO) => a.name.localeCompare(b.name);
+const letterOf = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1] : '';
+};
+
 /**
  * Scoring controls for one activity, shared by the admin page and the tablet
- * screen. Supports three modes: free number entry (e.g. Kahoot), preset point
- * buttons (tap a value), or criteria toggles. With many teams sharing a colour
- * prefix (e.g. "Rouge A"…), teams are grouped into collapsible colour sections.
+ * screen. Modes: free number entry, preset point buttons (tap a value), or
+ * criteria toggles. Teams sharing a colour prefix ("Rouge A"…) are grouped into
+ * collapsible colour sections. In preset mode each colour is split into
+ * half-groups (one per ladder length) separated visually, and a point value
+ * already given inside a half-group is locked out for the others (unique
+ * distribution, e.g. only one team can hold 600).
  */
 export const ScoringPanel: React.FC<{
   eventId: string | number;
@@ -77,7 +92,9 @@ export const ScoringPanel: React.FC<{
       ? scoring.activity.preset_points
       : DEFAULT_PRESET;
 
-  const teamCard = (team: TeamDTO) => {
+  // `disabled`: positive values already taken by OTHER teams of the same
+  // half-group (unique distribution). The team keeps its own value tappable.
+  const teamCard = (team: TeamDTO, disabled?: Set<number>) => {
     const total = pointsFor(team.id);
     return (
       <div key={team.id} className="card" style={{ textAlign: 'left', padding: 14, margin: '10px 0' }}>
@@ -107,11 +124,13 @@ export const ScoringPanel: React.FC<{
           <div className="preset-grid">
             {presetValues.map((v) => {
               const active = total === v && total > 0;
+              const taken = !active && v > 0 && !!disabled?.has(v);
               return (
                 <button
                   key={v}
                   type="button"
-                  disabled={locked}
+                  disabled={locked || taken}
+                  title={taken ? t.presetTaken : undefined}
                   className={`preset-btn ${active ? 'active' : ''}`}
                   onClick={() => setScore(team.id, active ? null : v)}
                 >
@@ -147,13 +166,41 @@ export const ScoringPanel: React.FC<{
     );
   };
 
+  // Render a list of teams. In preset mode, split into half-groups (size = ladder
+  // length) with a visual separator, and enforce unique point distribution
+  // within each half-group.
+  const renderTeams = (list: TeamDTO[]) => {
+    if (mode !== 'preset' || presetValues.length === 0) return list.map((tm) => teamCard(tm));
+    const half = chunk(list, presetValues.length);
+    return half.map((grp, ci) => {
+      const takenByOthers = (teamId: number) => {
+        const s = new Set<number>();
+        for (const tm of grp) {
+          if (tm.id === teamId) continue;
+          const p = pointsFor(tm.id);
+          if (p > 0) s.add(p);
+        }
+        return s;
+      };
+      const first = letterOf(grp[0].name);
+      const last = letterOf(grp[grp.length - 1].name);
+      const label = first && last ? (first === last ? first : `${first}–${last}`) : `Groupe ${ci + 1}`;
+      return (
+        <div key={ci}>
+          {half.length > 1 && <div className="subgroup-sep">{label}</div>}
+          {grp.map((tm) => teamCard(tm, takenByOthers(tm.id)))}
+        </div>
+      );
+    });
+  };
+
   // Group teams by the first word of their name (e.g. colour). Only group when
   // there are several distinct groups and enough teams to warrant it.
   const groupKey = (name: string) => name.trim().split(/\s+/)[0] || name;
   const distinct = new Set(teams.map((tm) => groupKey(tm.name)));
 
   if (distinct.size < 2 || teams.length <= 8) {
-    return <div>{teams.map(teamCard)}</div>;
+    return <div>{renderTeams([...teams].sort(byName))}</div>;
   }
 
   const groups: { key: string; teams: TeamDTO[] }[] = [];
@@ -174,13 +221,14 @@ export const ScoringPanel: React.FC<{
   return (
     <div>
       {groups.map((g) => {
+        const sorted = [...g.teams].sort(byName);
         const dot = COLOR_DOT[g.key.toLowerCase()] ?? '';
         return (
           <Collapsible
             key={g.key}
             title={`${dot ? dot + ' ' : ''}${g.key} — ${scoredCount(g.teams)}/${g.teams.length}`}
           >
-            {g.teams.map(teamCard)}
+            {renderTeams(sorted)}
           </Collapsible>
         );
       })}
