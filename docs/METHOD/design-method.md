@@ -1,7 +1,7 @@
 # Design Method
 
 **Owner:** Nova  
-**Version:** 309.a  
+**Version:** 309.b  
 **Purpose:** Global design constraints only (project-level UI lives in project/DESIGN.md)
 
 ---
@@ -1213,6 +1213,10 @@ Every app must define in `project/DESIGN.md`:
 > generated as **interactive Artifacts** in Claude Desktop, from the spec chapter + the M3
 > token set below. Iterate live with the operator; when approved, the Artifact's markup +
 > tokens become the reference Brian/Teddy implement against.
+>
+> **Evolved in v309.b.** Claude Design is the **bootstrap only**: on approval the Artifact source
+> is exported into the app's **`proto/` workspace** (app root), where the prototype keeps living
+> and evolving — see "Design Port Loop" below.
 
 ### How Nova prototypes
 
@@ -1221,7 +1225,8 @@ Every app must define in `project/DESIGN.md`:
    (not lorem ipsum), M3 applied, dark mode, `prefers-reduced-motion` respected.
 3. Tune live in the conversation (colors, spacing, motion) — no separate tuner panel needed;
    the Artifact regenerates on request.
-4. On approval, hand off the Artifact + the resolved token values into `project/DESIGN.md`.
+4. On approval, **export the Artifact source into the app's `proto/` folder** (its seed commit —
+   the proto then evolves in the repo) and record the resolved token values in `project/DESIGN.md`.
 
 ### Token Contract (Artifacts must use these — never hardcode colors)
 
@@ -1257,29 +1262,54 @@ pills, tables) · Rail · Layout (spacing, drawer, search, elevation, scrollbars
 
 ## Design Port Loop (Claude Design → code)
 
-**Owner:** Nova (directive) + Brian/Teddy (port) · **Ritual:** `/port` · **Added in v309.a.**
+**Owner:** Nova (directive) + Brian/Teddy (port) · **Ritual:** `/port` · **Added in v309.a · Evolved in v309.b (living `proto/` directive).**
 
-> Promoted from `docs/porting/PORTING-PLAYBOOK.md` (pilot-validated 2026-06-15). This is how an
-> approved Claude Design prototype crosses into a live React/Firebase app — across many apps —
-> **without restating instructions each session**. The Artifact stays where you set direction; the
-> port loop encodes *"obey the current design"* once, as committed files.
+> Promoted from `docs/porting/PORTING-PLAYBOOK.md` (pilot-validated 2026-06-15). This is how a
+> prototype crosses into a live React/Firebase app — across many apps — **without restating
+> instructions each session**. Since **v309.b**, Claude Design only **bootstraps** the prototype;
+> the prototype then lives in the repo (`proto/` at the app root) where design and features are
+> worked out in HTML **before** they are developed. The port loop encodes *"obey the current
+> proto"* once, as committed files.
 
-### Principle — the directive is a committed export, not a chat
+### Principle — the directive is a living committed prototype, not a chat
 
-The standing order lives in **committed files per app**, all pointing at the exported design. You
+The standing order lives in **committed files per app**, all pointing at the living proto. You
 never retype the instruction; you run `/port`.
 
 | File | Role | Re-touched |
 |---|---|---|
-| `docs/project/design/artifacts/{app}/` | The exported Claude Design prototype = the **directive** (the *source* HTML/JSX + tokens, never a screenshot) | whenever the design changes |
-| `docs/project/design/PORT-MAP.md` | element → component → Firestore map + checklist | once, then ticked off |
+| `proto/` (app root) | The living HTML prototype = the **directive** (seeded from a Claude Design export — *source* HTML + tokens, never a screenshot) | continuously — design + features evolve here first |
+| `docs/project/design/PORT-MAP.md` | proto screen → component → Firestore map + checklist | once, then per-screen state updates |
 | `.claude/commands/port.md` | the standing order as the `/port` ritual | once (installed or synced by the Claude addon) |
 
 Plus a **Design port directive** block in the app's `CLAUDE.md` so every session inherits the rule.
 
+> **Migration note (v309.a → v309.b).** The drop-zone `docs/project/design/artifacts/{app}/` is
+> retired for new work — the Claude Design export now lands directly in `proto/` as its seed
+> commit. `/port` falls back to the old folder only where `proto/` doesn't exist yet.
+
+### Proto workspace — `proto/` at the app root (v309.b)
+
+The proto is where design **and features** are worked out before development — clickable, cheap to
+change, committed. Its rules:
+
+1. **Seeded once from Claude Design** (bootstrap only), then evolved **in place** with Claude Code.
+   The git history of `proto/` *is* the design history — no re-export loop.
+2. **Plain HTML/CSS/JS** — no build step, no framework, no dependencies. The **token contract and
+   class contract are mandatory** (they are what keeps `/port foundation` mechanical).
+3. **Fake data is allowed here and ONLY here.** `proto/` is a design workspace, not a shipped path.
+   The seam is absolute: nothing under `app/`, `src/` or `components/` may import, link or copy
+   from `proto/`; keep it out of build/lint/deploy scope. Ports **re-implement** against live
+   Firestore/HubSpot — never lift data plumbing from the proto.
+4. **Per-screen lifecycle, tracked in PORT-MAP:** ⬜ designing → 🔄 porting → ✅ ported →
+   ⚠️ diverged. A screen is portable when its proto is settled. After it ships, design changes
+   still go **proto-first**, then a re-port PR — the proto leads, the app follows.
+5. **The proto never pre-decides the data model.** However complete it looks, schema / permissions /
+   feature scope stay behind the conflict gate below.
+
 ### PORT-MAP first (element → component → Firestore)
 
-Before porting any pixels, run `/port` once to **generate `PORT-MAP.md`** from the artifact
+Before porting any pixels, run `/port` once to **generate `PORT-MAP.md`** from the proto
 (start from `PORT-MAP-TEMPLATE.md`): map **each element → a component file → a Firestore path**.
 This is the only place app specifics are encoded — review it before building.
 
@@ -1312,20 +1342,23 @@ tenant model or business rules. Any such change **stops for the operator**, list
 
 ### Updating the directive
 
-Changed the design? **Re-export the artifact** over `docs/project/design/artifacts/{app}/` and commit.
-The `/port` command and the `CLAUDE.md` block already say *"follow the current artifact"* — nothing to
-retype.
+Changed the design? **Evolve `proto/` in place and commit**, then re-port the affected screen(s) —
+one PR each. The `/port` command and the `CLAUDE.md` block already say *"follow the current proto"* —
+nothing to retype, no re-export loop.
 
 ### CLAUDE.md block (paste into each app)
 
 ```
 ## Design port directive
-- The current UI directive for this app is the exported Claude Design artifact in
-  `docs/project/design/artifacts/`. Follow it for UX, layout, IA and features.
-- `docs/project/design/PORT-MAP.md` is the element→component→data map and checklist.
-- Reconcile, never overwrite: if the design implies a schema / permission / feature change,
+- The current UI directive for this app is the living HTML prototype in `proto/` at the app
+  root (seeded from Claude Design, evolved in place). Follow it for UX, layout, IA and features.
+- `proto/` never ships: fake data lives there and only there; nothing in the app may import,
+  link or copy from it — ports re-implement against live data.
+- `docs/project/design/PORT-MAP.md` is the proto-screen→component→data map and checklist.
+- Reconcile, never overwrite: if the proto implies a schema / permission / feature change,
   STOP and list it in the PR under "Needs decision" — do not change the data model yourself.
-- Tokens first, then nav / shell, then one page per PR. Run with `/port`.
+- Design changes go proto-first, then a re-port PR. Tokens first, then nav / shell, then one
+  page per PR. Run with `/port`.
 ```
 
 > **Runner note.** Today the loop runs on a Claude Code (web) or **Cowork** session driving `/port`,

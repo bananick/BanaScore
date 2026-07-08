@@ -45,7 +45,7 @@ Always engaged in the standard workflow:
 
 ---
 
-### On-Demand Specialists (7 agents)
+### On-Demand Specialists (8 agents)
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
@@ -58,11 +58,16 @@ Called when their domain is touched — all are **executable sub-agents** (`.cla
 | **Sage** | Test Architect | Test strategy, complex testing | `sage` |
 | **Gordon** | Sales, Marketing & Growth | GTM, funnels, marketing copy, SEO | `gordon` |
 | **Kasper** | Security | Security review, Firestore rules, hardening | `kasper` |
+| **Iris** | Research & Analysis | Study code/market/data → findings + préconisations | `iris` |
 
 > **Advisory hats (not executable Skills, v309.a):** Only **API & Multi-Agent** integration
 > (formerly Riley) remains an advisory hat — wielded inside a chat with `ai-infra-method.md`
 > loaded, implementation handed to Brian/Aiko. See the appendix at the end of this file.
 > Gordon and Kasper were promoted to first-class executable agents in v309.a.
+> **Iris** (Research & Analysis) was added as a **read-only advisory sub-agent + Skill** — she
+> studies code/market/data and *preconizes*; she writes analysis docs (`docs/analysis/`) only,
+> never product code. Capability skills grew too: **`/media`** (image search / create / resize /
+> export, owned by Nova). Run Lucia's sync to version this and propagate to the nested mirrors.
 
 ---
 

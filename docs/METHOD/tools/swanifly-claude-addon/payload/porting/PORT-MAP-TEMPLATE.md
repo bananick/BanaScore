@@ -1,11 +1,11 @@
 # Port Map — {APP}
 
-> The bridge between the Claude Design directive and this codebase.
+> The bridge between the living proto directive and this codebase.
 > Generated once per app (setup step 3 of the porting playbook), then kept as the living checklist.
 
-- **Design directive:** `docs/project/design/artifacts/{app}/` — exported from Claude Design on {DATE}
+- **Design directive:** `proto/` at the app root — seeded from Claude Design on {DATE}, evolved in place
 - **Stack / adapter:** {MUI | Tailwind v4 @theme | Tailwind v3} — see the foundation row
-- **Status legend:** ⬜ todo · 🔄 in PR · ✅ merged · ⚠️ conflict (needs your decision)
+- **Status legend:** ⬜ designing (proto not settled) · 🔄 porting (in PR) · ✅ ported (merged) · ⚠️ diverged / conflict (needs your decision)
 
 ## Foundation (once per app — bridge the token contract, then stop)
 | Status | Item |

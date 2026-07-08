@@ -4,7 +4,7 @@
  *
  * Materializes the Claude Code integration into an app:
  *   - AGENTS.md, SOUL.md, CLAUDE.md   -> app root        (CREATE-IF-MISSING — never clobbers app-owned identity)
- *   - "Design port directive" block   -> app CLAUDE.md    (MERGE — marker-guarded; reaches apps that already had a CLAUDE.md)
+ *   - "Design port directive" block   -> app CLAUDE.md    (MERGE — content-guarded: adds the block or refreshes it when the canonical snippet changes)
  *   - .claude/commands/<all>           -> app/.claude      (OVERWRITE — canonical rituals, incl. /port)
  *   - .claude/skills/<all>            -> app/.claude      (OVERWRITE — canonical tooling)
  *   - docs/project/design/PORT-MAP-TEMPLATE.md -> app docs (OVERWRITE — reference template for the /port loop)
@@ -17,7 +17,7 @@
  * Called automatically per app by scripts/sync-method-to-all-apps.mjs.
  */
 import {
-  readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync,
+  readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync, statSync,
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -66,20 +66,33 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
 
   // 1b) Design port directive — MERGE the standing block into the app's CLAUDE.md.
   // CLAUDE.md is create-if-missing above, so an app that already had its own CLAUDE.md
-  // would never receive the block via the copy. Inject it idempotently (marker-guarded),
-  // so the "every session inherits the design-port rule" guarantee actually holds.
+  // would never receive the block via the copy. Inject or refresh it idempotently
+  // (content-guarded: the section is replaced when the canonical snippet changes),
+  // so the "every session inherits the CURRENT design-port rule" guarantee actually holds.
   const directiveSnippet = join(payload, "snippets", "design-port-directive.md");
   const appClaude = join(appRoot, "CLAUDE.md");
   if (existsSync(directiveSnippet) && existsSync(appClaude)) {
     const current = readFileSync(appClaude, "utf8");
-    if (current.includes("## Design port directive")) {
-      res.directive = "present";
-    } else {
+    const block = readFileSync(directiveSnippet, "utf8").trimEnd();
+    const start = current.indexOf("## Design port directive");
+    if (start === -1) {
       if (!dryRun) {
-        const block = readFileSync(directiveSnippet, "utf8").trimEnd();
         writeFileSync(appClaude, current.replace(/\s*$/, "") + "\n\n" + block + "\n", "utf8");
       }
       res.directive = "added";
+    } else {
+      const nextHeading = current.indexOf("\n## ", start + 1);
+      const end = nextHeading === -1 ? current.length : nextHeading;
+      if (current.slice(start, end).trimEnd() === block) {
+        res.directive = "present";
+      } else {
+        if (!dryRun) {
+          const updated = current.slice(0, start) + block + "\n" +
+            (nextHeading === -1 ? "" : current.slice(end));
+          writeFileSync(appClaude, updated, "utf8");
+        }
+        res.directive = "updated";
+      }
     }
   }
 
@@ -95,12 +108,19 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
   }
 
   // 3) Skills — overwrite (canonical tooling, like METHOD files)
+  // Some repos keep `.claude/skills` as a symlink (materialized as a plain file on
+  // Windows checkouts) — skip those instead of erroring; the target dir is theirs to manage.
   const skillsSrc = join(payload, "skills");
+  const skillsDest = join(appRoot, ".claude", "skills");
   if (existsSync(skillsSrc)) {
-    for (const e of readdirSync(skillsSrc, { withFileTypes: true })) {
-      if (!e.isDirectory()) continue;
-      if (!dryRun) copyDir(join(skillsSrc, e.name), join(appRoot, ".claude", "skills", e.name));
-      res.updated.push(`.claude/skills/${e.name}`);
+    if (existsSync(skillsDest) && !statSync(skillsDest).isDirectory()) {
+      res.kept.push(".claude/skills (symlink stub — skipped)");
+    } else {
+      for (const e of readdirSync(skillsSrc, { withFileTypes: true })) {
+        if (!e.isDirectory()) continue;
+        if (!dryRun) copyDir(join(skillsSrc, e.name), join(skillsDest, e.name));
+        res.updated.push(`.claude/skills/${e.name}`);
+      }
     }
   }
 

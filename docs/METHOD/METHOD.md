@@ -1,4 +1,4 @@
-# METHOD v309.a
+# METHOD v310.a
 
 ## Quick Start
 
@@ -21,6 +21,13 @@
 | **Evolve METHOD** | ALL method files | Lucia |
 
 ---
+
+## What's New in v310.a
+1. **`/relay` handoff ritual (alias `/handoff`)** — the **dropoff** half of context handoff, the inverse of `/brief`. Where `/brief` rehydrates a fresh conversation from git + `STATE.md` + memory, `/relay` flushes the current conversation's volatile working-state (settled decisions, dead ends, exact next action) into `STATE.md`'s new **`## Resume here`** section and emits a pasteable Relay block. Six-row schema — **But · Acquis · État · Charge · Prochaine · Pièges** (pointers, never payloads). Relay only at a clean boundary (state already in git + STATE.md + task report), never mid-thrash. Complementary rule: offload residue-heavy exploration to sub-agents (Iris / Explore) so fewer Relays are needed. Ships to every app via the addon payload. See `.claude/commands/relay.md` + `method-core.md` → "Project State & Handoff".
+
+## What's New in v309.b
+1. **Design Port Loop v2 — living `proto/` directive** — Claude Design is **bootstrap only**: it seeds `proto/` at each app's root, where the prototype **evolves in place** (design + features worked out in HTML *before* development). `/port` implements one screen per PR **from the proto**; design changes go proto-first, then a re-port PR. `docs/project/design/artifacts/{app}/` retired for new work (fallback kept). Proto rules: token/class contract mandatory; fake data confined to `proto/`, never shipped/imported; conflict gate unchanged. See `design-method.md` → "Design Port Loop" + "Proto workspace".
+2. **Addon merge is now content-guarded** — `swanifly-claude-addon/install.mjs` refreshes the "Design port directive" block in app `CLAUDE.md` when the canonical snippet changes (was add-once), and tolerates symlinked `.claude/skills`.
 
 ## What's New in v309.a
 1. **Runners & Orchestration layer** — Documented the native execution stack: **native sub-agents** (`.claude/agents/`, the default) → **Agent Teams** (parallel) → **Cowork** (desktop) → **Swanifly** (one runner, not *the* engine). See the new section below.
@@ -379,9 +386,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 309.a  
+**Current Version:** 309.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-06-16
+**Released:** 2026-07-05
 
 ### Version Scheme
 

@@ -1,7 +1,7 @@
 # Agents Engineering & AI Agent Team Architecture
 
 **Owner:** Lucia (method-level) + Developers
-**Version:** 309.a
+**Version:** 310.a
 **Purpose:** Define the agent team architecture on the **Claude suite** — the native sub-agent layer, runners & orchestration, parallel + fleet execution, hard gates via hooks, agent-to-Skill mapping, the Desktop/Code division of labour, Artifacts-based design, and context management protocols.
 
 ---
@@ -193,6 +193,7 @@ The METHOD assumes a specific Desktop configuration. Set this up once per machin
 ### 7.6 Memory & Artifacts
 - Use **Artifacts** for prototypes and any generated doc/diagram you'll iterate on (see §8).
 - Treat Desktop **memory** as convenience, not truth — the repo is truth. Never let a decision live only in memory; write it to a doc.
+- **Relay ≠ memory.** `/relay` writes volatile per-workstream *resume* state to `STATE.md`'s `## Resume here`; memory holds durable cross-session *facts* about the user/project. Don't collapse one into the other.
 
 ---
 

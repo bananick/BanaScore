@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 309.a  
+**Version:** 310.a  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -13,7 +13,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 309.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 310.a (Epoch 3: Modular & Multi-Entry)
 
 ### Epochs
 
@@ -104,6 +104,21 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**310.a** (2026-07-08) — **Major: `/relay` handoff ritual — the dropoff half of context handoff**
+- **NEW — `/relay` slash-command ritual** (alias `/handoff`; `.claude/commands/relay.md` + addon payload `payload/commands/relay.md`): the inverse of `/brief`. `/brief` *picks up* a fresh conversation from git + `STATE.md` + memory; `/relay` *drops off* — it flushes a conversation's volatile working-state (settled decisions, dead ends tried, exact next action) into `STATE.md` before the window ends and emits a pasteable Relay block. Ships to every app via the installer payload, same as `/port`.
+- **NEW — `## Resume here` convention on `project/STATE.md`** (documented in `method-core.md` → "Project State & Handoff"): the durable Relay home, auto-loaded so `/brief` reads it for free. Six-row schema — **But · Acquis · État · Charge · Prochaine · Pièges** — pointers, never payloads. One block per app; each `/relay` overwrites it. Seeded as a placeholder into the hub `project/STATE.md`.
+- **CHANGED — operating-loop step 5 "Report & hand off"** (`CLAUDE.md` §"How Agents Operate" + `AGENTS.md` §"Operating Loop"): now emits a Relay at clean handoff boundaries, with the trigger rule — relay only once state already lives in git + `STATE.md` + task report, never mid-thrash (a premature handoff costs more in re-exploration than it saves).
+- **NEW — sub-agent offload rule** (`method-core.md`): route residue-heavy exploration / research through sub-agents (Iris / Explore) that return conclusions only, so the main context accumulates less residue and needs fewer Relays.
+- **CHANGED — Relay ≠ memory boundary** noted in `agents-engineering-method.md` §7.6: a Relay is volatile per-workstream *resume* state (owned by `STATE.md`); memory is durable cross-session *facts*.
+- **Updated:** `.claude/commands/relay.md` (+ payload mirror), `method-core.md`, `CLAUDE.md`, `AGENTS.md`, `agents-engineering-method.md`, `METHOD.md` (version line + What's New), `versioning.md`, `app-settings.json`, `project/STATE.md`.
+- Version bumped 309.b → 310.a; synced to the fleet via `npm run sync-method:all` + `npm run sync-method`.
+
+**309.b** (2026-07-05) — **Minor: Design Port Loop v2 — living `proto/` directive**
+- **CHANGED — The design directive is now the living HTML prototype in `proto/` at each app's root.** Claude Design is demoted to **bootstrap only**: it generates the initial prototype, whose source seeds `proto/`; the proto then evolves **in place** (design + features worked out in HTML *before* development). Git history of `proto/` = design history — the re-export loop is gone.
+- **RETIRED — `docs/project/design/artifacts/{app}/`** as the directive drop-zone for new work; `/port` falls back to it only where `proto/` doesn't exist yet.
+- **NEW — Proto workspace rules** (`design-method.md` → "Proto workspace"): plain HTML/CSS/JS, token + class contract mandatory; fake data confined to `proto/` (never shipped — no import/link/copy into `app/`/`src/`/`components/`); per-screen lifecycle in PORT-MAP (⬜ designing · 🔄 porting · ✅ ported · ⚠️ diverged); proto-first for post-ship design changes; conflict gate unchanged (the proto never pre-decides the data model).
+- **Updated:** `design-method.md` (Prototyping + Design Port Loop), `/port` command (hub + addon payload), addon snippet `design-port-directive.md`, payload + hub `CLAUDE.md` blocks, `docs/porting/PORTING-PLAYBOOK.md`.
 
 **309.a** (2026-06-16) — **Major: Native Orchestration + Reconciliation Refresh**
 - **NEW — Runners & Orchestration layer:** documented the native execution stack in `METHOD.md` / `README.md` — native sub-agents (`.claude/agents/`, **default**) → Agent Teams (parallel) → Cowork (desktop) → Swanifly (**one runner, not THE engine**). Reframed every "Swanifly is the engine" line across the docs.
@@ -285,5 +300,5 @@ npm run sync-method:dry-run      # preview
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-06-16
+**Last Updated:** 2026-07-08
 

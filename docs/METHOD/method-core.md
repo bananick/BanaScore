@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 308.a  
+**Version:** 310.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -317,6 +317,45 @@ git checkout main && git merge feat/015-b-fcm && git push origin main
 ```
 
 **Why:** Ensures progress is never lost, makes review easier, and keeps remote in sync with actual state at all times.
+
+---
+
+## Project State & Handoff (STATE.md)
+
+`project/STATE.md` is the durable single source of truth for **where the app is right now** — it is
+auto-loaded on every conversation (see Context Loading). Standard sections: a header (Last Updated,
+Current Sprint, Status, METHOD Version), then **Active Work**, **Blockers**, **Recent Decisions**,
+**Next Up**.
+
+### `## Resume here` — the Relay home
+
+The dropoff ritual `/relay` (alias `/handoff`) writes a `## Resume here` section near the top of
+`STATE.md` so the next conversation resumes without re-pasting context. It is the **inverse of
+`/brief`**: `/brief` picks up (rehydrates from git + `STATE.md` + memory), `/relay` drops off
+(flushes the live working-state before the window ends). Because `STATE.md` is already auto-loaded,
+`/brief` reads the block for free. One `## Resume here` block per app; each `/relay` overwrites the
+previous. Schema — **pointers, never payloads**:
+
+| Row | Carries |
+|---|---|
+| **But** | The goal in one line + the "done" test |
+| **Acquis** | Decisions settled / what now works — prevents re-derivation (the token win) |
+| **État** | Files touched, tests status, last commit hash |
+| **Charge** | *Load these next*: STATE.md, task file, 2–3 key sources — pointers, not contents |
+| **Prochaine** | The exact next action |
+| **Pièges** | Dead ends already tried, what NOT to re-touch |
+
+**Trigger discipline:** relay **only at a clean boundary** — state already committed to git +
+`STATE.md` + the task report. Never mid-thrash; a premature handoff costs more in re-exploration
+than it saves.
+
+**Relay ≠ memory:** a Relay is volatile per-workstream resume state owned by `STATE.md`; runtime
+memory holds durable cross-session facts about the user/project. Keep them separate — don't collapse
+one into the other.
+
+**Keep Relays rare — offload to sub-agents:** route residue-heavy exploration / research through
+sub-agents (Iris / Explore) that return **conclusions only**. The main context then accumulates less
+residue, so it needs fewer Relays in the first place.
 
 ---
 

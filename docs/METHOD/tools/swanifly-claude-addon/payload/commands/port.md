@@ -1,5 +1,5 @@
 ---
-description: Port the next screen from the committed Claude Design directive into this app (one screen, one PR)
+description: Port the next screen from the app's living proto/ directive into this app (one screen, one PR)
 argument-hint: [screen name | "next" | "foundation"]
 ---
 
@@ -9,8 +9,10 @@ You are porting this app's UI to its **design directive**. Do **not** wait for t
 restate any of the rules below — they are standing orders. Read the three sources, then act.
 
 ## Sources of truth (priority order)
-1. **The exported Claude Design artifact** in `docs/project/design/artifacts/` — the design directive
-   (UX, information architecture, layout, components, feature intent).
+1. **The living HTML prototype** in `proto/` at the app root — the design directive (UX, information
+   architecture, layout, components, feature intent). Seeded from Claude Design, evolved in place;
+   it leads, the app follows. *Fallback (apps not yet migrated): the exported artifact in
+   `docs/project/design/artifacts/`.*
 2. **`docs/project/design/PORT-MAP.md`** — the element → component → data map and the checklist of
    what is already done.
 3. **The existing code, specs and Firestore schema** — current reality.
@@ -41,15 +43,17 @@ inherits it. Pick the adapter by the app's stack:
 ## Standing rules (every run — no reminder needed)
 1. **Foundation before screens.** Run `npm install` first. If the token contract is not yet bridged in
    `globals.css` / theme (per the adapter table above), do that first with **Inter**, taking values from
-   the exported artifact. Swapping to **Lucide** adds a dependency, so do it as its own build-verified
+   the proto. Swapping to **Lucide** adds a dependency, so do it as its own build-verified
    step. Once per app.
 2. **One screen = one PR.** Branch, implement, open the PR. Small and reviewable.
-3. **Real data only.** Wire to the Firestore path named for this screen in PORT-MAP. No mock data.
+3. **Real data only.** Wire to the Firestore path named for this screen in PORT-MAP. No mock data —
+   and never import, link or copy data plumbing from `proto/`; re-implement against live data.
 4. **Conflict gate — reconcile, don't overwrite.** If the design implies a change to the schema, a
    tenant/permission rule, or adding/dropping a feature: **do not change the data model.** List it in
    the PR body under `## Needs decision` and continue with everything that isn't blocked.
-5. **Update PORT-MAP.** Mark the row, record the component file(s) touched.
-6. **Fidelity note.** In the PR body, compare the result against the artifact and the acceptance
+5. **Update PORT-MAP.** Mark the row (⬜ designing · 🔄 porting · ✅ ported · ⚠️ diverged), record
+   the component file(s) touched.
+6. **Fidelity note.** In the PR body, compare the result against the proto and the acceptance
    criteria from PORT-MAP.
 
 Stop after this one screen. Do not chain to the next.
