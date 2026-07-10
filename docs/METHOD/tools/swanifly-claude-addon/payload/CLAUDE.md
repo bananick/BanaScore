@@ -9,7 +9,7 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v307.a, `docs/METHOD/`, 15 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
+You operate inside the **METHOD** (v311.a, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
 
 ## Agent cohort
 
@@ -75,7 +75,14 @@ Claude Code uses **skills** as entry points. Mapping to your Antigravity slash-c
 | `/hubspot-sync` | Pull live HubSpot → Firestore | data rules |
 | `/media` | Search / create / resize / export visual assets (Nova-owned) | — |
 
-> Keep responses lean: reference METHOD files, don't paste them. Use Flash-tier reasoning for planning/UI/i18n; reserve deep reasoning for architecture & security.
+> Keep responses lean: reference METHOD files, don't paste them.
+
+## Model routing (default: orchestrate high, execute cheap)
+
+- **Coordinator high, delegates cheap.** Orchestration/review/security runs on the strongest available model (Fable/Opus); each delegated task runs on the **cheapest model that meets its quality bar**.
+- **Tiers:** **T1** judge/plan/review/security → opus · **T2** build/tests/ops → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
+- Sub-agent defaults live in `.claude/agents/` frontmatter (where installed); override per delegation when the task's tier differs. One retry max at a tier, then escalate one tier; Vera/Kasper never below T1.
+- On non-Claude tools (Cursor, Codex): inventory the models the tool exposes, map them onto T1/T2/T3, apply the same policy. Canonical: `docs/METHOD/routing-method.md` → "Model Routing".
 
 ## Design port directive
 

@@ -10,7 +10,7 @@
 - **Task**: <###-a ...> (TASK only)
 
 - **Reviewed by**: Vera (High-Model Analyzer)
-- **Model**: Claude Sonnet 4.5 | GPT-5 (high)
+- **Model**: T1 — Fable/Opus | GPT-5.x-class (the Review Gate never runs below T1; `routing-method.md` → "Model Routing")
 - **Verdict**: PASS | FAIL | PASS_WITH_FOLLOWUPS
 - **Date**: YYYY-MM-DD
 - **Inputs**:

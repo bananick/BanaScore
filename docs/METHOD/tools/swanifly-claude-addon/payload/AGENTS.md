@@ -4,6 +4,15 @@
 > For AG-specific instructions, see `GEMINI.md` (takes precedence).
 > Shared identity, voice & non-negotiables: see `SOUL.md`.
 
+## Model Routing (default: orchestrate high, execute cheap)
+
+> Canonical policy: `docs/METHOD/routing-method.md` → "Model Routing". Tool-agnostic — applies on Cursor, Codex, and any multi-model agent tool.
+
+- **Coordinator high, delegates cheap.** The orchestrating agent runs on the strongest model the tool exposes; every delegated/sub task runs on the **cheapest model that meets its quality bar**.
+- **Tiers:** **T1** judge/plan/review/security → strongest reasoning model (Fable/Opus/GPT-5.x-class) · **T2** build/tests/ops → mid-tier coding model (Sonnet-class) · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → cheapest competent model (Haiku-class).
+- **Environment awareness first:** before routing, **inventory the models actually available in this tool/workspace** (Cursor: the workspace's enabled model list; Codex: the CLI's model options; Claude Code: `.claude/agents/` frontmatter + per-delegation override) and map them onto T1/T2/T3 by capability and price. Never assume a specific vendor lineup.
+- **Escalation:** one retry max at a tier, then escalate one tier. Review/security tasks never run below T1. Missing tier → nearest available, preferring upward. Single-model tool → run inline and flag the tier mismatch in the report.
+
 ## Tech Stack
 
 - **Framework:** Next.js 15 (App Router)

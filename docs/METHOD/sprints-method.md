@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 308.a  
+**Version:** 311.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 ---
@@ -85,13 +85,14 @@ docs/sprints/010/
 
 ### Canonical Task Example
 
-**Filename:** `015-b ⬜ Riley - setup Firebase Cloud Messaging.md`
+**Filename:** `015-b ⬜ Brian - setup Firebase Cloud Messaging.md`
 
 ```markdown
-# 015-b ⬜ Riley - setup Firebase Cloud Messaging
+# 015-b ⬜ Brian - setup Firebase Cloud Messaging
 
 **Sprint:** 015  
-**Agent:** Riley  
+**Agent:** Brian  
+**Tier:** T2  
 **Prerequisites:** none  
 **Status:** [ ]  
 **Created:** 2025-11-20
@@ -239,7 +240,7 @@ None. FCM setup complete.
 ### Task Review
 
 - **Trigger:** Task is marked `✅` (executor done; ready for review)
-- **Reviewer:** **Vera** (use a high model like Claude Sonnet 4.5 or GPT-5)
+- **Reviewer:** **Vera** — **T1 floor**: strongest reasoning model available (Fable/Opus on Claude; GPT-5.x-class elsewhere). The Review Gate never runs below T1 (`routing-method.md` → "Model Routing")
 - **Output:** Reviewer appends a short review (use `docs/METHOD/templates/REVIEW-TEMPLATE.md`) and updates status:
   - `☑️` = approved / validated
   - `⚠️` = rejected (must-fix items + follow-up tasks required)
@@ -644,5 +645,5 @@ Readiness work compounds. If the current loop is dishonest or fragile, adding an
 ---
 
 **Owner:** Junia  
-**Last Updated:** 2026-06-18
+**Last Updated:** 2026-07-10
 

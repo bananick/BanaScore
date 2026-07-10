@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 309.a  
-**Purpose:** Define multi-entry system and orchestration patterns
+**Version:** 311.a  
+**Purpose:** Define multi-entry system, orchestration patterns, and model routing
 
 ---
 
@@ -58,6 +58,54 @@
 
 ---
 
+## Model Routing — orchestrate high, execute cheap
+
+> **Canonical policy (v311.a), all tools.** The coordinating agent runs on the strongest model
+> available on its surface; every delegated task runs on the **cheapest model that meets the
+> task's quality bar**. Cost is a routed variable, not an afterthought.
+
+### Capability tiers (tool-agnostic)
+
+| Tier | Work | Claude | Other tools (Cursor / Codex / …) |
+|---|---|---|---|
+| **T1 — Judge / Orchestrator** | plan, arbitrate, review gate, security, architecture, METHOD curation | Fable / Opus | strongest reasoning model available (GPT-5.x-class, Opus-class) |
+| **T2 — Builder** | implement, port, write tests, debug/ops, docs needing judgment | Sonnet | mid-tier coding model |
+| **T3 — Mechanical** | scaffolding, renames, i18n extraction, bulk edits, mirror/doc sync, formatting | Haiku | cheapest competent model |
+
+### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
+
+- **T1 (opus):** `junia`, `vera`, `kasper`, `april`, `nova`, `lucia`, `aiko`, `gordon`, `iris`
+- **T2 (sonnet):** `brian`, `teddy`, `sage`, `watson`
+- **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
+
+### Delegation-time overrides (the orchestrator's job)
+
+1. **At planning**, Junia tags each task file with its tier (`Tier: T1|T2|T3`) next to the owner.
+2. **At delegation**, pass a `model` override when the task's tier differs from the sub-agent's
+   default — e.g. `brian` + `model: haiku` for pure scaffolding; `sage` + `model: opus` for a
+   hard test-architecture call. No override needed when tier and default already match.
+3. **Escalation rule:** at most **one retry at the same tier**; a second failure escalates one
+   tier. Never burn three cheap attempts — a failed T3 loop costs more than starting at T2.
+4. **Quality floors:** the Vera review gate and Kasper security passes never run below T1.
+
+### Environment awareness (know your surface before routing)
+
+Before delegating, the coordinator **inventories its environment** and maps what is actually
+available onto the tiers — never assume the Claude lineup exists everywhere:
+
+- **Claude Code** — sub-agent `model:` frontmatter is the default; override per delegation
+  (Agent-tool `model` param / Swanifly threads a `model` option through the runner).
+- **Claude Desktop** — model is picked per chat: T1 for plan/review/design, T2 build, T3 cheap/fast.
+- **Cursor** — list the models enabled in this workspace; map each onto T1/T2/T3 by capability
+  and price; orchestrate on the best T1, delegate each task on its tier's cheapest fit.
+- **Codex / other CLI agents** — same mapping over whatever models the tool exposes.
+- **Single-model surface** — run inline; if the model sits below the task's tier, say so in the
+  task report (don't silently under-deliver a T1 review on a T3 model).
+- **Degrade gracefully:** a missing tier never blocks — take the nearest available tier,
+  preferring upward (quality) over downward (cost).
+
+---
+
 ## Context Loading Rules
 
 1. **Always load your agent entry files** (see matrix above)
@@ -85,6 +133,10 @@ Use `docs/METHOD/templates/REVIEW-TEMPLATE.md` for task and sprint reviews.
 ### Scenario
 
 Solo developer (you) using one powerful LLM (GPT-5, Claude Sonnet 4.5) to play all agents in sequence.
+
+> **Single-model surface** (see "Model Routing" above): run everything inline, still tag task files
+> with `Tier:`, and flag any below-tier pass in the task report — e.g. running the Step-7 Vera
+> review on a T2-class model is an acknowledged tier mismatch to note, not silently accept.
 
 ### Setup
 
@@ -120,6 +172,7 @@ Create 3 task files:
 - Creates `docs/sprints/2025/week-47/010-a ⬜ Brian - implement settings UI.md`
 - Creates `docs/sprints/2025/week-47/010-b ⬜ Brian - wire settings to Firestore.md`
 - Creates `docs/sprints/2025/week-47/010-c ⬜ Brian - add settings to navigation.md`
+- Tags each task file `Tier: T2` (build work — see "Model Routing")
 - Updates `docs/project/status.md` with sprint 010 active
 
 ---
@@ -341,4 +394,4 @@ Task: Close sprint 010.
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-03-11
+**Last Updated:** 2026-07-10

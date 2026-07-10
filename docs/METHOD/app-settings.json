@@ -1,7 +1,7 @@
 {
   "_about": "App-specific settings. This file can be edited locally (exception to METHOD read-only rule).",
   "app": "BanaScore",
-  "methodVersion": "310.a",
+  "methodVersion": "311.a",
   "mode": "FORTH",
   "_mode_values": [
     "FAST",

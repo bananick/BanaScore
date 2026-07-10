@@ -1,7 +1,7 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 309.a  
+**Version:** 311.a  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
 ---
@@ -20,9 +20,17 @@ Each agent exists in **three synchronized representations** — change one, mirr
 
 > Persona text is canonical (`agent-personas.ts`); the sub-agent and Skill files mirror it. See `.claude/agents/README.md` for the tool-scoping table and `agents-engineering-method.md` §5 for the delegation/parallel mechanics.
 
+**Model routing is on by default — orchestrate high, execute cheap.** The orchestrator runs on the
+strongest model of its surface (Fable/Opus on Claude); every delegated task runs on the **cheapest
+model that meets its quality bar** — T1 judge/plan/review/security (opus) · T2 build/tests/ops
+(sonnet) · T3 mechanical (haiku, delegation-time override only). Each agent's default tier is its
+`model:` frontmatter in `.claude/agents/`; Junia tags tasks with a `Tier:` at planning and overrides
+per delegation. On non-Claude surfaces (Cursor, Codex), the coordinator first inventories the models
+the tool exposes and maps them onto the tiers. Canonical policy: `routing-method.md` → "Model Routing".
+
 ---
 
-## Agent Roster (12)
+## Agent Roster (13)
 
 ### Human Executive (Agent 0)
 
@@ -222,8 +230,8 @@ Sprint planner, task sequencer, consolidator, orchestrator.
 6. **Close sprint** → plan next
 
 ### Model Preference
-- **Claude Opus** (planning, orchestration)
-- **Claude Haiku** (fast planning iteration)
+- **Claude Opus** (planning, orchestration — T1; planning never runs below T1)
+- Haiku is **not** a Junia option — T3 exists only as a delegation-time override for mechanical sub-tasks (`routing-method.md` → "Model Routing")
 - **Skill:** `junia` · **Surface:** Claude Desktop (`/sprint-plan` workflow)
 
 ### Routing
@@ -914,7 +922,7 @@ When **any** condition fails → full Review Gate (Vera Task Review) is required
 
 ### Model Preference
 - **Claude Opus** (deep review, security + reasoning)
-- **Claude Sonnet** (broad consistency checks)
+- **T1 floor** — the Review Gate never runs below T1; no Sonnet reviews (`routing-method.md` → "Model Routing")
 - **Skill:** `vera` · **Surface:** Claude Desktop (Review Gate — best as a dedicated conversation)
 
 ### Routing
@@ -1072,5 +1080,5 @@ METHOD file loaded; hand any implementation to an executable agent. Promote to a
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-06-16  
-**Version:** 309.a
+**Last Updated:** 2026-07-10  
+**Version:** 311.a

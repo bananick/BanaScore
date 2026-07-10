@@ -186,25 +186,31 @@ Output: A→Z journey summary with success criteria for the CUJ Precision Gate.
 
 ## Quick Reference
 
-| Agent | Surface | Model | Trigger |
-|:--|:--|:--|:--|
-| Junia | Claude Desktop | Opus | Sprint boundaries |
-| Brian | Claude Code | Sonnet (Opus for hard) | Every sprint task |
-| Vera | Claude Desktop | Opus | After every Brian task |
-| Sage | Claude Code | Sonnet / Haiku | Test-writing tasks |
-| Watson | Claude Code | Opus / Sonnet | Bugs / debugging |
-| Nova | Claude Desktop (Artifacts) | Opus | Design clarity / prototypes |
-| April | Claude Desktop | Opus | Scope unclear |
-| Lucia | Claude Desktop | Opus | METHOD changes only |
-| Aiko | Claude Desktop + Code | Opus | AI architecture |
-| Teddy | Claude Code | Sonnet / Haiku | Mobile tasks |
+> Model defaults follow the tier policy — `routing-method.md` → "Model Routing". Haiku (T3) is a
+> **delegation-time override** for mechanical sub-tasks, never a per-agent default.
 
-> **Advisory hats (not Skills):** Growth, API/multi-agent, and Security guidance are wielded
-> in a Claude Desktop chat with the relevant METHOD/project file loaded — the Swanifly engine
-> cannot spawn them as personas. Promote to Skills in `.claude/skills/` when needed.
+| Agent | Surface | Model (tier default) | Trigger |
+|:--|:--|:--|:--|
+| Junia | Claude Desktop | Opus (T1) | Sprint boundaries |
+| Brian | Claude Code | Sonnet (T2, escalate for hard logic) | Every sprint task |
+| Vera | Claude Desktop | Opus (T1 floor — never below) | After every Brian task |
+| Sage | Claude Code | Sonnet (T2) | Test-writing tasks |
+| Watson | Claude Code | Sonnet (T2, escalate for deep debugging) | Bugs / debugging |
+| Nova | Claude Desktop (Artifacts) | Opus (T1) | Design clarity / prototypes |
+| April | Claude Desktop | Opus (T1) | Scope unclear |
+| Lucia | Claude Desktop | Opus (T1) | METHOD changes only |
+| Aiko | Claude Desktop + Code | Opus (T1) | AI architecture |
+| Teddy | Claude Code | Sonnet (T2) | Mobile tasks |
+| Gordon | Desktop + Code | Opus (T1) | GTM / growth / marketing |
+| Kasper | Claude Code | Opus (T1 floor — never below) | Security review / hardening |
+| Iris | Desktop + Code | Opus (T1) | Research → préconisations |
+
+> **Advisory hat (not executable):** only API/multi-agent orchestration guidance (ex-Riley) is
+> wielded in a Desktop chat with `ai-infra-method.md` loaded. Gordon, Kasper and Iris are
+> first-class executable sub-agents + Skills since v309.a.
 
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-06-01  
-**Version:** 308.a
+**Last Updated:** 2026-07-10  
+**Version:** 311.a

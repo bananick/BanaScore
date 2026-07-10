@@ -1,4 +1,4 @@
-# METHOD v310.a
+# METHOD v311.a
 
 ## Quick Start
 
@@ -21,6 +21,9 @@
 | **Evolve METHOD** | ALL method files | Lucia |
 
 ---
+
+## What's New in v311.a
+1. **Model routing by default — orchestrate high, execute cheap.** The coordinator (Junia / review gates / security) runs on the strongest model of its surface (**Fable/Opus** on Claude); every delegated task runs on the **cheapest model that meets its quality bar**. Three tool-agnostic tiers — **T1** judge/plan/review/security (opus) · **T2** build/tests/ops (sonnet) · **T3** mechanical (haiku, delegation-time override only). Junia tags every task file `Tier: T1|T2|T3` at planning and overrides the sub-agent's default `model:` frontmatter at delegation when tiers differ; one retry max per tier, then escalate; Vera/Kasper never below T1. **Environment awareness:** on non-Claude surfaces (Cursor, Codex), the coordinator first inventories the models the tool actually exposes and maps them onto the tiers — never assumes a vendor lineup. Canonical: `routing-method.md` → "Model Routing".
 
 ## What's New in v310.a
 1. **`/relay` handoff ritual (alias `/handoff`)** — the **dropoff** half of context handoff, the inverse of `/brief`. Where `/brief` rehydrates a fresh conversation from git + `STATE.md` + memory, `/relay` flushes the current conversation's volatile working-state (settled decisions, dead ends, exact next action) into `STATE.md`'s new **`## Resume here`** section and emits a pasteable Relay block. Six-row schema — **But · Acquis · État · Charge · Prochaine · Pièges** (pointers, never payloads). Relay only at a clean boundary (state already in git + STATE.md + task report), never mid-thrash. Complementary rule: offload residue-heavy exploration to sub-agents (Iris / Explore) so fewer Relays are needed. Ships to every app via the addon payload. See `.claude/commands/relay.md` + `method-core.md` → "Project State & Handoff".

@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 310.a  
+**Version:** 311.a  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -13,7 +13,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 310.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 311.a (Epoch 3: Modular & Multi-Entry)
 
 ### Epochs
 
@@ -104,6 +104,14 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**311.a** (2026-07-10) — **Major: Model routing by default — tiered delegation, environment-aware**
+- **NEW — "Model Routing" canonical section** (`routing-method.md`): **orchestrate high, execute cheap** — the coordinator runs on the strongest model of its surface; every delegated task runs on the **cheapest model that meets its quality bar**. Three tool-agnostic tiers: **T1** judge/plan/review/security (Fable/Opus) · **T2** build/tests/ops (Sonnet) · **T3** mechanical — scaffolding, renames, i18n extraction, bulk edits (Haiku, delegation-time override only, no agent defaults to it). Escalation rule: one retry max at a tier, then escalate one tier. Quality floors: Vera review gate + Kasper security never below T1.
+- **NEW — Environment-awareness rule:** before routing, the coordinator **inventories the models its surface actually exposes** and maps them onto T1/T2/T3 by capability & price — Claude Code (frontmatter + per-delegation override), Claude Desktop (per-chat pick), **Cursor** (workspace model list), **Codex/other CLIs** (tool's model options). Missing tier → nearest available, preferring upward; single-model surface → run inline and flag the tier mismatch in the report.
+- **CHANGED — Junia orchestrates cost:** `/plan-sprint` (hub + addon payload) and `TASK-TEMPLATE.md` now carry a **`Tier: T1|T2|T3`** field per task, assigned at planning; `junia` sub-agent passes a `model` override at delegation when the task tier differs from the sub-agent's default (`.claude/agents/` frontmatter = the default tier; documented in `.claude/agents/README.md`).
+- **CHANGED — mirrors aligned:** hub + payload `CLAUDE.md` (new "Model Routing" section; Desktop model line re-expressed in tiers; stale v308.a/v307.a stamps + duplicated sub-agents blockquote fixed) and hub + payload `AGENTS.md` (cross-tool Model Routing section for Cursor/Codex); `agents-method.md` ("How agents run" policy paragraph); `agents-engineering-method.md` (§5 delegation-cost note, §7.5 tiers); `.claude/skills/junia` + `/sprint` skill (hub + payload) carry the `Tier:` contract.
+- **FIX — reconciliation sweep (adversarially verified):** purged below-T1 Vera instructions (`sprints-method.md` Review Gate line, `REVIEW-TEMPLATE.md` model default, `agents-method.md` Vera/Junia Model Preferences); re-tiered the stale model tables (`agents-engineering-method.md` §4 — Watson→Sonnet, +Gordon/Kasper/Iris rows, advisory-hat note corrected; `agent-launch-prompts.md` Quick Reference); Riley residue removed (TASK-TEMPLATE, `/sprint` skill, sprints-method canonical example → Brian + `Tier: T2`); roster counts 12→13; `docs/METHOD/README.md` refreshed from 309.a; version stamps aligned on every touched file.
+- Version bumped 310.a → 311.a.
 
 **310.a** (2026-07-08) — **Major: `/relay` handoff ritual — the dropoff half of context handoff**
 - **NEW — `/relay` slash-command ritual** (alias `/handoff`; `.claude/commands/relay.md` + addon payload `payload/commands/relay.md`): the inverse of `/brief`. `/brief` *picks up* a fresh conversation from git + `STATE.md` + memory; `/relay` *drops off* — it flushes a conversation's volatile working-state (settled decisions, dead ends tried, exact next action) into `STATE.md` before the window ends and emits a pasteable Relay block. Ships to every app via the installer payload, same as `/port`.
@@ -300,5 +308,5 @@ npm run sync-method:dry-run      # preview
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-08
+**Last Updated:** 2026-07-10
 

@@ -16,8 +16,8 @@ Manages sprints in the SprintOS convention. Two modes: **plan/create** and **aud
 - Folder: `docs/sprints/{NNN}/` (3-digit, left-padded).
 - Task file: `{sprint}-{seq} {status} {Agent} - {title}.md` — **status emoji is the first character**.
 - Status: `⬜` Todo · `✅` Done · `☑️` Validated · `⚠️` Problem.
-- Agents: Junia, Brian, Vera, April, Nova, Lucia, Teddy, Aiko, Watson, Sage, Riley, Kasper, Gordon (see `CLAUDE.md`).
-- Each task file has: header (Sprint, Agent, Prereqs, Status, Created) · **Context** (what/why/where) · **Acceptance Criteria** · **Definition of Done** · **Entry Files** · **Report** (appended after completion, or in `reports/`).
+- Agents: Junia, Brian, Vera, April, Nova, Lucia, Teddy, Aiko, Watson, Sage, Kasper, Gordon, Iris (see `CLAUDE.md`).
+- Each task file has: header (Sprint, Agent, **Tier** `T1|T2|T3` — judge/plan / build / mechanical, Prereqs, Status, Created) · **Context** (what/why/where) · **Acceptance Criteria** · **Definition of Done** · **Entry Files** · **Report** (appended after completion, or in `reports/`).
 
 ## Before doing anything
 

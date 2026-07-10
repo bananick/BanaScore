@@ -1,8 +1,8 @@
-# METHOD v309.a
+# METHOD v311.a
 
-**Version:** 309.a  
+**Version:** 311.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-06-16  
+**Released:** 2026-07-10  
 **Status:** ✅ Production-Ready
 
 ---
@@ -33,16 +33,16 @@
 ```
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
-.claude/agents/                                 ← 12 delegatable sub-agents + README (Claude Code)
+.claude/agents/                                 ← 13 delegatable sub-agents + README (Claude Code)
 .claude/commands/                               ← /plan-sprint, /review, /intervention, /port
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
-  agents-method.md           # 12 agents, roles, rituals, models
+  agents-method.md           # 13 agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
-  routing-method.md          # Entry points, agent routing
+  routing-method.md          # Entry points, agent routing, model routing (tiers)
   ai-infra-method.md         # Multi-provider architecture
   sprints-method.md          # Sprint structure, gates
   tests-method.md            # Testing strategy
@@ -60,6 +60,12 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v311.a
+
+1. **Model routing by default — orchestrate high, execute cheap.** The coordinator runs on the strongest model of its surface (Fable/Opus on Claude); each delegated task runs on the cheapest model meeting its bar — **T1** judge/plan/review/security (opus) · **T2** build/tests/ops (sonnet) · **T3** mechanical (haiku, delegation-time override only). Junia tags tasks `Tier: T1|T2|T3` at planning; Vera/Kasper never below T1. On Cursor/Codex the coordinator inventories the tool's models and maps them onto the tiers. Canonical: `routing-method.md` → "Model Routing".
+
+*(v310.a added the `/relay` handoff ritual + `## Resume here` convention — see `versioning.md`.)*
 
 ## What's New in v309.a
 
@@ -84,7 +90,7 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## Agent Cohort (12)
+## Agent Cohort (13)
 
 Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork).
 
@@ -92,7 +98,7 @@ Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegat
 |---|---|
 | **Core Loop** | Junia (planning), Brian (web dev), Vera (review) |
 | **Managers** | April (vision), Nova (design), Lucia (method) |
-| **Specialists** | Teddy, Aiko, Watson, Sage, Gordon (sales/marketing), Kasper (security) |
+| **Specialists** | Teddy, Aiko, Watson, Sage, Gordon (sales/marketing), Kasper (security), Iris (research) |
 
 > **Advisory hat (not executable):** Riley (API & multi-agent automation) is wielded in a
 > Desktop chat — no sub-agent or Skill. See `agents-method.md`.
@@ -128,13 +134,13 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 309.a  
-**Previous:** 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 311.a  
+**Previous:** 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **See:** `versioning.md` for full changelog.
 
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-06-16  
+**Last Updated:** 2026-07-10  
 **Status:** ✅ Production-Ready

@@ -5,7 +5,8 @@
 ## Header
 - **Sprint**: <###>
 - **Task**: <###-a>
-- **Agent**: <Brian|Teddy|Watson|Riley|Aiko|Gordon|Sage|...>
+- **Agent**: <Brian|Teddy|Watson|Aiko|Gordon|Sage|...>
+- **Tier**: <T1 judge/plan/review/security | T2 build/tests/ops | T3 mechanical> (model routing — see `routing-method.md` → "Model Routing")
 - **Prerequisites**: <none | list task ids that must be ☑️>
 - **Status**: ⬜
 - **Created**: YYYY-MM-DD

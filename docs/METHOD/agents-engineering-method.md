@@ -1,7 +1,7 @@
 # Agents Engineering & AI Agent Team Architecture
 
 **Owner:** Lucia (method-level) + Developers
-**Version:** 310.a
+**Version:** 311.a
 **Purpose:** Define the agent team architecture on the **Claude suite** — the native sub-agent layer, runners & orchestration, parallel + fleet execution, hard gates via hooks, agent-to-Skill mapping, the Desktop/Code division of labour, Artifacts-based design, and context management protocols.
 
 ---
@@ -96,14 +96,17 @@ Every METHOD agent is a **Claude Skill** — a folder with a `SKILL.md` that Cla
 | **Nova** | `nova` | Desktop (design + Artifacts) | Opus | yes (CSS/JSX) |
 | **Vera** | `vera` | Desktop (review) | Opus | **no** (review only) |
 | **Sage** | `sage` | Claude Code (tests) | Sonnet | yes (tests only) |
-| **Watson** | `watson` | Claude Code (ops/debug) | Opus | yes |
+| **Watson** | `watson` | Claude Code (ops/debug) | Sonnet | yes |
 | **Aiko** | `aiko` | Desktop + Code (AI infra) | Opus | yes |
 | **Lucia** | `lucia` | Desktop (METHOD only) | Opus | yes (docs) |
+| **Gordon** | `gordon` | Desktop + Code (growth) | Opus | yes (docs) |
+| **Kasper** | `kasper` | Claude Code (security) | Opus | yes (hardening) |
+| **Iris** | `iris` | Desktop + Code (research) | Opus | yes (analysis docs only) |
 
 **Notes:**
-- **Model default ≠ lock.** Pick the model per chat in Desktop, or per run in Claude Code. Opus for deep reasoning/review/architecture, Sonnet for build/iteration, Haiku for cheap/fast (planning scaffolds, trivial edits).
+- **Model default ≠ lock — but route by tier.** Defaults live in `.claude/agents/` frontmatter (T1 opus / T2 sonnet); override per delegation, escalate one tier after a failed retry. Haiku = T3 mechanical, delegation-time override only. Canonical: `routing-method.md` → "Model Routing".
 - **Vera never commits** (`expectsCommits: false` in the engine). A build agent that produces **zero commits** is treated as a **failed task** by Swanifly — review agents are the exception.
-- **The 3 advisory hats** (Gordon — growth, Riley — API/multi-agent, Kasper — security) are *not* executable Skills today; the Swanifly engine cannot spawn them. Wear them as a framing inside a Desktop chat with the relevant METHOD file loaded, or promote them to Skills when the engine grows personas. See `agents-method.md`.
+- **One advisory hat remains** (API / multi-agent orchestration, ex-Riley) — wielded inside a Desktop chat with `ai-infra-method.md` loaded, not executable. **Gordon, Kasper and Iris are first-class executable sub-agents + Skills since v309.a.** See `agents-method.md`.
 
 ---
 
@@ -116,6 +119,13 @@ Claude Code can spawn **subagents** via the Task tool, giving each a fresh conte
 - A task needs deep research while you continue other work
 - You want to isolate a risky operation
 - You want to run the sprint loop with minimal intervention
+
+### Model routing at delegation (default)
+Delegation is also a **cost decision**: the orchestrator stays on the strongest model; each spawned
+subagent runs on the cheapest tier that meets the task's bar (T1 judge → opus · T2 build → sonnet ·
+T3 mechanical → haiku). Sub-agent defaults live in `.claude/agents/` frontmatter; override per
+delegation when the task's `Tier:` differs. Full policy incl. Cursor/Codex mapping:
+`routing-method.md` → "Model Routing".
 
 ### Brian subagent pattern
 ```
@@ -186,9 +196,12 @@ The METHOD assumes a specific Desktop configuration. Set this up once per machin
 - The cross-cutting working agreements (status-before-tools, concise messaging, conventional commits, `.env` policy, EN/FR i18n) live in **`claude-rules.md`** and should be reflected in your global Desktop custom instructions. See `claude-rules.md`.
 
 ### 7.5 Model selection
-- Default **Opus** for planning, review, architecture, and design reasoning.
-- Switch to **Sonnet** for build/iteration, **Haiku** for cheap/fast scaffolding.
-- In Claude Code, pass `--model` (Swanifly threads a `model` option through to the runner).
+- Default **Opus** for planning, review, architecture, and design reasoning (T1).
+- Switch to **Sonnet** for build/iteration (T2), **Haiku** for cheap/fast scaffolding (T3).
+- In Claude Code, pass `--model` (Swanifly threads a `model` option through to the runner);
+  sub-agents carry their own default in `.claude/agents/` frontmatter, overridable per delegation.
+- The tier system (T1/T2/T3), escalation rule, and the environment-awareness mapping for
+  non-Claude tools (Cursor, Codex) are canonical in `routing-method.md` → "Model Routing".
 
 ### 7.6 Memory & Artifacts
 - Use **Artifacts** for prototypes and any generated doc/diagram you'll iterate on (see §8).
@@ -269,5 +282,5 @@ Long threads lose context ("context rot"). Maintain strict hygiene:
 7. **For autonomous sprints, use Swanifly** — it already runs Claude Code per persona and opens a PR.
 
 ---
-**Last Updated:** 2026-06-01
+**Last Updated:** 2026-07-10
 **Status:** ✅ Production-Ready (Claude Desktop + Claude Code + Artifacts)
