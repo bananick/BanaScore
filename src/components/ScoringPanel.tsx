@@ -24,12 +24,6 @@ const COLOR_DOT: Record<string, string> = {
   blanc: '⚪',
 };
 
-const chunk = <T,>(arr: T[], size: number): T[][] => {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-};
-
 const byName = (a: TeamDTO, b: TeamDTO) => a.name.localeCompare(b.name);
 const letterOf = (name: string) => {
   const parts = name.trim().split(/\s+/);
@@ -169,9 +163,12 @@ export const ScoringPanel: React.FC<{
   // Render a list of teams. In preset mode, split into half-groups (size = ladder
   // length) with a visual separator, and enforce unique point distribution
   // within each half-group.
-  const renderTeams = (list: TeamDTO[]) => {
+  const renderTeams = (list: TeamDTO[], split: boolean) => {
     if (mode !== 'preset' || presetValues.length === 0) return list.map((tm) => teamCard(tm));
-    const half = chunk(list, presetValues.length);
+    // Split a colour into two equal half-groups (e.g. A–H / I–P). Uniqueness of
+    // point values applies inside each half-group independently.
+    const mid = Math.ceil(list.length / 2);
+    const half = split && list.length > 1 ? [list.slice(0, mid), list.slice(mid)] : [list];
     return half.map((grp, ci) => {
       const takenByOthers = (teamId: number) => {
         const s = new Set<number>();
@@ -200,7 +197,7 @@ export const ScoringPanel: React.FC<{
   const distinct = new Set(teams.map((tm) => groupKey(tm.name)));
 
   if (distinct.size < 2 || teams.length <= 8) {
-    return <div>{renderTeams([...teams].sort(byName))}</div>;
+    return <div>{renderTeams([...teams].sort(byName), false)}</div>;
   }
 
   const groups: { key: string; teams: TeamDTO[] }[] = [];
@@ -228,7 +225,7 @@ export const ScoringPanel: React.FC<{
             key={g.key}
             title={`${dot ? dot + ' ' : ''}${g.key} — ${scoredCount(g.teams)}/${g.teams.length}`}
           >
-            {renderTeams(sorted)}
+            {renderTeams(sorted, true)}
           </Collapsible>
         );
       })}
