@@ -29,7 +29,7 @@ async function api(method, path, body) {
 
 const COLORS = ['Rouge', 'Bleu', 'Vert', 'Jaune'];
 const LETTERS = 'ABCDEFGHIJKLMNOP'.split(''); // A → P (16, en 2 demi-groupes de 8)
-const PRESET = [600, 500, 400, 300, 200, 100, 0];
+const PRESET = [700, 600, 500, 400, 300, 200, 100, 0]; // 8 paliers (demi-groupes de 8)
 const ACTIVITIES = [
   { name: 'Fun Flasher', mode: 'free' },
   { name: 'Water Challenge', mode: 'preset', preset: PRESET },
