@@ -11,8 +11,8 @@ Claude Code integration for the Swanifly **METHOD**, shipped as a METHOD tool (s
 | `.claude/commands/` | `plan-sprint`, `port`, `review`, `intervention`, `ship` | **overwrite** — canonical METHOD rituals |
 | `.claude/skills/` | `deploy`, `implement-plan`, `ux-review`, `landing-page`, `ads-ops`, `ship-check`, `sprint`, `hubspot-sync` | **overwrite** — canonical tooling |
 | `docs/project/design/` | `PORT-MAP-TEMPLATE.md` | **overwrite** — reference template the `/port` loop starts from (the live `PORT-MAP.md` is never touched) |
-| `.claude/hooks/` | `no-mock-guard.ps1` | **overwrite** |
-| `.claude/settings.json` | the `PostToolUse(Write\|Edit)` no-mock hook | **merge** — idempotent, preserves other settings |
+| `.claude/hooks/` | `no-mock-guard.ps1`, `session-telemetry.mjs` | **overwrite** |
+| `.claude/settings.json` | the `PostToolUse(Write\|Edit)` no-mock hook + the `Stop` session-telemetry hook | **merge** — idempotent per hook, preserves other settings (incl. any custom `Stop` hook the app already has) |
 
 `CLAUDE.md` is auto-loaded by Claude Code; it `@import`s `SOUL.md` + `AGENTS.md` and mirrors `GEMINI.md` (agent cohort, context-loading rules, hierarchy of truth, sprint conventions, Definition of Done).
 
@@ -30,6 +30,10 @@ export to `docs/project/design/artifacts/{app}/`, generates `PORT-MAP.md` from t
 
 `no-mock-guard.ps1` runs after every `Write`/`Edit`. If it sees mock/fixture signals (`mockData`, `fixtures/`, `faker`, `sampleData`, …) in a source file (`.ts/.tsx/.js/.jsx/.mjs`, excluding tests/docs/qa) it returns exit 2, feeding the violation back to Claude. This enforces **REAL — Data Integrity** (`code-rules.md` §6 / `SOUL.md` non-negotiable #1). Fails open on any error, so it never blocks a legitimate edit.
 
+## Session telemetry
+
+`session-telemetry.mjs` runs on `Stop` (after every assistant turn). It parses the session's transcript — plus any delegated sub-agent/Workflow transcripts alongside it — deduped per API-response `message.id`, and appends one JSON row (tokens, message counts, duration, model(s), best-effort topic/sprint) to `docs/project/telemetry/sessions.jsonl`. Append-only; consumers dedupe by `sessionId` and keep the newest row. No dollar cost computed — raw tokens only. Fails open, silent on success. This is the feedback loop for `routing-method.md`'s Model Routing tiers. See `routing-method.md` → "Session Telemetry Ledger" for the full schema.
+
 ## Usage
 
 **Automatic** — `npm run sync-method:all` seeds every app after copying METHOD. Skip with `--no-claude`.
@@ -42,5 +46,5 @@ node docs/METHOD/tools/swanifly-claude-addon/install.mjs <path-to-app> [--dry-ru
 ## Notes
 
 - The 5 generic skills (`deploy`, `implement-plan`, `ux-review`, `landing-page`, `ads-ops`) are also installed at user level (`~/.claude/skills/`) on the dev's machine, so they already work in every repo; the per-app copies make each app self-contained for collaborators / CI.
-- The hook command is Windows PowerShell (`powershell.exe`). A POSIX variant would need a `.sh` guard + a second hook entry.
+- The no-mock guard's command is Windows PowerShell (`powershell.exe`). A POSIX variant would need a `.sh` guard + a second hook entry. The session-telemetry hook is Node (`node`), so it's already cross-platform.
 - This addon is the **canonical source** for portable app seeding; edit it here (Lucia curates), then re-sync. Bana-Share's live copies (root + `.claude/`) should mirror this payload.

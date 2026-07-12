@@ -1,4 +1,4 @@
-# METHOD v311.a
+# METHOD v312.a
 
 ## Quick Start
 
@@ -21,6 +21,9 @@
 | **Evolve METHOD** | ALL method files | Lucia |
 
 ---
+
+## What's New in v312.a
+1. **Session Telemetry Ledger — the Model Routing feedback loop.** A Claude Code Stop hook (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to `docs/project/telemetry/sessions.jsonl`: tokens (main-loop + delegated sub-agents/workflows, deduped per API call), message counts, duration, model(s), best-effort topic/sprint. Fails open, silent on success, append-only (dedupe by `sessionId`, keep the newest row when reading). No dollar-cost computed — raw tokens only, pricing changes too often to hardcode. Ships to every app via the addon (`install.mjs` now also merges the `Stop` hook, idempotent, preserves any custom `Stop` hook an app already has). Codex/Cursor have no automated equivalent yet — self-report manually. Canonical: `routing-method.md` → "Session Telemetry Ledger".
 
 ## What's New in v311.a
 1. **Model routing by default — orchestrate high, execute cheap.** The coordinator (Junia / review gates / security) runs on the strongest model of its surface (**Fable/Opus** on Claude); every delegated task runs on the **cheapest model that meets its quality bar**. Three tool-agnostic tiers — **T1** judge/plan/review/security (opus) · **T2** build/tests/ops (sonnet) · **T3** mechanical (haiku, delegation-time override only). Junia tags every task file `Tier: T1|T2|T3` at planning and overrides the sub-agent's default `model:` frontmatter at delegation when tiers differ; one retry max per tier, then escalate; Vera/Kasper never below T1. **Environment awareness:** on non-Claude surfaces (Cursor, Codex), the coordinator first inventories the models the tool actually exposes and maps them onto the tiers — never assumes a vendor lineup. Canonical: `routing-method.md` → "Model Routing".

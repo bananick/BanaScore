@@ -1,8 +1,8 @@
-# METHOD v311.a
+# METHOD v312.a
 
-**Version:** 311.a  
+**Version:** 312.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-07-10  
+**Released:** 2026-07-12  
 **Status:** ✅ Production-Ready
 
 ---
@@ -36,13 +36,14 @@ CLAUDE.md                                       ← Repo root: canonical context
 .claude/agents/                                 ← 13 delegatable sub-agents + README (Claude Code)
 .claude/commands/                               ← /plan-sprint, /review, /intervention, /port
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
+.claude/hooks/session-telemetry.mjs             ← Stop hook: appends session token/shape data
 
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
   agents-method.md           # 13 agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
-  routing-method.md          # Entry points, agent routing, model routing (tiers)
+  routing-method.md          # Entry points, agent routing, model routing (tiers), session telemetry
   ai-infra-method.md         # Multi-provider architecture
   sprints-method.md          # Sprint structure, gates
   tests-method.md            # Testing strategy
@@ -57,15 +58,16 @@ docs/METHOD/                                    ← Synced across all apps
 
 docs/project/                                   ← App-specific (local)
   VISION.md, DESIGN.md, SCHEMA.md, FOCUS.md, STATE.md, ROADMAP.web.md, AI-INFRA.md
+  telemetry/sessions.jsonl   # Session telemetry ledger (auto-appended by the Stop hook)
 ```
 
 ---
 
-## What's New in v311.a
+## What's New in v312.a
 
-1. **Model routing by default — orchestrate high, execute cheap.** The coordinator runs on the strongest model of its surface (Fable/Opus on Claude); each delegated task runs on the cheapest model meeting its bar — **T1** judge/plan/review/security (opus) · **T2** build/tests/ops (sonnet) · **T3** mechanical (haiku, delegation-time override only). Junia tags tasks `Tier: T1|T2|T3` at planning; Vera/Kasper never below T1. On Cursor/Codex the coordinator inventories the tool's models and maps them onto the tiers. Canonical: `routing-method.md` → "Model Routing".
+1. **Session Telemetry Ledger.** A Claude Code Stop hook (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to `docs/project/telemetry/sessions.jsonl` — tokens (main-loop + delegated sub-agents/workflows), message counts, duration, model(s), best-effort topic/sprint. The feedback loop for Model Routing: check whether tiering is actually saving cost instead of guessing. Ships to every app via the addon. Canonical: `routing-method.md` → "Session Telemetry Ledger".
 
-*(v310.a added the `/relay` handoff ritual + `## Resume here` convention — see `versioning.md`.)*
+*(v311.a added default Model Routing — T1/T2/T3 tiers, orchestrate high/execute cheap. v310.a added the `/relay` handoff ritual + `## Resume here` convention — see `versioning.md`.)*
 
 ## What's New in v309.a
 
@@ -134,13 +136,13 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 311.a  
-**Previous:** 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 312.a  
+**Previous:** 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **See:** `versioning.md` for full changelog.
 
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-10  
+**Last Updated:** 2026-07-12  
 **Status:** ✅ Production-Ready

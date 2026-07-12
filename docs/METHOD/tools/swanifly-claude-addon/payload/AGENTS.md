@@ -13,6 +13,10 @@
 - **Environment awareness first:** before routing, **inventory the models actually available in this tool/workspace** (Cursor: the workspace's enabled model list; Codex: the CLI's model options; Claude Code: `.claude/agents/` frontmatter + per-delegation override) and map them onto T1/T2/T3 by capability and price. Never assume a specific vendor lineup.
 - **Escalation:** one retry max at a tier, then escalate one tier. Review/security tasks never run below T1. Missing tier → nearest available, preferring upward. Single-model tool → run inline and flag the tier mismatch in the report.
 
+### Session Telemetry Ledger
+
+Each repo keeps `docs/project/telemetry/sessions.jsonl` — append-only, one row per invocation (a session produces many rows as it progresses; dedupe by `sessionId` and keep the newest row, never sum them) — with tokens, message counts, duration, model(s), and best-effort topic/sprint, so the Model Routing tiers above can be checked against real usage instead of guessing. **On Claude Code this is automated** (a Stop hook appends it). **On Cursor and Codex there is no automated equivalent yet** — pull the numbers from `/usage` (Codex) or the usage dashboard (Cursor) and append the same fields by hand in the task report, rather than leaving the ledger silently thinner for that tool's work. Canonical schema: `docs/METHOD/routing-method.md` → "Session Telemetry Ledger".
+
 ## Tech Stack
 
 - **Framework:** Next.js 15 (App Router)

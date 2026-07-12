@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 311.a  
-**Purpose:** Define multi-entry system, orchestration patterns, and model routing
+**Version:** 312.a  
+**Purpose:** Define multi-entry system, orchestration patterns, model routing, and session telemetry
 
 ---
 
@@ -103,6 +103,68 @@ available onto the tiers — never assume the Claude lineup exists everywhere:
   task report (don't silently under-deliver a T1 review on a T3 model).
 - **Degrade gracefully:** a missing tier never blocks — take the nearest available tier,
   preferring upward (quality) over downward (cost).
+
+---
+
+## Session Telemetry Ledger
+
+> **The feedback loop for Model Routing.** Tiering is a hypothesis ("T3 delegations are cheaper
+> and still good enough") — this ledger is how you check it against real usage instead of vibes.
+
+### What it captures (Claude Code, on by default since v312.a)
+
+A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to
+`docs/project/telemetry/sessions.jsonl` in the current repo:
+
+- **Tokens** — input / output / cache-creation / cache-read, split into `mainLoop` (the top-level
+  conversation) and `subAgents` (every delegated sub-agent and Workflow-tool agent spawned during
+  the session), plus a combined `totals`. Deduped per API response (`message.id`) so a single
+  streamed reply split across several transcript lines is never double-counted.
+- **Shape** — user-message count, assistant API-call count, start/end timestamps, duration,
+  the model(s) used, git branch, app (repo folder name).
+- **Best-effort hints** — `topic` (first user message, truncated to 150 chars) and `sprint`
+  (regex match on `docs/sprints/{NNN}` paths touched during the session). Both can be `null`.
+- **`outcome` / `efficiencyNote`** — always `null` from the hook. These are **manual, optional**
+  fields — the closing agent, Vera, or Iris can backfill them (e.g. during a Review Gate or a
+  periodic audit) when there's a real verdict worth recording. Don't force every row to have one.
+- **No dollar cost.** Pricing changes and varies by plan — the ledger stores exact raw token
+  counts only; apply your current rate card when you actually need a $ figure.
+
+### Mechanics worth knowing
+
+- **Fires after every assistant turn, not just at the true end of a conversation** (Stop hooks
+  don't have a cleaner signal than that in Claude Code today). Each firing re-parses the whole
+  transcript and appends a **fresh cumulative snapshot** — the file is append-only, never
+  rewritten in place, which is what makes it safe under concurrent sessions. **Consumers must
+  dedupe by `sessionId` and keep the newest row** — don't sum every row, that double-counts.
+- **Fails open.** Any error (missing file, malformed JSON, mid-write truncation) is swallowed
+  silently — a telemetry bug must never block Claude from stopping.
+- **Silent on success** — no `systemMessage`, to avoid noise on every single turn.
+
+### Where it lives / how it ships
+
+- **Hub-owned copy:** `.claude/hooks/session-telemetry.mjs` + wired in `.claude/settings.json`
+  → `hooks.Stop`.
+- **Fleet distribution:** mirrored at
+  `docs/METHOD/tools/swanifly-claude-addon/payload/hooks/session-telemetry.mjs`; the installer
+  (`install.mjs`) copies it into every app and merges the `Stop` hook entry into the app's own
+  `.claude/settings.json` idempotently (preserves any hook the app already has, incl. its own
+  custom `Stop` hooks — appends alongside, never replaces).
+- **Per-repo, not centralized.** Each app accumulates its own `docs/project/telemetry/sessions.jsonl`.
+  There is no fleet-wide rollup (yet) — if you want one, have Iris walk the fleet and aggregate.
+
+### Cross-tool status (Codex, Cursor)
+
+Not wired — no automated equivalent exists today:
+
+- **Codex CLI** exposes `/status` (session snapshot) and `/usage` (account rollups), but there's
+  no established Claude-Code-style hook mechanism here to auto-capture per-session data yet.
+- **Cursor** only exposes account-level usage (Dashboard → Usage, or the Enterprise "AI code
+  tracking" API) — per-conversation export isn't natively available; treat as a known gap, not
+  a bug, until Cursor ships it or the team builds a scraper against the Enterprise API.
+- If you're working in Codex or Cursor, self-report the same fields manually in the task report
+  (tokens from `/usage` or the dashboard, topic/sprint/outcome by hand) rather than leaving the
+  ledger silently thinner for that tool's work.
 
 ---
 
@@ -394,4 +456,4 @@ Task: Close sprint 010.
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-10
+**Last Updated:** 2026-07-12

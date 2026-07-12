@@ -9,7 +9,8 @@
  *   - .claude/skills/<all>            -> app/.claude      (OVERWRITE — canonical tooling)
  *   - docs/project/design/PORT-MAP-TEMPLATE.md -> app docs (OVERWRITE — reference template for the /port loop)
  *   - .claude/hooks/no-mock-guard.ps1 -> app/.claude      (OVERWRITE)
- *   - .claude/settings.json           -> app/.claude      (MERGE the no-mock PostToolUse hook, idempotent)
+ *   - .claude/hooks/session-telemetry.mjs -> app/.claude  (OVERWRITE)
+ *   - .claude/settings.json           -> app/.claude      (MERGE the no-mock PostToolUse hook + the session-telemetry Stop hook, idempotent per hook)
  *
  * Usage (standalone):   node install.mjs <appRoot> [--dry-run]
  * Programmatic:         import { installClaudeAddon } from './install.mjs'
@@ -47,12 +48,12 @@ function readJsonSafe(file) {
 
 /**
  * @param {{appRoot:string, addonDir?:string, dryRun?:boolean}} opts
- * @returns {{created:string[], kept:string[], updated:string[], merged:boolean, settingsSkipped:boolean, directive:string}}
+ * @returns {{created:string[], kept:string[], updated:string[], merged:boolean, telemetryMerged:boolean, settingsSkipped:boolean, directive:string}}
  */
 export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } = {}) {
   const payload = join(addonDir, "payload");
   if (!existsSync(payload)) throw new Error(`payload not found at ${payload}`);
-  const res = { created: [], kept: [], updated: [], merged: false, settingsSkipped: false, directive: "skipped" };
+  const res = { created: [], kept: [], updated: [], merged: false, telemetryMerged: false, settingsSkipped: false, directive: "skipped" };
 
   // 1) Identity files — create-if-missing (preserve any app-authored version)
   for (const f of ["AGENTS.md", "SOUL.md", "CLAUDE.md"]) {
@@ -132,6 +133,14 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
     res.updated.push(".claude/hooks/no-mock-guard.ps1");
   }
 
+  // 4c) Session telemetry hook — overwrite
+  const telemetryHookSrc = join(payload, "hooks", "session-telemetry.mjs");
+  if (existsSync(telemetryHookSrc)) {
+    const telemetryHookDest = join(appRoot, ".claude", "hooks", "session-telemetry.mjs");
+    if (!dryRun) { mkdirSync(dirname(telemetryHookDest), { recursive: true }); copyFileSync(telemetryHookSrc, telemetryHookDest); }
+    res.updated.push(".claude/hooks/session-telemetry.mjs");
+  }
+
   // 4b) Porting kit — drop the PORT-MAP template so the /port loop has a starting point in-repo.
   // (docs/porting/ is not on the METHOD sync surface; the design-port SPEC ships via
   // docs/METHOD/design-method.md, but the per-app template must travel with the addon.)
@@ -142,7 +151,7 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
     res.updated.push("docs/project/design/PORT-MAP-TEMPLATE.md");
   }
 
-  // 5) settings.json — merge the no-mock PostToolUse hook (idempotent, preserves everything else)
+  // 5) settings.json — merge hooks (idempotent per hook, preserves everything else)
   const snippet = readJsonSafe(join(payload, "settings.snippet.json"));
   const setPath = join(appRoot, ".claude", "settings.json");
   let settings = {};
@@ -157,12 +166,24 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
   }
   if (!settings.$schema) settings.$schema = "https://json.schemastore.org/claude-code-settings.json";
   if (!settings.hooks) settings.hooks = {};
+
   if (!Array.isArray(settings.hooks.PostToolUse)) settings.hooks.PostToolUse = [];
   const alreadyThere = JSON.stringify(settings.hooks.PostToolUse).includes("no-mock-guard");
-  if (!alreadyThere && snippet) {
+  if (!alreadyThere && snippet?.hooks?.PostToolUse) {
     settings.hooks.PostToolUse.push(...snippet.hooks.PostToolUse);
-    if (!dryRun) { mkdirSync(dirname(setPath), { recursive: true }); writeFileSync(setPath, JSON.stringify(settings, null, 2) + "\n", "utf8"); }
     res.merged = true;
+  }
+
+  if (!Array.isArray(settings.hooks.Stop)) settings.hooks.Stop = [];
+  const telemetryAlreadyThere = JSON.stringify(settings.hooks.Stop).includes("session-telemetry");
+  if (!telemetryAlreadyThere && snippet?.hooks?.Stop) {
+    settings.hooks.Stop.push(...snippet.hooks.Stop);
+    res.telemetryMerged = true;
+  }
+
+  if (!dryRun && (res.merged || res.telemetryMerged)) {
+    mkdirSync(dirname(setPath), { recursive: true });
+    writeFileSync(setPath, JSON.stringify(settings, null, 2) + "\n", "utf8");
   }
   return res;
 }
@@ -184,5 +205,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (r.directive === "added") console.log("  directive: design-port block merged into CLAUDE.md");
   else if (r.directive === "present") console.log("  directive: design-port block already present");
   if (r.settingsSkipped) console.log("  settings: SKIPPED — existing .claude/settings.json is not valid JSON (left untouched)");
-  else console.log("  settings: " + (r.merged ? "no-mock hook merged" : "no-mock hook already present"));
+  else {
+    console.log("  settings: " + (r.merged ? "no-mock hook merged" : "no-mock hook already present"));
+    console.log("  settings: " + (r.telemetryMerged ? "session-telemetry hook merged" : "session-telemetry hook already present"));
+  }
 }

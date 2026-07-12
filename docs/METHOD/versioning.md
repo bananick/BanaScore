@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 311.a  
+**Version:** 312.a  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -13,7 +13,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 311.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 312.a (Epoch 3: Modular & Multi-Entry)
 
 ### Epochs
 
@@ -104,6 +104,15 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**312.a** (2026-07-12) — **Major: Session Telemetry Ledger — the Model Routing feedback loop**
+- **NEW — Claude Code Stop hook `.claude/hooks/session-telemetry.mjs`:** appends one JSON row per invocation to `docs/project/telemetry/sessions.jsonl` — tokens (input/output/cache-creation/cache-read, split into `mainLoop` and delegated `subAgents`, deduped per API-response `message.id` so streamed content-block splits are never double-counted), user/assistant message counts, start/end timestamps + duration, model(s) used, git branch, app name, best-effort `topic` (first user message, truncated) and `sprint` (regex on touched `docs/sprints/{NNN}` paths). `outcome`/`efficiencyNote` are always `null` from the hook — optional manual fields for the closing agent, Vera, or Iris to backfill.
+- **Deliberately no dollar-cost field.** Pricing changes and varies by plan; raw token counts are the source of truth, apply your current rate card at analysis time rather than trusting a hardcoded (and likely stale) table baked into the hook.
+- **Fires after every assistant turn** (Stop hooks have no cleaner "true end of conversation" signal in Claude Code today) — each firing re-parses the whole transcript and appends a fresh cumulative snapshot. Append-only by design (safe under concurrent sessions); consumers dedupe by `sessionId` and keep the newest row. Fails open on any error; silent on success (no `systemMessage`, to avoid per-turn noise).
+- **NEW — canonical "Session Telemetry Ledger" section** in `routing-method.md`, positioned right after "Model Routing": frames the ledger explicitly as that policy's feedback loop, documents the schema, mechanics, distribution, and the **cross-tool gap** — no automated equivalent exists yet for Codex CLI (`/status`/`/usage` exist but no hook mechanism) or Cursor (account-level only, per-conversation export not natively available); both call for manual self-reporting in the interim.
+- **CHANGED — addon distribution:** hook mirrored to `docs/METHOD/tools/swanifly-claude-addon/payload/hooks/session-telemetry.mjs`; `settings.snippet.json` gained a `Stop` entry; `install.mjs` now copies the hook file and merges the `Stop` hook into an app's `.claude/settings.json` idempotently (checked independently from the existing `PostToolUse` no-mock-guard merge; preserves any custom `Stop` hook the app already has — appends alongside, never replaces). Verified against a fresh app (both hooks merged, correct JSON) and a re-run (idempotent, no duplication) and an app with a pre-existing custom `Stop` hook (preserved + appended correctly).
+- **Verified against real data:** ran the hook against this session's own live transcript before wiring it in — correctly summed tokens across the main loop and 32 sub-agent/workflow transcript files with no double-counting.
+- Version bumped 311.a → 312.a.
 
 **311.a** (2026-07-10) — **Major: Model routing by default — tiered delegation, environment-aware**
 - **NEW — "Model Routing" canonical section** (`routing-method.md`): **orchestrate high, execute cheap** — the coordinator runs on the strongest model of its surface; every delegated task runs on the **cheapest model that meets its quality bar**. Three tool-agnostic tiers: **T1** judge/plan/review/security (Fable/Opus) · **T2** build/tests/ops (Sonnet) · **T3** mechanical — scaffolding, renames, i18n extraction, bulk edits (Haiku, delegation-time override only, no agent defaults to it). Escalation rule: one retry max at a tier, then escalate one tier. Quality floors: Vera review gate + Kasper security never below T1.
@@ -308,5 +317,5 @@ npm run sync-method:dry-run      # preview
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-10
+**Last Updated:** 2026-07-12
 
