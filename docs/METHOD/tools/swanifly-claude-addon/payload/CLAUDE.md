@@ -9,7 +9,7 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v311.a, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
+You operate inside the **METHOD** (v312.b, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
 
 ## Agent cohort
 
@@ -83,6 +83,7 @@ Claude Code uses **skills** as entry points. Mapping to your Antigravity slash-c
 - **Tiers:** **T1** judge/plan/review/security → opus · **T2** build/tests/ops → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
 - Sub-agent defaults live in `.claude/agents/` frontmatter (where installed); override per delegation when the task's tier differs. One retry max at a tier, then escalate one tier; Vera/Kasper never below T1.
 - On non-Claude tools (Cursor, Codex): inventory the models the tool exposes, map them onto T1/T2/T3, apply the same policy. Canonical: `docs/METHOD/routing-method.md` → "Model Routing".
+- **Compress the chat, never the artifact.** Terse in conversation (no filler, preambles, hedging, tool narration); full prose in committed docs, EN/FR copy and review/security verdicts. Code, commands, paths, errors and numbers verbatim everywhere. Compression skills (Caveman & co.) opt-in per session, same boundary — measure before adopting. Canonical: `docs/METHOD/routing-method.md` → "Output Compression".
 
 ## Design port directive
 

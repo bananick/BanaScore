@@ -1,4 +1,4 @@
-# METHOD v312.a
+# METHOD v312.b
 
 ## Quick Start
 
@@ -21,6 +21,9 @@
 | **Evolve METHOD** | ALL method files | Lucia |
 
 ---
+
+## What's New in v312.b
+1. **Output Compression — terse where it's cheap, complete where it matters.** One boundary settles the question: compress the **conversation**, never the **artifact**. Compress freely in build/debug/ops chat, status pings and settled context; never compress committed docs (task files, `STATE.md`, `DESIGN.md`, `SCHEMA.md`, PR bodies, `/relay` blocks), user-facing EN/FR copy, Vera verdicts / Kasper findings, the 3-line header or a `### Needs decision` block. Two invariants hold everywhere: code, commands, paths, error strings and numbers verbatim; the handoff is always a doc. Third-party compression skills (Caveman & co.) are **opt-in per session, not a fleet default** — output tokens are the minority of agentic spend, such skills add ~1–1.5k input tokens per turn, so measure the delta with the Session Telemetry Ledger before adopting one. Canonical: `routing-method.md` → "Output Compression".
 
 ## What's New in v312.a
 1. **Session Telemetry Ledger — the Model Routing feedback loop.** A Claude Code Stop hook (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to `docs/project/telemetry/sessions.jsonl`: tokens (main-loop + delegated sub-agents/workflows, deduped per API call), message counts, duration, model(s), best-effort topic/sprint. Fails open, silent on success, append-only (dedupe by `sessionId`, keep the newest row when reading). No dollar-cost computed — raw tokens only, pricing changes too often to hardcode. Ships to every app via the addon (`install.mjs` now also merges the `Stop` hook, idempotent, preserves any custom `Stop` hook an app already has). Codex/Cursor have no automated equivalent yet — self-report manually. Canonical: `routing-method.md` → "Session Telemetry Ledger".

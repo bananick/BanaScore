@@ -17,6 +17,10 @@
 
 Each repo keeps `docs/project/telemetry/sessions.jsonl` — append-only, one row per invocation (a session produces many rows as it progresses; dedupe by `sessionId` and keep the newest row, never sum them) — with tokens, message counts, duration, model(s), and best-effort topic/sprint, so the Model Routing tiers above can be checked against real usage instead of guessing. **On Claude Code this is automated** (a Stop hook appends it). **On Cursor and Codex there is no automated equivalent yet** — pull the numbers from `/usage` (Codex) or the usage dashboard (Cursor) and append the same fields by hand in the task report, rather than leaving the ledger silently thinner for that tool's work. Canonical schema: `docs/METHOD/routing-method.md` → "Session Telemetry Ledger".
 
+### Output Compression
+
+**Compress the conversation, never the artifact.** Chat narration during build/debug/ops compresses freely — drop filler, preambles, hedging, tool narration and restated context. Committed docs (task files, `STATE.md`, PR bodies, `/relay` blocks), user-facing EN/FR copy, and review/security verdicts do not compress: severity and nuance are the deliverable, and a terse doc costs more in re-exploration than the tokens it saved. **Code, commands, paths, error strings and numbers are reproduced verbatim everywhere.** Third-party compression skills (Caveman & co.) are opt-in per session under the same boundary — never a fleet default; measure the delta in the telemetry ledger above before adopting one, since output tokens are the minority of agentic spend and such skills add input-token overhead per turn. Canonical: `docs/METHOD/routing-method.md` → "Output Compression".
+
 ## Tech Stack
 
 - **Framework:** Next.js 15 (App Router)

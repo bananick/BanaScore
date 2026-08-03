@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 312.a  
-**Purpose:** Define multi-entry system, orchestration patterns, model routing, and session telemetry
+**Version:** 312.b  
+**Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
 
@@ -140,6 +140,20 @@ A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per
 - **Fails open.** Any error (missing file, malformed JSON, mid-write truncation) is swallowed
   silently — a telemetry bug must never block Claude from stopping.
 - **Silent on success** — no `systemMessage`, to avoid noise on every single turn.
+- **It commits and pushes its own row** (since 2026-08-01). Because it fires every turn, the
+  ledger otherwise leaves the working tree dirty after *every* turn — including turns that touched
+  no file at all. The git-check Stop hook then asks the agent to commit and push, and since a
+  merged PR cannot track new work, the agent opens a **fresh PR per turn**. That is not
+  hypothetical: three pull requests were merged whose entire content was hook output before this
+  was added. The ledger cleans up after itself.
+  - **Pathspec commit only** — `git commit -- docs/project/telemetry/sessions.jsonl`, never
+    `git add -A`. Sweeping the agent's in-progress work into a telemetry commit would be far
+    worse than the noise it removes; the agent's staged index is left untouched.
+  - **Never on `main`/`master` or a detached HEAD**, same rule as `ship-push.sh`.
+  - **Committer pinned to `noreply@anthropic.com`**, or GitHub renders the commit *Unverified*
+    and the git-check hook correctly objects.
+  - **Never force-pushes, never auto-rebases.** A rejected push leaves the row committed locally
+    and the next turn retries — an unpushed commit is a real state worth reporting.
 
 ### Where it lives / how it ships
 
@@ -165,6 +179,55 @@ Not wired — no automated equivalent exists today:
 - If you're working in Codex or Cursor, self-report the same fields manually in the task report
   (tokens from `/usage` or the dashboard, topic/sprint/outcome by hand) rather than leaving the
   ledger silently thinner for that tool's work.
+
+---
+
+## Output Compression — terse where it's cheap, complete where it matters
+
+> **The third cost lever**, after tiering (Model Routing) and context discipline (max 3 METHOD
+> files per conversation). Also the **smallest** of the three: in agentic sessions spend is
+> dominated by input and cache reads, and most output tokens are code and tool arguments, which
+> never compress. Treat this as hygiene, not a budget strategy.
+
+### The boundary
+
+Compression applies to the **conversation**, never to the **artifact**.
+
+| Compress freely | Never compress |
+|---|---|
+| Chat narration during build / debug / ops (T2–T3 work) | Committed docs — task files, `STATE.md`, `DESIGN.md`, `SCHEMA.md`, PR bodies, `/relay` blocks |
+| Status pings, progress checklists, tool-result summaries | User-facing copy (EN/FR), product and marketing strings |
+| Settled context — don't restate it, just drop it | Review verdicts (Vera) and security findings (Kasper) — severity and nuance *are* the deliverable |
+| Preambles, apologies, hedging | The 3-line header and every `### Needs decision` block |
+
+Two edge cases the table doesn't settle on its own:
+
+- **A delegated agent's final report is a handoff, not narration** — right column. It reads like
+  build chatter, but the orchestrator has no other view of that work; `junia → brian → junia` is
+  the default execution path, so a compressed sub-agent report loses the sprint's actual state.
+- **Commit subjects stay conventional-terse** (`type(scope): summary`); commit **bodies** are an
+  artifact and follow the right column.
+
+Two rules hold in both columns:
+
+- **Code, commands, paths, error strings and numbers are reproduced verbatim** — never
+  abbreviated, never paraphrased, never "summarized".
+- **The handoff is always a doc.** A terse doc costs more in re-exploration than the tokens it
+  saved — that is the whole reason `/relay` and the task report exist.
+
+### Third-party compression skills (Caveman & co.)
+
+Opt-in **per session**, never a fleet default, and bound by the table above. Reasonable use:
+long `brian` / `teddy` / `watson` build-and-debug runs where the chat is scaffolding, not
+deliverable. Keep them off for April / Gordon / Nova (copy), Vera / Kasper (verdicts), and any
+doc-writing task.
+
+Before adopting one anywhere, **measure it**: the Session Telemetry Ledger above already records
+`outputTokens` per session — compare rows across comparable sessions and write the delta into
+`efficiencyNote`. Don't buy a vendor's headline number — including the one in this section. Note
+also that such skills add ~1–1.5k tokens of standing instructions to the context (paid once at
+cache-creation, then served as cheap cache reads) and leave reasoning tokens untouched, so on
+short sessions the saving is thin.
 
 ---
 
@@ -456,4 +519,4 @@ Task: Close sprint 010.
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-12
+**Last Updated:** 2026-08-01

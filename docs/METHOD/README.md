@@ -1,8 +1,8 @@
-# METHOD v312.a
+# METHOD v312.b
 
-**Version:** 312.a  
+**Version:** 312.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-07-12  
+**Released:** 2026-08-01  
 **Status:** ✅ Production-Ready
 
 ---
@@ -63,11 +63,11 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## What's New in v312.a
+## What's New in v312.b
 
-1. **Session Telemetry Ledger.** A Claude Code Stop hook (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to `docs/project/telemetry/sessions.jsonl` — tokens (main-loop + delegated sub-agents/workflows), message counts, duration, model(s), best-effort topic/sprint. The feedback loop for Model Routing: check whether tiering is actually saving cost instead of guessing. Ships to every app via the addon. Canonical: `routing-method.md` → "Session Telemetry Ledger".
+1. **Output Compression boundary.** One rule settles how terse an agent may be: **compress the conversation, never the artifact**. Chat narration during build/debug compresses freely; committed docs, EN/FR copy and Vera/Kasper verdicts do not — and code, commands, paths, errors and numbers stay verbatim everywhere. Third-party compression skills (Caveman & co.) are opt-in per session under the same boundary, measured against the telemetry ledger rather than a vendor's headline number. Canonical: `routing-method.md` → "Output Compression".
 
-*(v311.a added default Model Routing — T1/T2/T3 tiers, orchestrate high/execute cheap. v310.a added the `/relay` handoff ritual + `## Resume here` convention — see `versioning.md`.)*
+*(v312.a added the Session Telemetry Ledger — a Stop hook appending per-session token rows to `docs/project/telemetry/sessions.jsonl`, the feedback loop for Model Routing. v311.a added default Model Routing — T1/T2/T3 tiers, orchestrate high/execute cheap. v310.a added the `/relay` handoff ritual + `## Resume here` convention — see `versioning.md`.)*
 
 ## What's New in v309.a
 
@@ -136,13 +136,13 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 312.a  
-**Previous:** 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 312.b  
+**Previous:** 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **See:** `versioning.md` for full changelog.
 
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-12  
+**Last Updated:** 2026-08-01  
 **Status:** ✅ Production-Ready

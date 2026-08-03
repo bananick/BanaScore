@@ -10,9 +10,15 @@
 // runs many times per session. Each run re-parses the whole transcript and writes a fresh,
 // cumulative snapshot — appended, never rewritten in place (append-only is what makes this safe
 // under concurrent sessions). Consumers should dedupe by sessionId and keep the newest row.
+//
+// Because it runs every turn, it also COMMITS AND PUSHES its own row (see
+// commitAndPushLedger at the bottom) — otherwise the ledger leaves the working tree dirty after
+// every turn, the git-check Stop hook asks the agent to commit it, and the agent opens a pull
+// request per turn. That happened three times before this was added.
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 function readStdin() {
   try {
@@ -199,6 +205,59 @@ function main() {
   const outFile = join(outDir, 'sessions.jsonl');
   mkdirSync(outDir, { recursive: true });
   appendFileSync(outFile, JSON.stringify(row) + '\n', 'utf8');
+  commitAndPushLedger(projectDir, outFile);
+}
+
+/**
+ * Commit and push THIS ROW, and nothing else.
+ *
+ * Why the hook does its own git: Stop fires after every assistant turn, so this
+ * file goes dirty every turn — including turns that touched no file at all. The
+ * companion git-check Stop hook then reports an uncommitted change and asks the
+ * agent to commit and push, and because a merged PR cannot track new work, the
+ * agent opens a fresh PR. The observed result was three merged pull requests
+ * whose entire content was hook output. The ledger has to clean up after itself.
+ *
+ * SAFETY, in order of how badly each would hurt:
+ *   1. A PATHSPEC commit — `git commit -- <sessions.jsonl>`. NEVER `git add -A`.
+ *      Sweeping the agent's in-progress work into a telemetry commit would be
+ *      far worse than the noise this removes. A pathspec commit also leaves the
+ *      agent's staged index untouched.
+ *   2. Never on main/master or a detached HEAD — same rule ship-push.sh follows.
+ *   3. Committer identity pinned to noreply@anthropic.com, or GitHub renders the
+ *      commit "Unverified" and the git-check hook (correctly) objects.
+ *   4. Never force-pushes. A rejected push leaves the row committed locally; the
+ *      next turn retries, and an unpushed commit is a real state worth reporting.
+ *   5. Fails open at every step. Telemetry must never block Claude from stopping.
+ */
+function commitAndPushLedger(projectDir, outFile) {
+  const git = (args) =>
+    spawnSync('git', args, { cwd: projectDir, encoding: 'utf8', timeout: 10_000 });
+
+  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout?.trim();
+  if (!branch || ['main', 'master', 'HEAD'].includes(branch)) return;
+  if (!git(['remote']).stdout?.trim()) return;
+
+  // Nothing staged or unstaged for this path ⇒ the row is already committed.
+  const dirty = git(['status', '--porcelain', '--', outFile]).stdout?.trim();
+  if (!dirty) return;
+
+  const commit = git([
+    '-c', 'user.email=noreply@anthropic.com',
+    '-c', 'user.name=Claude',
+    'commit',
+    '-m', 'chore(telemetry): append session row',
+    '-m', 'Written by the session-telemetry Stop hook. Ledger data only — this\ncommit touches docs/project/telemetry/sessions.jsonl and nothing else.',
+    '--no-verify', // pre-commit runs lint-staged; a data append has nothing to lint
+    '--', outFile,
+  ]);
+  if (commit.status !== 0) return;
+
+  // Push only what is already committed, exactly like ship-push.sh. A failure
+  // here is deliberately silent and unretried: no force, no auto-rebase.
+  const hasUpstream =
+    git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']).status === 0;
+  git(hasUpstream ? ['push'] : ['push', '-u', 'origin', branch]);
 }
 
 try {

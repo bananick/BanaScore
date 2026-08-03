@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 312.a  
+**Version:** 312.b  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -13,7 +13,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 312.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 312.b (Epoch 3: Modular & Multi-Entry)
 
 ### Epochs
 
@@ -104,6 +104,12 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**312.b** (2026-08-01) — **Minor: Output Compression boundary — terse chat, complete artifacts**
+- **NEW — "Output Compression" section** in `routing-method.md`, right after "Session Telemetry Ledger": names the one boundary that matters — compress the **conversation**, never the **artifact**. Two-column table (compress freely / never compress), plus the two invariants: code/commands/paths/errors/numbers verbatim everywhere, and the handoff is always a doc.
+- **CHANGED — mirrors:** hub `CLAUDE.md` + `AGENTS.md` gain a "compress the chat, never the artifact" bullet in their **Communication Contract**; addon `payload/AGENTS.md` (`### Output Compression`) + `payload/CLAUDE.md` gain the same rule under **Model Routing** — neither payload file carries a Communication Contract section, and both already host the Session Telemetry Ledger there, so the rule reaches every synced app by the established shape.
+- **Scope call — third-party compression skills (Caveman & co.) stay opt-in per session, not a fleet default.** Rationale recorded in the new section: output tokens are the minority of agentic spend (input + cache reads dominate, and code never compresses), such skills add standing instructions to the context, and the Session Telemetry Ledger already exists to measure the real delta instead of trusting a headline number.
+- No new METHOD file, sub-agent, slash-command or hook → Minor bump. Version 312.a → 312.b.
 
 **312.a** (2026-07-12) — **Major: Session Telemetry Ledger — the Model Routing feedback loop**
 - **NEW — Claude Code Stop hook `.claude/hooks/session-telemetry.mjs`:** appends one JSON row per invocation to `docs/project/telemetry/sessions.jsonl` — tokens (input/output/cache-creation/cache-read, split into `mainLoop` and delegated `subAgents`, deduped per API-response `message.id` so streamed content-block splits are never double-counted), user/assistant message counts, start/end timestamps + duration, model(s) used, git branch, app name, best-effort `topic` (first user message, truncated) and `sprint` (regex on touched `docs/sprints/{NNN}` paths). `outcome`/`efficiencyNote` are always `null` from the hook — optional manual fields for the closing agent, Vera, or Iris to backfill.
@@ -317,5 +323,5 @@ npm run sync-method:dry-run      # preview
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-12
+**Last Updated:** 2026-08-01
 
