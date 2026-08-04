@@ -25,17 +25,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 
 ## Definition of Done
 
-- [ ] Feature works (smoke test)
-- [ ] Unit tests for critical paths
-- [ ] Typecheck passes (no `any`)
-- [ ] EN/FR i18n strings externalized
-- [ ] No linter errors
-- [ ] Zod schemas match Firestore (if data touched)
-- [ ] Schema.md updated (if changed)
-- [ ] Empty/error/loading states handled
-- [ ] Task report appended
-- [ ] Review Gate passed (Vera)
-- [ ] Committed + pushed
+One canonical list: **`method-core.md` → "Definition of Done"** (9 standard items + the task-specific gates below it). Do not restate it here — this file previously carried an 11-item variant that silently disagreed with the template every task file is generated from.
 
 ## Code Conventions
 
@@ -60,7 +50,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 
 - Format: `type(scope): message` (feat/fix/chore/docs/test/refactor)
 - Branch per task: `feat/{sprint}-{seq}-{scope}`
-- CI must pass before merge to `main`
+- There is no CI and no branch protection on this account, so nothing checks a merge to `main` — run the checks locally before merging
 
 ---
 

@@ -275,31 +275,22 @@ git branch -d feat/120-a-admin-nav
 - Max lifespan: **3 days** (if longer, scope is too big — split the task)
 - Branch name: `feat/`, `fix/`, `chore/` prefix matching commit types
 - **Never force-push to `main`**
-- **CI must pass before merge** (see CI Gate below)
+- **Run the checks locally before merge** (see Merge Gate below)
 
-**Why branches matter for solo devs:** Without a teammate to catch mistakes, the branch + CI gate IS your safety net. Committing directly to `main` means broken code immediately becomes "truth" with no recovery point.
+**Why branches matter for solo devs:** Without a teammate to catch mistakes, the branch IS your recovery point. Committing directly to `main` means broken code immediately becomes "truth" with nothing to roll back to.
 
-### CI Gate (Mandatory)
+### Merge Gate (local — there is no CI)
 
-**Every push triggers CI.** Code cannot merge to `main` unless all checks pass.
+**There is no CI and no branch protection on this account.** The GitHub Actions workflows were deleted on 2026-06-28 (`8b989e9`, billing), and enabling branch protection returns HTTP 403 on this plan. Nothing checks a merge to `main`. Merging is the deploy.
 
-**Minimum CI checks:**
+**So run these yourself, on the branch, before you merge:**
 - [ ] `npm run lint` — no linter errors
 - [ ] `npx tsc --noEmit` — TypeScript compiles
 - [ ] `npm test` — unit + integration tests pass
 - [ ] `npm run build` — production build succeeds
+- [ ] `npx playwright test` — E2E specs pass (where E2E exists)
 
-**Extended CI checks (add when E2E exists):**
-- [ ] `npx playwright test` — E2E specs pass
-
-**Setup:** Use `docs/METHOD/templates/CI-TEMPLATE.yml` for GitHub Actions.
-
-**Enforcement:** Enable GitHub branch protection on `main`:
-- Require status checks to pass
-- No direct push to `main`
-- No force-push
-
-**If CI is red:** Fix the failing check before anything else. Do not start new tasks while CI is broken.
+**If any is red:** fix it before anything else. Nothing downstream will catch it for you.
 
 ### Sync Cadence
 

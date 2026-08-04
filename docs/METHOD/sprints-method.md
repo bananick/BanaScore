@@ -212,16 +212,7 @@ None. FCM setup complete.
 
 ## Definition of Done
 
-**Standard DoD for all tasks** (see `method-core.md` for full details):
-
-- [ ] Feature works (smoke test)
-- [ ] Unit tests for critical paths
-- [ ] Typecheck passes (no `any`)
-- [ ] EN/FR i18n strings externalized
-- [ ] No linter errors
-- [ ] Task report appended
-- [ ] Review Gate passed (Vera) → task marked `☑️`
-- [ ] Committed to git
+**Standard DoD for all tasks — the 9 items in `method-core.md` → "Definition of Done".** Not restated here; that file is the only copy.
 
 **Additional quality measures** (add as needed based on task):
 - E2E tests for critical user journeys

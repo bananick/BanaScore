@@ -43,7 +43,7 @@
 2. **Cohort 10 → 12 executable agents** — Promoted **Gordon** (Sales/Marketing) and **Kasper** (Security) to native sub-agents + Skills. **Riley** (API/automation) stays a demoted advisory hat (not executable).
 3. **Native sub-agents + slash-commands** — The cohort is delegatable in Claude Code via `.claude/agents/`; rituals run as `/plan-sprint`, `/review`, `/intervention`, `/port`. `routing-method.md` now teaches the native flow, not manual role-switching.
 4. **Parallel + fleet model** — Worktree isolation, fan-out on independent tasks, dependency gates, merge policy, and the multi-repo (~30-app) dimension.
-5. **Gates as hooks** — DoD / Kill-Gate / write-path scoping wired as `.claude/settings.json` PreToolUse hooks instead of honor-system prose.
+5. **Gates** — the no-mock guard (`PostToolUse`), the `permissions.deny` Bash blocklist and per-agent `tools:` frontmatter are wired. DoD, Kill-Gate and `sage`'s write-path scoping are prose, not hooks.
 6. **Design Port Loop** — `docs/porting/PORTING-PLAYBOOK.md` promoted into the design method: PORT-MAP-first, one-screen-per-PR, reconcile-don't-overwrite + the MUI-hex token bridge.
 7. **AI infra refresh** — `ai-infra-method.md` re-owned to **Aiko**; model lineup → 2026 baseline (Fable 5 / Opus 4.8 / Sonnet 4.6 / Haiku 4.5 + 1M context).
 8. **Stack-drift caveat** — Declared stack = TARGET; detect the app's actual stack first (`Apps/web` = Next 14 + MUI flat; BanAventures = Vite + Tailwind).
@@ -289,7 +289,7 @@ The METHOD is **runner-agnostic**. The same cohort + the same task docs execute 
 4. `/review` → **Vera** validates (read-only, never commits) → `☑️`.
 5. Merge to `main` once CI is green.
 
-**Gates are enforced as hooks** (`.claude/settings.json` PreToolUse): write-path scoping (`sage`→tests, `vera`→review-only), a Bash command blocklist, and commit/E2E-green gates — not honor-system prose.
+**What is actually machine-enforced** (`.claude/settings.json` — there is no `PreToolUse` block): a `PostToolUse` no-mock guard on `Write|Edit`, two `Stop` hooks (auto-push, session telemetry), a `permissions.deny` Bash blocklist, and per-agent `tools:` frontmatter in `.claude/agents/`. Tool omission is real enforcement — `vera` has no `Write`/`Edit`. Everything else is prose: `sage`'s tests-only rule, the DoD, the Kill Gate and the E2E-green gate are honor-system, and `sage`'s tool list is identical to `brian`'s.
 
 **See:** `agents-engineering-method.md` (runner architecture), `.claude/agents/README.md` (delegation + hooks), `sprints-method.md` (parallel/fleet model).
 
@@ -320,21 +320,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ---
 
-## Definition of Done (v305.a)
+## Definition of Done
 
-**9 items. No bloat.**
-
-- [ ] Feature works (smoke test)
-- [ ] Critical path tests pass
-- [ ] TypeScript strict (no `any`)
-- [ ] i18n strings externalized (EN/FR)
-- [ ] No lint errors
-- [ ] Task report appended
-- [ ] Committed + pushed to GitHub
-- [ ] Vera review passed → `☑️`
-- [ ] FOCUS.md updated if objective completed
-
-**See:** `method-core.md` for extended DoD and schema governance.
+**9 items. No bloat.** One canonical list — **`method-core.md` → "Definition of Done"**, plus the task-specific gates below it. It is not restated here: five divergent copies (9 / 9 / 11 / 8 / 8) were live until 2026-08-04, so the template every task was generated from could not satisfy the gate it was judged by.
 
 ---
 
@@ -395,7 +383,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 309.b  
+**Current Version:** 312.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-07-05
 

@@ -75,7 +75,7 @@ docs/project/                                   ← App-specific (local)
 2. **Cohort 10 → 12** — Promoted **Gordon** (Sales/Marketing) + **Kasper** (Security) to sub-agents + Skills. **Riley** (API/automation) stays a demoted advisory hat.
 3. **Native sub-agents + slash-commands** — Delegatable in Claude Code via `.claude/agents/`; rituals as `/plan-sprint`, `/review`, `/intervention`, `/port`.
 4. **Parallel + fleet model** — Worktree isolation, fan-out, dependency gates, merge policy, multi-repo dimension.
-5. **Gates as hooks** — DoD / write-path scoping wired in `.claude/settings.json`.
+5. **Gates** — only the no-mock guard (`PostToolUse`), the `permissions.deny` Bash blocklist and per-agent `tools:` frontmatter are wired in `.claude/settings.json`. There is no `PreToolUse` block; DoD and write-path scoping are prose.
 6. **Design Port Loop** — PORT-MAP-first, one-screen-per-PR, MUI-hex token bridge.
 7. **AI infra refresh + stack caveat** — `ai-infra` re-owned to Aiko, 2026 model lineup; declared stack = TARGET (detect actual stack first).
 

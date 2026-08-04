@@ -57,9 +57,7 @@ When in doubt, the higher-level document wins.
 
 ## Definition of Done
 
-- [ ] Feature works (smoke test) · [ ] critical-path tests pass · [ ] TypeScript strict (no `any`)
-- [ ] i18n EN/FR externalized · [ ] no lint errors · [ ] task report in `reports/`
-- [ ] committed + pushed · [ ] Vera review → `☑️` · [ ] `STATE.md` updated if objective completed
+One canonical list, 9 items: **`docs/METHOD/method-core.md` → "Definition of Done"**, plus the task-specific gates below it. Load it when you close a task; do not maintain a second copy here. Nothing machine-enforces it.
 
 ## Skills ↔ your workflows
 

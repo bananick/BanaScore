@@ -70,16 +70,7 @@
 
 ## DoD
 
-**Standard DoD for all tasks:**
-
-- [ ] Feature works (smoke test)
-- [ ] Unit tests for critical paths
-- [ ] Typecheck passes (no `any`)
-- [ ] EN/FR i18n strings externalized (if UI)
-- [ ] No linter errors
-- [ ] Report appended
-- [ ] Review Gate passed (Vera) → task marked `☑️`
-- [ ] Committed to git
+**Standard DoD for all tasks — the 9 items in `method-core.md` → "Definition of Done".** Copy them in when instantiating this template; do not maintain a second list here.
 
 **Additional quality measures** (add as needed):
 - [ ] Integration/E2E tests for critical journey

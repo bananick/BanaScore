@@ -2,7 +2,9 @@
 // .claude/hooks/session-telemetry.mjs — Stop hook.
 // Appends one JSONL row per invocation summarizing this Claude Code session's cost/shape:
 // tokens (main loop + delegated sub-agents/workflows, deduped per API call), message counts,
-// duration, model(s), best-effort topic/sprint. Feeds docs/project/telemetry/sessions.jsonl so
+// duration, model(s), best-effort sprint. It deliberately records NO prompt text: the row is
+// committed and pushed automatically, so operator wording must never enter it. Feeds
+// docs/project/telemetry/sessions.jsonl so
 // Iris (or a human) can mine it later for METHOD efficiency signal — see routing-method.md ->
 // "Session Telemetry Ledger". Fails open on any error: never blocks Claude from stopping.
 //
@@ -60,13 +62,12 @@ function summarizeTranscript(filePath) {
   const seenMessageIds = new Set();
   let firstTimestamp = null;
   let lastTimestamp = null;
-  let firstUserText = null;
   let gitBranch = null;
   let raw;
   try {
     raw = readFileSync(filePath, 'utf8');
   } catch {
-    return { totals, models, firstTimestamp, lastTimestamp, firstUserText, gitBranch, sprintText: '' };
+    return { totals, models, firstTimestamp, lastTimestamp, gitBranch, sprintText: '' };
   }
 
   let sprintText = '';
@@ -92,7 +93,6 @@ function summarizeTranscript(filePath) {
     if (entry.type === 'user' && entry.message?.role === 'user'
       && typeof entry.message.content === 'string' && !entry.isMeta) {
       totals.userMessages++;
-      if (firstUserText === null) firstUserText = entry.message.content;
     }
 
     if (entry.type === 'assistant' && entry.message?.role === 'assistant') {
@@ -113,7 +113,7 @@ function summarizeTranscript(filePath) {
     }
   }
 
-  return { totals, models, firstTimestamp, lastTimestamp, firstUserText, gitBranch, sprintText };
+  return { totals, models, firstTimestamp, lastTimestamp, gitBranch, sprintText };
 }
 
 function addTotals(a, b) {
@@ -176,7 +176,6 @@ function main() {
     + totals.cacheCreationInputTokens + totals.cacheReadInputTokens;
 
   const sprint = guessSprint(main_.sprintText || '') || guessSprint(subSprintText);
-  const topic = (main_.firstUserText || '').replace(/\s+/g, ' ').trim().slice(0, 150);
 
   const row = {
     schemaVersion: 1,
@@ -187,7 +186,6 @@ function main() {
     cwd: projectDir,
     gitBranch: main_.gitBranch,
     sprint,
-    topic: topic || null,
     models: [...models],
     startedAt: main_.firstTimestamp,
     lastActivityAt: main_.lastTimestamp,
@@ -248,7 +246,6 @@ function commitAndPushLedger(projectDir, outFile) {
     'commit',
     '-m', 'chore(telemetry): append session row',
     '-m', 'Written by the session-telemetry Stop hook. Ledger data only — this\ncommit touches docs/project/telemetry/sessions.jsonl and nothing else.',
-    '--no-verify', // pre-commit runs lint-staged; a data append has nothing to lint
     '--', outFile,
   ]);
   if (commit.status !== 0) return;
