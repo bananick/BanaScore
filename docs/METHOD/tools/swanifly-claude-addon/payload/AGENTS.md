@@ -32,6 +32,7 @@ The operator must never have to ask *"et le projet global, on en est où ? qu'es
 ---
 
 - **One idea per bullet, no paragraph inside the card.** Six blocks maximum; an empty block is deleted, never filled with "none".
+- **Every line earns its place:** it changes a decision, an action, or a mental model — otherwise it is deleted, not shortened. **Name the object, never the activity** (`method-core.md:393`, `npm run doctor`, `afd4cd7`), as a clickable link or a runnable command.
 - Title emoji = real status: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation. The section emojis (📊 🧠 🤝 ⚖️ ➡️ ⚠️) are fixed landmarks, not decoration.
 - `Avancement` = position in the **global** project (sprint tasks closed, plan to-dos, screens ported, PRs), a 5-block bar 🟩/⬜ plus the ratio. Ratio only when actually counted this turn — never invented; nothing countable → say it in words.
 - Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Never bury a decision in the prose above.

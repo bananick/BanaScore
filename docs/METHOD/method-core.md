@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 315.b  
+**Version:** 315.c  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -472,6 +472,14 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 - **`Vigilance` only when the risk is real and sharp.**
 - **Link what is clickable.** Paths as markdown links (`[method-core.md](docs/METHOD/method-core.md)`),
   commits, commands and error strings as inline code. That is half the reason the card is not fenced.
+- **Every line earns its place.** A bullet survives only if it changes one of three things: a
+  **decision** the operator might take, an **action** he might run, or a **mental model** he carries
+  into tomorrow. A bullet that changes none of the three is **deleted**, not shortened — "we also
+  touched X" is changelog, and the diff already says it.
+- **Name the object, never the activity.** `docs/METHOD/method-core.md:393` not "the method file";
+  `npm run doctor` not "the checker"; `afd4cd7` not "the last commit". Everything nameable is named,
+  as a clickable link or a runnable command — that is what makes a card actionable rather than
+  merely informative.
 - **Everything in the card is grounded** in a command run or a file read this turn. Unknown stays
   `inconnu`; never a plausible guess. The card is the most-read surface of the whole METHOD — a wrong
   number there is worse than a missing one.

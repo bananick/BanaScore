@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 315.b  
+**Version:** 315.c  
 **Last Updated:** 2026-09-01  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 315.b (Epoch 3: Modular & Multi-Entry)
+**Current:** 315.c (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -131,6 +131,14 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**315.c** (2026-09-01) — **Minor: every line earns its place — the card becomes actionable, not just readable**
+
+- **Operator direction, recorded as a rule rather than an intention:** *"le plus structuré et clair et actionnable, le mieux"*. v315.a fixed **what** the card says, v315.b fixed **how it renders**; this fixes **which lines are allowed to exist**.
+- **NEW — "every line earns its place."** A bullet survives only if it changes one of three things: a **decision** the operator might take, an **action** he might run, or a **mental model** he carries into tomorrow. A bullet that changes none of the three is **deleted, not shortened** — "we also touched X" is changelog, and the diff already says it. This is the rule the earlier "not a changelog" line implied without making testable.
+- **NEW — "name the object, never the activity."** `docs/METHOD/method-core.md:393` not "the method file"; `npm run doctor` not "the checker"; `afd4cd7` not "the last commit". Everything nameable is named, as a clickable link or a runnable command. This is what separates an actionable card from a merely informative one, and it is only possible because v315.b took the card out of the code fence.
+- **CHANGED — mirrors:** `method-core.md` (canonical), `method-core-lite.md` (one condensed bullet), addon `payload/CLAUDE.md` + `payload/AGENTS.md`, and the global `~/.claude/CLAUDE.md` (machine-local, not carried by the sync).
+- Two rules added to an existing contract; no new METHOD file, command or hook. Minor bump. Version 315.b to 315.c.
 
 **315.b** (2026-09-01) — **Minor: the two cards become markdown, not a code fence**
 

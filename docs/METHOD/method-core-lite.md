@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 315.b-lite  
+**Version:** 315.c-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -72,6 +72,8 @@ renders small, unstyled and unclickable). Canonical spec: **`method-core.md` →
 ---
 
 - One idea per bullet, **no paragraph in the card**; six blocks max, an empty one is deleted.
+- **Chaque ligne gagne sa place** : elle change une décision, une action, ou un modèle mental — sinon
+  elle saute. Nomme l'objet (`method-core.md:393`, `npm run doctor`, `afd4cd7`), jamais l'activité.
 - Section emojis are fixed landmarks (📊 🧠 🤝 ⚖️ ➡️ ⚠️); the title emoji is the real status.
 - `Avancement` = the global project, not the turn. Ratio only when actually counted; never invented.
 - Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Then the `▶ Prompt suivant`

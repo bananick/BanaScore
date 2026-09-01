@@ -1,4 +1,4 @@
-# METHOD v315.b
+# METHOD v315.c
 
 ## Quick Start
 
@@ -21,6 +21,9 @@
 | **Evolve METHOD** | ALL method files | Lucia |
 
 ---
+
+## What's New in v315.c
+1. **Every line earns its place.** Two rules turn the Debrief from readable into **actionable**. A bullet survives only if it changes a **decision**, an **action**, or a **mental model** — anything else is **deleted, not shortened**. And **name the object, never the activity**: `method-core.md:393` not "the method file", `npm run doctor` not "the checker", `afd4cd7` not "the last commit" — every nameable thing rendered as a clickable link or a runnable command, which only became possible once v315.b took the card out of the code fence.
 
 ## What's New in v315.b
 1. **The Debrief and the Flight Deck leave the code fence.** A `text` fence renders small, monospace and unstyled — no bold, no colour, no clickable paths — which is why the card was still not being read. Both cards are now **plain markdown** framed by `---` rules: a `### ✅ Debrief · {lane}` title carrying the status emoji, then fixed section landmarks 📊 `Avancement` · 🧠 `À retenir` · 🤝 `Décidé pour toi` · ⚖️ `Tu décides` · ➡️ `Suite` · ⚠️ `Vigilance`. The progress bar is 5 emoji blocks 🟩/⬜. The ≤ 68-character and ≤ 16-line caps are **dropped** — they were workarounds for the fence; the rule is now one idea per bullet, no paragraph, six blocks max. Paths become clickable links. The `▶ Prompt suivant` stays fenced, because it is copy-paste. Placeholders switch to `{braces}` so a renderer cannot swallow them as HTML tags.
@@ -409,7 +412,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 315.b  
+**Current Version:** 315.c  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-09-01
 
