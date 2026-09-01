@@ -1,11 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-<<<<<<< HEAD
-**Version:** 313.b  
-=======
-**Version:** 313.a  
->>>>>>> origin/main
+**Version:** 315.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -276,17 +272,7 @@ is no longer where work *waits* — it is where work is *assembled*, for minutes
 
 ---
 
-<<<<<<< HEAD
-**There is no CI and no branch protection on this account.** GitHub Actions is billing-blocked
-account-wide (github.com billing — unrelated to the active Google Cloud / Firebase billing, see
-`SOUL.md` → "Boundaries"); the workflows were deleted on 2026-06-28 (`8b989e9`) after every run
-failed at the starting line ("account payments failed / spending limit"), and enabling branch
-protection returns HTTP 403 on this plan. Do not re-add `.github/workflows/*.yml` or propose
-"turning CI back on" in any repo on this account — nothing checks a merge to `main`. Merging is the
-deploy.
-=======
 ### Landing (the default) & the exception list
->>>>>>> origin/main
 
 **The operator does not manage pull requests.** Every conversation ends by **landing on `main`**, and
 `main` is the deploy. A PR is the **exception** — the artifact of something a human must decide — not
@@ -294,8 +280,10 @@ the normal path. If you are opening a PR out of habit, you are adding a chore th
 remember.
 
 **There is no CI and no branch protection on this account.** The GitHub Actions workflows were
-deleted on 2026-06-28 (`8b989e9`, billing), and enabling branch protection returns HTTP 403 on this
-plan. So the gate is **local and machine-checked**, not prose an agent can claim to have honored:
+deleted on 2026-06-28 (`8b989e9`) after every run failed at the starting line on a GitHub billing
+block — account-wide, and unrelated to the active Google Cloud / Firebase billing (`SOUL.md` →
+"Boundaries"): never propose "turning CI back on". Enabling branch protection returns HTTP 403 on
+this plan. So the gate is **local and machine-checked**, not prose an agent can claim to have honored:
 
 | Piece | What it does |
 |---|---|

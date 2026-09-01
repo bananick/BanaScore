@@ -4,7 +4,6 @@
 > For AG-specific instructions, see `GEMINI.md` (takes precedence).
 > Shared identity, voice & non-negotiables: see `SOUL.md`.
 
-<<<<<<< HEAD
 ## Operator Reporting — close with the Debrief
 
 > Canonical spec: `docs/METHOD/method-core.md` → "Operator Reporting". Tool-agnostic — applies on Cursor, Codex, and any agent tool that reports back to a human.
@@ -35,7 +34,7 @@ SUITE
 - Nothing to decide → `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. A decision is never buried in the prose above the card.
 - Small answer → one landing line (`✅ <fait> · suite → <action>`); nothing done → no card. **A delegated sub-agent never emits a Debrief** — it hands its orchestrator a report, and the orchestrator renders one card for the whole chain.
 - The `Done / State / Next` 3-line header stays the opener of **written artifacts** (PR bodies, task reports, sub-agent reports), not of chat replies. Chat leads with the answer.
-=======
+
 ## Landing (the default) — the operator does not manage PRs
 
 > Canonical: `docs/METHOD/method-core.md` → "Landing (the default) & the exception list". Tool-agnostic.
@@ -45,7 +44,6 @@ SUITE
 - **Exceptions → PR + a `### Needs decision` block:** schema / Firestore rules · auth, secrets, middleware · `SOUL.md` · dependency or lockfile changes · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]`/`[wip]`/`[hold]`/`Needs decision` in a commit · `wip` branch name · red, absent or stale verify · trunk conflict. Harmless false positive? Land it with **`[land-anyway]`** in the commit subject and say why.
 - **Never:** `gh pr merge --admin` · force-push · `git rebase` · check out the trunk · delete the marker to fake a green.
 - **On a tool with no hooks** (Cursor, Codex): run `node .claude/hooks/verify-gate.mjs` then `node .claude/hooks/land.mjs` as the last step of the task and report the landed sha. Leaving a branch behind for a human to merge is the failure mode this replaces.
->>>>>>> origin/main
 
 ## Model Routing (default: orchestrate high, execute cheap)
 

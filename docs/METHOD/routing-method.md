@@ -1,11 +1,7 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-<<<<<<< HEAD
-**Version:** 313.b  
-=======
-**Version:** 313.a  
->>>>>>> origin/main
+**Version:** 315.a  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---

@@ -9,11 +9,7 @@
 
 ## How Claude works in this repo
 
-<<<<<<< HEAD
-You operate inside the **METHOD** (v313.b, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
-=======
-You operate inside the **METHOD** (v313.a, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
->>>>>>> origin/main
+You operate inside the **METHOD** (v315.a, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
 
 ## Agent cohort
 
@@ -81,7 +77,6 @@ Claude Code uses **skills** as entry points. Mapping to your Antigravity slash-c
 
 > Keep responses lean: reference METHOD files, don't paste them.
 
-<<<<<<< HEAD
 ## Operator reporting — close with the Debrief
 
 The operator must never have to ask *"et le projet global, on en est où ? qu'est-ce que je dois décider ?"*. Close every substantial reply with this card, then the `▶ Prompt suivant` block. Canonical spec: `docs/METHOD/method-core.md` → "Operator Reporting".
@@ -109,7 +104,7 @@ SUITE
 - Nothing to decide → `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. Never bury a decision in the prose above.
 - Small answer → one landing line (`✅ <fait> · suite → <action>`); nothing done → no card. **A delegated sub-agent never emits a Debrief** — it hands its orchestrator a report (3-line header + task report), and the orchestrator renders one card.
 - The `Done / State / Next` 3-line header stays the opener of **written artifacts** (PR bodies, task reports), not of chat replies.
-=======
+
 ## Landing (the default) — the operator does not manage PRs
 
 > Canonical: `docs/METHOD/method-core.md` → "Landing (the default) & the exception list" + "Slice discipline".
@@ -119,7 +114,6 @@ SUITE
 - **Exceptions → PR + `### Needs decision`:** schema / Firestore rules · auth, secrets, middleware · `SOUL.md` · dependency or lockfile changes · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]`/`[wip]`/`[hold]`/`Needs decision` in a commit · `wip` branch · red, absent or stale verify · trunk conflict. Harmless false positive → land it with **`[land-anyway]`** in the commit subject and say why.
 - **It also happens on its own:** the `Stop` hook lands the docs/tooling lane after every turn, `SessionEnd` attempts a full land at the end of the conversation, and `npm run land:sweep` reports every open PR with what blocks it.
 - **Never:** `gh pr merge --admin` · force-push · `git rebase` · check out `main` · delete the marker to fake a green.
->>>>>>> origin/main
 
 ## Model routing (default: orchestrate high, execute cheap)
 

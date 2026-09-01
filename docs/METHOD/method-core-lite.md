@@ -1,10 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-<<<<<<< HEAD
-**Version:** 313.b-lite  
-=======
-**Version:** 313.a-lite  
->>>>>>> origin/main
+**Version:** 315.a-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---

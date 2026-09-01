@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# METHOD v313.b
-=======
-# METHOD v314.a
->>>>>>> origin/main
+# METHOD v315.a
 
 ## Quick Start
 
@@ -26,15 +22,14 @@
 
 ---
 
-<<<<<<< HEAD
-## What's New in v313.b
+## What's New in v315.a
+1. **Operator Reporting — the Debrief replaces the closing Orientation frame.** Every substantial answer now ends with one card built around the three questions the operator kept asking by hand: *ce qui vient d'être fait · où ça met le projet global · ce que je dois décider maintenant*. Rows: a one-line headline + status glyph, **`Avancement`** (position in the global project — a real count from sprint task files / plan to-dos / PORT-MAP rows / PRs, **never an invented ratio**), **`À RETENIR`** (2–4 one-line key facts, including a `Décidé pour toi :` line for every reversible call made without asking), **`TU DÉCIDES`** (0–2 operator calls, recommendation first, or `rien — j'ai tranché : …`), **`SUITE`** (exactly one next action) and an optional `⚠` line, then the `▶ Prompt suivant` block. Hard discipline: ≤ 16 lines, ≤ 68 characters, **no wrapping paragraph inside the card** — the previous frame failed precisely because prose blobs were stuffed into framed rows. Cadence: full card on substantial answers · one landing line on small ones · no card when nothing was done. **Delegated sub-agents never emit a Debrief** — they hand their orchestrator a `Done / State / Next` report and the orchestrator renders one card for the whole chain. The **Flight Deck** becomes the **pickup** card only (`/brief`, resume hook, cold start), ending the two-overlapping-summaries redundancy, and the 3-line header is scoped to written artifacts (PR bodies, task reports). Canonical: `method-core.md` → "Operator Reporting". Tooling: `flight-deck.ps1 -Mode context` now emits `sprint` + `sprint_progress` (counts both the METHOD emoji markers and the ASCII `[ ]`/`[x]` convention most app repos actually use), so `Avancement` is grounded for free on `/brief` and on resume.
+
+## What's New in v314.b
 1. **One sprint = one conversation = one branch = one worktree.** Two canonical rules contradicted each other — `agents-engineering-method.md` §9 said *"One thread per task"*, `sprints-method.md` said *"One sprint, one conversation"* — so an operator reading both did not know how many windows to open. Arbitrated once, in **`sprints-method.md` → "Conversation Naming"**, which is now the single home of the session-splitting rule; everywhere else points to it. The rule is dictated by the two `Stop` hooks in `.claude/settings.json`: `ship-push.sh` and `session-telemetry.mjs` both no-op on `main`/`master`/`HEAD` and both push the current branch **swallowing a rejected push** — so two sessions on one branch make the second one's work invisible to every downstream reader while it exists only locally, and two sessions in one worktree share an index (`/ship`'s `git add` stages the other's mid-edit files). Three lanes, ASCII titles, sprint number first: **Sprint** `{NNN} {sujet}` / `sprint/{NNN}-{slug}` · **Split** `{NNN} {sujet} · {seq} {titre}` / `sprint/{NNN}-{seq}` + its own worktree · **Intervention** `INT {YYYY-MM-DD} {sujet}` / `int/{date}-{slug}`; the operator's uppercase lane prefixes (`PILOT - `, `PROD - `, `AUTOM - `, `GROWTH - `) are documented as the non-sprint form. **The choice is runtime, never planning-time** — default to a sub-agent inside the sprint conversation; a workflow at ≥ 3 near-identical items; a new session only once one of four facts has *already* happened (3rd build→test→fix loop on the same card · another repo · its own deploy+verify loop with the operator · two code-writing cards concurrently). **No `Session:` field was added to the task template** — its neighbour `Tier:` is mandatory since v311.a and is filled in **0 of 85** task files under `Apps/*/docs/sprints/`. Only the sprint conversation runs `/relay` (one `## Resume here` per app, `method-core.md`).
 2. **Delegation by default, as a standing order.** New **"Délégation par défaut"** section in the hub `CLAUDE.md` and in `payload/CLAUDE.md` (kept identical), under Model Routing: coordination stays in the conversation; every delegation goes out on the cheapest model that meets the bar (haiku mechanical · sonnet build/tests/ops · opus judgment/review/security); a workflow at ≥ 3 similar items; a parallel session only on an observed trigger; and **offloading context is a goal in itself** — residue-heavy exploration goes to a sub-agent that returns only its conclusion. It was being retyped by hand every session.
 3. **Count drift corrected** (each verified against the filesystem): `.claude/commands/` **4 → 6** rituals (`/relay` and `/ship` were undocumented) in `METHOD.md` ×2, `docs/METHOD/README.md`, `routing-method.md` ("By Slash-Command" table), hub `CLAUDE.md`, `.claude/agents/README.md`; `.claude/agents/` **12 → 13** sub-agents in `METHOD.md` ×2; addon README **5 → 6** commands and **8 → 9** skills (`media` was missing).
 
-## What's New in v313.a
-1. **Operator Reporting — the Debrief replaces the closing Orientation frame.** Every substantial answer now ends with one card built around the three questions the operator kept asking by hand: *ce qui vient d'être fait · où ça met le projet global · ce que je dois décider maintenant*. Rows: a one-line headline + status glyph, **`Avancement`** (position in the global project — a real count from sprint task files / plan to-dos / PORT-MAP rows / PRs, **never an invented ratio**), **`À RETENIR`** (2–4 one-line key facts, including a `Décidé pour toi :` line for every reversible call made without asking), **`TU DÉCIDES`** (0–2 operator calls, recommendation first, or `rien — j'ai tranché : …`), **`SUITE`** (exactly one next action) and an optional `⚠` line, then the `▶ Prompt suivant` block. Hard discipline: ≤ 16 lines, ≤ 68 characters, **no wrapping paragraph inside the card** — the previous frame failed precisely because prose blobs were stuffed into framed rows. Cadence: full card on substantial answers · one landing line on small ones · no card when nothing was done. **Delegated sub-agents never emit a Debrief** — they hand their orchestrator a `Done / State / Next` report and the orchestrator renders one card for the whole chain. The **Flight Deck** becomes the **pickup** card only (`/brief`, resume hook, cold start), ending the two-overlapping-summaries redundancy, and the 3-line header is scoped to written artifacts (PR bodies, task reports). Canonical: `method-core.md` → "Operator Reporting". Tooling: `flight-deck.ps1 -Mode context` now emits `sprint` + `sprint_progress` (counts both the METHOD emoji markers and the ASCII `[ ]`/`[x]` convention most app repos actually use), so `Avancement` is grounded for free on `/brief` and on resume.
-=======
 ## What's New in v314.a
 1. **The hub stops versioning 17 copies of itself.** 2,031 mirror files under `Apps/**/docs/METHOD/`, `Apps/**/.claude/` and the seeded `PORT-MAP-TEMPLATE.md` are now **gitignored** (files stay on disk, the sync still writes them). They were the *cause* of the version drift v313.b detects: 18 places to change one rule, a 3,511-item diff per release that tripped the landing gate's `scale` exception every time, and `grep` returning 18 hits for one sentence. Verified safe first — every mirror file was payload-generated and all 18 app `settings.json` were byte-identical. **Pulling this release removes the mirrors from a checkout's disk; run `npm run sync-method:all` once per machine to repopulate.** Never author inside a mirror: the sync overwrites it and git has no copy.
 2. **Doctor E8 locks the decision in.** Any `Apps/**/docs/METHOD/*` or `Apps/**/.claude/*` path that gets tracked again fails `npm run doctor`. W1 now reports stale *generated output*, not repo drift; W3 notes that `Apps/_archived/**` is out of the sync scope so its mirror can only rot.
@@ -49,7 +44,6 @@
 2. **The exception list, decided once instead of per PR.** schema / Firestore rules · auth, secrets, middleware · `SOUL.md` · real dependency or lockfile changes (a `scripts`-only `package.json` touch does not block) · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]` / `[wip]` / `[hold]` / `Needs decision` in a commit · `wip` branch name · red, absent or stale verify · trunk conflict. Held back → the branch is pushed, a PR is opened or commented **once** with the exact reason, and the report carries a `### Needs decision` block. Harmless false positive → land it with **`[land-anyway]`** in the commit subject and say why.
 3. **It happens without being asked.** `Stop` hook lands the **docs/tooling lane only** after every turn (zero build risk, and where the PR backlog actually came from); `SessionEnd` attempts a **full land** when the conversation ends; `/land` is the explicit close at slice end. `npm run land:sweep` reports every open PR with what blocks it, `land:sweep:apply` squash-merges the clean ones — so a backlog can't rebuild silently.
 4. **Slice discipline = the token control.** One conversation = one slice = one landing. A landed slice needs no `/relay` (`main` *is* the state), and an open PR is a token liability — the work returns in a new window with the context re-derived from scratch. `/ship` is demoted to the exception path; `/land` is the default. Canonical: `method-core.md` → "Landing (the default) & the exception list" + "Slice discipline".
->>>>>>> origin/main
 
 ## What's New in v312.b
 1. **Output Compression — terse where it's cheap, complete where it matters.** One boundary settles the question: compress the **conversation**, never the **artifact**. Compress freely in build/debug/ops chat, status pings and settled context; never compress committed docs (task files, `STATE.md`, `DESIGN.md`, `SCHEMA.md`, PR bodies, `/relay` blocks), user-facing EN/FR copy, Vera verdicts / Kasper findings, the 3-line header or a `### Needs decision` block. Two invariants hold everywhere: code, commands, paths, error strings and numbers verbatim; the handoff is always a doc. Third-party compression skills (Caveman & co.) are **opt-in per session, not a fleet default** — output tokens are the minority of agentic spend, such skills add ~1–1.5k input tokens per turn, so measure the delta with the Session Telemetry Ledger before adopting one. Canonical: `routing-method.md` → "Output Compression".
@@ -412,15 +406,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-<<<<<<< HEAD
-**Current Version:** 313.b  
+**Current Version:** 315.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-09-01
-=======
-**Current Version:** 314.a  
-**Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-08-10
->>>>>>> origin/main
 
 ### Version Scheme
 
