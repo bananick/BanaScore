@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 315.a  
+**Version:** 315.b  
 **Last Updated:** 2026-09-01  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 315.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 315.b (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -131,6 +131,19 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**315.b** (2026-09-01) — **Minor: the two cards become markdown, not a code fence**
+
+- **Problem.** v315.a shipped the Debrief inside a `text` fence. The operator's verdict after one day: *"en fenêtre de code c'est petit et pas très paginé"*. The fence was the wrong container — it renders in small monospace with **no bold, no colour, no clickable paths**, at a fixed width that forces content to wrap badly. The v315.a line discipline (≤ 68 characters, no wrapping paragraph) existed only to work around that container, and the ASCII bar `▓▓░░` reads as noise at that size.
+- **CHANGED — both cards are now plain markdown**, framed by two `---` rules that span the window: a `### ✅ Debrief · {lane}` title carrying the status emoji, then bold section labels with **fixed emoji landmarks** — 📊 `Avancement` · 🧠 `À retenir` · 🤝 `Décidé pour toi` · ⚖️ `Tu décides` · ➡️ `Suite` · ⚠️ `Vigilance`. The emojis are deliberately invariant: the eye learns their position, which is what makes a recurring card scannable.
+- **CHANGED — the progress bar is emoji**, 5 blocks 🟩/⬜ instead of 7 ASCII `▓`/`░`: bigger, legible at a glance, and it survives a proportional font.
+- **DROPPED — the ≤ 68 character and ≤ 16 line caps.** They were container workarounds. Markdown wraps with the window, so the rule is now qualitative and stronger: **one idea per bullet, never a paragraph inside the card, six blocks maximum, an empty block deleted rather than filled with "none".**
+- **NEW — link what is clickable.** Paths render as markdown links (`[method-core.md](docs/METHOD/method-core.md)`), commits/commands/error strings as inline code. Inside a fence none of that worked; this is half the reason the card left the fence.
+- **UNCHANGED — the `▶ Prompt suivant` stays fenced**, because it exists to be copy-pasted; fenced as `bash` for a command so the app renders a Run button. It is the only fenced block in a closing.
+- **CHANGED — the Flight Deck follows the same grammar** (`### 🛫 Flight Deck · {projet}`, six bold rows with 🎯 📍 🔀 ➡️ ⚖️ 🚧), so pickup and dropoff read as one system.
+- **CHANGED — placeholders use `{braces}`, not `<angle brackets>`.** A markdown renderer can swallow `<lane>` as an unknown HTML tag, which would silently empty the template in `CLAUDE.md` and in every synced app.
+- **CHANGED — mirrors:** `method-core.md` (canonical), `method-core-lite.md`, hub `CLAUDE.md` + `AGENTS.md`, addon `payload/CLAUDE.md` + `payload/AGENTS.md`, and the global `~/.claude/CLAUDE.md` "Output style" (machine-local, not carried by the sync).
+- Presentation of an existing contract; no new METHOD file, command or hook. Minor bump. Version 315.a to 315.b.
 
 **315.a** (2026-09-01) — **Major: Operator Reporting — the Debrief card**
 

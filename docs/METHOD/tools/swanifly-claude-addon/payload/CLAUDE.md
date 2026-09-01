@@ -9,7 +9,7 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v315.a, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
+You operate inside the **METHOD** (v315.b, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
 
 ## Agent cohort
 
@@ -81,28 +81,35 @@ Claude Code uses **skills** as entry points. Mapping to your Antigravity slash-c
 
 The operator must never have to ask *"et le projet global, on en est où ? qu'est-ce que je dois décider ?"*. Close every substantial reply with this card, then the `▶ Prompt suivant` block. Canonical spec: `docs/METHOD/method-core.md` → "Operator Reporting".
 
-```text
-DEBRIEF · <lane>                                          <glyphe>
-<Une ligne : ce qui vient d'être fait.>
+**Plain markdown, never a fenced block** — a fence renders small, monospace, unstyled, with unclickable paths, and that is exactly what stopped being read. The `▶ Prompt suivant` is the only fenced thing in a closing, because it exists to be copy-pasted.
 
-Avancement   <barre>  <n/N unité>  ·  <fait git/PR/test réel>
+---
 
-À RETENIR
- • <fait clé, une ligne>
- • Décidé pour toi : <choix réversible pris sans demander>
+### ✅ Debrief · {lane}
 
-TU DÉCIDES
- • <question>   reco → <option recommandée>
+{Une ligne : ce qui vient d'être fait.}
 
-SUITE
- → <la prochaine action utile>
-```
+**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N unité} · {fait git / PR / test réel}
 
-- **≤ 16 lines, ≤ 68 characters per line, no wrapping paragraph inside the card.** One idea per bullet.
-- `<glyphe>`: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation.
-- `Avancement` = position in the **global** project (sprint tasks closed, plan to-dos, screens ported, PRs). Ratio only when actually counted this turn — never invented; nothing countable → say it in words.
-- Nothing to decide → `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. Never bury a decision in the prose above.
-- Small answer → one landing line (`✅ <fait> · suite → <action>`); nothing done → no card. **A delegated sub-agent never emits a Debrief** — it hands its orchestrator a report (3-line header + task report), and the orchestrator renders one card.
+**🧠 À retenir**
+- {fait clé}
+- 🤝 **Décidé pour toi** — {choix réversible pris sans demander}
+
+**⚖️ Tu décides**
+- {question} → **reco :** {option recommandée}
+
+**➡️ Suite** — {la prochaine action utile}
+
+**⚠️ Vigilance** — {un seul risque réel}
+
+---
+
+- **One idea per bullet, no paragraph inside the card.** Six blocks maximum; an empty block is deleted, never filled with "none".
+- Title emoji = real status: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation. The section emojis (📊 🧠 🤝 ⚖️ ➡️ ⚠️) are fixed landmarks, not decoration.
+- `Avancement` = position in the **global** project (sprint tasks closed, plan to-dos, screens ported, PRs), a 5-block bar 🟩/⬜ plus the ratio. Ratio only when actually counted this turn — never invented; nothing countable → say it in words.
+- Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Never bury a decision in the prose above.
+- Link what is clickable: paths as markdown links, commits and commands as inline code.
+- Small answer → one landing line (`✅ {fait} · suite → {action}`); nothing done → no card. **A delegated sub-agent never emits a Debrief** — it hands its orchestrator a report (3-line header + task report), and the orchestrator renders one card.
 - The `Done / State / Next` 3-line header stays the opener of **written artifacts** (PR bodies, task reports), not of chat replies.
 
 ## Landing (the default) — the operator does not manage PRs

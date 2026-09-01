@@ -1,4 +1,4 @@
-# METHOD v315.a
+# METHOD v315.b
 
 ## Quick Start
 
@@ -21,6 +21,9 @@
 | **Evolve METHOD** | ALL method files | Lucia |
 
 ---
+
+## What's New in v315.b
+1. **The Debrief and the Flight Deck leave the code fence.** A `text` fence renders small, monospace and unstyled — no bold, no colour, no clickable paths — which is why the card was still not being read. Both cards are now **plain markdown** framed by `---` rules: a `### ✅ Debrief · {lane}` title carrying the status emoji, then fixed section landmarks 📊 `Avancement` · 🧠 `À retenir` · 🤝 `Décidé pour toi` · ⚖️ `Tu décides` · ➡️ `Suite` · ⚠️ `Vigilance`. The progress bar is 5 emoji blocks 🟩/⬜. The ≤ 68-character and ≤ 16-line caps are **dropped** — they were workarounds for the fence; the rule is now one idea per bullet, no paragraph, six blocks max. Paths become clickable links. The `▶ Prompt suivant` stays fenced, because it is copy-paste. Placeholders switch to `{braces}` so a renderer cannot swallow them as HTML tags.
 
 ## What's New in v315.a
 1. **Operator Reporting — the Debrief replaces the closing Orientation frame.** Every substantial answer now ends with one card built around the three questions the operator kept asking by hand: *ce qui vient d'être fait · où ça met le projet global · ce que je dois décider maintenant*. Rows: a one-line headline + status glyph, **`Avancement`** (position in the global project — a real count from sprint task files / plan to-dos / PORT-MAP rows / PRs, **never an invented ratio**), **`À RETENIR`** (2–4 one-line key facts, including a `Décidé pour toi :` line for every reversible call made without asking), **`TU DÉCIDES`** (0–2 operator calls, recommendation first, or `rien — j'ai tranché : …`), **`SUITE`** (exactly one next action) and an optional `⚠` line, then the `▶ Prompt suivant` block. Hard discipline: ≤ 16 lines, ≤ 68 characters, **no wrapping paragraph inside the card** — the previous frame failed precisely because prose blobs were stuffed into framed rows. Cadence: full card on substantial answers · one landing line on small ones · no card when nothing was done. **Delegated sub-agents never emit a Debrief** — they hand their orchestrator a `Done / State / Next` report and the orchestrator renders one card for the whole chain. The **Flight Deck** becomes the **pickup** card only (`/brief`, resume hook, cold start), ending the two-overlapping-summaries redundancy, and the 3-line header is scoped to written artifacts (PR bodies, task reports). Canonical: `method-core.md` → "Operator Reporting". Tooling: `flight-deck.ps1 -Mode context` now emits `sprint` + `sprint_progress` (counts both the METHOD emoji markers and the ASCII `[ ]`/`[x]` convention most app repos actually use), so `Avancement` is grounded for free on `/brief` and on resume.
@@ -406,7 +409,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 315.a  
+**Current Version:** 315.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-09-01
 

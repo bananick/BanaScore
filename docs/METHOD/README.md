@@ -1,6 +1,6 @@
-# METHOD v315.a
+# METHOD v315.b
 
-**Version:** 315.a  
+**Version:** 315.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-09-01  
 **Status:** ✅ Production-Ready
@@ -68,6 +68,9 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v315.b
+1. **The Debrief and the Flight Deck leave the code fence.** A `text` fence renders small, monospace and unstyled — no bold, no colour, no clickable paths — which is why the card was still not being read. Both cards are now **plain markdown** framed by `---` rules: a `### ✅ Debrief · {lane}` title carrying the status emoji, then fixed section landmarks 📊 `Avancement` · 🧠 `À retenir` · 🤝 `Décidé pour toi` · ⚖️ `Tu décides` · ➡️ `Suite` · ⚠️ `Vigilance`. The progress bar is 5 emoji blocks 🟩/⬜. The ≤ 68-character and ≤ 16-line caps are **dropped** — they were workarounds for the fence; the rule is now one idea per bullet, no paragraph, six blocks max. Paths become clickable links. The `▶ Prompt suivant` stays fenced, because it is copy-paste. Placeholders switch to `{braces}` so a renderer cannot swallow them as HTML tags.
 
 ## What's New in v315.a
 
@@ -169,8 +172,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 315.a  
-**Previous:** 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 315.b  
+**Previous:** 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **See:** `versioning.md` for full changelog.
 

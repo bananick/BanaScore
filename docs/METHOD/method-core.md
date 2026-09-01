@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 315.a  
+**Version:** 315.b  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -399,11 +399,18 @@ questions, one per moment, and **never both in the same answer**.
 
 | Moment | Card | The question it answers |
 |---|---|---|
-| **Pickup** — `/brief`, resume hook, cold start | **Flight Deck** (6 rows) | Où on en est · quoi faire maintenant |
+| **Pickup** — `/brief`, resume hook, cold start | **Flight Deck** | Où on en est · quoi faire maintenant |
 | **Dropoff** — the close of a substantial answer | **Debrief** | Ce qui vient d'être fait · où ça met le projet · ce que je dois décider |
 
 An answer that opens with a Flight Deck (resume, `/brief`) still closes with a Debrief, but the
 Debrief then carries only what the Flight Deck didn't, and never repeats its words.
+
+**Both cards are plain markdown, never a fenced block.** This is not cosmetic. A `text` fence renders
+small, monospace and unstyled: no bold, no colour, no clickable paths, and a fixed width that forces
+long content to wrap badly or be truncated. Markdown gives real emphasis, real emoji, spacing that
+paginates, wrapping that follows the window, and `file.md:42` paths the operator can click. The
+**only** fenced block in a closing is the `▶ Prompt suivant`, which stays fenced because it exists to
+be copy-pasted (fence it as `bash` for a command, so the app renders a Run button).
 
 ### The Debrief — closing card
 
@@ -411,63 +418,70 @@ The mental model is a chief of staff walking in for thirty seconds: *voilà ce q
 voilà où ça met le projet, voilà ce que tu dois garder en tête, voilà ce que tu dois trancher.* It is
 a briefing, not a changelog — the diff already lists the edits.
 
-Rendered as a fenced `text` block, last thing before the `▶ Prompt suivant`:
+Exact shape, `---` rules included (they draw the card's frame at full window width):
 
-```text
-DEBRIEF · <lane ou workstream>                            <glyphe>
-<Une ligne : ce qui vient d'être fait, en langage opérateur.>
+---
 
-Avancement   <barre>  <n/N unité>  ·  <fait git/PR/test réel>
+### ✅ Debrief · {lane ou workstream}
 
-À RETENIR
- • <fait clé, une ligne>
- • <fait clé, une ligne>
- • Décidé pour toi : <choix réversible pris sans demander>
+{Une ligne : ce qui vient d'être fait, en langage opérateur.}
 
-TU DÉCIDES
- • <la question, courte>
-   reco → <l'option recommandée>  ·  sinon <l'alternative>
+**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N unité} · {fait git / PR / test réel}
 
-SUITE
- → <la prochaine action utile>
+**🧠 À retenir**
+- {fait clé}
+- {fait clé}
+- 🤝 **Décidé pour toi** — {choix réversible pris sans demander}
 
-⚠ <un seul risque réel — sinon, supprimer la ligne>
-```
+**⚖️ Tu décides**
+- {la question, courte} → **reco :** {l'option recommandée} · sinon {l'alternative}
 
-**Hard rules — these are what make the card readable.**
+**➡️ Suite** — {la prochaine action utile}
 
-- **≤ 16 lines, ≤ 68 characters per line.** Never a wrapping paragraph inside the card: a prose blob
-  stuffed into a framed row is exactly what stopped being read. One idea per bullet, one line per
-  bullet; a second line is allowed only to keep a path, a number or a verbatim string intact.
-- **Glyphe** carries the real status: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation.
+**⚠️ Vigilance** — {un seul risque réel}
+
+---
+
+**Hard rules — these are what keep the card readable.**
+
+- **One idea per bullet, one line at a normal window width.** Never a paragraph inside the card — a
+  prose blob is exactly what stopped being read. Markdown wraps gracefully, so there is no character
+  count to respect; but a bullet that needs three lines is two bullets, or belongs in the body above.
+- **Six blocks maximum**, in the order above, and an empty block is **deleted**, never filled with
+  "none". A full card renders in about twelve lines.
+- **The status emoji in the title carries the real state:** `✅` fait · `🟡` besoin de toi · `🔴`
+  bloqué · `👀` en observation. The section emojis (📊 🧠 🤝 ⚖️ ➡️ ⚠️) are **fixed** — they are
+  landmarks the eye learns, not decoration, so they never vary from one card to the next.
 - **`Avancement` positions the work in the global project, not in the turn.** Sprint tasks closed,
-  plan to-dos done, screens ported, PRs open — a 7-block bar (`▓`/`░`) plus the ratio. Only render a
-  ratio when something countable was actually read this turn: sprint task files by status marker,
-  plan checkboxes, `PORT-MAP.md` rows, the PR list. On Claude Code the `/brief` context script
-  already emits `sprint` and `sprint_progress` for free. Nothing countable → name the lane and its
-  position in words. **Never invent a ratio.**
-- **`À RETENIR` is the brief itself — 2 to 4 bullets.** What the operator must hold in his head
+  plan to-dos done, screens ported, PRs open — a 5-block bar (🟩 filled / ⬜ empty) plus the ratio.
+  Only render a ratio when something countable was actually read this turn: sprint task files by
+  status marker, plan checkboxes, `PORT-MAP.md` rows, the PR list. On Claude Code the `/brief`
+  context script already emits `sprint` and `sprint_progress` for free. Nothing countable → name the
+  lane and its position in words. **Never invent a ratio.**
+- **`À retenir` is the brief itself — 2 to 4 bullets.** What the operator must hold in his head
   tomorrow: what now works, what changed shape, what got ruled out, what surprised us. Include one
-  **`Décidé pour toi :`** bullet whenever a reversible call was made without asking, so it can be
+  **🤝 `Décidé pour toi`** bullet whenever a reversible call was made without asking, so it can be
   objected to cheaply. No bullet that merely restates a file edit.
-- **`TU DÉCIDES` — 0 to 2 items, recommendation first**, same grammar as a `### Needs decision`
-  block, which stays the long form in the body when a decision needs its options laid out. Nothing
-  to decide → the single line `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. A decision is never
-  buried in the prose above the card.
-- **`SUITE` — exactly one action**, the single most useful next move (`terminé` when truly finished),
+- **`Tu décides` — 0 to 2 items, recommendation first**, same grammar as a `### Needs decision`
+  block, which stays the long form in the body when a decision needs its options laid out. Nothing to
+  decide → one line: `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` A decision is never buried in
+  the prose above the card.
+- **`Suite` — exactly one action**, the single most useful next move (`terminé` when truly finished),
   followed by the `▶ Prompt suivant` block: one fenced, self-contained prompt — goal, repo and key
   paths, constraints, acceptance — pasteable into a fresh window with zero extra context.
-- **`⚠` only when the risk is real and sharp.** An empty row is deleted, not filled with "none".
+- **`Vigilance` only when the risk is real and sharp.**
+- **Link what is clickable.** Paths as markdown links (`[method-core.md](docs/METHOD/method-core.md)`),
+  commits, commands and error strings as inline code. That is half the reason the card is not fenced.
 - **Everything in the card is grounded** in a command run or a file read this turn. Unknown stays
-  `inconnu`; never a plausible guess. The card is the most-read surface of the whole METHOD — a
-  wrong number there is worse than a missing one.
+  `inconnu`; never a plausible guess. The card is the most-read surface of the whole METHOD — a wrong
+  number there is worse than a missing one.
 
 **Cadence.** The card must stay rare enough to keep meaning something:
 
 | Answer | Close with |
 |---|---|
-| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/ship`, `/relay`, `/review` | Full Debrief + `▶ Prompt suivant` |
-| Small — a question answered, a lookup, a one-line fix | One landing line: `✅ <ce qui est fait> · suite → <l'action>` |
+| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/land`, `/ship`, `/relay`, `/review` | Full Debrief + `▶ Prompt suivant` |
+| Small — a question answered, a lookup, a one-line fix | One landing line: `✅ {ce qui est fait} · suite → {l'action}` |
 | Nothing done — refusal, clarification, pure conversation | No card at all |
 
 **Who renders it.** Only the agent speaking to the operator — the orchestrator, or a single agent
@@ -484,26 +498,32 @@ no preamble.
 
 ### The Flight Deck — pickup card
 
-Six rows, rendered for `/brief`, for a resume hook injecting "Resume Flight Deck context", and at a
-cold start — never as the closing summary of work.
+Rendered for `/brief`, for a resume hook injecting "Resume Flight Deck context", and at a cold
+start — never as the closing summary of work. Same markdown grammar as the Debrief:
 
-```text
-[Project] - [workstream]          [path/branch]
-  Enjeu      Why this matters / what lane this is
-  Etat       Current concrete state: files, tests, runtime, blockers
-  Git        Branch, ahead/behind, dirty count, PR state, last commit
-  Prochaine  The next useful action
-  Decision   Real strategy choice only, otherwise "none"
-  Eviter     Sharp constraint, risk, or thing not to do
-```
+---
 
-Grounded in git / status / memory, not vibes, and under the same line discipline as the Debrief: ≤ 68
-characters per row, no wrapping paragraph. If `Etat` holds three facts, keep the two that change the
-next decision and push the rest into the body.
+### 🛫 Flight Deck · {projet} — {workstream}
 
-> **Surface note.** Claude Code frames a fenced `text` block as a card; Claude Desktop and the web
-> app render it as a plain code block. The format is identical on both — the line discipline is what
-> carries the readability, not the frame.
+`{chemin}` · branche `{branch}`
+
+- **🎯 Enjeu** — pourquoi ça compte, quelle lane
+- **📍 État** — l'état concret : fichiers, tests, runtime, blocages
+- **🔀 Git** — ahead/behind, fichiers modifiés, PR, dernier commit
+- **➡️ Prochaine** — la prochaine action utile
+- **⚖️ Décision** — vrai choix de stratégie, sinon « aucune »
+- **🚧 Éviter** — la contrainte ou le risque à ne pas franchir
+
+---
+
+Six rows, grounded in git / status / memory, not vibes, under the same discipline as the Debrief: one
+line per row, no paragraph. If `État` holds three facts, keep the two that change the next decision
+and push the rest into the body.
+
+> **Surface note.** Claude Code, Claude Desktop and the web app all render markdown, so the cards
+> look right on every surface — which a fenced block did not. Where markdown is not rendered at all,
+> the bold markers and emoji degrade to plain text and the card stays legible; that is the worst
+> case, and it is still better than a monospace box.
 
 ---
 

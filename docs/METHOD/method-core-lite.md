@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 315.a-lite  
+**Version:** 315.b-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -48,30 +48,34 @@ One canonical list: **`method-core.md` → "Definition of Done"** (9 standard it
 
 ## Operator Reporting
 
-Close every substantial answer with the **Debrief** card — the operator must never have to ask where
-the global project stands or what he has to decide. Canonical spec (template, hard rules, cadence):
-**`method-core.md` → "Operator Reporting"**.
+Close every substantial answer with the **Debrief** — the operator must never have to ask where the
+global project stands or what he has to decide. **Plain markdown, never a fenced block** (a fence
+renders small, unstyled and unclickable). Canonical spec: **`method-core.md` → "Operator Reporting"**.
 
-```text
-DEBRIEF · <lane>                                          <glyphe>
-<Une ligne : ce qui vient d'être fait.>
+---
 
-Avancement   <barre>  <n/N unité>  ·  <fait git/PR/test réel>
+### ✅ Debrief · {lane}
 
-À RETENIR
- • <fait clé, une ligne>
- • Décidé pour toi : <choix réversible pris sans demander>
+{Une ligne : ce qui vient d'être fait.}
 
-TU DÉCIDES
- • <question>   reco → <option recommandée>
+**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N unité} · {fait git / PR / test réel}
 
-SUITE
- → <la prochaine action utile>
-```
+**🧠 À retenir**
+- {fait clé}
+- 🤝 **Décidé pour toi** — {choix réversible pris sans demander}
 
-- ≤ 16 lines, ≤ 68 characters per line, one idea per bullet. **No wrapping paragraph in the card.**
+**⚖️ Tu décides**
+- {question} → **reco :** {option recommandée}
+
+**➡️ Suite** — {la prochaine action utile}
+
+---
+
+- One idea per bullet, **no paragraph in the card**; six blocks max, an empty one is deleted.
+- Section emojis are fixed landmarks (📊 🧠 🤝 ⚖️ ➡️ ⚠️); the title emoji is the real status.
 - `Avancement` = the global project, not the turn. Ratio only when actually counted; never invented.
-- Nothing to decide → `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. Then the `▶ Prompt suivant` block.
+- Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Then the `▶ Prompt suivant`
+  block, the only fenced thing in a closing.
 - Small answer → one landing line instead. Delegated sub-agents never emit a Debrief.
 
 ## Sessions
