@@ -5,6 +5,9 @@ import type { ActivityDTO, EventDTO } from '../types';
 import { t } from '../i18n';
 import { useToast } from '../toast';
 import { ScoringPanel } from '../components/ScoringPanel';
+import { IfpAtelierPanel } from '../components/IfpAtelierPanel';
+import { IfpCoursePanel } from '../components/IfpCoursePanel';
+import { atelierByLabel, isCourseLabel } from '../ifp';
 
 /** Focused, touch-friendly scoring of a single activity (one tablet per activity). */
 export const ScoreActivity: React.FC = () => {
@@ -26,6 +29,10 @@ export const ScoreActivity: React.FC = () => {
 
   const locked = !!event && event.status !== 'open';
 
+  // IFP tournament: dedicated panels (rotations by group / course positions).
+  const atelier = activity ? atelierByLabel(activity.workshop || activity.name) : undefined;
+  const isCourse = activity ? isCourseLabel(activity.workshop || activity.name) : false;
+
   return (
     <div className="app-container">
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -42,7 +49,13 @@ export const ScoreActivity: React.FC = () => {
           🔒 {t.eventLocked}
         </div>
       )}
-      <ScoringPanel eventId={eventId!} activityId={aId} locked={locked} />
+      {atelier ? (
+        <IfpAtelierPanel eventId={eventId!} activityId={aId} atelier={atelier} locked={locked} />
+      ) : isCourse ? (
+        <IfpCoursePanel eventId={eventId!} activityId={aId} locked={locked} />
+      ) : (
+        <ScoringPanel eventId={eventId!} activityId={aId} locked={locked} />
+      )}
     </div>
   );
 };

@@ -23,6 +23,7 @@ export interface TeamDTO {
   qr_token?: string; // only returned to admin requests
   admin_points: number;
   bonus_label: string | null;
+  team_group?: string | null; // group tag (e.g. IFP: A..F), null when unused
 }
 
 export interface ActivityDTO {

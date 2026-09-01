@@ -23,6 +23,7 @@ export interface TeamRow {
   qr_token: string;
   admin_points: number;
   bonus_label: string | null;
+  team_group: string | null;
 }
 
 export interface ActivityRow {

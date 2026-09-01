@@ -122,6 +122,9 @@ function migrate(db: DB): void {
   addColumnIfMissing(db, 'events', 'scorer_code', `TEXT`);
   addColumnIfMissing(db, 'teams', 'admin_points', `INTEGER NOT NULL DEFAULT 0`);
   addColumnIfMissing(db, 'teams', 'bonus_label', `TEXT`);
+  // Optional group tag (e.g. IFP tournament: A..F) used to bucket teams into
+  // rotations. NULL for events that don't use groups.
+  addColumnIfMissing(db, 'teams', 'team_group', `TEXT`);
   addColumnIfMissing(db, 'activities', 'coefficient', `REAL NOT NULL DEFAULT 1`);
   addColumnIfMissing(db, 'activities', 'workshop', `TEXT`);
   addColumnIfMissing(db, 'activities', 'scoring_mode', `TEXT NOT NULL DEFAULT 'criteria'`);

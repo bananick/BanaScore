@@ -12,6 +12,7 @@
     "serve": "node dist-server/index.js",
     "preview": "vite preview",
     "test": "node --require ./server/test-setup.js --test server/store.test.ts",
+    "seed:ifp": "node scripts/seed-ifp.cjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
