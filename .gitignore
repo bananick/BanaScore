@@ -40,3 +40,6 @@ hosting/.cache
 /firebase-*.zip
 /.firebase/
 /emulator-ui/
+
+# Claude Code (config locale, non versionnée)
+.claude/
