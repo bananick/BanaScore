@@ -2,6 +2,7 @@
 
 **Owner:** Lucia  
 **Version:** 311.a  
+**Last Updated:** 2026-07-10  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
 ---
@@ -1076,9 +1077,3 @@ METHOD file loaded; hand any implementation to an executable agent. Promote to a
 2. **This week:** Managers run 95% Gate (interview before uncertain decisions)
 3. **This month:** Junia runs Managers Sync before each sprint planning
 4. **Ongoing:** Refine agent entry files based on real usage patterns
-
----
-
-**Owner:** Lucia  
-**Last Updated:** 2026-07-10  
-**Version:** 311.a

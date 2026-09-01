@@ -2,6 +2,7 @@
 
 **Owner:** April + Nova  
 **Version:** 308.a  
+**Last Updated:** 2026-06-01  
 **Purpose:** Structured pre-BUILD pipeline to define, specify, and prototype apps
 
 ---
@@ -203,9 +204,3 @@ Track progress in `project/FOCUS.md` and in BanaPilot (if available).
 | Use placeholder text ("Lorem ipsum") | Use realistic content |
 | Prototype only happy path | Cover key flows + empty/error states |
 | Start BUILD without human gate | Get explicit "go" on prototype |
-
----
-
-**Owner:** April + Nova  
-**Last Updated:** 2026-06-01  
-**Version:** 308.a

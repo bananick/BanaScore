@@ -10,7 +10,9 @@
  *   - docs/project/design/PORT-MAP-TEMPLATE.md -> app docs (OVERWRITE — reference template for the /port loop)
  *   - .claude/hooks/no-mock-guard.ps1 -> app/.claude      (OVERWRITE)
  *   - .claude/hooks/session-telemetry.mjs -> app/.claude  (OVERWRITE)
- *   - .claude/settings.json           -> app/.claude      (MERGE the no-mock PostToolUse hook + the session-telemetry Stop hook, idempotent per hook)
+ *   - .claude/hooks/{ship-push.sh,land.mjs,verify-gate.mjs} -> app/.claude (OVERWRITE — the "land, don't ship" engine, v313.a)
+ *   - .gitignore                      -> app root         (APPEND `.method/` once, only if a .gitignore exists)
+ *   - .claude/settings.json           -> app/.claude      (MERGE the no-mock PostToolUse hook + the Stop/SessionEnd hooks, idempotent PER ENTRY)
  *
  * Usage (standalone):   node install.mjs <appRoot> [--dry-run]
  * Programmatic:         import { installClaudeAddon } from './install.mjs'
@@ -48,12 +50,12 @@ function readJsonSafe(file) {
 
 /**
  * @param {{appRoot:string, addonDir?:string, dryRun?:boolean}} opts
- * @returns {{created:string[], kept:string[], updated:string[], merged:boolean, telemetryMerged:boolean, settingsSkipped:boolean, directive:string}}
+ * @returns {{created:string[], kept:string[], updated:string[], merged:boolean, hooksMerged:string[], telemetryMerged:boolean, settingsSkipped:boolean, directive:string}}
  */
 export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } = {}) {
   const payload = join(addonDir, "payload");
   if (!existsSync(payload)) throw new Error(`payload not found at ${payload}`);
-  const res = { created: [], kept: [], updated: [], merged: false, telemetryMerged: false, settingsSkipped: false, directive: "skipped" };
+  const res = { created: [], kept: [], updated: [], merged: false, hooksMerged: [], telemetryMerged: false, settingsSkipped: false, directive: "skipped" };
 
   // 1) Identity files — create-if-missing (preserve any app-authored version)
   for (const f of ["AGENTS.md", "SOUL.md", "CLAUDE.md"]) {
@@ -133,12 +135,30 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
     res.updated.push(".claude/hooks/no-mock-guard.ps1");
   }
 
-  // 4c) Session telemetry hook — overwrite
-  const telemetryHookSrc = join(payload, "hooks", "session-telemetry.mjs");
-  if (existsSync(telemetryHookSrc)) {
-    const telemetryHookDest = join(appRoot, ".claude", "hooks", "session-telemetry.mjs");
-    if (!dryRun) { mkdirSync(dirname(telemetryHookDest), { recursive: true }); copyFileSync(telemetryHookSrc, telemetryHookDest); }
-    res.updated.push(".claude/hooks/session-telemetry.mjs");
+  // 4c) Program hooks — overwrite. session-telemetry feeds the routing ledger;
+  // ship-push + land + verify-gate are the "land, don't ship" engine (v313.a):
+  // the operator never merges a PR by hand, so the gate must travel with the METHOD.
+  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs"]) {
+    const src = join(payload, "hooks", name);
+    if (!existsSync(src)) continue;
+    const dest = join(appRoot, ".claude", "hooks", name);
+    if (!dryRun) { mkdirSync(dirname(dest), { recursive: true }); copyFileSync(src, dest); }
+    res.updated.push(`.claude/hooks/${name}`);
+  }
+
+  // 4d) .gitignore — the landing gate's scratch state is per-machine, never committed.
+  // (land.mjs and verify-gate.mjs also filter `.method/` themselves, so this is hygiene,
+  // not correctness — an app without a .gitignore is left alone.)
+  const ignorePath = join(appRoot, ".gitignore");
+  if (existsSync(ignorePath)) {
+    const current = readFileSync(ignorePath, "utf8");
+    if (!current.includes(".method/")) {
+      if (!dryRun) {
+        writeFileSync(ignorePath, current.replace(/\s*$/, "\n") +
+          "\n# Landing gate scratch state (HEAD-pinned verify marker, last-reported block reasons)\n.method/\n", "utf8");
+      }
+      res.updated.push(".gitignore (.method/)");
+    }
   }
 
   // 4b) Porting kit — drop the PORT-MAP template so the /port loop has a starting point in-repo.
@@ -174,14 +194,28 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, dryRun = false } 
     res.merged = true;
   }
 
-  if (!Array.isArray(settings.hooks.Stop)) settings.hooks.Stop = [];
-  const telemetryAlreadyThere = JSON.stringify(settings.hooks.Stop).includes("session-telemetry");
-  if (!telemetryAlreadyThere && snippet?.hooks?.Stop) {
-    settings.hooks.Stop.push(...snippet.hooks.Stop);
-    res.telemetryMerged = true;
+  // Stop / SessionEnd merge per-entry, not per-array: an app that already has the
+  // telemetry hook must still receive the landing hook, and vice versa. Each snippet
+  // entry carries a distinctive script name — use it as the idempotency marker.
+  const markerOf = (entry) => {
+    const s = JSON.stringify(entry);
+    for (const m of ["session-telemetry", "ship-push", "land.mjs", "no-mock-guard"]) if (s.includes(m)) return m;
+    return s;
+  };
+  for (const event of ["Stop", "SessionEnd"]) {
+    const incoming = snippet?.hooks?.[event];
+    if (!Array.isArray(incoming)) continue;
+    if (!Array.isArray(settings.hooks[event])) settings.hooks[event] = [];
+    const present = JSON.stringify(settings.hooks[event]);
+    for (const entry of incoming) {
+      if (present.includes(markerOf(entry))) continue;
+      settings.hooks[event].push(entry);
+      res.hooksMerged.push(`${event}:${markerOf(entry)}`);
+    }
   }
+  res.telemetryMerged = res.hooksMerged.some((h) => h.includes("session-telemetry"));
 
-  if (!dryRun && (res.merged || res.telemetryMerged)) {
+  if (!dryRun && (res.merged || res.hooksMerged.length)) {
     mkdirSync(dirname(setPath), { recursive: true });
     writeFileSync(setPath, JSON.stringify(settings, null, 2) + "\n", "utf8");
   }
@@ -207,6 +241,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (r.settingsSkipped) console.log("  settings: SKIPPED — existing .claude/settings.json is not valid JSON (left untouched)");
   else {
     console.log("  settings: " + (r.merged ? "no-mock hook merged" : "no-mock hook already present"));
-    console.log("  settings: " + (r.telemetryMerged ? "session-telemetry hook merged" : "session-telemetry hook already present"));
+    console.log("  settings: " + (r.hooksMerged.length ? "hooks merged — " + r.hooksMerged.join(", ") : "Stop/SessionEnd hooks already present"));
   }
 }

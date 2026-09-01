@@ -1,7 +1,11 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 310.a  
+<<<<<<< HEAD
+**Version:** 313.b  
+=======
+**Version:** 313.a  
+>>>>>>> origin/main
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -252,62 +256,102 @@ git commit -m "docs(roadmap): mark settings page complete"
 
 ### Branches
 
-**Default: one short-lived branch per sprint task.** Never commit directly to `main`.
+**One short-lived branch per slice.** A **slice** is what a single conversation can finish *and land*.
+Never commit directly to `main`; never let a branch outlive the conversation that opened it.
 
 ```bash
-# Start task:
 git checkout -b feat/{sprint}-{seq}-{scope}   # e.g., feat/120-a-admin-nav
-
-# Work (commit often):
-git add .
-git commit -m "feat(admin): implement sidebar navigation"
-git push origin feat/120-a-admin-nav
-
-# When task is ✅ and CI is green:
-# → Merge to main (PR or fast-forward)
-git checkout main
-git merge feat/120-a-admin-nav
-git push origin main
-git branch -d feat/120-a-admin-nav
+git add . && git commit -m "feat(admin): implement sidebar navigation"
+npm run land                                   # → verify, then fast-forward main
 ```
 
 **Branch rules:**
-- Max lifespan: **3 days** (if longer, scope is too big — split the task)
-- Branch name: `feat/`, `fix/`, `chore/` prefix matching commit types
-- **Never force-push to `main`**
-- **Run the checks locally before merge** (see Merge Gate below)
+- Max lifespan: **one conversation** (hard ceiling 3 days — longer means the slice was too big)
+- Branch name: `feat/`, `fix/`, `chore/`, `docs/` prefix matching commit types. Cloud sessions get
+  `claude/{concern}` — still one concern.
+- **Never force-push. Never `git rebase`. Never check out `main`** (worktrees share the trunk ref).
 
-**Why branches matter for solo devs:** Without a teammate to catch mistakes, the branch IS your recovery point. Committing directly to `main` means broken code immediately becomes "truth" with nothing to roll back to.
+**Why branches still matter solo:** the branch is the recovery point. What changed is that the branch
+is no longer where work *waits* — it is where work is *assembled*, for minutes or hours, not days.
 
-### Merge Gate (local — there is no CI)
+---
 
-**There is no CI and no branch protection on this account.** The GitHub Actions workflows were deleted on 2026-06-28 (`8b989e9`, billing), and enabling branch protection returns HTTP 403 on this plan. Nothing checks a merge to `main`. Merging is the deploy.
+<<<<<<< HEAD
+**There is no CI and no branch protection on this account.** GitHub Actions is billing-blocked
+account-wide (github.com billing — unrelated to the active Google Cloud / Firebase billing, see
+`SOUL.md` → "Boundaries"); the workflows were deleted on 2026-06-28 (`8b989e9`) after every run
+failed at the starting line ("account payments failed / spending limit"), and enabling branch
+protection returns HTTP 403 on this plan. Do not re-add `.github/workflows/*.yml` or propose
+"turning CI back on" in any repo on this account — nothing checks a merge to `main`. Merging is the
+deploy.
+=======
+### Landing (the default) & the exception list
+>>>>>>> origin/main
 
-**So run these yourself, on the branch, before you merge:**
-- [ ] `npm run lint` — no linter errors
-- [ ] `npx tsc --noEmit` — TypeScript compiles
-- [ ] `npm test` — unit + integration tests pass
-- [ ] `npm run build` — production build succeeds
-- [ ] `npx playwright test` — E2E specs pass (where E2E exists)
+**The operator does not manage pull requests.** Every conversation ends by **landing on `main`**, and
+`main` is the deploy. A PR is the **exception** — the artifact of something a human must decide — not
+the normal path. If you are opening a PR out of habit, you are adding a chore the operator has to
+remember.
 
-**If any is red:** fix it before anything else. Nothing downstream will catch it for you.
+**There is no CI and no branch protection on this account.** The GitHub Actions workflows were
+deleted on 2026-06-28 (`8b989e9`, billing), and enabling branch protection returns HTTP 403 on this
+plan. So the gate is **local and machine-checked**, not prose an agent can claim to have honored:
+
+| Piece | What it does |
+|---|---|
+| **`.claude/hooks/verify-gate.mjs`** | Classifies the diff into lanes — `doc` (nothing to run) · `tooling` (`node --check`) · `app` (that app's `lint`/`typecheck`/`test`/`build`) — and only spends build time on what can break production. Stamps `.method/verify-ok.json` **pinned to the HEAD sha**. Fails **closed**: app code in an app with no `typecheck`/`test`/`build` script cannot land. |
+| **`.claude/hooks/land.mjs`** | Refuses to land without a green marker *at the current commit* (a stale green is not a green light). Merges `origin/main` in, then `git push origin HEAD:main`. Any open PR for the branch closes itself as merged. |
+| **`Stop` hook** | After every turn: lands the **docs/tooling lane only** (`--lane docs`). Zero build risk, and it is where the PR backlog actually came from. |
+| **`SessionEnd` hook** | When the conversation ends: attempts a **full land**. This is the "results of each conversation reach `main`" guarantee. |
+| **`/land`** | The explicit close at slice end. Don't wait for the hook when you know the slice is done. |
+| **`npm run land:sweep`** | Every open PR + what blocks it; `land:sweep:apply` squash-merges the clean ones. Nothing should sit open for more than a few days. |
+
+**The exception list — fail-closed, and the only reasons a PR is correct:**
+
+| Exception | Why a human looks |
+|---|---|
+| **schema** — `SCHEMA.md`, `schemas/`, `*.zod.ts`, `firestore`/`storage.rules`, `*.indexes.json` | data-model changes are the conflict gate; never decide one yourself |
+| **security** — `auth/`, `middleware/`, `.env*`, `serviceAccount*`, `security/` | our most common production failure |
+| **soul** — `SOUL.md` | the non-negotiables are the operator's, not an agent's |
+| **deps** — a real `dependencies`/`devDependencies` edit, any lockfile | supply chain (a `scripts`-only `package.json` touch does **not** block) |
+| **migration** — `migrations/`, `*migrate*.mjs\|ts` | irreversible against live data |
+| **infra** — `.github/workflows/`, `apphosting.yaml` | changes what deploy means |
+| **scale** — > 60 files or > 2000 deleted lines | too big to land unreviewed; split the slice |
+| **hold** — `[no-auto-merge]`, `[wip]`, `[hold]`, `Needs decision` in a commit **subject**, or `wip` in the branch name | the operator's one-token brake (subjects only — a body that *documents* these markers must not trip them) |
+| **red / absent / stale verify · trunk conflict** | fix it, don't route around it |
+
+Held back → the gate pushes the branch, opens or comments on a PR **once** with the exact reason, and
+the report carries a `### Needs decision` block with a recommendation. Two legitimate outs, both
+explicit: resolve the reason, or — when the exception fired on something genuinely harmless — land it
+with **`[land-anyway]`** in the commit subject and say so in the report.
+
+**Forbidden, always:** `gh pr merge --admin` · force-push · `git rebase` · deleting the marker to
+fake a green · `git add -A` sweeping someone else's in-flight work into your commit.
+
+### Slice discipline (why this saves tokens)
+
+Landing is what keeps conversations small, and small conversations are the cost control:
+
+- **One conversation = one slice = one landing.** If a conversation has not landed anything and the
+  context is filling up, the slice was too big — land what is green, `/relay`, and start fresh.
+- **Landing beats relaying.** A landed slice needs no handoff prose at all: `main` *is* the state.
+  `/relay` is for a slice that genuinely spans windows, not a substitute for finishing one.
+- **Route residue-heavy work to sub-agents** (Iris / Explore) that return conclusions only — see
+  "Project State & Handoff".
+- **A PR is a token liability**: it means the work is coming back later, in a new window, with the
+  context re-derived from scratch.
 
 ### Sync Cadence
 
-**Git commit + push is required after every completed task** — not only at sprint end.
+**Commit after every completed task; land at the end of the conversation.**
 
 ```bash
-# After every ✅ task:
-# (on your feature branch)
-git add .
-git commit -m "feat(notifications): implement FCM"
-git push origin feat/015-b-fcm
-
-# Merge to main once CI passes:
-git checkout main && git merge feat/015-b-fcm && git push origin main
+git add . && git commit -m "feat(notifications): implement FCM"
+npm run land          # verify → fast-forward main → deploy
 ```
 
-**Why:** Ensures progress is never lost, makes review easier, and keeps remote in sync with actual state at all times.
+**Why:** progress is never lost, `main` is always the truth, and no queue of pull requests
+accumulates behind the operator's attention.
 
 ---
 
@@ -347,6 +391,131 @@ one into the other.
 **Keep Relays rare — offload to sub-agents:** route residue-heavy exploration / research through
 sub-agents (Iris / Explore) that return **conclusions only**. The main context then accumulates less
 residue, so it needs fewer Relays in the first place.
+
+**Sub-agent vs. separate session — the two halves.** A **sub-agent** returns a conclusion into a
+context you keep: you stay the owner of the thread, the branch and the Relay. A **separate session**
+carries the context away and gives back a *document* — it owns its own branch and worktree, and it
+does **not** relay (there is one `## Resume here` per app, and the sprint conversation holds it). So
+offloading is the default and splitting is the exception. The four observed facts that justify the
+split, plus the `Stop`-hook mechanism that makes two sessions on one branch diverge silently:
+`sprints-method.md` → "Conversation Naming".
+
+---
+
+## Operator Reporting — the Debrief and the Flight Deck
+
+At the end of an intervention the operator must never have to ask *"et le projet global, on en est
+où ? qu'est-ce qui a été fait ? qu'est-ce que je dois décider maintenant ?"*. If he asks, the report
+failed — the information existed, it just wasn't rendered where he reads. Two cards answer those
+questions, one per moment, and **never both in the same answer**.
+
+| Moment | Card | The question it answers |
+|---|---|---|
+| **Pickup** — `/brief`, resume hook, cold start | **Flight Deck** (6 rows) | Où on en est · quoi faire maintenant |
+| **Dropoff** — the close of a substantial answer | **Debrief** | Ce qui vient d'être fait · où ça met le projet · ce que je dois décider |
+
+An answer that opens with a Flight Deck (resume, `/brief`) still closes with a Debrief, but the
+Debrief then carries only what the Flight Deck didn't, and never repeats its words.
+
+### The Debrief — closing card
+
+The mental model is a chief of staff walking in for thirty seconds: *voilà ce qui vient d'être fait,
+voilà où ça met le projet, voilà ce que tu dois garder en tête, voilà ce que tu dois trancher.* It is
+a briefing, not a changelog — the diff already lists the edits.
+
+Rendered as a fenced `text` block, last thing before the `▶ Prompt suivant`:
+
+```text
+DEBRIEF · <lane ou workstream>                            <glyphe>
+<Une ligne : ce qui vient d'être fait, en langage opérateur.>
+
+Avancement   <barre>  <n/N unité>  ·  <fait git/PR/test réel>
+
+À RETENIR
+ • <fait clé, une ligne>
+ • <fait clé, une ligne>
+ • Décidé pour toi : <choix réversible pris sans demander>
+
+TU DÉCIDES
+ • <la question, courte>
+   reco → <l'option recommandée>  ·  sinon <l'alternative>
+
+SUITE
+ → <la prochaine action utile>
+
+⚠ <un seul risque réel — sinon, supprimer la ligne>
+```
+
+**Hard rules — these are what make the card readable.**
+
+- **≤ 16 lines, ≤ 68 characters per line.** Never a wrapping paragraph inside the card: a prose blob
+  stuffed into a framed row is exactly what stopped being read. One idea per bullet, one line per
+  bullet; a second line is allowed only to keep a path, a number or a verbatim string intact.
+- **Glyphe** carries the real status: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation.
+- **`Avancement` positions the work in the global project, not in the turn.** Sprint tasks closed,
+  plan to-dos done, screens ported, PRs open — a 7-block bar (`▓`/`░`) plus the ratio. Only render a
+  ratio when something countable was actually read this turn: sprint task files by status marker,
+  plan checkboxes, `PORT-MAP.md` rows, the PR list. On Claude Code the `/brief` context script
+  already emits `sprint` and `sprint_progress` for free. Nothing countable → name the lane and its
+  position in words. **Never invent a ratio.**
+- **`À RETENIR` is the brief itself — 2 to 4 bullets.** What the operator must hold in his head
+  tomorrow: what now works, what changed shape, what got ruled out, what surprised us. Include one
+  **`Décidé pour toi :`** bullet whenever a reversible call was made without asking, so it can be
+  objected to cheaply. No bullet that merely restates a file edit.
+- **`TU DÉCIDES` — 0 to 2 items, recommendation first**, same grammar as a `### Needs decision`
+  block, which stays the long form in the body when a decision needs its options laid out. Nothing
+  to decide → the single line `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. A decision is never
+  buried in the prose above the card.
+- **`SUITE` — exactly one action**, the single most useful next move (`terminé` when truly finished),
+  followed by the `▶ Prompt suivant` block: one fenced, self-contained prompt — goal, repo and key
+  paths, constraints, acceptance — pasteable into a fresh window with zero extra context.
+- **`⚠` only when the risk is real and sharp.** An empty row is deleted, not filled with "none".
+- **Everything in the card is grounded** in a command run or a file read this turn. Unknown stays
+  `inconnu`; never a plausible guess. The card is the most-read surface of the whole METHOD — a
+  wrong number there is worse than a missing one.
+
+**Cadence.** The card must stay rare enough to keep meaning something:
+
+| Answer | Close with |
+|---|---|
+| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/ship`, `/relay`, `/review` | Full Debrief + `▶ Prompt suivant` |
+| Small — a question answered, a lookup, a one-line fix | One landing line: `✅ <ce qui est fait> · suite → <l'action>` |
+| Nothing done — refusal, clarification, pure conversation | No card at all |
+
+**Who renders it.** Only the agent speaking to the operator — the orchestrator, or a single agent
+working directly with him. A **delegated sub-agent never emits a Debrief**: its report goes to its
+orchestrator as a handoff (3-line header + task report, uncompressed per Output Compression), and
+the orchestrator folds those reports into one card. Otherwise a `junia → brian → sage → vera` chain
+lands four cards in one answer and the format dies of noise.
+
+**Relation to the 3-line header.** `Done / State / Next` remains the opening header of **written
+artifacts** — PR bodies, task reports, sub-agent reports. In chat with the operator the Debrief does
+that job at the close, where the eye lands after a long turn; rendering both is the redundancy that
+made the summary wallpaper. Chat replies instead **lead with the answer**: first line = what changed,
+no preamble.
+
+### The Flight Deck — pickup card
+
+Six rows, rendered for `/brief`, for a resume hook injecting "Resume Flight Deck context", and at a
+cold start — never as the closing summary of work.
+
+```text
+[Project] - [workstream]          [path/branch]
+  Enjeu      Why this matters / what lane this is
+  Etat       Current concrete state: files, tests, runtime, blockers
+  Git        Branch, ahead/behind, dirty count, PR state, last commit
+  Prochaine  The next useful action
+  Decision   Real strategy choice only, otherwise "none"
+  Eviter     Sharp constraint, risk, or thing not to do
+```
+
+Grounded in git / status / memory, not vibes, and under the same line discipline as the Debrief: ≤ 68
+characters per row, no wrapping paragraph. If `Etat` holds three facts, keep the two that change the
+next decision and push the rest into the body.
+
+> **Surface note.** Claude Code frames a fenced `text` block as a card; Claude Desktop and the web
+> app render it as a plain code block. The format is identical on both — the line discipline is what
+> carries the readability, not the frame.
 
 ---
 

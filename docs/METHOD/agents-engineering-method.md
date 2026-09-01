@@ -120,6 +120,11 @@ Claude Code can spawn **subagents** via the Task tool, giving each a fresh conte
 - You want to isolate a risky operation
 - You want to run the sprint loop with minimal intervention
 
+> **Subagent is the default; a separate session is the exception.** A subagent returns a conclusion
+> into the context you keep; a separate session carries the context away and returns a document.
+> The four triggers that justify a separate session — and the one-sprint/one-conversation/one-branch/
+> one-worktree rule behind them — live in `sprints-method.md` → "Conversation Naming".
+
 ### Model routing at delegation (default)
 Delegation is also a **cost decision**: the orchestrator stays on the strongest model; each spawned
 subagent runs on the cheapest tier that meets the task's bar (T1 judge → opus · T2 build → sonnet ·
@@ -234,7 +239,7 @@ The PROTOTYPE phase of the Definition Pipeline now runs on **Claude Artifacts**,
 
 Long threads lose context ("context rot"). Maintain strict hygiene:
 
-1.  **One thread per task.** Start a new Desktop chat / Claude Code session for each sprint task.
+1.  **One sprint = one conversation = one branch = one worktree.** The default for a sprint task is a **subagent inside the sprint's conversation**, not a new window. Open a separate session only once one of four facts has *already* happened (3rd build→test→fix loop on the same card · the card lives in another repo · it needs its own deploy+verify loop with the operator · two code-writing cards must run concurrently, each on `sprint/{NNN}-{seq}` in its own worktree). Never on size or estimate. Full rule, lanes, title/branch forms and the hook mechanism that forces it: **`sprints-method.md` → "Conversation Naming"**. *(This supersedes the former "one thread per task".)*
 2.  **Explicit context loading.** Reference METHOD/project docs in your prompt. In Claude Code, rely on `CLAUDE.md` auto-load for conventions; reference task-specific docs explicitly. In Desktop, lean on Project knowledge + the Skill.
 3.  **Wipe and restart.** If an agent spins for more than ~3 turns, **stop**. Revert to the last checkpoint, start a fresh chat, provide only essential state + error logs.
 4.  **Subagent isolation.** Claude Code subagents start clean by design — this naturally prevents rot for parallel tasks.

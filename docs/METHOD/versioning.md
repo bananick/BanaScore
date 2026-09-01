@@ -1,7 +1,12 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 312.b  
+<<<<<<< HEAD
+**Version:** 313.b  
+=======
+**Version:** 314.a  
+**Last Updated:** 2026-08-10  
+>>>>>>> origin/main
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -13,7 +18,25 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 312.b (Epoch 3: Modular & Multi-Entry)
+<<<<<<< HEAD
+**Current:** 313.b (Epoch 3: Modular & Multi-Entry)
+=======
+**Current:** 314.a (Epoch 3: Modular & Multi-Entry)
+
+### Per-file version stamps
+
+**One metadata block per file, in the header, and only there** — `**Owner:**` / `**Version:**` /
+`**Last Updated:**` / `**Purpose:**`. A file's stamp is the version at which **that file** last
+changed, so lagging behind the declared version is normal and honest; what is not allowed is:
+
+- **two stamps in one file** — a footer copy is a drift generator, never a second source of truth
+  (v313.b removed the last four, one of which had disagreed with its own header since 306.c);
+- **a stamp newer than the declared version** — nothing may claim to ship ahead of `METHOD.md`;
+- **a release with no `Version History` entry** in this file.
+
+All three are checked by `npm run doctor` (`scripts/method-doctor.mjs`), so the rule is enforced
+rather than remembered.
+>>>>>>> origin/main
 
 ### Epochs
 
@@ -56,6 +79,15 @@
 > **Source of truth = `Bana-Share`.** METHOD files are authored here and pushed out to all
 > apps. (`SprintOS` was the legacy name of this hub; the repo is now `Bana-Share`.)
 
+> **The mirrors are generated output, not versioned content (v314.a).** `Apps/**/docs/METHOD/`,
+> `Apps/**/.claude/` and the seeded `PORT-MAP-TEMPLATE.md` are **gitignored in the hub**. They
+> still exist on disk and the sync still writes them — the hub simply stopped versioning 2,031
+> copies of its own content. Tracking them meant 18 places to update one rule and a 3,511-item
+> diff per release, which is precisely what produced the version drift the doctor now catches.
+> **After pulling a release, run `npm run sync-method:all` once** to repopulate this machine.
+> Corollary: never author anything inside a mirror — the sync overwrites it and git has no copy.
+> Doctor check **E8** fails if a mirror path is ever tracked again.
+
 | Content | Truth Source | Direction | Frequency |
 |---------|-------------|-----------|-----------|
 | METHOD files | Bana-Share | Bana-Share → apps | On demand |
@@ -68,6 +100,9 @@
 1. **METHOD is read-only in apps** (except app-settings.json)
 2. **Apps push project files to Bana-Share**
 3. **Bana-Share never modifies app project files**
+4. **`npm run doctor` must be green before you sync.** A red doctor means the hub is
+   internally inconsistent — syncing would copy that inconsistency into every app, 17 times
+   over. Fix the hub, then push.
 
 ---
 
@@ -104,6 +139,63 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+<<<<<<< HEAD
+**313.b** (2026-09-01) — **Minor: One sprint = one conversation = one branch = one worktree**
+
+- **Problem.** Two canonical rules shipped side by side and excluded each other. `agents-engineering-method.md` §9 "Context Hygiene" item 1 said *"One thread per task. Start a new Desktop chat / Claude Code session for each sprint task."*; `sprints-method.md` → "Conversation Naming" said *"One sprint, one conversation — keep all of a sprint's role-switching inside the conversation named for that sprint."* Neither had an owner, so an operator who read one and then the other could not tell how many windows to open. Both were prescriptions about the same thing written in two files that never referenced each other.
+- **ARBITRATED — `sprints-method.md` → "Conversation Naming" is the canonical home** of the session-splitting rule, and is now flagged as such at the top of the section. The existing rules are kept verbatim: a sprint conversation's title starts with the sprint number (`{NNN} {topic}`), and tracked interventions use `INT {YYYY-MM-DD} {topic}`.
+- **NEW — the rule: "one sprint = one conversation = one branch = one worktree."** It is not a style preference; it follows from what `.claude/settings.json` actually wires. Two `Stop` hooks run at the end of every Claude Code turn and both write to git: `ship-push.sh` (`exit 0` on `main`/`master`/`HEAD`, otherwise `git push`, or `git push -u origin "$branch"` when there is no upstream — never commits, never force-pushes) and `session-telemetry.mjs` (appends one row to `docs/project/telemetry/sessions.jsonl`, then commits and pushes that row only, behind the same guard `if (!branch || ['main','master','HEAD'].includes(branch)) return;`). Both **swallow a rejected push** — `ship-push.sh` redirects it to `>/dev/null 2>&1`, and the telemetry hook states the same choice in its own comments: *"Never force-pushes. A rejected push leaves the row committed locally; the next turn retries."* Consequence: two sessions on one branch make the second's push fail non-fast-forward and vanish — the work exists locally while `/brief`, the telemetry ledger, GitHub and the operator all read that branch as stalled. That is the expensive failure: not a lost commit, a *lie about progress*. Two sessions in one worktree share an index, so `/ship`'s `git add` stages the other session's mid-edit files. The fix is the naming rule, not more hook logic.
+- **NEW — three lanes, ASCII titles, sprint number first:** **Sprint** (default) `{NNN} {sujet}` / `sprint/{NNN}-{slug}` / one sprint · **Split** (exception) `{NNN} {sujet} · {seq} {titre}` / `sprint/{NNN}-{seq}` + its own worktree / one card · **Intervention** `INT {YYYY-MM-DD} {sujet}` / `int/{date}-{slug}` / one fix. No literal emoji in a title or branch name — the precedent is this file's own v313.a entry (`flight-deck.ps1` is kept pure ASCII because a `.ps1` without a BOM is read as the ANSI codepage by PowerShell 5.1 and literal emoji silently break every match) and its mirror-image at v306.b (`[ ]` read as a PowerShell wildcard). Emoji stay in **file** status markers.
+- **NEW — the operator's uppercase lane prefixes are documented, not overruled.** Outside a sprint he already writes `PILOT - …`, `PROD - …`, `AUTOM - …`, `GROWTH - …`. That form is now the documented shape for conversations belonging to no sprint: it sorts cleanly, does not compete with `{NNN}`, and a convention already in use beats a stricter one that gets ignored. `INT {YYYY-MM-DD} {topic}` remains the form for a *tracked* intervention (the one that writes `docs/interventions/`).
+- **NEW — the choice rule is runtime, never planning-time.** At planning the planner holds the least information it will ever hold about a card: it has not seen the code, the test output, or how many fix loops the card will cost. Default: **sub-agent inside the sprint conversation**. Workflow at **≥ 3 near-identical items + a verification pass**. **New session only if one of four facts has already happened**: the 3rd build→test→fix loop has started on the same card · the card lives in another repo than the sprint · it needs its own deploy + verify loop with the operator in it · two code-writing cards must run concurrently (each on `sprint/{NNN}-{seq}` in its own worktree). Nothing else — not size, not estimate, not "it looks big".
+- **DELIBERATELY NOT ADDED — no `Session:` field on the task template.** Its neighbour `Tier:` has been mandatory since v311.a and is present in `templates/TASK-TEMPLATE.md`, yet a grep over `Apps/*/docs/sprints/` finds it filled in **0 of 85** task files (all 18 `tier` hits in those files are domain prose — customer tiers, pricing tiers). A second dead field beside a dead field is not automation, only more surface to sync. The trigger list is checked by whoever executes, when the trigger fires.
+- **NEW — one conversation relays.** `method-core.md` → "`## Resume here` — the Relay home" allows exactly one block per app (*"One `## Resume here` block per app; each `/relay` overwrites the previous."*), so only the sprint conversation runs `/relay`. A split session hands back through its task file and its commits.
+- **CHANGED — pointers, never copies:** `agents-engineering-method.md` §9 item 1 replaced (was "One thread per task") and §5 "When to use subagents" gains a pointer; `method-core.md` gains the missing half beside the sub-agent offload rule (a sub-agent returns a conclusion into a context you keep; a separate session carries the context away and returns a document, owns its branch, and does not relay); `method-core-lite.md` — the file routine sessions actually load — gains a short `## Sessions` block with the rule and the pointer.
+- **NEW — "Délégation par défaut"** in the hub `CLAUDE.md` and `payload/CLAUDE.md` (kept identical), under Model Routing: a standing order the operator was retyping by hand every session. Coordination stays in the conversation; each delegation goes out on the cheapest model that meets the bar (haiku mechanical · sonnet build/tests/ops · opus judgment/review/security, one retry per tier then escalate); a workflow at ≥ 3 similar items; a parallel session only on an observed trigger; and offloading context is a goal in itself — residue-heavy exploration goes to a sub-agent that returns **only its conclusion**.
+- **FIX — count drift, each number verified against the filesystem.** `.claude/commands/` holds **6** files (`intervention`, `plan-sprint`, `port`, `relay`, `review`, `ship`), documented as 4 — corrected in `METHOD.md` (both the native-layer note and the Support-files footer), `docs/METHOD/README.md` (file structure), `routing-method.md` ("By Slash-Command" table, which was missing `/relay` and `/ship` as rows), hub `CLAUDE.md`, `.claude/agents/README.md`. `.claude/agents/` holds **13** personas + README, documented as 12 in `METHOD.md` ×2 — corrected. Addon `README.md` listed **5** commands (missing `relay`) and **8** skills (missing `media`) against a payload holding **6** and **9** — corrected.
+- Clarification + cross-link corrections + count fixes; no new METHOD file, no new command, no new hook. Minor bump. Version 313.a to 313.b.
+
+**313.a** (2026-09-01) — **Major: Operator Reporting — the Debrief card**
+
+- **Problem.** The closing `ORIENTATION` frame (Vue / Etat / Suite / Vigilance) had stopped being read. Two failures, both structural: long prose was wrapped into framed rows, so a "3-second landing strip" rendered as a five-line paragraph inside a box; and three overlapping summary devices coexisted — the 3-line header at the top, the Flight Deck at substantial stops, and the Orientation frame at the close — so the same information appeared up to three times per answer under three different vocabularies. The operator ended every intervention asking by hand: *"où en est le projet global ? qu'est-ce qui a été fait ? qu'est-ce que je dois décider maintenant ?"*.
+- **NEW — "Operator Reporting" section** in `method-core.md`, right after "Project State & Handoff": the canonical spec for the two cards, their moments, the Debrief template, its hard rules and its cadence. A condensed copy lives in `method-core-lite.md` (the file most routine sessions actually load).
+- **NEW — the Debrief**, closing card of every substantial answer: one-line headline + status glyph (`✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation), then **`Avancement`** (the row that was missing — position in the *global* project: sprint tasks closed, plan to-dos, screens ported, PRs, as a 7-block bar plus the ratio), **`À RETENIR`** (2–4 one-line key facts, with a `Décidé pour toi :` bullet for every reversible call made without asking, so it can be objected to cheaply), **`TU DÉCIDES`** (0–2 operator calls, recommendation first, or `rien — j'ai tranché : …`), **`SUITE`** (exactly one action), an optional `⚠` line, then the `▶ Prompt suivant` block.
+- **Hard rules that carry the readability:** ≤ 16 lines, ≤ 68 characters per line, **no wrapping paragraph inside the card**, one idea per bullet. Every number grounded in a command run or a file read that turn — unknown stays `inconnu`, and a ratio is **never invented** (the card is the most-read surface of the METHOD; a wrong number there is worse than a missing one).
+- **CHANGED — one card per moment, ending the redundancy.** The **Flight Deck** is now the **pickup** card only (`/brief`, resume hook, cold start); the Debrief is the **dropoff** card. An answer may open with a Flight Deck and close with a Debrief, but the Debrief then carries only what the Flight Deck didn't. The **3-line header** (`Done / State / Next`) is scoped to **written artifacts** — PR bodies, task reports, sub-agent reports to an orchestrator; chat replies lead with the answer instead.
+- **CHANGED — cadence.** Full card on substantial answers (code/docs changed, slice closed, decision taken, handoff, `/brief`, `/ship`, `/relay`, `/review`) · one landing line (`✅ <fait> · suite → <action>`) on small ones · no card when nothing was done. **A delegated sub-agent never emits a Debrief** — otherwise a `junia → brian → sage → vera` chain lands four cards in one answer; the orchestrator folds every report into one.
+- **CHANGED — mirrors:** hub `CLAUDE.md` + `AGENTS.md` Communication Contract now lead with the Debrief bullet; addon `payload/CLAUDE.md` gains an "Operator reporting" section and `payload/AGENTS.md` an "Operator Reporting" section (both carrying the template, so a synced app is self-sufficient); `.claude/commands/relay.md` and `ship.md` (+ their payload copies) close with the Debrief instead of `Done / State / Next`; `.claude/agents/junia.md` gains the fold-the-cohort's-reports-into-one-card rule.
+- **CHANGED — tooling (`~/.claude/scripts/flight-deck.ps1`):** `-Mode context` and `-Mode resume-hook` now emit `sprint` and `sprint_progress`, so `Avancement` is grounded for free on `/brief` and on resume. The counter resolves `docs/sprints` by walking up from the working directory to the git root (a nested app mirror keeps its own sprints under the hub's git root), caps sprint numbers at 3 digits (so a `2025/` folder is not mistaken for the current sprint), excludes the sprint's own index file from the task count, and counts **both** status vocabularies — the METHOD emoji markers and the ASCII `[ ]`/`[x]` convention most app repos actually use. Verified against ACOSH (`023`, 0/3), BanaLog (`121`, 0/7), the nested `Apps/Banadoo` mirror (`001`, 0/1), AuSalon (`020`, index file only, reports "no status-tagged task files") and the hub itself (no `docs/sprints`, reports `none`). The file is kept **pure ASCII** — emoji are matched by Unicode code-point escapes, because a `.ps1` without a BOM is read as the ANSI codepage by PowerShell 5.1 and literal emoji would silently break every match.
+- **Global (cross-project) layer:** `~/.claude/CLAUDE.md` "Output style" rewritten around the same two cards, and `~/.claude/skills/brief/SKILL.md` now closes `/brief` with a Debrief whose `Avancement` reads `sprint_progress` from the live context.
+- New reporting contract + reworked rituals and hook output. Major bump. Version 312.b to 313.a.
+=======
+**314.a** (2026-08-10) — **Major: the hub stops versioning 17 copies of itself**
+- **Problem it fixes.** The hub tracked **2,031** mirror files — `Apps/**/docs/METHOD/` (1,404), `Apps/**/.claude/` (608) and 38 seeded `PORT-MAP-TEMPLATE.md` — i.e. 18 copies of every rule. That duplication was the *cause* of the drift v313.b was built to detect: one rule change meant 18 places to update, a release diff was 3,511 items (tripping the landing gate's >60-file `scale` exception **every single time**, so a gate had to be overridden as routine), and `grep ship-push` in the hub returned 30 files, 28 of them the same sentence repeated.
+- **CHANGED — mirrors are gitignored, not deleted.** `git rm -r --cached` on all 2,031 paths; files stay on disk; `.gitignore` now carries `Apps/**/docs/METHOD/`, `Apps/**/.claude/`, `Apps/**/docs/project/design/PORT-MAP-TEMPLATE.md` with the rationale inline. Verified safe first: every tracked mirror file was payload-generated, and all 18 app `.claude/settings.json` were **byte-identical** (md5 `8c142fc2`) — zero app customization was at risk. `installClaudeAddon` recreates `settings.json` when absent, and the sync recreates `.claude/agents/` + `.claude/commands/`, so everything untracked is regenerable.
+- **Operational consequence, stated because it bites once:** pulling this release **deletes the mirrors from a checkout's disk** (they were tracked, now they are not). Run `npm run sync-method:all` once per machine to repopulate. Never author inside a mirror.
+- **NEW — doctor check E8:** fails if any `Apps/**/docs/METHOD/*` or `Apps/**/.claude/*` path is tracked again, so one careless `git add -f` cannot silently undo this. **W1** re-worded — it now reports *stale generated output on this machine*, not repo drift. **W3** re-worded: `Apps/_archived/**` is excluded from the sync scope (`EXCLUDE_PATTERNS`), so an archived mirror can only rot — delete it or promote the app.
+- **FIXED — landing gate lane patterns were root-anchored.** `verify-gate.mjs` matched `^docs/` and `^\.claude/`, so `Apps/{app}/docs/METHOD/...` and `Apps/{app}/.claude/...` fell through to the **app** lane — this very change would have kicked off a real `npm run build` per nested app. Both are now depth-agnostic (`(^|/)docs/`, `(^|/)\.claude/`, same for `scripts/`, `tools/`, `.github/`, `qa/`, `prompts/`, `TEMPLATES/`, `projects/`). Fixed in the hub copy and the addon payload together, which doctor **E5** enforces.
+- **REMOVED — `docs/project/rescued-stash-0-sprint-captain-verify-gate.patch`**: superseded by the landed v313.a implementation; keeping it invited someone to re-apply a stale design.
+- Breaking file-structure change → Major bump. Version 313.b → 314.a.
+
+**313.b** (2026-08-10) — **Minor: METHOD consistency becomes machine-checked (`npm run doctor`)**
+- **Problem it fixes.** v313.a made *merging* machine-checked; METHOD consistency itself was still prose. An audit found `ai-infra-method.md` carrying two stamps that had disagreed since 306.c (309.a in the header, 306.c in a footer that also still named Riley as owner, two releases after the file was re-owned to Aiko), three more files carrying duplicate stamps waiting to drift the same way, and 17 tracked fleet mirrors a release behind — none of it caught by anything.
+- **NEW — `scripts/method-doctor.mjs` (`npm run doctor`).** Seven ERROR checks: the declared version agrees across `METHOD.md`/`README.md`/`versioning.md` · a `Version History` entry exists for it · no file declares two *different* stamps · no file claims a version newer than declared · **the addon payload byte-matches the hub for every file it ships** (line-ending agnostic — this is what stops apps receiving a stale copy of a hook the hub already fixed) · every hook path wired in `.claude/settings.json` exists · every `docs/METHOD/<file>.md` reference resolves. Three WARN classes: duplicate-but-agreeing stamps, fleet mirrors behind the hub, and **app roots the landing gate cannot verify** (no `typecheck`/`type-check`/`test`/`build`) — which ties the doctor to the v313.a gate.
+- **CHANGED — one metadata block per file.** Removed the duplicate footer stamps from `agents-method.md`, `definition-method.md`, `process-method.md` and the stale one from `ai-infra-method.md`, folding `**Last Updated:**` into each header. The convention is now written down under "Per-file version stamps" instead of being folklore.
+- **CHANGED — Sync Protocol rule 4:** `npm run doctor` must be green before a sync, because a sync multiplies any hub inconsistency by 17.
+- Known-and-reported, not silently tolerated: 17 mirrors at 312.b awaiting the sync · `Apps/_archived/Banapilot` still carries a mirror inside the sync scope · `Swanifly` (root), `Swanifly/web`, `SprintOS/web`, `Apps/HarryQuote` have no `test` script, so their app code lands untested.
+- No new METHOD file, sub-agent, slash-command or enforcement hook → Minor bump. Version 313.a → 313.b.
+
+**313.a** (2026-08-10) — **Major: Land, don't ship — the operator stops managing pull requests**
+- **Problem it fixes.** Every conversation ended by pushing a branch and opening a PR, and the operator had to remember to merge each one. Nine PRs had accumulated on the hub (oldest 278 days, several conflicting or draft), so "finished work" routinely meant "work waiting on attention". Branch protection is unavailable on this plan (HTTP 403) and CI was removed for billing (`8b989e9`), so the human merge click was carrying a gate that nothing else enforced.
+- **NEW — `.claude/hooks/verify-gate.mjs`:** classifies the diff against the trunk into lanes and only spends build time where production can break — `doc` (`docs/`, `*.md`, `proto/`, `qa/`, `*.jsonl` → nothing to run) · `tooling` (`scripts/`, `.claude/`, `tools/`, registries → `node --check`) · `app` (nearest package.json root → its `lint`, `typecheck`|`type-check`, `test`, `build`, stopping at the first red). Writes `.method/verify-ok.json` **pinned to the HEAD sha**. Exits 0 green / 1 red / 2 blocked, and **fails closed**: app code under a root exposing none of `typecheck`/`test`/`build` is `blocked`, not green (this is why `Swanifly/web` cannot land app code until its tests are backfilled).
+- **NEW — `.claude/hooks/land.mjs`:** refuses on trunk / detached HEAD / dirty tree / nothing ahead; scans the exception list; merges `origin/main` into the branch (**never** rebases); runs the verify gate and demands a green marker whose sha equals HEAD (a stale green is not a green light); then `git push origin HEAD:refs/heads/main`. Because the trunk is never checked out, it is worktree-safe by construction, and GitHub marks any open PR for the branch as merged on its own — no PR dance. Also `--sweep` (every open PR + what blocks it) and `--sweep --apply` (squash-merge the clean ones).
+- **NEW — the exception list, decided once instead of per PR** (fail-closed, machine-checked): schema / Firestore rules · auth, secrets, middleware · `SOUL.md` · a real `dependencies`/`devDependencies` or lockfile edit (a `scripts`-only `package.json` touch does **not** block) · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]`/`[wip]`/`[hold]`/`Needs decision` in a commit · `wip` in the branch name · red/absent/stale verify · trunk conflict. Held back → the branch is pushed and a PR opened (or commented) **once** with the exact reason, plus a `### Needs decision` block in the report. Deliberate override: **`[land-anyway]`** in the commit subject.
+- **NEW — hooks + command.** `Stop` → `land.mjs --auto --lane docs` (docs/tooling only, so a half-built feature can never reach `main` between two turns); `SessionEnd` → `land.mjs --auto` (full land: the "results of each conversation reach `main`" guarantee); `/land` = the explicit close at slice end. `npm run verify` / `land` / `land:dry` / `land:sweep` / `land:sweep:apply`.
+- **CHANGED — `/ship` demoted to the exception path** (open a PR *because the operator must decide something*, stated as a `### Needs decision` block). `method-core.md`: "Branches" rewritten around the **slice** (branch lifetime = one conversation), "Merge Gate" replaced by **"Landing (the default) & the exception list"**, new **"Slice discipline"** section tying landing to token cost. `method-core-lite.md`, `docs/cicd/DEPLOY.md` (now "Land & Deploy"), hub `CLAUDE.md` + `AGENTS.md` (loop step 5 is **Land**) updated to match; addon payload + `settings.snippet.json` carry all of it to every app.
+- **Trade recorded:** green = land = deploy to prod, the same call made on 2026-06-28. The verify gate is the only brake, so keeping it honest (every shipping app exposes `typecheck`/`test`/`build`) is now a METHOD obligation, not a nice-to-have.
+- New hooks + new slash-command + a rewritten core section → Major bump. Version 312.b → 313.a.
+>>>>>>> origin/main
 
 **312.b** (2026-08-01) — **Minor: Output Compression boundary — terse chat, complete artifacts**
 - **NEW — "Output Compression" section** in `routing-method.md`, right after "Session Telemetry Ledger": names the one boundary that matters — compress the **conversation**, never the **artifact**. Two-column table (compress freely / never compress), plus the two invariants: code/commands/paths/errors/numbers verbatim everywhere, and the handoff is always a doc.

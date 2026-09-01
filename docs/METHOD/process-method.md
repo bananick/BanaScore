@@ -2,6 +2,7 @@
 
 **Owner:** Lucia (method-level) + Aiko (project-level)  
 **Version:** 306.c  
+**Last Updated:** 2026-04-11  
 **Purpose:** Define how to model, delegate, trace, and improve business processes in AI-native applications
 
 ---
@@ -413,9 +414,3 @@ How will process executions be traced? What metrics? What storage?
 - **Instrument:** Add execution tracing (start simple — log start/end/status)
 - **Monitor:** Review traces after 2 weeks (Watson health check)
 - **Improve:** Adjust processes based on data (Lucia monthly review)
-
----
-
-**Owner:** Lucia (method-level) + Aiko (project-level)  
-**Last Updated:** 2026-04-11  
-**Version:** 306.c

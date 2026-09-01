@@ -137,8 +137,18 @@ function zeroTotals() {
   };
 }
 
-function guessSprint(text) {
-  const m = text.match(/docs[\\/]sprints[\\/](\d{3})/);
+// Attributes the session to a sprint. This is the only cost-per-sprint key in the ledger, so a
+// wrong number is worse than no number: never guess, never infer from the session title.
+//   1. The branch — `sprint/190` is the one sprint identifier a session cannot avoid
+//      materialising, and it cannot be confused with anything else in the transcript.
+//   2. Failing that, a path, anchored: the number must follow the separator after `sprints`
+//      immediately, and `(?!\d)` stops it matching inside a millesime — `docs/sprints/2025/…`
+//      used to yield a phantom "sprint 202" (4 of the 8 attributed rows in the ledger).
+//   3. Failing that, null.
+function guessSprint(branch, text) {
+  const b = (branch ?? '').match(/^sprint[\\/](\d{3})(?!\d)/);
+  if (b) return b[1];
+  const m = (text ?? '').match(/docs[\\/]sprints[\\/](\d{3})(?!\d)/);
   return m ? m[1] : null;
 }
 
@@ -175,7 +185,8 @@ function main() {
   totals.allTokens = totals.inputTokens + totals.outputTokens
     + totals.cacheCreationInputTokens + totals.cacheReadInputTokens;
 
-  const sprint = guessSprint(main_.sprintText || '') || guessSprint(subSprintText);
+  const sprint = guessSprint(main_.gitBranch, main_.sprintText)
+    ?? guessSprint(main_.gitBranch, subSprintText);
 
   const row = {
     schemaVersion: 1,

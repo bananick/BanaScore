@@ -1432,10 +1432,3 @@ match /teams/{teamId}/process_runs/{runId} {
 5. **Budget caps** — Prevent runaway costs
 6. **Audit logs** — Track who called what, when
 7. **Content filtering** — Block harmful outputs (use provider safety tools)
-
----
-
-**Owner:** Riley (method-level) + Gordon (project-level)  
-**Version:** 306.c  
-**Last Updated:** 2026-04-11
-

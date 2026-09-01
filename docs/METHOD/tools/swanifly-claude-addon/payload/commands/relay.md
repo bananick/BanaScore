@@ -29,7 +29,7 @@ isn't committed yet, finish the slice (or run `/ship`) first, then relay.
    already auto-loaded). One `## Resume here` block per app; overwrite the previous one.
 3. **Emit the block** — print the Relay as a fenced, copy-paste-ready block for the next window.
 
-Then report **Done / State / Next**.
+Then close with the **Debrief** card (`docs/METHOD/method-core.md` → "Operator Reporting") — `Avancement` grounded in the sprint/plan count, `TU DÉCIDES` carrying anything left for the operator — followed by the `▶ Prompt suivant` block.
 
 > **Relay ≠ memory.** Memory holds durable cross-session facts about the user/project; a Relay is
 > volatile per-workstream resume state, owned by `STATE.md`. Don't write workstream state into

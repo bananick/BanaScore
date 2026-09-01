@@ -4,6 +4,49 @@
 > For AG-specific instructions, see `GEMINI.md` (takes precedence).
 > Shared identity, voice & non-negotiables: see `SOUL.md`.
 
+<<<<<<< HEAD
+## Operator Reporting — close with the Debrief
+
+> Canonical spec: `docs/METHOD/method-core.md` → "Operator Reporting". Tool-agnostic — applies on Cursor, Codex, and any agent tool that reports back to a human.
+
+The operator must never have to ask *"et le projet global, on en est où ? qu'est-ce qui a été fait ? qu'est-ce que je dois décider maintenant ?"*. Close every substantial reply with this card, then one fenced `▶ Prompt suivant` block (self-contained: goal, repo + key paths, constraints, acceptance).
+
+```text
+DEBRIEF · <lane>                                          <glyphe>
+<Une ligne : ce qui vient d'être fait.>
+
+Avancement   <barre>  <n/N unité>  ·  <fait git/PR/test réel>
+
+À RETENIR
+ • <fait clé, une ligne>
+ • Décidé pour toi : <choix réversible pris sans demander>
+
+TU DÉCIDES
+ • <question>   reco → <option recommandée>
+
+SUITE
+ → <la prochaine action utile>
+```
+
+- **≤ 16 lines, ≤ 68 characters per line, no wrapping paragraph inside the card.** One idea per bullet — a framed prose blob is exactly what stops being read.
+- `<glyphe>`: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation.
+- `Avancement` = position in the **global** project, not in the turn. Ratio only when something countable was actually read this turn (sprint task files, plan checkboxes, `PORT-MAP.md` rows, PR list); otherwise say it in words. **Never invent a ratio.**
+- `À RETENIR` = 2–4 bullets of what to hold in your head tomorrow, including one `Décidé pour toi :` line for every reversible call made without asking. Not a changelog.
+- Nothing to decide → `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. A decision is never buried in the prose above the card.
+- Small answer → one landing line (`✅ <fait> · suite → <action>`); nothing done → no card. **A delegated sub-agent never emits a Debrief** — it hands its orchestrator a report, and the orchestrator renders one card for the whole chain.
+- The `Done / State / Next` 3-line header stays the opener of **written artifacts** (PR bodies, task reports, sub-agent reports), not of chat replies. Chat leads with the answer.
+=======
+## Landing (the default) — the operator does not manage PRs
+
+> Canonical: `docs/METHOD/method-core.md` → "Landing (the default) & the exception list". Tool-agnostic.
+
+- **One conversation = one slice = one landing.** Every conversation ends on `main`; `main` is the deploy. A pull request is the **exception** — the artifact of a decision only the operator can make — never the normal path. Nothing landed and context is filling up? The slice was too big: land what is green, then stop.
+- **Close with `/land`** (`npm run land`), not by opening a PR. `.claude/hooks/verify-gate.mjs` classifies the diff (docs → nothing to run · tooling → `node --check` · app code → that app's `lint`/`typecheck`/`test`/`build`) and stamps `.method/verify-ok.json` **pinned to the HEAD sha**; `.claude/hooks/land.mjs` refuses to land without a green marker at the current commit, merges `origin/main` in (never rebases), then `git push origin HEAD:main`. It never checks out the trunk, so it is worktree-safe. Fails **closed**: an app exposing no `typecheck`/`test`/`build` cannot land app code.
+- **Exceptions → PR + a `### Needs decision` block:** schema / Firestore rules · auth, secrets, middleware · `SOUL.md` · dependency or lockfile changes · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]`/`[wip]`/`[hold]`/`Needs decision` in a commit · `wip` branch name · red, absent or stale verify · trunk conflict. Harmless false positive? Land it with **`[land-anyway]`** in the commit subject and say why.
+- **Never:** `gh pr merge --admin` · force-push · `git rebase` · check out the trunk · delete the marker to fake a green.
+- **On a tool with no hooks** (Cursor, Codex): run `node .claude/hooks/verify-gate.mjs` then `node .claude/hooks/land.mjs` as the last step of the task and report the landed sha. Leaving a branch behind for a human to merge is the failure mode this replaces.
+>>>>>>> origin/main
+
 ## Model Routing (default: orchestrate high, execute cheap)
 
 > Canonical policy: `docs/METHOD/routing-method.md` → "Model Routing". Tool-agnostic — applies on Cursor, Codex, and any multi-model agent tool.

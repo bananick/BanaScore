@@ -1,8 +1,16 @@
-# METHOD v312.b
+<<<<<<< HEAD
+# METHOD v313.b
 
-**Version:** 312.b  
+**Version:** 313.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-08-01  
+**Released:** 2026-09-01  
+=======
+# METHOD v314.a
+
+**Version:** 314.a  
+**Epoch:** 3 (Modular & Multi-Entry)  
+**Released:** 2026-08-10  
+>>>>>>> origin/main
 **Status:** ✅ Production-Ready
 
 ---
@@ -34,9 +42,19 @@
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
 .claude/agents/                                 ← 13 delegatable sub-agents + README (Claude Code)
-.claude/commands/                               ← /plan-sprint, /review, /intervention, /port
+<<<<<<< HEAD
+.claude/commands/                               ← 6 rituals: /plan-sprint, /review, /intervention, /port, /relay, /ship
+=======
+.claude/commands/                               ← /land, /ship, /plan-sprint, /review, /intervention, /port, /relay
+>>>>>>> origin/main
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
+.claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
+.claude/hooks/verify-gate.mjs                   ← The local gate: lane-aware checks + HEAD-pinned marker
+.claude/hooks/no-mock-guard.ps1                 ← PostToolUse: SOUL non-negotiable #1 (Windows only — see intervention 2026-08-10)
+.claude/hooks/ship-push.sh                      ← Stop hook: pushes committed work on feature branches
 .claude/hooks/session-telemetry.mjs             ← Stop hook: appends session token/shape data
+
+scripts/method-doctor.mjs                       ← `npm run doctor`: METHOD consistency checks (v313.b)
 
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
@@ -62,6 +80,35 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+<<<<<<< HEAD
+## What's New in v313.b
+
+1. **One sprint = one conversation = one branch = one worktree.** `agents-engineering-method.md` said "one thread per task" while `sprints-method.md` said "one sprint, one conversation" — mutually exclusive, and neither owned. Arbitrated once in **`sprints-method.md` → "Conversation Naming"**, now the canonical home; every other file points to it. The rule follows the two `Stop` hooks in `.claude/settings.json` (`ship-push.sh`, `session-telemetry.mjs`): both no-op on `main` and both push the current branch while **swallowing a rejected push**, so two sessions on one branch leave the second's work local and invisible while every downstream reader sees a stalled branch. Three lanes with ASCII titles (Sprint · Split · Intervention), the operator's `PILOT - `/`PROD - `/`AUTOM - `/`GROWTH - ` prefixes documented as the non-sprint form, and a **runtime** choice rule: sub-agent by default, workflow at ≥ 3 near-identical items, a new session only once one of four facts has already happened. No `Session:` field was added to the task template — `Tier:`, mandatory since v311.a, is filled in 0 of 85 app task files.
+2. **"Délégation par défaut" is now the default, not a sentence to retype.** New section in the hub `CLAUDE.md` and `payload/CLAUDE.md`: coordination stays in the conversation, each delegation goes out on the cheapest model that meets the bar, a workflow at ≥ 3 similar items, a parallel session only on an observed trigger, and offloading context is a goal in itself.
+3. **Count drift fixed:** `.claude/commands/` 4 → **6** rituals (`/relay`, `/ship` were undocumented), `.claude/agents/` 12 → **13** sub-agents, addon README 5 → **6** commands and 8 → **9** skills.
+
+## What's New in v313.a
+
+1. **Operator Reporting — the Debrief closes every substantial answer.** The end-of-intervention card was rewritten around the three questions the operator kept having to ask by hand: *ce qui vient d'être fait · où ça met le projet global · ce que je dois décider maintenant*. `Avancement` positions the work in the global project with a real count (never an invented ratio); `À RETENIR` carries 2–4 one-line key facts including a `Décidé pour toi :` line for every reversible call made without asking; `TU DÉCIDES` surfaces the operator's calls, recommendation first. Hard line discipline (≤ 16 lines, ≤ 68 characters, no wrapping paragraph in the card) — the old `ORIENTATION` frame failed because prose blobs were stuffed into framed rows. Cadence: full card on substantial answers, one landing line on small ones, no card when nothing was done; delegated sub-agents never emit one. The **Flight Deck** is now the **pickup** card only (`/brief`, resume, cold start), which removes the two-overlapping-summaries redundancy. Canonical: `method-core.md` → "Operator Reporting".
+=======
+## What's New in v314.a
+
+1. **The hub stops versioning 17 copies of itself.** 2,031 mirror files (`Apps/**/docs/METHOD/`, `Apps/**/.claude/`, seeded `PORT-MAP-TEMPLATE.md`) are gitignored — generated output, not versioned content. They were the cause of the drift, not a symptom: 18 places per rule change, 3,511-item release diffs. **After pulling, run `npm run sync-method:all` once per machine** to repopulate the mirrors on disk. Never author inside one.
+2. **Doctor E8** fails if a mirror is ever tracked again; **W1** now means "stale generated output on this machine"; `Apps/_archived/**` is out of the sync scope.
+3. **Landing gate lanes are depth-agnostic** — `docs/` and `.claude/` were root-anchored, so fleet-wide changes fell through to the app lane and would have triggered a build per nested app.
+
+## What's New in v313.b
+
+1. **`npm run doctor` — METHOD consistency is machine-checked.** Version stamps that disagree, a release with no changelog entry, an addon payload file that has drifted from the hub copy (how apps silently inherit a stale hook), a wired hook that does not exist, a dangling `docs/METHOD/*.md` reference: all now fail a check instead of surviving unnoticed. Warns on fleet mirrors behind the hub and on app roots the landing gate cannot verify. **Doctor green before you sync.**
+2. **One metadata block per file** — four duplicate footer stamps removed; convention written down in `versioning.md` → "Per-file version stamps".
+
+## What's New in v313.a
+
+1. **Land, don't ship — the operator stops managing pull requests.** Every conversation ends on `main`; a PR is the **exception** (a decision only the operator can make), never the normal path. `.claude/hooks/verify-gate.mjs` classifies the diff into lanes (docs → nothing to run · tooling → `node --check` · app code → that app's `lint`/`typecheck`/`test`/`build`) and stamps `.method/verify-ok.json` **pinned to the HEAD sha**; `.claude/hooks/land.mjs` refuses to land without a green marker at the current commit, then fast-forwards `main` — never checking out the trunk, so it is worktree-safe. Fails **closed**: an app with no `typecheck`/`test`/`build` cannot land app code.
+2. **The exception list, decided once instead of per PR.** schema/Firestore rules · auth, secrets, middleware · `SOUL.md` · dependency or lockfile changes · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]`/`Needs decision` · red or stale verify · trunk conflict. Held back → one PR with the exact reason + a `### Needs decision` block. Deliberate override: `[land-anyway]` in the commit subject.
+3. **Automatic:** `Stop` lands the docs/tooling lane every turn, `SessionEnd` attempts a full land, `/land` is the explicit close. `npm run land:sweep` shows every open PR and what blocks it, so a backlog cannot rebuild silently. Canonical: `method-core.md` → "Landing (the default) & the exception list" + "Slice discipline".
+>>>>>>> origin/main
 
 ## What's New in v312.b
 
@@ -136,13 +183,18 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 312.b  
-**Previous:** 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+<<<<<<< HEAD
+**Current:** 313.b  
+**Previous:** 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+=======
+**Current:** 314.a  
+**Previous:** 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+>>>>>>> origin/main
 
 **See:** `versioning.md` for full changelog.
 
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-08-01  
+**Last Updated:** 2026-09-01  
 **Status:** ✅ Production-Ready

@@ -1,6 +1,10 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 308.a-lite  
+<<<<<<< HEAD
+**Version:** 313.b-lite  
+=======
+**Version:** 313.a-lite  
+>>>>>>> origin/main
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -46,11 +50,56 @@ One canonical list: **`method-core.md` → "Definition of Done"** (9 standard it
 - Firestore rules: default-deny first
 - Firebase App Check required in production
 
+## Operator Reporting
+
+Close every substantial answer with the **Debrief** card — the operator must never have to ask where
+the global project stands or what he has to decide. Canonical spec (template, hard rules, cadence):
+**`method-core.md` → "Operator Reporting"**.
+
+```text
+DEBRIEF · <lane>                                          <glyphe>
+<Une ligne : ce qui vient d'être fait.>
+
+Avancement   <barre>  <n/N unité>  ·  <fait git/PR/test réel>
+
+À RETENIR
+ • <fait clé, une ligne>
+ • Décidé pour toi : <choix réversible pris sans demander>
+
+TU DÉCIDES
+ • <question>   reco → <option recommandée>
+
+SUITE
+ → <la prochaine action utile>
+```
+
+- ≤ 16 lines, ≤ 68 characters per line, one idea per bullet. **No wrapping paragraph in the card.**
+- `Avancement` = the global project, not the turn. Ratio only when actually counted; never invented.
+- Nothing to decide → `TU DÉCIDES  rien — j'ai tranché : <x>, <y>`. Then the `▶ Prompt suivant` block.
+- Small answer → one landing line instead. Delegated sub-agents never emit a Debrief.
+
+## Sessions
+
+**Un sprint = une conversation = une branche = un worktree.** Défaut : sous-agent dans la
+conversation du sprint. Nouvelle session seulement si un fait est **déjà** survenu : 3e boucle
+build→test→fix sur la même carte · carte dans un autre repo · sa propre boucle déploiement+vérif avec
+l'opérateur · deux cartes qui écrivent du code en parallèle (chacune sa branche `sprint/{NNN}-{seq}`
++ son worktree). Jamais sur la taille ou l'estimation. Deux sessions sur une même branche : le push
+de la seconde est rejeté et **avalé** par les hooks `Stop` — le travail paraît à l'arrêt.
+Titres ASCII, numéro d'abord. Règle complète : `sprints-method.md` → "Conversation Naming".
+
 ## Git
 
 - Format: `type(scope): message` (feat/fix/chore/docs/test/refactor)
-- Branch per task: `feat/{sprint}-{seq}-{scope}`
-- There is no CI and no branch protection on this account, so nothing checks a merge to `main` — run the checks locally before merging
+- Branch per **slice** (what one conversation can finish): `feat/{sprint}-{seq}-{scope}`
+- **Land, don't ship.** Close the conversation with `npm run land` (`/land`) — it verifies, then
+  fast-forwards `main`. `main` is the deploy. The operator never manages PRs.
+- There is no CI and no branch protection on this account, so the gate is local and machine-checked:
+  `.claude/hooks/verify-gate.mjs` stamps a HEAD-pinned green marker, `.claude/hooks/land.mjs` refuses
+  to land without it. Never force-push, never `git rebase`, never `gh pr merge --admin`.
+- A **PR is the exception**: schema/rules · auth/secrets · `SOUL.md` · deps/lockfile · migrations ·
+  deploy wiring · >60 files · `[no-auto-merge]`/`Needs decision`. Held back → fix the reason, or land
+  it with `[land-anyway]` in the commit subject and say why.
 
 ---
 

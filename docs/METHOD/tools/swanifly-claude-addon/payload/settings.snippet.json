@@ -25,10 +25,49 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash .claude/hooks/ship-push.sh",
+            "timeout": 30,
+            "statusMessage": "Auto-pushing committed work..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "node",
             "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/session-telemetry.mjs"],
             "timeout": 20,
             "statusMessage": "Logging session telemetry..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/land.mjs",
+              "--auto",
+              "--lane",
+              "docs"
+            ],
+            "timeout": 120,
+            "statusMessage": "Landing docs/tooling work on main..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/land.mjs", "--auto"],
+            "timeout": 900,
+            "statusMessage": "Landing this conversation on main..."
           }
         ]
       }

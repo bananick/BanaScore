@@ -429,11 +429,101 @@ None. FCM setup complete.
 
 ### Conversation Naming
 
+> **Canonical home of the session-splitting rule.** Anything elsewhere in the METHOD that tells you
+> how many windows to open — `agents-engineering-method.md` §5 and §9, `method-core.md`,
+> `method-core-lite.md` — points here and does not restate the rule.
+
 **Rule:** Every Desktop/Code conversation that works a sprint **starts its name with the sprint number** — `{NNN} {topic}` (e.g., `309 — METHOD refresh`).
 
 - **Why:** a session is instantly traceable to its sprint (and its task files / folder) without opening it.
-- **One sprint, one conversation** — keep all of a sprint's role-switching inside the conversation named for that sprint (matches "Issue prompts" below).
 - **Non-sprint work** (interventions) uses the intervention slug instead: `INT {YYYY-MM-DD} {topic}` — mirrors `docs/interventions/YYYY-MM-DD-{Agent}-{topic}.md`.
+
+#### One sprint = one conversation = one branch = one worktree
+
+This is the settled arbitration. It supersedes the older "one thread per task" wording, and it is
+**not a style preference** — it is dictated by what `.claude/settings.json` actually wires.
+
+Two `Stop` hooks run at the end of every Claude Code turn, and both write to git:
+
+| Hook | What it does at Stop |
+|---|---|
+| `.claude/hooks/ship-push.sh` | `exit 0` on `main`/`master`/`HEAD`; otherwise pushes the current branch (`git push`, or `git push -u origin "$branch"` when no upstream). Never commits, never force-pushes. |
+| `.claude/hooks/session-telemetry.mjs` | Appends one row to `docs/project/telemetry/sessions.jsonl`, then commits and pushes **that row only** — same guard: `if (!branch \|\| ['main','master','HEAD'].includes(branch)) return;`. |
+
+Both are branch-scoped and both **swallow a rejected push**. `ship-push.sh` redirects the push to
+`>/dev/null 2>&1`, and the telemetry hook documents the same choice in its own comments: *"Never
+force-pushes. A rejected push leaves the row committed locally; the next turn retries."*
+
+Two consequences follow directly, and they are the whole reason for the rule:
+
+1. **Two sessions on the same branch ⇒ silent divergence.** The second session's push is rejected
+   non-fast-forward and the rejection is discarded. The work exists locally; every downstream reader
+   — `/brief`, the telemetry ledger, GitHub, the operator — sees that branch as stalled. Nothing
+   surfaces the error. This is the expensive failure mode: not a lost commit, a *lie about progress*.
+2. **Two sessions in the same worktree ⇒ a shared index.** `git add` in `/ship` stages whatever the
+   other session is mid-edit. One session's commit ships the other's half-finished file.
+
+Neither hook is defensive against concurrency, and neither should become so — the cheap fix is the
+naming rule, not more hook logic. *(If you are reading this in an app mirror and the two hooks above
+are not what `.claude/settings.json` wires there, trust the file, not this table, and report the
+drift.)*
+
+#### The three lanes
+
+Conversation titles are **ASCII, sprint number first**. Do not put a literal emoji in a conversation
+title or a branch name: a `.ps1` without a BOM is read as the ANSI codepage by PowerShell 5.1, so a
+literal emoji silently breaks every `match` — the precedent is recorded in `versioning.md` (v313.a,
+`flight-deck.ps1`: *"The file is kept **pure ASCII** — emoji are matched by Unicode code-point
+escapes … literal emoji would silently break every match"*), and v306.b logs the mirror-image bug
+(`[ ]` read as a PowerShell wildcard). Emoji belong in **file** status markers, never in titles.
+
+| Lane | Title | Branch | Lifespan |
+|---|---|---|---|
+| **Sprint** (default) | `{NNN} {sujet}` | `sprint/{NNN}-{slug}` | one sprint |
+| **Split** (exception) | `{NNN} {sujet} · {seq} {titre}` | `sprint/{NNN}-{seq}` + its own worktree | one card |
+| **Intervention** | `INT {YYYY-MM-DD} {sujet}` | `int/{date}-{slug}` | one fix |
+
+**Non-sprint lanes.** Outside a sprint the operator already uses an uppercase lane prefix in
+practice — `PILOT - …`, `PROD - …`, `AUTOM - …`, `GROWTH - …`. That form is the documented shape for
+conversations that belong to no sprint: it sorts cleanly, it does not compete with `{NNN}` (a lane
+prefix and a sprint number are visibly different at a glance), and a naming convention already in use
+beats a stricter one that gets ignored. `INT {YYYY-MM-DD} {topic}` stays the form for a *tracked*
+intervention — the one that writes `docs/interventions/YYYY-MM-DD-{Agent}-{topic}.md`.
+
+#### Choosing the lane — a runtime rule, never a planning-time one
+
+The choice is made **while executing**, on an observed fact — never predicted while planning.
+At planning time the planner holds the least information it will ever hold about the card: it has not
+seen the code, the test output, or how many fix loops the card will actually cost. A session split
+decided in advance is a guess, and a wrong guess is expensive in both directions (a needless window
+loses the sprint's context; a missing one produces the silent-divergence failure above).
+
+```
+DÉFAUT : sous-agent, dans la conversation du sprint.
+WORKFLOW si : ≥ 3 items quasi-identiques + une passe de vérification.
+NOUVELLE SESSION seulement si l'un de ces faits est DÉJÀ survenu :
+  1. la 3e boucle build → test → fix a commencé sur la même carte, ou
+  2. la carte vit dans un autre repo que celui du sprint, ou
+  3. elle demande sa propre boucle déploiement + vérification avec l'opérateur dedans, ou
+  4. deux cartes qui écrivent du code doivent tourner en même temps
+     (→ chacune sa branche sprint/{NNN}-{seq} et son worktree).
+Rien d'autre. Ni la taille, ni l'estimation, ni « ça a l'air gros ».
+```
+
+**No `Session:` field is added to the task template — deliberately.** Its neighbour `Tier:` has been
+mandatory since v311.a and is present in `TASK-TEMPLATE.md`, yet a grep over `Apps/*/docs/sprints/`
+finds it filled in **0 of 85** task files (every `tier` hit in those files is domain prose — customer
+tiers, pricing tiers). A second unfilled field next to an unfilled field is not automation; it is
+more surface to sync. The trigger list above is checked by whoever is executing, at the moment the
+trigger fires, and needs no field to live in.
+
+#### One conversation relays
+
+`method-core.md` → "`## Resume here` — the Relay home" states: *"One `## Resume here` block per app;
+each `/relay` overwrites the previous."* There is exactly one slot, so exactly one lane may write it:
+**the sprint conversation**. A split session hands back through its **task file and its commits** —
+never `/relay`, which would overwrite the sprint's own resume state with a single card's context. An
+intervention lane relays only if it is the sole active lane on that app.
 
 ---
 

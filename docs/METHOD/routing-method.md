@@ -1,7 +1,11 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 312.b  
+<<<<<<< HEAD
+**Version:** 313.b  
+=======
+**Version:** 313.a  
+>>>>>>> origin/main
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -11,8 +15,8 @@
 
 ### By Agent
 
-> Cohort = 12 executable agents (Skills + `.claude/agents/` sub-agents). **Riley** (API/automation)
-> is a demoted advisory hat — no sub-agent, no routing row.
+> Cohort = 13 executable agents (Skills + `.claude/agents/` sub-agents — count verified against the
+> directory). **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row.
 
 | Agent   | Sub-agent              | Entry Files                                                       |
 |---------|------------------------|-------------------------------------------------------------------|
@@ -28,6 +32,7 @@
 | Sage    | `sage`                 | `tests-method.md` → `project/ROADMAP.*.md` → sprint task file     |
 | Kasper  | `kasper`               | `code-rules.md` → `project/` → security configs                  |
 | Vera    | `vera` (read-only)     | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task/sprint file |
+| Iris    | `iris` (read-only on code) | `method-core-lite.md` → `project/STATE.md` → `docs/analysis/`                  |
 
 ### By Task Type
 
@@ -52,9 +57,13 @@
 | `/review`       | Vera   | Run the Review Gate (read-only) | — |
 | `/intervention` | Lucia  | Open a METHOD intervention RFC | — |
 | `/port`         | Nova/Brian | Port a Claude-Design Artifact screen to code | `brian`/`teddy` |
+| `/relay`        | any    | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
+| `/ship`         | any    | Commit + push + open/update the PR | — |
 
-> Rituals live in `.claude/commands/`. Junia orchestrates the loop:
-> `/plan-sprint` → build (`brian`/`teddy`) → `sage` → `watson` (if red) → `/review` (`vera`).
+> 6 rituals, all in `.claude/commands/`. Junia orchestrates the loop:
+> `/plan-sprint` → build (`brian`/`teddy`) → `sage` → `watson` (if red) → `/review` (`vera`) → `/ship`.
+> Only the sprint conversation runs `/relay` — one `## Resume here` per app
+> (`sprints-method.md` → "Conversation Naming").
 
 ---
 
