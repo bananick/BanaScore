@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 315.c  
+**Version:** 316.a  
 **Last Updated:** 2026-09-01  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 315.c (Epoch 3: Modular & Multi-Entry)
+**Current:** 316.a (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -132,6 +132,18 @@ npm run sync-method:dry-run      # preview
 
 ## Version History
 
+**316.a** (2026-09-01) — **Major: 8 mandates with an identity — `.claude/agents/` becomes the source of truth**
+
+- **Problem.** The cohort was 13 **job titles**, not 13 mandates. Every persona file described a role and none described what its holder *refuses*, *defers*, or *hands off*, so two agents asked the same question returned two different answers and nothing said which one was entitled to answer. In parallel the persona text existed three times — `.claude/agents/{agent}.md`, `.claude/skills/{agent}/SKILL.md` and `Swanifly/web/lib/engine/agent-personas.ts` — with the **engine file documented as canonical**, the inverse of the file the operator actually edits.
+- **NEW — every agent carries an `## Identity` section:** **Voice** (how it writes), **I refuse** (what it will not do even when asked), **I defer to** (whose call outranks its own), **I hand off to** (where its output goes next). A shared **`## Non-negotiables`** block, byte-identical across all of them, closes every `.claude/agents/*.md` — the rules that hold whatever the mandate, restated in the one file an agent actually loads when it executes.
+- **CHANGED — 13 job titles → 8 active mandates + 5 dormant.** Active: `junia`, `brian`, `sage`, `watson`, `kasper`, `vera`, `nova`, `gordon`. Dormant: `teddy`, `aiko`, `april`, `lucia`, `iris` — moved to **`.claude/_dormant/`**, kept and documented with a one-line reason each, but **outside the directories Claude Code scans**, so they are neither loaded nor delegable. The location is the whole mechanism: discovery is **recursive**, so a `.claude/agents/_optional/` would have left all five live; only a sibling directory outside `agents/` actually deactivates them. **Gordon absorbs the SEA / paid-ads mandate.**
+- **CHANGED — one source of truth for persona text: `.claude/agents/{agent}.md`.** `SKILL.md` files become stubs that load the agent file, and `agent-personas.ts` is a **derived artifact** generated from it. Its silent fallback to Brian on an unknown persona key is now a **throw** — a mistyped agent name used to run as Brian and look like it had worked.
+- **CHANGED — the "CI exists" residue purged from 12 documents.** GitHub Actions is billing-blocked account-wide **by choice** (`SOUL.md` → "Boundaries"), unrelated to the active GCP/Firebase billing; the quality gate runs **locally** and merging to `main` **is** the deploy. `templates/CI-TEMPLATE.yml` is kept and flagged inert rather than deleted — a future account could un-block Actions.
+- **FIX — telemetry:** model names are recorded **per scope** (main loop vs delegated sub-agents) instead of being flattened into one list, and the `guessSprint` regex no longer mis-reads the sprint number off a touched path.
+- **CHANGED — installer:** the addon's content-guarded section merge is generalized, so every payload section merges into an app's file idempotently instead of only the ones that had been special-cased.
+- **Numbering, recorded once so the history stays readable.** This lot was authored as four stacked entries (`315.b` … `315.e`) while `origin/main` published its own **315.b** ("the two cards become markdown") and **315.c** ("every line earns its place"). The published numbers stand untouched; this work — one coherent change — is consolidated here as **316.a** rather than four entries. No earlier entry was dropped or rewritten.
+- New agent-file contract + restructured cohort directory + a behaviour change in the engine → Major bump. Version 315.c → 316.a.
+
 **315.c** (2026-09-01) — **Minor: every line earns its place — the card becomes actionable, not just readable**
 
 - **Operator direction, recorded as a rule rather than an intention:** *"le plus structuré et clair et actionnable, le mieux"*. v315.a fixed **what** the card says, v315.b fixed **how it renders**; this fixes **which lines are allowed to exist**.
@@ -174,7 +186,7 @@ npm run sync-method:dry-run      # preview
 - **NEW — three lanes, ASCII titles, sprint number first:** **Sprint** (default) `{NNN} {sujet}` / `sprint/{NNN}-{slug}` / one sprint · **Split** (exception) `{NNN} {sujet} · {seq} {titre}` / `sprint/{NNN}-{seq}` + its own worktree / one card · **Intervention** `INT {YYYY-MM-DD} {sujet}` / `int/{date}-{slug}` / one fix. No literal emoji in a title or branch name — the precedent is this file's own v315.a entry (`flight-deck.ps1` is kept pure ASCII because a `.ps1` without a BOM is read as the ANSI codepage by PowerShell 5.1 and literal emoji silently break every match) and its mirror-image at v306.b (`[ ]` read as a PowerShell wildcard). Emoji stay in **file** status markers.
 - **NEW — the operator's uppercase lane prefixes are documented, not overruled.** Outside a sprint he already writes `PILOT - …`, `PROD - …`, `AUTOM - …`, `GROWTH - …`. That form is now the documented shape for conversations belonging to no sprint: it sorts cleanly, does not compete with `{NNN}`, and a convention already in use beats a stricter one that gets ignored. `INT {YYYY-MM-DD} {topic}` remains the form for a *tracked* intervention (the one that writes `docs/interventions/`).
 - **NEW — the choice rule is runtime, never planning-time.** At planning the planner holds the least information it will ever hold about a card: it has not seen the code, the test output, or how many fix loops the card will cost. Default: **sub-agent inside the sprint conversation**. Workflow at **≥ 3 near-identical items + a verification pass**. **New session only if one of four facts has already happened**: the 3rd build→test→fix loop has started on the same card · the card lives in another repo than the sprint · it needs its own deploy + verify loop with the operator in it · two code-writing cards must run concurrently (each on `sprint/{NNN}-{seq}` in its own worktree). Nothing else — not size, not estimate, not "it looks big".
-- **DELIBERATELY NOT ADDED — no `Session:` field on the task template.** Its neighbour `Tier:` has been mandatory since v311.a and is present in `templates/TASK-TEMPLATE.md`, yet a grep over `Apps/*/docs/sprints/` finds it filled in **0 of 85** task files (all 18 `tier` hits in those files are domain prose — customer tiers, pricing tiers). A second dead field beside a dead field is not automation, only more surface to sync. The trigger list is checked by whoever executes, when the trigger fires.
+- **DELIBERATELY NOT ADDED — no `Session:` field on the task template.** Its neighbour `Tier:` has been mandatory since v311.a and is present in `templates/TASK-TEMPLATE.md`, yet a grep over `Apps/*/docs/sprints/` finds it filled in **0 of 85** task files (all 5 `tier` hits in those files are domain prose — customer tiers, pricing tiers). A second dead field beside a dead field is not automation, only more surface to sync. The trigger list is checked by whoever executes, when the trigger fires.
 - **NEW — one conversation relays.** `method-core.md` → "`## Resume here` — the Relay home" allows exactly one block per app (*"One `## Resume here` block per app; each `/relay` overwrites the previous."*), so only the sprint conversation runs `/relay`. A split session hands back through its task file and its commits.
 - **CHANGED — pointers, never copies:** `agents-engineering-method.md` §9 item 1 replaced (was "One thread per task") and §5 "When to use subagents" gains a pointer; `method-core.md` gains the missing half beside the sub-agent offload rule (a sub-agent returns a conclusion into a context you keep; a separate session carries the context away and returns a document, owns its branch, and does not relay); `method-core-lite.md` — the file routine sessions actually load — gains a short `## Sessions` block with the rule and the pointer.
 - **NEW — "Délégation par défaut"** in the hub `CLAUDE.md` and `payload/CLAUDE.md` (kept identical), under Model Routing: a standing order the operator was retyping by hand every session. Coordination stays in the conversation; each delegation goes out on the cheapest model that meets the bar (haiku mechanical · sonnet build/tests/ops · opus judgment/review/security, one retry per tier then escalate); a workflow at ≥ 3 similar items; a parallel session only on an observed trigger; and offloading context is a goal in itself — residue-heavy exploration goes to a sub-agent that returns **only its conclusion**.

@@ -1,7 +1,7 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 311.a  
+**Version:** 311.b  
 **Last Updated:** 2026-07-10  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
@@ -9,29 +9,49 @@
 
 ## How agents run (the native sub-agent layer)
 
-Each agent exists in **three synchronized representations** — change one, mirror the others:
+**`.claude/agents/{agent}.md` is the canonical definition of an agent** — its `## Identity`
+(voice · refusals · deference · handoff), its mandate, and the cohort-wide `## Non-negotiables`
+block. Two surfaces **derive** from it and redefine nothing: `.claude/skills/{agent}/SKILL.md` is a
+**stub that loads the agent file** (exposes the persona on Claude Desktop), and
+`Swanifly/web/lib/engine/agent-personas.ts` is **generated from it** (the headless runner).
+Edit the agent file — never a Skill stub, never the engine. Tool-scoping table:
+`.claude/agents/README.md`. Delegation/parallel mechanics: `agents-engineering-method.md` §5.
 
-| Surface | Where | Use |
-|---|---|---|
-| **Sub-agent** (default) | `.claude/agents/{agent}.md` | **Delegate** a task to an isolated agent with its own context window + a scoped tool allow-list. This is the native execution layer. |
-| **Skill** | `.claude/skills/{agent}/SKILL.md` | Invoke a persona *in the current conversation* (Desktop + Code). |
-| **Swanifly persona** | `Swanifly/web/lib/engine/agent-personas.ts` | One runner that spawns the cohort headlessly. |
+### Orchestration chain (canonical — reference it, never restate it, except `junia.md`)
 
-**Lead with delegation.** In Claude Code (web, and the local Code tab in Cowork), **Junia** orchestrates via the `Agent` tool — `/plan-sprint` → delegate build (`brian`/`teddy`) → `sage` → `watson` (if red) → `vera` gate (`/review`). Each sub-agent runs in a fresh context with **scoped tools** (Vera read-only; Sage tests-only; Kasper review+harden). In Claude Desktop the same cohort is invoked **as Skills** by name. **Mono-conversation role-switching** (one model playing agents in sequence) is the **fallback** for tools without a sub-agent layer — see "Agent Interaction Patterns". Swanifly, Agent Teams, and Cowork are **runners** over the same cohort, not the engine.
+`brian` (build) → `sage` (tests) → `watson` (fix if red) → `kasper` (security pass —
+**only when `firestore.rules` / auth / API routes are touched**) → `vera` (review gate).
 
-> Persona text is canonical (`agent-personas.ts`); the sub-agent and Skill files mirror it. See `.claude/agents/README.md` for the tool-scoping table and `agents-engineering-method.md` §5 for the delegation/parallel mechanics.
+Fan-out, outside the chain: `nova` design · `gordon` GTM/growth.
 
-**Model routing is on by default — orchestrate high, execute cheap.** The orchestrator runs on the
-strongest model of its surface (Fable/Opus on Claude); every delegated task runs on the **cheapest
-model that meets its quality bar** — T1 judge/plan/review/security (opus) · T2 build/tests/ops
-(sonnet) · T3 mechanical (haiku, delegation-time override only). Each agent's default tier is its
-`model:` frontmatter in `.claude/agents/`; Junia tags tasks with a `Tier:` at planning and overrides
-per delegation. On non-Claude surfaces (Cursor, Codex), the coordinator first inventories the models
-the tool exposes and maps them onto the tiers. Canonical policy: `routing-method.md` → "Model Routing".
+Dormant agents (`teddy`, `aiko`, `april`, `lucia`, `iris`) are **not** in the chain or the fan-out —
+parked under `.claude/_dormant/`, outside Claude Code's scanned agent directories, so **not loaded
+and not delegable**. Reactivating one is a `git mv` back into `.claude/agents/`, the operator's
+call, never an agent's mid-session. See "Agent Roster" below.
+
+**The one exception is `.claude/agents/junia.md`**, which carries this chain inline: it is the only
+file loaded when Junia executes, and a reference would force a mid-delegation detour to read
+another file. Every other file — including `.claude/agents/README.md` and `CLAUDE.md` — references
+this section and never restates the chain.
+
+**Junia** drives it via the `Agent` tool (`/plan-sprint` → … → `/review`), one task at a time, each
+with its task file + entry files; no task skips the Vera gate. Each sub-agent runs in a fresh
+context with **scoped tools** (Vera read-only; Sage tests-only; Kasper review+harden). Swanifly,
+Agent Teams and Cowork are **runners** over the same cohort, not the engine.
+**Mono-conversation role-switching** is the **fallback** for tools without a sub-agent layer — see
+"Agent Interaction Patterns".
+
+**Delegation is the default, not an option**, and **model routing is on by default** (orchestrate
+high, execute cheap; `Tier:` on every task file): `routing-method.md` → "Model Routing".
 
 ---
 
-## Agent Roster (13)
+## Agent Roster (8 active mandates + 5 dormant)
+
+**An agent earns a name when its mandate is one you would otherwise have to retype.** Eight
+mandates clear that bar. The five that no longer do stay documented but are parked under
+`.claude/_dormant/`, outside Claude Code's scanned agent directories — **not loaded, not
+delegable**. Reactivating one is a `git mv` back into `.claude/agents/`, the operator's call.
 
 ### Human Executive (Agent 0)
 
@@ -39,48 +59,58 @@ the tool exposes and maps them onto the tiers. Canonical policy: `routing-method
 
 ---
 
-### Core Loop (4 agents)
+### Core Loop (5 agents)
 
 Always engaged in the standard workflow:
 
-| Agent | Role | When | Sub-agent / Skill |
-|-------|------|------|-------|
-| **Junia** | Planning & Orchestration | Every sprint | `junia` |
-| **April** | Vision & Copy | Before planning, when scope unclear | `april` |
-| **Brian/Teddy** | Development | Every task | `brian` / `teddy` |
-| **Vera** | Review & Validation | After every task | `vera` |
-
-**Default workflow:** Junia plans → Brian builds → Sage tests → Vera reviews
+| Agent | Mandate | When | Sub-agent / Skill |
+|-------|---------|------|-------|
+| **Junia** | Orchestrate — planning & delegation | Every sprint | `junia` |
+| **Brian** | Build — web development | Every task | `brian` |
+| **Sage** | Prove — test architecture | After every build task | `sage` |
+| **Watson** | Repair — reliability & ops | When the build or the tests go red | `watson` |
+| **Vera** | Judge — review & validation | After every task | `vera` |
 
 ---
 
-### On-Demand Specialists (8 agents)
+### On-Demand Specialists (3 agents)
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
-| Agent | Role | Call When | Sub-agent / Skill |
-|-------|------|-----------|-------|
-| **Nova** | Design System + Artifacts | New components, design unclear | `nova` |
-| **Lucia** | Method Curator | METHOD changes only | `lucia` |
-| **Watson** | Reliability & Ops | Bugs, debugging, deployment | `watson` |
-| **Aiko** | AI Integration | AI features | `aiko` |
-| **Sage** | Test Architect | Test strategy, complex testing | `sage` |
-| **Gordon** | Sales, Marketing & Growth | GTM, funnels, marketing copy, SEO | `gordon` |
-| **Kasper** | Security | Security review, Firestore rules, hardening | `kasper` |
-| **Iris** | Research & Analysis | Study code/market/data → findings + préconisations | `iris` |
+| Agent | Mandate | Call When | Sub-agent / Skill |
+|-------|---------|-----------|-------|
+| **Kasper** | Guard — security | Security review, Firestore rules, hardening | `kasper` |
+| **Nova** | Draw — design system + tokens | New components, design unclear | `nova` |
+| **Gordon** | Sell — sales, marketing & growth | GTM, funnels, marketing copy, SEO | `gordon` |
+
+---
+
+#### Dormant (delegable on explicit request)
+
+Their agent files are parked under `.claude/_dormant/` (`agents/` + `skills/`); their entry files
+and the per-agent sections below stand unchanged. They are simply not routed to by default and
+never appear in the orchestration chain or the fan-out.
+
+| Agent | Was | Why dormant |
+|-------|-----|-------------|
+| **Teddy** | Mobile Development | Mobile is a mode, not a person — no mobile app in flight. |
+| **Aiko** | AI Integration | Wiring AI is building; that is Brian's mandate. |
+| **April** | Vision & Copy (CUJ Gate) | Her CUJ Gate belonged to the sprint regime, now retired. |
+| **Lucia** | Method Curator | METHOD curation happens in conversation, not by delegation. |
+| **Iris** | Research & Analysis | A generic `Agent()` already does exactly this. |
 
 > **Advisory hats (not executable Skills, v309.a):** Only **API & Multi-Agent** integration
 > (formerly Riley) remains an advisory hat — wielded inside a chat with `ai-infra-method.md`
-> loaded, implementation handed to Brian/Aiko. See the appendix at the end of this file.
+> loaded, implementation handed to Brian. See the appendix at the end of this file.
 > Gordon and Kasper were promoted to first-class executable agents in v309.a.
-> **Iris** (Research & Analysis) was added as a **read-only advisory sub-agent + Skill** — she
-> studies code/market/data and *preconizes*; she writes analysis docs (`docs/analysis/`) only,
-> never product code. Capability skills grew too: **`/media`** (image search / create / resize /
-> export, owned by Nova). Run Lucia's sync to version this and propagate to the nested mirrors.
+> Capability skills grew too: **`/media`** (image search / create / resize / export, owned by Nova).
 
 ---
 
 ## 1. April — Vision & Copy
+
+> **Dormant** — delegable on explicit request only. Her CUJ Precision Gate belonged to the sprint
+> regime, which has been retired. Kept documented; out of the routing tables and the rotation.
 
 ### Role
 Vision architect, persona expert, copywriter.
@@ -194,19 +224,18 @@ Sprint planner, task sequencer, consolidator, orchestrator.
 |             | `project/status.md`       | Current state |
 |             | `sprints/` (task files)   | Create/update tasks |
 |             | `interventions/`          | Escalate to experts |
-| **Ignores** | `method/` (except 3 above)| Lucia's domain |
+| **Ignores** | `method/` (except 3 above)| curated in conversation, not in a sprint |
 |             | `src/`                    | Implementation details |
 
 ### Rituals
 
 #### Sprint Planning (Weekly)
 1. **Check current ISO week:** `date +%V`
-2. **Run Managers Sync:**
-   - April: VISION current?
+2. **Run Managers Sync** (active mandates only):
    - Nova: DESIGN current?
-   - Aiko: AI-INFRA current?
    - Sage: Tests strategy clear?
-   - Lucia: METHOD synced? (`npm run sync-method:all:dry`)
+   - Kasper: any security surface in scope this sprint?
+   - METHOD synced? (`npm run sync-method:all:dry` — run it yourself; Lucia is dormant)
 3. **95% Gate:** If uncertainty > 5%, stop → interview expert → update docs → then plan
 4. **Review active CUJ step:** `journeys/{cuj}.md`
 5. **Draft sprint plan** (3-7 bullets)
@@ -272,7 +301,7 @@ Product UX architect, design system curator, token maintainer, a11y baseline enf
 | **Writes**  | `project/DESIGN.md`       | Update UX architecture, navigation, tokens, components |
 | **Ignores** | `method/` (except design) | Universal guidelines |
 |             | `sprints/`                | Execution details |
-|             | implementation edits       | Nova specifies and reviews; Brian/Teddy implement unless task explicitly asks Nova to prototype |
+|             | implementation edits       | Nova specifies and reviews; Brian implements unless task explicitly asks Nova to prototype |
 
 ### Rituals
 
@@ -290,7 +319,7 @@ Run this when `project/DESIGN.md` is missing, stale, or before any significant n
 9. **Define visual system:** Inter, Lucide-first icons, CSS variables, gradient CTAs, dark mode, a11y baseline.
 10. **Write/update `project/DESIGN.md`:** include audit, decisions, open questions, and migration priorities.
 
-**Gate:** Brian/Teddy should not build a new shell, route family, or major component set until Nova's App UX Discovery is complete or explicitly waived by the human operator.
+**Gate:** Brian should not build a new shell, route family, or major component set until Nova's App UX Discovery is complete or explicitly waived by the human operator.
 
 #### Design System Setup (Once)
 1. **Define tokens** in `project/DESIGN.md`:
@@ -309,7 +338,7 @@ Run this when `project/DESIGN.md` is missing, stale, or before any significant n
 - **Gate:** 95% certainty on UX architecture before Junia plans
 
 #### During Intervention
-- **When:** Design guidance needed (Brian, Teddy stuck)
+- **When:** Design guidance needed (Brian stuck)
 - **Do:** Provide specific guidance (taxonomy, shell placement, layout pattern, tokens, states, a11y)
 - **Output:** Update DESIGN.md with decisions
 - **Handoff:** Notify requesting agent
@@ -332,6 +361,9 @@ Run this when `project/DESIGN.md` is missing, stale, or before any significant n
 ---
 
 ## 4. Lucia — Method Curator
+
+> **Dormant** — delegable on explicit request only. METHOD curation happens in conversation, not
+> by delegation. Kept documented; out of the routing tables and the rotation.
 
 ### Role
 METHOD maintainer, version manager, mini-RFC reviewer.
@@ -485,6 +517,9 @@ Before handing off to Vera, Brian runs an autonomous write→test→fix loop:
 
 ## 6. Teddy — Mobile Development
 
+> **Dormant** — delegable on explicit request only. Mobile is a mode, not a person, and no mobile
+> app is in flight. Kept documented; out of the routing tables and the rotation.
+
 ### Role
 Mobile developer (React Native, Expo), feature implementer.
 
@@ -565,7 +600,7 @@ Reliability engineer, ops specialist, debugger, bug triager.
 1. **Check error logs** (Firebase Crashlytics, Sentry, Cloud Logging)
 2. **Prioritize:** P0 (critical) → P1 (high) → P2 (medium) → P3 (low)
 3. **Create bug file:** `bugs/open/BUG-###-{Agent}-{title}.md` (use BUG-TEMPLATE)
-4. **Assign:** Self (if ops) OR Brian/Teddy (if feature bug)
+4. **Assign:** Self (if ops) OR Brian (if feature bug)
 
 #### Smoke Test (After Sprint Task)
 1. **Start app** on .env PORT
@@ -591,10 +626,10 @@ Reliability engineer, ops specialist, debugger, bug triager.
    - Duration spikes or regressions (> 200% of target)
    - Cost overruns (> budget per execution)
 3. **Classify incidents:**
-   - Agent error (prompt/model issue) → escalate to Aiko
-   - Process design flaw (step missing or wrong order) → escalate to Lucia
+   - Agent error (prompt/model issue) → escalate to Junia (routing/tier call)
+   - Process design flaw (step missing or wrong order) → escalate to Junia; METHOD edits happen in conversation
    - Edge case (new scenario not covered) → create new test case
-4. **Propose improvements** → create intervention for Lucia
+4. **Propose improvements** → open an intervention and take it to the operator
 5. **Report** → `docs/process-health/YYYY-MM-DD-report.md`
 6. **Alert Junia** if any process is in 🔴 Critical state
 
@@ -613,7 +648,7 @@ Reliability engineer, ops specialist, debugger, bug triager.
 ## 8. Gordon — Sales, Marketing & Growth
 
 ### Role
-Sales/marketing/growth strategist. Owns go-to-market: acquisition, conversion, funnels, positioning, marketing copy, SEO, landing/sales pages, lifecycle/email, pricing narratives, and competitive research. Turns product value (April's vision) into demand and revenue.
+Sales/marketing/growth strategist. Owns go-to-market: acquisition, conversion, funnels, positioning, marketing copy, SEO, landing/sales pages, lifecycle/email, pricing narratives, and competitive research. Turns product value (`project/VISION.md`) into demand and revenue.
 
 ### Responsibilities
 - Design growth loops (acquisition, activation, revenue, referral) and run funnel/CRO experiments
@@ -621,7 +656,7 @@ Sales/marketing/growth strategist. Owns go-to-market: acquisition, conversion, f
 - Write marketing copy + landing/sales-page specs (hand to Nova/Brian to build)
 - Create campaign briefs with success thresholds
 - Build pricing & positioning narratives; protect brand trust and UX
-- Align messaging with April, implementation with Brian/Teddy
+- Align messaging with `project/VISION.md`, implementation with Brian
 
 ### Information Surfaces
 
@@ -644,7 +679,7 @@ Sales/marketing/growth strategist. Owns go-to-market: acquisition, conversion, f
 2. **Identify opportunities:** Acquisition, activation, revenue, referral
 3. **Prioritize experiments:** By impact × confidence
 4. **Create briefs:** Hypothesis, design, success threshold → `docs/growth/`
-5. **Coordinate with Brian/Teddy** for implementation
+5. **Coordinate with Brian** for implementation
 
 #### Experiment Cycle
 1. **Hypothesis:** "If X, then Y% improvement in Z"
@@ -663,11 +698,14 @@ Sales/marketing/growth strategist. Owns go-to-market: acquisition, conversion, f
 ### Routing
 - **Entry:** `agents-method.md` → `project/VISION.md` → `docs/growth/`
 - **Task type:** Interventions for growth strategy; sprint tasks for campaigns
-- **Orchestration:** Junia delegates; pairs with April (vision) and Nova (design)
+- **Orchestration:** Junia delegates; pairs with Nova (design) and Brian (build)
 
 ---
 
 ## 9. Aiko — AI Integration
+
+> **Dormant** — delegable on explicit request only. Wiring AI is building, which is Brian's
+> mandate. Kept documented; out of the routing tables and the rotation.
 
 ### Role
 AI Integration Specialist. Implements AI features, model integration, prompt engineering.
@@ -739,7 +777,7 @@ Test Architect. Authors and maintains acceptance/component/domain/architecture t
 - Curate fixtures and data builders
 - Maintain test infrastructure (Vitest config, Playwright setup)
 - Analyze test coverage
-- Partner with Brian/Teddy/Watson
+- Partner with Brian and Watson
 
 ### Information Surfaces
 
@@ -911,7 +949,7 @@ Low-risk tasks may skip the full Review Gate and auto-close as `☑️` when **A
 5. **No new dependencies** (no changes to `package.json` dependencies)
 6. **No i18n-visible copy** (no user-facing string changes outside `messages/`)
 
-When Fast-Track applies, the executing agent (Brian/Teddy) appends `[FAST-TRACK]` to the task report and sets status directly to `☑️`. Vera is **not invoked**.
+When Fast-Track applies, the executing agent (Brian) appends `[FAST-TRACK]` to the task report and sets status directly to `☑️`. Vera is **not invoked**.
 
 When **any** condition fails → full Review Gate (Vera Task Review) is required.
 
@@ -944,10 +982,9 @@ When **any** condition fails → full Review Gate (Vera Task Review) is required
 
 | Agent | Role |
 |-------|------|
-| **Junia** | Primary owner. Creates/updates during sprint planning. Uses for task prioritization. |
-| **April** | Reviews vision alignment. Validates features match personas/JTBD. |
+| **Junia** | Primary owner. Creates/updates during sprint planning. Uses for task prioritization. Also carries vision alignment — personas/JTBD — now that April is dormant. |
 | **Nova** | Validates design patterns, component naming, UI consistency. |
-| **Brian/Teddy** | Reference for implementation. Report completion status. |
+| **Brian** | Reference for implementation. Reports completion status. |
 
 ---
 
@@ -955,28 +992,30 @@ When **any** condition fails → full Review Gate (Vera Task Review) is required
 
 | File                       | Primary Writer | Readers                        |
 |----------------------------|----------------|--------------------------------|
-| `project/VISION.md`        | April          | All                            |
-| `project/STRUCTURE.md`     | Junia          | April, Nova, Brian, Teddy      |
+| `project/VISION.md`        | Junia          | All                            |
+| `project/STRUCTURE.md`     | Junia          | Nova, Brian                    |
 | `project/ROADMAP.web.md`   | Junia          | All                            |
-| `project/ROADMAP.mobile.md`| Junia          | All                            |
-| `project/DESIGN.md`        | Nova           | Brian, Teddy, Sage             |
-| `project/AI-INFRA.md`      | Aiko           | Brian, Teddy, Watson, Junia    |
+| `project/DESIGN.md`        | Nova           | Brian, Sage                    |
 | `project/status.md`        | Junia          | All                            |
 | `sprints/{sprint-file}.md` | Task agent     | Junia (consolidation)          |
-| `bugs/{bug-file}.md`       | Owner agent    | Watson (triage), Lucia (METHOD)|
+| `bugs/{bug-file}.md`       | Owner agent    | Watson (triage), Junia         |
 | `interventions/{file}.md`  | Executing agent| Junia, relevant managers       |
-| `journeys/{cuj}.md`        | Junia + April  | All                            |
-| `method/*` (all files)     | Lucia          | All (via routing)              |
-| `docs/growth/`             | Gordon         | Junia, April, Brian, Teddy     |
+| `journeys/{cuj}.md`        | Junia          | All                            |
+| `method/*` (all files)     | the conversation | All (via routing)            |
+| `docs/growth/`             | Gordon         | Junia, Brian                   |
 | `firestore.rules`          | Kasper         | Brian, Watson, Junia           |
 | `docs/security/`           | Kasper         | Watson, Junia                  |
+
+> Surfaces owned by a **dormant** mandate keep their files but lose their default writer:
+> `project/ROADMAP.mobile.md` (Teddy) and `project/AI-INFRA.md` (Aiko) are read-only references
+> until that mandate is explicitly delegated again.
 
 ---
 
 ## Agent Interaction Patterns
 
 ### Native delegation (default)
-**Junia** holds the `Agent` tool and delegates to isolated sub-agents in METHOD order. Each runs in a fresh context with scoped tools (no role-switch discipline to maintain — isolation is structural):
+The chain above, run for real (isolation is structural — no role-switch discipline to maintain):
 
 ```
 /plan-sprint                       → Junia plans, creates 010-a..c
@@ -988,8 +1027,6 @@ Junia delegates:
 /review                            → Vera gate (read-only) → ☑️ / ⚠️
 Junia consolidates, closes sprint
 ```
-
-See `agents-engineering-method.md` §5 for parallel/worktree mechanics.
 
 ### Mono-conversation role-switching (fallback)
 For tools **without** a sub-agent layer, one model plays agents in sequence within a single conversation — explicit role switches with correct entry files each time:
@@ -1020,12 +1057,6 @@ Am I debugging?
 Am I designing?
   → Nova → Load: design-method.md, project/DESIGN.md
 
-Am I reviewing METHOD?
-  → Lucia → Load: all method/ files
-
-Am I working on AI features?
-  → Aiko → Load: ai-infra-method.md, project/AI-INFRA.md
-
 Am I testing?
   → Sage → Load: tests-method.md, sprint task file
 
@@ -1037,13 +1068,18 @@ Am I reviewing a completed task or closing a sprint?
 
 Am I reviewing or hardening security?
   → Kasper → Load: method-core.md (Security Baseline), project/SCHEMA.md, the diff
+
+Am I on METHOD curation, AI wiring, mobile, vision/copy, or a research pass?
+  → No default route — those mandates are dormant (Lucia, Aiko, Teddy, April, Iris).
+    Handle it in conversation, delegate a generic Agent(), or name the dormant
+    agent explicitly if you really want its persona.
 ```
 
 ---
 
 ## 95% Certainty Gate (Managers Only)
 
-**Applies to:** April, Junia, Nova, Lucia
+**Applies to:** Junia, Nova (and to any dormant manager — April, Lucia — if explicitly delegated)
 
 **Rule:** If uncertainty > 5%, STOP and resolve before proceeding.
 
@@ -1065,7 +1101,7 @@ METHOD file loaded; hand any implementation to an executable agent. Promote to a
 
 ### Riley — API & Multi-Agent Architecture
 - **Domain:** external API/webhook/SDK integrations, event-driven pipelines, multi-agent topologies (ADK/MCP), agent-to-agent contracts, integration reliability (retries, idempotency, dead-letter).
-- **How to wield:** chat with `ai-infra-method.md` + `project/AI-INFRA.md` loaded; design the integration spec / topology, then **hand implementation to Brian (adapters) or Aiko (AI providers)** in Claude Code, with **Kasper** for the security pass.
+- **How to wield:** chat with `ai-infra-method.md` + `project/AI-INFRA.md` loaded; design the integration spec / topology, then **hand implementation to Brian** in Claude Code, with **Kasper** for the security pass.
 - **Writes (via the executor):** `docs/integrations/` (specs, contracts, runbooks), `src/lib/integrations/`, `project/AI-INFRA.md` (topology).
 - **Model:** Opus.
 

@@ -8,11 +8,11 @@ Claude Code integration for the Swanifly **METHOD**, shipped as a METHOD tool (s
 |:--|:--|:--|
 | App root | `AGENTS.md`, `SOUL.md`, `CLAUDE.md` | **create-if-missing** — never clobbers an app's own identity |
 | App `CLAUDE.md` | the **"Design port directive"** block | **merge** — marker-guarded; reaches apps that already had a CLAUDE.md (create-if-missing alone never would) |
-| `.claude/commands/` | `plan-sprint`, `port`, `review`, `intervention`, `relay`, `ship` (6) | **overwrite** — canonical METHOD rituals |
+| `.claude/commands/` | `plan-sprint`, `port`, `review`, `intervention`, `relay`, `land`, `ship`, `brief` (8) | **overwrite** — canonical METHOD rituals |
 | `.claude/skills/` | `deploy`, `implement-plan`, `ux-review`, `landing-page`, `ads-ops`, `ship-check`, `sprint`, `hubspot-sync`, `media` (9) | **overwrite** — canonical tooling |
 | `docs/project/design/` | `PORT-MAP-TEMPLATE.md` | **overwrite** — reference template the `/port` loop starts from (the live `PORT-MAP.md` is never touched) |
-| `.claude/hooks/` | `no-mock-guard.ps1`, `session-telemetry.mjs` | **overwrite** |
-| `.claude/settings.json` | the `PostToolUse(Write\|Edit)` no-mock hook + the `Stop` session-telemetry hook | **merge** — idempotent per hook, preserves other settings (incl. any custom `Stop` hook the app already has) |
+| `.claude/hooks/` | `no-mock-guard.ps1`, `session-telemetry.mjs`, `ship-push.sh`, `land.mjs`, `verify-gate.mjs`, `flight-deck.mjs` | **overwrite** |
+| `.claude/settings.json` | `PostToolUse(Write\|Edit)` no-mock guard · `Stop` (ship-push, session-telemetry, land docs-lane) · `SessionEnd` (full land) · `SessionStart(resume)` (flight-deck resume context) | **merge** — idempotent per hook, preserves other settings (incl. any custom hook the app already has) |
 
 `CLAUDE.md` is auto-loaded by Claude Code; it `@import`s `SOUL.md` + `AGENTS.md` and mirrors `GEMINI.md` (agent cohort, context-loading rules, hierarchy of truth, sprint conventions, Definition of Done).
 

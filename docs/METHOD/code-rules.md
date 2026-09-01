@@ -1,7 +1,7 @@
 # Code Rules
 
 **Owner:** Kasper (Security) + Brian (Web Dev)  
-**Version:** 308.a  
+**Version:** 308.b  
 **Purpose:** Actionable rules to keep code smart, light, secure, and powerful
 
 ---
@@ -261,10 +261,12 @@ npm run typecheck      # TypeScript strict check
 
 | Agent | When to load |
 |-------|-------------|
-| **Brian** | Every implementation task |
+| **Brian** | Every implementation task, including AI feature wiring |
 | **Kasper** | Security review, audit |
 | **Vera** | Review Gate (check overrides) |
-| **Aiko** | AI feature implementation |
+
+> Aiko (AI Integration) is dormant (`.claude/_dormant/`) — AI feature implementation is Brian's
+> mandate.
 
 ---
 

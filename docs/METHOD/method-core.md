@@ -87,7 +87,7 @@ Quality gates are built into the workflow:
 
 ### Ops
 - **Hosting:** Firebase App Hosting in `europe-west1` / `europe-west4` for Next.js web backends, EAS for mobile
-- **CI/CD:** GitHub Actions
+- **CI/CD:** none — gates run **locally** before merge (see "Merge Gate" below); GitHub Actions is billing-blocked account-wide, by choice, unrelated to the active GCP/Firebase billing (`SOUL.md` → "Boundaries"). Merging to `main` **is** the deploy.
 - **Monitoring:** Firebase Crashlytics, Cloud Logging
 - **Analytics:** Firebase Analytics
 
@@ -294,6 +294,12 @@ this plan. So the gate is **local and machine-checked**, not prose an agent can 
 | **`/land`** | The explicit close at slice end. Don't wait for the hook when you know the slice is done. |
 | **`npm run land:sweep`** | Every open PR + what blocks it; `land:sweep:apply` squash-merges the clean ones. Nothing should sit open for more than a few days. |
 
+**Merge Gate (local — there is no CI).** This is the gate the rest of the METHOD refers to as
+"the Merge Gate": it is now *run for you* by `verify-gate.mjs` rather than recited from a checklist.
+For the `app` lane, green means all four of `npm run lint` · `npx tsc --noEmit` (or the app's
+`typecheck` script) · `npm test` · `npm run build`, plus `npx playwright test` where E2E exists.
+If any is red: fix it before anything else — nothing downstream will catch it for you.
+
 **The exception list — fail-closed, and the only reasons a PR is correct:**
 
 | Exception | Why a human looks |
@@ -334,8 +340,9 @@ Landing is what keeps conversations small, and small conversations are the cost 
 **Commit after every completed task; land at the end of the conversation.**
 
 ```bash
+# After every ✅ task, on your branch:
 git add . && git commit -m "feat(notifications): implement FCM"
-npm run land          # verify → fast-forward main → deploy
+npm run land          # verify → fast-forward main → deploy (there is no CI)
 ```
 
 **Why:** progress is never lost, `main` is always the truth, and no queue of pull requests

@@ -1,7 +1,7 @@
 # Agents Engineering & AI Agent Team Architecture
 
 **Owner:** Lucia (method-level) + Developers
-**Version:** 311.a
+**Version:** 311.c
 **Purpose:** Define the agent team architecture on the **Claude suite** — the native sub-agent layer, runners & orchestration, parallel + fleet execution, hard gates via hooks, agent-to-Skill mapping, the Desktop/Code division of labour, Artifacts-based design, and context management protocols.
 
 ---
@@ -85,23 +85,28 @@ The METHOD runs on three Claude surfaces. Each has a distinct sweet spot:
 
 Every METHOD agent is a **Claude Skill** — a folder with a `SKILL.md` that Claude auto-invokes by name. Skills are **version-controlled in the repo** (`.claude/skills/{agent}/`), so they travel with the project and work identically in Claude Desktop and Claude Code.
 
-> **Source of truth:** The canonical persona text lives in `Swanifly/web/lib/engine/agent-personas.ts` (the prompts Swanifly feeds to Claude Code). Skill `SKILL.md` files mirror those personas so a human in Desktop and the Swanifly engine invoke the *same* agent.
+> **Source of truth:** `.claude/agents/{agent}.md` is the canonical persona text (Identity, mandate, cohort-wide Non-negotiables). `Swanifly/web/lib/engine/agent-personas.ts` is a **derived artifact** generated from it (the prompts Swanifly feeds to Claude Code); Skill `SKILL.md` files are **stubs that load the agent file**. Edit the agent file — never a Skill stub, never the engine — so a human in Desktop and the Swanifly engine invoke the *same* agent.
 
 | Agent | Skill | Primary surface | Model default | Commits? |
 |:--|:--|:--|:--|:--|
 | **Junia** | `junia` | Desktop (planning) | Opus | yes (plans) |
-| **April** | `april` | Desktop (scope/CUJ) | Opus | yes (docs) |
 | **Brian** | `brian` | Claude Code (build) | Sonnet → Opus for hard logic | yes |
-| **Teddy** | `teddy` | Claude Code (mobile build) | Sonnet | yes |
 | **Nova** | `nova` | Desktop (design + Artifacts) | Opus | yes (CSS/JSX) |
 | **Vera** | `vera` | Desktop (review) | Opus | **no** (review only) |
 | **Sage** | `sage` | Claude Code (tests) | Sonnet | yes (tests only) |
 | **Watson** | `watson` | Claude Code (ops/debug) | Sonnet | yes |
-| **Aiko** | `aiko` | Desktop + Code (AI infra) | Opus | yes |
-| **Lucia** | `lucia` | Desktop (METHOD only) | Opus | yes (docs) |
 | **Gordon** | `gordon` | Desktop + Code (growth) | Opus | yes (docs) |
 | **Kasper** | `kasper` | Claude Code (security) | Opus | yes (hardening) |
-| **Iris** | `iris` | Desktop + Code (research) | Opus | yes (analysis docs only) |
+
+#### Dormant (delegable on explicit request only)
+
+| Agent | Was | Why dormant |
+|:--|:--|:--|
+| **Teddy** | Mobile Development | Mobile is a mode, not a person — Brian's mandate. |
+| **Aiko** | AI Integration | Wiring AI is building — Brian's mandate. |
+| **April** | Vision, Copy, CUJ | Product copy & vision — Gordon's mandate (operator arbitrates). |
+| **Lucia** | Method Curator | METHOD curation happens in conversation — Junia's. |
+| **Iris** | Research & Analysis | Open-ended study — Junia's / this conversation. |
 
 **Notes:**
 - **Model default ≠ lock — but route by tier.** Defaults live in `.claude/agents/` frontmatter (T1 opus / T2 sonnet); override per delegation, escalate one tier after a failed retry. Haiku = T3 mechanical, delegation-time override only. Canonical: `routing-method.md` → "Model Routing".

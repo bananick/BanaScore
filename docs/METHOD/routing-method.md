@@ -11,24 +11,34 @@
 
 ### By Agent
 
-> Cohort = 13 executable agents (Skills + `.claude/agents/` sub-agents — count verified against the
-> directory). **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row.
+> Cohort = **8 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
+> **5 dormant** agent files listed below the table. An agent earns a name when its mandate is one
+> you would otherwise have to retype.
+> **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row.
 
-| Agent   | Sub-agent              | Entry Files                                                       |
-|---------|------------------------|-------------------------------------------------------------------|
-| April   | `april`                | `agents-method.md` → `project/VISION.md`                          |
-| Junia   | `junia`                | `agents-method.md` → `sprints-method.md` → `project/` (all)      |
-| Nova    | `nova`                 | `design-method.md` → `project/DESIGN.md`                          |
-| Lucia   | `lucia`                | ALL `method/` files                                               |
-| Brian   | `brian`                | `method-core.md` → `project/DESIGN.md` → sprint task file         |
-| Teddy   | `teddy`                | `method-core.md` → `project/DESIGN.md` → `project/mobile-*.md` → sprint task file |
-| Watson  | `watson`               | `method-core.md` → `tests-method.md` → `project/STATE.md`        |
-| Gordon  | `gordon`               | `project/VISION.md` → `project/ROADMAP.*.md` → analytics          |
-| Aiko    | `aiko`                 | `ai-infra-method.md` → `project/AI-INFRA.md` → sprint task file   |
-| Sage    | `sage`                 | `tests-method.md` → `project/ROADMAP.*.md` → sprint task file     |
-| Kasper  | `kasper`               | `code-rules.md` → `project/` → security configs                  |
-| Vera    | `vera` (read-only)     | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task/sprint file |
-| Iris    | `iris` (read-only on code) | `method-core-lite.md` → `project/STATE.md` → `docs/analysis/`                  |
+| Agent   | Mandate     | Sub-agent              | Entry Files                                                       |
+|---------|-------------|------------------------|-------------------------------------------------------------------|
+| Junia   | orchestrate | `junia`                | `agents-method.md` → `sprints-method.md` → `project/` (all)      |
+| Brian   | build       | `brian`                | `method-core.md` → `project/DESIGN.md` → sprint task file         |
+| Sage    | prove       | `sage`                 | `tests-method.md` → `project/ROADMAP.*.md` → sprint task file     |
+| Watson  | repair      | `watson`               | `method-core.md` → `tests-method.md` → `project/STATE.md`        |
+| Kasper  | guard       | `kasper`               | `code-rules.md` → `project/` → security configs                  |
+| Vera    | judge       | `vera` (read-only)     | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task/sprint file |
+| Nova    | draw        | `nova`                 | `design-method.md` → `project/DESIGN.md`                          |
+| Gordon  | sell        | `gordon`               | `project/VISION.md` → `project/ROADMAP.*.md` → analytics          |
+
+#### Dormant (delegable on explicit request)
+
+Out of the routing tables and the default rotation. Agent files parked under `.claude/_dormant/`;
+their entry files stand.
+
+| Agent  | Sub-agent               | Entry Files                                                       | Why dormant |
+|--------|-------------------------|-------------------------------------------------------------------|-------------|
+| Teddy  | `teddy`                 | `method-core.md` → `project/DESIGN.md` → `project/mobile-*.md` → sprint task file | mobile is a mode, not a person — no mobile app in flight |
+| Aiko   | `aiko`                  | `ai-infra-method.md` → `project/AI-INFRA.md` → sprint task file   | wiring AI is building — Brian's mandate |
+| April  | `april`                 | `agents-method.md` → `project/VISION.md`                          | her CUJ Gate belonged to the sprint regime, now retired |
+| Lucia  | `lucia`                 | ALL `method/` files                                               | METHOD curation happens in conversation |
+| Iris   | `iris` (read-only on code) | `method-core-lite.md` → `project/STATE.md` → `docs/analysis/` | a generic `Agent()` already does exactly this |
 
 ### By Task Type
 
@@ -51,13 +61,17 @@
 |-----------------|--------|--------------|--------------|
 | `/plan-sprint`  | Junia  | Create sprint folder + task files | — |
 | `/review`       | Vera   | Run the Review Gate (read-only) | — |
-| `/intervention` | Lucia  | Open a METHOD intervention RFC | — |
-| `/port`         | Nova/Brian | Port a Claude-Design Artifact screen to code | `brian`/`teddy` |
+| `/intervention` | Junia  | Open a METHOD intervention RFC (was Lucia — dormant; curation happens in conversation) | — |
+| `/port`         | Nova/Brian | Port one screen from the app's living `proto/` directive to code | `brian` |
 | `/relay`        | any    | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
-| `/ship`         | any    | Commit + push + open/update the PR | — |
+| `/land`         | any    | Commit + local verify gate + merge to `main` — **the default close** | — |
+| `/ship`         | any    | Commit + push + open/update the PR — **the exception path** | — |
 
-> 6 rituals, all in `.claude/commands/`. Junia orchestrates the loop:
-> `/plan-sprint` → build (`brian`/`teddy`) → `sage` → `watson` (if red) → `/review` (`vera`) → `/ship`.
+> 7 rituals, all in `.claude/commands/`. The orchestration chain Junia drives is defined **once**,
+> in `agents-method.md` → "Orchestration chain" — reference it, never restate it here.
+> A slice closes on **`/land`** (`main` is the deploy; the gate is local — there is no CI on this
+> account); `/ship` is reserved for the exception list in `method-core.md` → "Landing (the default)
+> & the exception list".
 > Only the sprint conversation runs `/relay` — one `## Resume here` per app
 > (`sprints-method.md` → "Conversation Naming").
 
@@ -69,6 +83,24 @@
 > available on its surface; every delegated task runs on the **cheapest model that meets the
 > task's quality bar**. Cost is a routed variable, not an afterthought.
 
+### Delegation is the default (standing order — comes before the tiers)
+
+**Never do yourself, in the coordinating conversation, work a cheaper agent can deliver.**
+Coordination stays put: the conversation reads reports, arbitrates, decides, reports to the
+operator. Everything executable and delegable leaves it — building, testing, fixing, high-residue
+exploration (finding where a thing lives, reading ten files to extract three lines, mapping a repo),
+bulk mechanical edits. **This is the default, not an option**; doing delegable work inline is the
+exception you must justify. Offloading context is a goal in itself — the coordinator's context
+carries the decision, not the raw material.
+
+| Form | When | Cost |
+|---|---|---|
+| **Sub-agent** (`Agent`) | **default** — a bounded task that returns a conclusion, with no round-trip through the operator | fresh context; the coordinator's stays clean |
+| **Workflow** | ≥ 3 near-identical items, or work that earns an adversarial verification pass | parallel, deterministic |
+| **Parallel sessions** | only on an **observed** trigger, never a predicted one: 3rd build→test→fix loop on the same task · a different repo · a deploy loop with the operator in it · two tasks writing code at once (→ one branch + worktree each) | one human click |
+
+Nothing else justifies a second window — not size, not an estimate, not "it looks big".
+
 ### Capability tiers (tool-agnostic)
 
 | Tier | Work | Claude | Other tools (Cursor / Codex / …) |
@@ -79,9 +111,10 @@
 
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
-- **T1 (opus):** `junia`, `vera`, `kasper`, `april`, `nova`, `lucia`, `aiko`, `gordon`, `iris`
-- **T2 (sonnet):** `brian`, `teddy`, `sage`, `watson`
+- **T1 (opus):** `junia`, `vera`, `kasper`, `nova`, `gordon`
+- **T2 (sonnet):** `brian`, `sage`, `watson`
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
+- **Dormant agents** keep their tiers if you call one explicitly: T1 `april`, `lucia`, `aiko`, `iris` · T2 `teddy`
 
 ### Delegation-time overrides (the orchestrator's job)
 
@@ -125,12 +158,25 @@ A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per
   conversation) and `subAgents` (every delegated sub-agent and Workflow-tool agent spawned during
   the session), plus a combined `totals`. Deduped per API response (`message.id`) so a single
   streamed reply split across several transcript lines is never double-counted.
+- **Models, per scope** — `mainLoop.models` and `subAgents.models`, plus a global `models` union
+  kept for existing readers. **Read the per-scope arrays, not the union:** a global
+  `["opus","sonnet"]` is identical whether opus coordinated and sonnet executed (compliant with
+  "orchestrate high, execute cheap") or the reverse (a routing violation). Only
+  `mainLoop.models = ["opus"]` + `subAgents.models = ["sonnet"]` actually proves the policy held.
+  Rows written before the 2026-09-01 hook fix carry the union alone and cannot be audited
+  for routing.
 - **Shape** — user-message count, assistant API-call count, start/end timestamps, duration,
-  the model(s) used, git branch, app (repo folder name).
-- **Best-effort hints** — `topic` (first user message, truncated to 150 chars) and `sprint`
-  (regex match on `docs/sprints/{NNN}` paths touched during the session). Both can be `null`.
+  git branch, app (repo folder name).
+- **No prompt text, ever.** The row is committed and pushed automatically, so operator wording
+  must never enter it. There is no `topic` field.
+- **Best-effort hint** — `sprint`, a regex match on sprint paths seen in the transcript. It accepts
+  `docs/sprints/{NNN}` and `docs/project/sprints/{YYYY}/week-{N}/{NNN}` (the layout this fleet
+  actually uses), skips the year/week segments, and requires a non-digit after the 3 digits so a
+  year can't be captured. Can be `null`. *Before the 2026-09-01 fix it matched 3 digits after
+  `docs/sprints/`, so `…/2025/…` logged sprint `"202"` — 219 of the hub's 227 rows say `"202"`.
+  Those rows are wrong and stay wrong: the ledger is append-only and history is never rewritten.*
 - **`outcome` / `efficiencyNote`** — always `null` from the hook. These are **manual, optional**
-  fields — the closing agent, Vera, or Iris can backfill them (e.g. during a Review Gate or a
+  fields — the closing agent or Vera can backfill them (e.g. during a Review Gate or a
   periodic audit) when there's a real verdict worth recording. Don't force every row to have one.
 - **No dollar cost.** Pricing changes and varies by plan — the ledger stores exact raw token
   counts only; apply your current rate card when you actually need a $ figure.
@@ -170,7 +216,8 @@ A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per
   `.claude/settings.json` idempotently (preserves any hook the app already has, incl. its own
   custom `Stop` hooks — appends alongside, never replaces).
 - **Per-repo, not centralized.** Each app accumulates its own `docs/project/telemetry/sessions.jsonl`.
-  There is no fleet-wide rollup (yet) — if you want one, have Iris walk the fleet and aggregate.
+  There is no fleet-wide rollup (yet) — if you want one, delegate a generic `Agent()` to walk the
+  fleet and aggregate.
 
 ### Cross-tool status (Codex, Cursor)
 
@@ -223,8 +270,8 @@ Two rules hold in both columns:
 ### Third-party compression skills (Caveman & co.)
 
 Opt-in **per session**, never a fleet default, and bound by the table above. Reasonable use:
-long `brian` / `teddy` / `watson` build-and-debug runs where the chat is scaffolding, not
-deliverable. Keep them off for April / Gordon / Nova (copy), Vera / Kasper (verdicts), and any
+long `brian` / `watson` build-and-debug runs where the chat is scaffolding, not
+deliverable. Keep them off for Gordon / Nova (copy), Vera / Kasper (verdicts), and any
 doc-writing task.
 
 Before adopting one anywhere, **measure it**: the Session Telemetry Ledger above already records
@@ -499,27 +546,11 @@ Task: Close sprint 010.
 
 ---
 
-### Outcome
+### Trade-off
 
-**Time:** 1 long conversation with multiple role switches  
-**Files modified:** 6 (3 tasks + smoke test + status + roadmap)  
-**Tests:** Unit, integration, smoke  
-**DoD:** Met  
-**Status:** Sprint 010 complete
-
-### Advantages
-
-✅ Fast iteration (single context window)  
-✅ No orchestration overhead  
-✅ Works today with any powerful LLM  
-✅ Natural for solo developer
-
-### Disadvantages
-
-⚠️ No true parallelization  
-⚠️ Risk of role confusion if not disciplined  
-⚠️ Long context windows required
-
+✅ Fast in one context window; works with any single powerful LLM.
+⚠️ No parallelization, role-confusion risk, long context windows — which is exactly why this is the
+**fallback**, not the default (see "Delegation is the default" above).
 
 ---
 

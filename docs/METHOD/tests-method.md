@@ -1,7 +1,7 @@
 # Testing Strategy
 
 **Owner:** Sage (with Lucia for method-level)  
-**Version:** 308.a  
+**Version:** 308.b  
 **Purpose:** Test types, strategies, tools, fixtures
 
 ---
@@ -201,7 +201,7 @@ test('create and view invoice', async ({ page }) => {
 
 **Spec naming:** `tests/e2e/{NN}-{cuj-name}.spec.ts` (e.g., `01-auth-flow.spec.ts`, `02-quote-creation.spec.ts`)
 
-**CI integration:** E2E specs run in GitHub Actions on every push. See `templates/CI-TEMPLATE.yml` for setup.
+**Nominal path — local run:** there is no CI on this account (`SOUL.md` → "Boundaries"); run `npx playwright test` on the branch as part of the local Merge Gate (`method-core.md` → "Merge Gate") before merging — merging to `main` is the deploy. `templates/CI-TEMPLATE.yml` is kept inert for a possible future account; see `templates/PLAYWRIGHT-SETUP.md` for the local setup.
 
 **Setup guide:** See `templates/PLAYWRIGHT-SETUP.md` for initial Playwright configuration.
 

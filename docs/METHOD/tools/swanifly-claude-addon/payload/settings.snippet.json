@@ -36,7 +36,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/session-telemetry.mjs"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-telemetry.mjs"
+            ],
             "timeout": 20,
             "statusMessage": "Logging session telemetry..."
           }
@@ -57,6 +59,19 @@
             "statusMessage": "Landing docs/tooling work on main..."
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/pilotage-refresh.mjs"
+            ],
+            "timeout": 90,
+            "statusMessage": "Refreshing the pilotage dashboard..."
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -65,9 +80,30 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/land.mjs", "--auto"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/land.mjs",
+              "--auto"
+            ],
             "timeout": 900,
             "statusMessage": "Landing this conversation on main..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/flight-deck.mjs",
+              "--mode",
+              "resume-hook"
+            ],
+            "timeout": 15,
+            "statusMessage": "Preparing Flight Deck..."
           }
         ]
       }

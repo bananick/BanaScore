@@ -141,14 +141,21 @@ function zeroTotals() {
 // wrong number is worse than no number: never guess, never infer from the session title.
 //   1. The branch — `sprint/190` is the one sprint identifier a session cannot avoid
 //      materialising, and it cannot be confused with anything else in the transcript.
-//   2. Failing that, a path, anchored: the number must follow the separator after `sprints`
-//      immediately, and `(?!\d)` stops it matching inside a millesime — `docs/sprints/2025/…`
-//      used to yield a phantom "sprint 202" (4 of the 8 attributed rows in the ledger).
+//   2. Failing that, a path mentioned in the transcript, anchored deliberately:
+//      - accepts both `docs/sprints/` and `docs/project/sprints/` (this repo uses the latter);
+//      - skips an optional `{year}/` and `week-{n}/` segment pair, because the real layout is
+//        `docs/project/sprints/2025/week-42/005-a …` — the number lives two segments down;
+//      - `[\\/]+` tolerates JSON-escaped Windows paths (`docs\\project\\sprints\\…`), which is
+//        how they actually appear in the raw transcript lines this scans;
+//      - `(?!\d)` forces a separator after the 3 digits, so a millesime can never be captured.
+//        Without it `docs/sprints/2025/…` yielded a phantom sprint "202".
 //   3. Failing that, null.
 function guessSprint(branch, text) {
   const b = (branch ?? '').match(/^sprint[\\/](\d{3})(?!\d)/);
   if (b) return b[1];
-  const m = (text ?? '').match(/docs[\\/]sprints[\\/](\d{3})(?!\d)/);
+  const m = (text ?? '').match(
+    /docs[\\/]+(?:project[\\/]+)?sprints[\\/]+(?:\d{4}[\\/]+(?:week-\d{1,2}[\\/]+)?)?(\d{3})(?!\d)/,
+  );
   return m ? m[1] : null;
 }
 
@@ -173,11 +180,12 @@ function main() {
   const subFiles = existsSync(subAgentsDir) ? findJsonlFiles(subAgentsDir) : [];
   const subTotals = zeroTotals();
   const models = new Set(main_.models);
+  const subModels = new Set();
   let subSprintText = '';
   for (const f of subFiles) {
     const s = summarizeTranscript(f);
     addTotals(subTotals, s.totals);
-    for (const m of s.models) models.add(m);
+    for (const m of s.models) { models.add(m); subModels.add(m); }
     subSprintText += s.sprintText || '';
   }
 
@@ -197,14 +205,17 @@ function main() {
     cwd: projectDir,
     gitBranch: main_.gitBranch,
     sprint,
+    // Global union, kept for existing readers. It CANNOT verify routing on its own:
+    // ["opus","sonnet"] reads the same whether opus coordinated and sonnet executed (compliant)
+    // or the reverse (not). The per-scope `models` on mainLoop/subAgents below are what answer that.
     models: [...models],
     startedAt: main_.firstTimestamp,
     lastActivityAt: main_.lastTimestamp,
     durationMs: main_.firstTimestamp && main_.lastTimestamp
       ? new Date(main_.lastTimestamp) - new Date(main_.firstTimestamp)
       : null,
-    mainLoop: main_.totals,
-    subAgents: { ...subTotals, fileCount: subFiles.length },
+    mainLoop: { ...main_.totals, models: [...main_.models] },
+    subAgents: { ...subTotals, models: [...subModels], fileCount: subFiles.length },
     totals,
     outcome: null,       // optional — filled in by the closing agent's DoD report, or by Vera/Iris
     efficiencyNote: null, // optional — same

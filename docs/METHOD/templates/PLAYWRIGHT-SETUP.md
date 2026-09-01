@@ -1,7 +1,7 @@
 # Playwright E2E Setup Guide
 
 **Owner:** Sage  
-**Version:** 307.a  
+**Version:** 307.b  
 **Purpose:** Step-by-step setup for Playwright E2E testing in METHOD apps
 
 ---
@@ -17,7 +17,7 @@ npm init playwright@latest
 When prompted:
 - TypeScript: **Yes**
 - Test directory: **tests/e2e**
-- GitHub Actions: **No** (use `CI-TEMPLATE.yml` instead)
+- GitHub Actions: **No** — there is no CI on this account (`SOUL.md` → "Boundaries"); run `npx playwright test` locally as part of the Merge Gate (`method-core.md` → "Merge Gate") before merging. `CI-TEMPLATE.yml` is kept inert for a possible future account only — do not wire it up.
 - Install browsers: **Yes** (Chromium only is fine for start)
 
 ### 2. Configure Playwright

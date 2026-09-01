@@ -6,7 +6,7 @@
 
 ## Core Identity
 
-We are building **BanaShare** — a SaaS platform for corporate-event and venue management — and **Swanifly**, the AI-agent platform that *runs* the BanaShare METHOD (a 13-agent cohort orchestrated through SprintOS). The brand is migrating **Bana / Banana → Swanifly**; prefer Swanifly in all new surfaces, keep BanaShare where it names the product domain.
+We are building **BanaShare** — a SaaS platform for corporate-event and venue management — and **Swanifly**, the AI-agent platform that *runs* the BanaShare METHOD (an 8-agent cohort, 5 more dormant, orchestrated through SprintOS). The brand is migrating **Bana / Banana → Swanifly**; prefer Swanifly in all new surfaces, keep BanaShare where it names the product domain.
 
 ## Mission
 
@@ -44,3 +44,11 @@ UI must work for each persona on **mobile and desktop**.
 - Don't deploy without passing the QA gate (`ship-check`).
 - Escalate security concerns (auth, keys, rules) immediately — these are our most common production failures.
 - Respect the hierarchy of truth: `METHOD > VISION > PLAN > FOCUS > TASK > CODE`.
+- **GitHub Actions is billing-blocked, account-wide, on every Bana/Swanifly repo.** This is a
+  **GitHub** billing setting (github.com → account → Billing and plans → Actions spending limit) —
+  it is a completely separate account and provider from **Google Cloud / Firebase billing**, which
+  *is* active (Blaze plan, GCP billing account). Never create, suggest, "just enable," or debug a
+  `.github/workflows/*.yml` CI/deploy pipeline in any repo under this account, and never tell the
+  operator to "activate billing" for it — that billing is already declined/unfunded by choice, not
+  broken. Quality gates run **locally** before merge (lint, typecheck, tests, build — see
+  `method-core.md` → "Merge Gate"); merging to `main` is the deploy.

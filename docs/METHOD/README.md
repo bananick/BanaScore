@@ -1,6 +1,6 @@
-# METHOD v315.c
+# METHOD v316.a
 
-**Version:** 315.c  
+**Version:** 316.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-09-01  
 **Status:** ✅ Production-Ready
@@ -33,7 +33,7 @@
 ```
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
-.claude/agents/                                 ← 13 delegatable sub-agents + README (Claude Code)
+.claude/agents/                                 ← 8 active + 5 dormant sub-agents + README (Claude Code)
 .claude/commands/                               ← 7 rituals: /land, /ship, /plan-sprint, /review, /intervention, /port, /relay
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 .claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
@@ -47,7 +47,7 @@ scripts/method-doctor.mjs                       ← `npm run doctor`: METHOD con
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
-  agents-method.md           # 13 agents, roles, rituals, models
+  agents-method.md           # 8 active + 5 dormant agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
   routing-method.md          # Entry points, agent routing, model routing (tiers), session telemetry
   ai-infra-method.md         # Multi-provider architecture
@@ -68,6 +68,18 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v316.a
+
+1. **Thirteen job titles become 8 active mandates + 5 dormant.** `junia brian sage watson kasper vera nova gordon` are the active cohort; **Teddy, Aiko, April, Lucia, Iris** move to `.claude/_dormant/` — outside the folders Claude Code scans, so they are neither loaded nor delegable until deliberately revived. `_optional/` would have changed nothing: agent discovery is **recursive**, so a renamed subfolder stays discovered. **Gordon** absorbs the SEA/ads mandate.
+2. **Every agent carries an identity, not just a job description.** Each `.claude/agents/*.md` gains a `## Identity` section (**Voice** · **I refuse** · **I defer to** · **I hand off to**) and closes on a `## Non-negotiables` block that is byte-identical across the cohort — one place to change what no agent may do.
+3. **`.claude/agents/*.md` is the single source for personas.** The `SKILL.md` files become stubs that point at it, and `agent-personas.ts` is derived from it rather than maintained beside it. Its silent fallback to Brian for an unknown persona — the bug that let a typo run the wrong agent unnoticed — now **throws**.
+4. **CI claims purged from 12 documents.** GitHub Actions is billing-blocked account-wide **by choice**, so no doc may promise a pipeline that cannot run: the gate is the **local** verify (`.claude/hooks/verify-gate.mjs`), and merging to `main` is the deploy. Canonical: `method-core.md` → "Merge Gate".
+5. **Telemetry & installer fixes.** The session ledger records **models per scope** instead of collapsing them into one field, and the `guessSprint` regex no longer mis-parses sprint folder names. The addon installer's content-guarded section merge is generalised, so a re-run stops clobbering hand-edited sections.
+
+> **Renumbering note:** this lot was authored in-branch as 315.b–315.e while the trunk published its
+> own 315.b and 315.c. The trunk numbers stand; the whole cohort refactor lands here as **one**
+> release, 316.a.
 
 ## What's New in v315.c
 1. **Every line earns its place.** Two rules turn the Debrief from readable into **actionable**. A bullet survives only if it changes a **decision**, an **action**, or a **mental model** — anything else is **deleted, not shortened**. And **name the object, never the activity**: `method-core.md:393` not "the method file", `npm run doctor` not "the checker", `afd4cd7` not "the last commit" — every nameable thing rendered as a clickable link or a runnable command, which only became possible once v315.b took the card out of the code fence.
@@ -131,15 +143,32 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## Agent Cohort (13)
+## Agent Cohort (8 active mandates + 5 dormant)
 
-Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork).
+Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; eight mandates hold that bar.
 
-| Group | Agents |
+| Agent | Mandate |
 |---|---|
-| **Core Loop** | Junia (planning), Brian (web dev), Vera (review) |
-| **Managers** | April (vision), Nova (design), Lucia (method) |
-| **Specialists** | Teddy, Aiko, Watson, Sage, Gordon (sales/marketing), Kasper (security), Iris (research) |
+| **Junia** | Orchestrate — planning & delegation |
+| **Brian** | Build — web development |
+| **Sage** | Prove — test architecture |
+| **Watson** | Repair — reliability & ops |
+| **Kasper** | Guard — security |
+| **Vera** | Judge — review & validation (no commits) |
+| **Nova** | Draw — design system + tokens |
+| **Gordon** | Sell — sales, marketing & growth |
+
+#### Dormant (delegable on explicit request)
+
+Parked under `.claude/_dormant/`: still documented and still invocable by name, simply out of the routing tables and the default rotation.
+
+| Agent | Was | Why dormant |
+|---|---|---|
+| **Teddy** | Mobile Development | Mobile is a mode, not a person — no mobile app in flight. |
+| **Aiko** | AI Integration | Wiring AI is building; that is Brian's mandate. |
+| **April** | Vision, Copy, CUJ | Her CUJ Gate belonged to the sprint regime, now retired. |
+| **Lucia** | Method Curator | METHOD curation happens in conversation, not by delegation. |
+| **Iris** | Research & Analysis | A generic `Agent()` already does exactly this. |
 
 > **Advisory hat (not executable):** Riley (API & multi-agent automation) is wielded in a
 > Desktop chat — no sub-agent or Skill. See `agents-method.md`.
@@ -167,7 +196,7 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 | **Cowork** | Desktop's local Code tab (same `.claude/agents` + `.claude/commands`) | Sequential |
 | **Swanifly** | `Swanifly/web/lib/engine/` spawns the `claude` CLI per persona for unattended runs | ✅ orchestrated batch |
 
-**Flow (Junia orchestrates):** `/plan-sprint` → delegate to owner sub-agents (independent tasks fan out as a team) → `sage` tests → `watson` if red → `/review` (Vera, read-only) → merge. Gates (`sage`→tests-only, `vera`→review-only, Bash blocklist) are enforced as `.claude/settings.json` hooks.
+**Flow (Junia orchestrates):** the chain is defined once, in `agents-method.md` → "Orchestration chain". Mechanically enforced: the Bash blocklist (`.claude/settings.json` `permissions.deny`) and `vera`→review-only (she holds no write tool). **Prompt-enforced only:** `sage`→tests-only and `iris`→`docs/analysis/` — their frontmatter grants `Write, Edit` with no path restriction. See `.claude/agents/README.md`.
 
 **See:** `agents-engineering-method.md`, `.claude/agents/README.md`.
 
@@ -175,8 +204,11 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 315.c  
-**Previous:** 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 316.a  
+**Previous:** 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+
+**Cohort refactor (8 active + 5 dormant)** ships as the single release **316.a** — see
+`versioning.md` for the renumbering note and the full changelog.
 
 **See:** `versioning.md` for full changelog.
 

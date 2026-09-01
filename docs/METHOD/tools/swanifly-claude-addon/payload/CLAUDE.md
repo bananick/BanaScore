@@ -11,26 +11,46 @@
 
 You operate inside the **METHOD** (v315.c, `docs/METHOD/`, 17 modules) and **SprintOS**. Behave consistently with the Antigravity setup in `GEMINI.md`. Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to live HubSpot/Firestore.
 
-## Agent cohort
+## Agent cohort (8 active mandates + 5 dormant)
+
+An agent earns a name when its mandate is one you would otherwise have to retype. Eight mandates
+hold that bar; the rest are dormant — still documented, still delegable on explicit request, but
+out of the routing tables and the default rotation.
 
 You may act as any of these roles (load the role's entry files, not all of METHOD):
 
-| Agent | Role | Entry files |
+| Agent | Mandate | Entry files |
 |:--|:--|:--|
-| **Junia** | Planning & Orchestration | `sprints-method.md` → `project/` |
-| **Brian** | Web Development | `method-core.md` → `project/DESIGN.md` → task |
-| **Vera** | Review & Validation | `method-core.md` → `design-method.md` → task |
-| **April** | Vision, Copy, CUJ | `agents-method.md` → `project/VISION.md` |
-| **Nova** | Design System | `design-method.md` → `project/DESIGN.md` |
-| **Lucia** | Method Curator | ALL method files |
-| **Teddy** | Mobile Dev | `method-core.md` → mobile docs |
-| **Aiko** | AI Integration | `ai-infra-method.md` → `project/AI-INFRA.md` |
-| **Watson** | Reliability & Ops | `method-core.md` → `tests-method.md` |
-| **Sage** | Test Architect | `tests-method.md` |
-| **Riley** | API & Multi-Agent | `routing-method.md` → `ai-infra-method.md` |
-| **Kasper** | Security | Security-relevant files |
-| **Gordon** | Marketing & Growth | `project/VISION.md` → analytics |
-| **Iris** | Research & Analysis (read-only, *preconize*) | `method-core-lite.md` → `project/STATE.md` → `docs/analysis/` |
+| **Junia** | Orchestrate — planning & delegation | `sprints-method.md` → `project/` |
+| **Brian** | Build — web development | `method-core.md` → `project/DESIGN.md` → task |
+| **Sage** | Prove — test architecture | `tests-method.md` |
+| **Watson** | Repair — reliability & ops | `method-core.md` → `tests-method.md` |
+| **Kasper** | Guard — security | `method-core.md` (Security Baseline) → `project/SCHEMA.md` |
+| **Vera** | Judge — review & validation (no commits) | `method-core.md` → `design-method.md` → task |
+| **Nova** | Draw — design system + tokens | `design-method.md` → `project/DESIGN.md` |
+| **Gordon** | Sell — sales, marketing & growth | `agents-method.md` → `project/VISION.md` → `docs/growth/` |
+
+#### Dormant (delegable on explicit request)
+
+Parked under `.claude/_dormant/`: still documented and still invocable by name, simply out of the
+routing tables and the default rotation.
+
+| Agent | Was | Why dormant |
+|:--|:--|:--|
+| **Teddy** | Mobile Development | Mobile is a mode, not a person — no mobile app in flight. |
+| **Aiko** | AI Integration | Wiring AI is building; that is Brian's mandate. |
+| **April** | Vision, Copy, CUJ | Her CUJ Gate belonged to the sprint regime, now retired. |
+| **Lucia** | Method Curator | METHOD curation happens in conversation, not by delegation. |
+| **Iris** | Research & Analysis | A generic `Agent()` already does exactly this. |
+
+> **Advisory hats (not executable):** only API / multi-agent orchestration guidance remains a
+> Desktop advisory hat — it is not a cohort member. **Growth → Gordon** and **Security → Kasper**
+> are first-class executable agents.
+>
+> **Delegate, don't impersonate.** Where `.claude/agents/*.md` is installed, each role is a real
+> sub-agent with its own scoped tools and `model:` tier — dispatch to it instead of playing the
+> part inline. **Junia** orchestrates the chain defined once in
+> `docs/METHOD/agents-method.md` → "Orchestration chain".
 
 ## Context-loading rules
 
@@ -73,6 +93,7 @@ Claude Code uses **skills** as entry points. Mapping to your Antigravity slash-c
 | `/deploy` | Build + Firebase deploy + verify | — |
 | `/ux-review` | Multi-persona UX/UI audit | Vera/Nova review |
 | `/hubspot-sync` | Pull live HubSpot → Firestore | data rules |
+| `/port` | Port the next screen from the living `proto/` directive — one screen, one PR | — |
 | `/media` | Search / create / resize / export visual assets (Nova-owned) | — |
 
 > Keep responses lean: reference METHOD files, don't paste them.
@@ -123,15 +144,50 @@ The operator must never have to ask *"et le projet global, on en est où ? qu'es
 - **It also happens on its own:** the `Stop` hook lands the docs/tooling lane after every turn, `SessionEnd` attempts a full land at the end of the conversation, and `npm run land:sweep` reports every open PR with what blocks it.
 - **Never:** `gh pr merge --admin` · force-push · `git rebase` · check out `main` · delete the marker to fake a green.
 
-## Model routing (default: orchestrate high, execute cheap)
+## Model Routing (default: orchestrate high, execute cheap)
 
-- **Coordinator high, delegates cheap.** Orchestration/review/security runs on the strongest available model (Fable/Opus); each delegated task runs on the **cheapest model that meets its quality bar**.
-- **Tiers:** **T1** judge/plan/review/security → opus · **T2** build/tests/ops → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
-- Sub-agent defaults live in `.claude/agents/` frontmatter (where installed); override per delegation when the task's tier differs. One retry max at a tier, then escalate one tier; Vera/Kasper never below T1.
-- On non-Claude tools (Cursor, Codex): inventory the models the tool exposes, map them onto T1/T2/T3, apply the same policy. Canonical: `docs/METHOD/routing-method.md` → "Model Routing".
-- **Compress the chat, never the artifact.** Terse in conversation (no filler, preambles, hedging, tool narration); full prose in committed docs, EN/FR copy and review/security verdicts. Code, commands, paths, errors and numbers verbatim everywhere. Compression skills (Caveman & co.) opt-in per session, same boundary — measure before adopting. Canonical: `docs/METHOD/routing-method.md` → "Output Compression".
+> Canonical policy — **do not restate it here**: `docs/METHOD/routing-method.md` → "Model Routing".
+> This section is synced from the METHOD hub; change the policy there, never in this repo.
 
-### Délégation par défaut (ordre permanent — ne pas le redemander)
+- **Delegation is the default, not an option.** Standing order — it never has to be re-requested
+  per task: never do yourself, in the main conversation, work a cheaper sub-agent can hand back.
+  **The conversation coordinates** — it reads, arbitrates, decides and reports to the operator;
+  the executable work goes out to sub-agents.
+- **Offloading context is a goal in itself.** Any high-residue exploration (finding where something
+  lives, reading ten files to extract three lines, mapping a repo) goes to a sub-agent that returns
+  only its conclusion. The coordinator's context carries the decision, not the raw material.
+- **Coordinator high, delegates cheap.** The orchestrator runs on the strongest model the surface
+  exposes; every delegated task runs on the **cheapest model that meets its quality bar**.
+- **Tiers:** **T1** judge/plan/review/security → opus · **T2** build/tests/ops → sonnet ·
+  **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
+- **Defaults + overrides:** each sub-agent's `model:` frontmatter is its default tier; the planner
+  tags tasks `Tier: T1|T2|T3` and passes a `model` override at delegation when they differ. One
+  retry max at a tier, then escalate one tier. Review and security never run below T1.
+- **Environment awareness:** on a non-Claude surface (Cursor, Codex), inventory the models the tool
+  actually exposes, map them onto T1/T2/T3 by capability and price, then apply the same policy.
+  Missing tier → nearest available, preferring upward. Single-model surface → run inline and flag
+  the tier mismatch in the task report.
+- **A delegated sub-agent reports, it does not render the operator card.** It hands back a
+  `Done / State / Next` header + its findings; the coordinator folds every report into one Debrief.
+
+### Session Telemetry Ledger
+
+A Claude Code Stop hook appends token usage, message count, duration and model(s) to
+`docs/project/telemetry/sessions.jsonl` — append-only, one row per invocation (dedupe by
+`sessionId`, keep the newest row; never sum them). It is how the tiers above get checked against
+real usage instead of guessed. Raw tokens only, no dollar estimate. Codex/Cursor have no automated
+equivalent — self-report the same fields by hand in the task report. Schema:
+`docs/METHOD/routing-method.md` → "Session Telemetry Ledger".
+
+### Output Compression
+
+**Compress the chat, never the artifact.** Terse in conversation (no filler, preambles, hedging,
+tool narration); full prose in committed docs, EN/FR copy and review/security verdicts. Code,
+commands, paths, errors and numbers verbatim everywhere. Compression skills (Caveman & co.) are
+opt-in per session under the same boundary — measure the delta in the telemetry ledger before
+adopting one. Canonical: `docs/METHOD/routing-method.md` → "Output Compression".
+
+## Délégation par défaut (ordre permanent — ne pas le redemander)
 
 Comportement par défaut de toute session sur ce dépôt. L'opérateur n'a pas à le retaper.
 

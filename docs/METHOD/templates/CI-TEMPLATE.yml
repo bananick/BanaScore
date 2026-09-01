@@ -1,4 +1,6 @@
-# METHOD CI Gate Template — v307.a
+# INERT on this account — GitHub Actions is billing-blocked account-wide, by choice (`SOUL.md` → "Boundaries"); kept only for a possible future account, do not wire it up. Nominal path: the local Merge Gate (`method-core.md` → "Merge Gate").
+#
+# METHOD CI Gate Template — v307.b (inert)
 #
 # Copy this file to your app's `.github/workflows/ci.yml`
 # and customize the steps as needed.

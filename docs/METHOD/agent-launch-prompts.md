@@ -197,20 +197,20 @@ Output: A→Z journey summary with success criteria for the CUJ Precision Gate.
 | Sage | Claude Code | Sonnet (T2) | Test-writing tasks |
 | Watson | Claude Code | Sonnet (T2, escalate for deep debugging) | Bugs / debugging |
 | Nova | Claude Desktop (Artifacts) | Opus (T1) | Design clarity / prototypes |
-| April | Claude Desktop | Opus (T1) | Scope unclear |
-| Lucia | Claude Desktop | Opus (T1) | METHOD changes only |
-| Aiko | Claude Desktop + Code | Opus (T1) | AI architecture |
-| Teddy | Claude Code | Sonnet (T2) | Mobile tasks |
 | Gordon | Desktop + Code | Opus (T1) | GTM / growth / marketing |
 | Kasper | Claude Code | Opus (T1 floor — never below) | Security review / hardening |
-| Iris | Desktop + Code | Opus (T1) | Research → préconisations |
+
+> **Dormant — delegate only on explicit request, not by default:** April, Lucia, Aiko, Teddy, Iris
+> (`.claude/_dormant/`). Their mandates are covered by the active roster above: mobile + AI wiring
+> → **Brian**; product copy & vision → **Gordon** (operator arbitrates); METHOD curation & open-ended
+> study → **Junia** / this conversation.
 
 > **Advisory hat (not executable):** only API/multi-agent orchestration guidance (ex-Riley) is
-> wielded in a Desktop chat with `ai-infra-method.md` loaded. Gordon, Kasper and Iris are
-> first-class executable sub-agents + Skills since v309.a.
+> wielded in a Desktop chat with `ai-infra-method.md` loaded. Gordon and Kasper are first-class
+> executable sub-agents + Skills since v309.a.
 
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-07-10  
-**Version:** 311.a
+**Last Updated:** 2026-09-01  
+**Version:** 311.b

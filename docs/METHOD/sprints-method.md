@@ -1,8 +1,18 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 311.a  
+**Version:** 311.b  
 **Purpose:** Sprint system, DoD by mode, rituals
+
+> **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
+> one only for work that is genuinely multi-task and planned ahead — several ordered tasks with
+> real dependencies, more than one owner/agent, or a milestone that warrants a review gate. The
+> **nominal** mode is a single targeted slice: an **intervention** (`/intervention`, logged in
+> `docs/interventions/`) or a **plan** executed to the end, then the local merge gate, then merge
+> on `main` = deploy. A single fix, a single screen, a single analysis is never a sprint — wrapping
+> one in sprint ceremony produces folders nobody closes. Everything below remains the reference for
+> the sprint mode, and applies in full once a sprint is actually open. See `CLAUDE.md` →
+> "Work Modes" for the nominal path.
 
 ---
 
@@ -134,7 +144,7 @@ Setup Firebase Cloud Messaging (FCM) for push notifications.
 - [ ] Integration test with emulator
 - [ ] EN/FR i18n strings (`notification.permission.request`, etc.)
 - [ ] Typecheck passes
-- [ ] CI passes
+- [ ] Local Merge Gate passes (lint, typecheck, tests, build — `method-core.md` → "Merge Gate"; there is no CI)
 - [ ] Report appended to this file
 - [ ] Review Gate passed (Vera)
 - [ ] Status updated to ✅ or ⚠️

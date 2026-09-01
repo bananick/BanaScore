@@ -1,7 +1,9 @@
 # BanaShare — Agent Instructions
 
-> Cross-tool instructions shared across Antigravity, Cursor, and Claude Code.
-> For AG-specific instructions, see `GEMINI.md` (takes precedence).
+> **`CLAUDE.md` is canonical.** This file **derives** from it — the same context restated for
+> non-Claude agents (Cursor, Codex, Cline, Antigravity), so it reads standalone without a Claude
+> runtime. `GEMINI.md` is a retired redirect stub, not a source of truth. Rules change in
+> `CLAUDE.md` first; this mirror follows.
 > Shared identity, voice & non-negotiables: see `SOUL.md`.
 
 ## Operator Reporting — close with the Debrief
@@ -54,6 +56,7 @@ The operator must never have to ask *"et le projet global, on en est où ? qu'es
 
 > Canonical policy: `docs/METHOD/routing-method.md` → "Model Routing". Tool-agnostic — applies on Cursor, Codex, and any multi-model agent tool.
 
+- **Delegation is the default, not an option.** Standing order, never re-requested per task: never do yourself, in the main conversation, work a cheaper sub-agent can hand back. **The conversation coordinates** — reads, arbitrates, decides, reports; the executable work goes out to sub-agents. High-residue exploration (finding where something lives, reading ten files for three lines, mapping a repo) is delegated too and comes back as a conclusion, not raw material.
 - **Coordinator high, delegates cheap.** The orchestrating agent runs on the strongest model the tool exposes; every delegated/sub task runs on the **cheapest model that meets its quality bar**.
 - **Tiers:** **T1** judge/plan/review/security → strongest reasoning model (Fable/Opus/GPT-5.x-class) · **T2** build/tests/ops → mid-tier coding model (Sonnet-class) · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → cheapest competent model (Haiku-class).
 - **Environment awareness first:** before routing, **inventory the models actually available in this tool/workspace** (Cursor: the workspace's enabled model list; Codex: the CLI's model options; Claude Code: `.claude/agents/` frontmatter + per-delegation override) and map them onto T1/T2/T3 by capability and price. Never assume a specific vendor lineup.
@@ -69,9 +72,13 @@ Each repo keeps `docs/project/telemetry/sessions.jsonl` — append-only, one row
 
 ## Tech Stack
 
+> Declared stack = the **target baseline**. **Detect this app's actual stack before building** —
+> several repos are still Next 14 + MUI with a flat `app/` + `components/` layout, migrating toward
+> the below. Follow the target; never assume `src/features/` or Tailwind-vs-MUI without looking.
+
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript strict mode — no `any`, no `as` assertions
-- **Styling:** Tailwind CSS + CSS custom properties (Proto-Kit tokens)
+- **Styling:** Tailwind CSS + CSS custom properties (METHOD token contract, M3 baseline)
 - **Auth:** Firebase Authentication
 - **Database:** Firestore (multitenant — `teams/{teamId}/*`)
 - **Storage:** Firebase Storage
