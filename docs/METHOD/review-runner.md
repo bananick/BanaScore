@@ -1,7 +1,7 @@
 ﻿# Review Runner — AI Review Platform
 
 > **Version :** 309.a  
-> **Owner :** Vera (quality gate) + April (CUJ définition)  
+> **Owner :** Vera (quality gate) + Junia (CUJ définition, via la Cadrage)  
 > **Statut :** MVP — Phase 1 & 2 complétées
 
 ---

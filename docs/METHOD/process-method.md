@@ -1,6 +1,6 @@
 ﻿# Process Architecture Method
 
-**Owner:** Lucia (method-level) + Aiko (project-level)  
+**Owner:** Lucia (method-level and project-level)  
 **Version:** 306.c  
 **Last Updated:** 2026-04-11  
 **Purpose:** Define how to model, delegate, trace, and improve business processes in AI-native applications

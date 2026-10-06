@@ -1,8 +1,8 @@
-# METHOD v316.a
+# METHOD v318.a
 
-**Version:** 316.a  
+**Version:** 318.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-09-01  
+**Released:** 2026-10-06  
 **Status:** ✅ Production-Ready
 
 ---
@@ -13,18 +13,19 @@
 
 | I want to... | Load | Agent |
 |---|---|---|
-| **Define a new app** | `definition-method.md` → `project/definition/` | April + Nova |
-| **Plan a sprint** | `sprints-method.md` → `journeys/` → `project/` | Junia |
-| **Build a feature** | `method-core.md` → `project/DESIGN.md` → task | Brian / Teddy |
+| **Define a new app** | `definition-method.md` → `project/definition/` | Nova (vision: the operator) |
+| **Plan a slice or a sprint** | `sprints-method.md` → `journeys/` → `project/` | Junia |
+| **Build a feature** | `method-core.md` → `project/DESIGN.md` → task | Brian |
 | **Design UI** | `design-method.md` → `project/DESIGN.md` | Nova |
-| **Add AI capability** | `ai-infra-method.md` → `project/AI-INFRA.md` | Aiko |
-| **Define app processes** | `process-method.md` → `project/PROCESSES.md` | Aiko + Lucia |
-| **Review work** | `method-core.md` → `design-method.md` → task | Vera |
-| **Sync METHOD** | `versioning.md` → BanaPilot or CLI | Lucia |
+| **Add AI capability** | `ai-infra-method.md` → `project/AI-INFRA.md` | Brian |
+| **Define app processes** | `process-method.md` → `project/PROCESSES.md` | Junia |
+| **Review a slice** | `method-core.md` → `design-method.md` → task | Vera |
+| **Prove a journey** | `tests-method.md` → task → `journeys/` | Sage |
+| **Study / client deliverable** | `method-core-lite.md` → `project/STATE.md` | Iris |
+| **Sync METHOD** | `versioning.md` → `npm run doctor:fleet` → `sync-method:all:dry` | Lucia |
 | **Debug** | `method-core.md` → `tests-method.md` | Watson |
-| **Test** | `tests-method.md` | Sage |
-| **Write copy / CUJ** | `agents-method.md` → `journeys/` | April |
-| **Evolve METHOD** | ALL method files | Lucia |
+| **Write copy (EN/FR), sell, run ads** | `agents-method.md` → `project/VISION.md` → `docs/growth/` | Gordon |
+| **Evolve METHOD** | `versioning.md` → the files the change touches | Lucia |
 
 ---
 
@@ -33,21 +34,21 @@
 ```
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
-.claude/agents/                                 ← 8 active + 5 dormant sub-agents + README (Claude Code)
-.claude/commands/                               ← 7 rituals: /land, /ship, /plan-sprint, /review, /intervention, /port, /relay
+.claude/agents/                                 ← 10 active sub-agents + README (3 dormant in .claude/_dormant/)
+.claude/commands/                               ← 8 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /port (optional), /relay (optional)
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 .claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
 .claude/hooks/verify-gate.mjs                   ← The local gate: lane-aware checks + HEAD-pinned marker
 .claude/hooks/no-mock-guard.ps1                 ← PostToolUse: SOUL non-negotiable #1 (Windows only — see intervention 2026-08-10)
 .claude/hooks/ship-push.sh                      ← Stop hook: pushes committed work on feature branches
-.claude/hooks/session-telemetry.mjs             ← Stop hook: appends session token/shape data
+.claude/hooks/session-telemetry.mjs             ← Stop hook: appends session token/shape data to a local, gitignored ledger
 
 scripts/method-doctor.mjs                       ← `npm run doctor`: METHOD consistency checks (v313.b)
 
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
-  agents-method.md           # 8 active + 5 dormant agents, roles, rituals, models
+  agents-method.md           # 10 active + 3 dormant agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
   routing-method.md          # Entry points, agent routing, model routing (tiers), session telemetry
   ai-infra-method.md         # Multi-provider architecture
@@ -64,17 +65,66 @@ docs/METHOD/                                    ← Synced across all apps
 
 docs/project/                                   ← App-specific (local)
   VISION.md, DESIGN.md, SCHEMA.md, FOCUS.md, STATE.md, ROADMAP.web.md, AI-INFRA.md
-  telemetry/sessions.jsonl   # Session telemetry ledger (auto-appended by the Stop hook)
+  telemetry/sessions.jsonl   # Session telemetry ledger (auto-appended by the Stop hook; local, gitignored — hooks no longer commit it (318.a), untracked in a follow-up)
 ```
 
 ---
+
+## What's New in v318.a
+
+1. **Cohort: 10 active mandates + 3 dormant, fitted to 120 days of practice.** Iris returns as *Study
+   & Deliverables* (client-grade studies, sourced numbers, `inconnu` when unknown, and the new
+   **anonymisation/GDPR rule**); Lucia returns as *METHOD release manager* (versioning, sync with a
+   clobber report, upstreaming, `ACTIONS.md`); Sage becomes *Prove*, Junia *Plan* (the coordinating
+   conversation orchestrates), Gordon *Commercial & growth*. April, Aiko, Teddy stay dormant.
+2. **Routing:** Nova and Gordon default to sonnet; Vera runs once per slice at the Recette, always
+   opus; every Workflow worker gets an explicit `model` (default sonnet).
+3. **SOUL split** — `## Non-negotiables` + `## Boundaries` hub-owned, the rest app-owned; the payload
+   `SOUL.md` becomes a neutral seed.
+4. **Five `CLAUDE.md` sections merged into every app** (Agent Cohort · Model Routing · Landing &
+   conversation size · Communication Contract · Design port directive).
+5. **Safe sync** — dormant agents relocated to `.claude/_dormant/` in apps, app-enriched agents kept,
+   `--dry-run` clobber report, a CLOBBER file skipped and an app-authored section kept without `--force`; `npm run doctor` green and
+   `npm run doctor:fleet` showing no **blocking** finding — or each blocking repo skipped / declaring
+   `claudeAddon.ownedSections` — before any sync.
+6. **Mechanical Cadrage, telemetry no longer committed** — `/land` refuses a new intervention/task file
+   without `Journey:` + `Proof:`. Hooks no longer commit the ledger (318.a); the file becomes untracked
+   in a follow-up once every checkout runs the 318.a hooks. `npm run telemetry:report` aggregates it.
+7. **Cuts and fixes** — `sprint` + `ship-check` skills parked, the conversation-title convention
+   dropped, `/port` + `/relay` optional; LANDED ≠ DEPLOYED everywhere (records PR #43), one screen =
+   one land, dormant never delegable, 8 rituals, `agent-personas.ts` hand-maintained and parked.
+
+## What's New in v317.c
+
+1. **The landing gate classifies `.codex/agents/*.toml` as tooling.** Apps that mirror their agents for Codex were failing `/land` closed ("unclassifiable") on any crew change; `verify-gate.mjs` (hub + addon payload) now files `.codex/` with the tooling lane, and a new case (`e3` in `tests/verify-gate.lanes.test.mjs`) pins it. Apps get the fix at their next METHOD sync.
+2. **Domain owners & the business pack (app-level).** New `agents-method.md` section: an app may keep its business knowledge in `docs/project/business/` (owner table + the human-GO rule) and add domain-owner agents with four fixed sections (Charger d'abord · Règle de GO · Pièges · Frontières). They stay app-level — never in the hub cohort — and an app MAY re-use a demoted name such as Riley. Reference: bananaevents.
+
+## What's New in v317.b
+
+1. **One lineage for the landing gate.** The addon payload's `verify-gate.mjs` is now the superset of the three copies that had drifted (payload · main checkout · worktrees): `test:gate` before `test`, 64 MB spawn buffer (the `ENOBUFS` false red), 30 min per script, `src/**/*.json` in the app lane, `apphosting`/`scheduler.yaml` in tooling, quotepath-safe paths.
+2. **Worktrees run the main checkout's hooks.** `land.mjs` resolves the main checkout (`git rev-parse --git-common-dir`) and runs *its* `verify-gate.mjs`; a worktree copy re-execs the main copy. Worktrees created before 317.b: recopy the hooks once before `/land` (`method-core.md` → "Landing").
+
+## What's New in v317.a
+
+1. **Two-moment contract: Cadrage · Recette.** The operator is invited in at the two ends of the
+   work — **🎯 Cadrage** (one `AskUserQuestion` fixing Journey/Proof/out-of-scope before the first
+   edit) and **✅ Recette** (recette table + the four states `CODED`/`LANDED`/`DEPLOYED`/`PROVEN`,
+   never merged, before the Debrief) — never the middle, which stays autonomous outside the
+   conflict gate. Canonical: `method-core.md` → "The two-moment contract — Cadrage · Recette".
+2. **The CUJ is the unit, no gatekeeper agent.** `templates/CUJ-TEMPLATE.md` becomes a slim
+   ~35-line shape; `TASK-TEMPLATE.md` requires `Journey:`/`Proof:`; `method-doctor.mjs` (E9) fails
+   any task/intervention file created on or after 2026-09-06 missing them.
+3. **Telemetry off the Stop-commit loop.** `session-telemetry.mjs` appends on every `Stop`;
+   committing and pushing moved to `SessionEnd` (`--commit`), once per conversation.
+4. **`AGENTS.md` no longer imported into Claude's context.** `CLAUDE.md` drops `@AGENTS.md`;
+   `AGENTS.md` stays the non-Claude mirror, hand-kept in sync.
 
 ## What's New in v316.a
 
 1. **Thirteen job titles become 8 active mandates + 5 dormant.** `junia brian sage watson kasper vera nova gordon` are the active cohort; **Teddy, Aiko, April, Lucia, Iris** move to `.claude/_dormant/` — outside the folders Claude Code scans, so they are neither loaded nor delegable until deliberately revived. `_optional/` would have changed nothing: agent discovery is **recursive**, so a renamed subfolder stays discovered. **Gordon** absorbs the SEA/ads mandate.
 2. **Every agent carries an identity, not just a job description.** Each `.claude/agents/*.md` gains a `## Identity` section (**Voice** · **I refuse** · **I defer to** · **I hand off to**) and closes on a `## Non-negotiables` block that is byte-identical across the cohort — one place to change what no agent may do.
 3. **`.claude/agents/*.md` is the single source for personas.** The `SKILL.md` files become stubs that point at it, and `agent-personas.ts` is derived from it rather than maintained beside it. Its silent fallback to Brian for an unknown persona — the bug that let a typo run the wrong agent unnoticed — now **throws**.
-4. **CI claims purged from 12 documents.** GitHub Actions is billing-blocked account-wide **by choice**, so no doc may promise a pipeline that cannot run: the gate is the **local** verify (`.claude/hooks/verify-gate.mjs`), and merging to `main` is the deploy. Canonical: `method-core.md` → "Merge Gate".
+4. **CI claims purged from 12 documents.** GitHub Actions is billing-blocked account-wide **by choice**, so no doc may promise a pipeline that cannot run: the gate is the **local** verify (`.claude/hooks/verify-gate.mjs`), and merging to `main` was then called the deployment (corrected in 318.a: it is LANDED). Canonical: `method-core.md` → "Merge Gate".
 5. **Telemetry & installer fixes.** The session ledger records **models per scope** instead of collapsing them into one field, and the `guessSprint` regex no longer mis-parses sprint folder names. The addon installer's content-guarded section merge is generalised, so a re-run stops clobbering hand-edited sections.
 
 > **Renumbering note:** this lot was authored in-branch as 315.b–315.e while the trunk published its
@@ -143,32 +193,32 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## Agent Cohort (8 active mandates + 5 dormant)
+## Agent Cohort (10 active mandates + 3 dormant)
 
-Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; eight mandates hold that bar.
+Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; ten mandates hold that bar. **The coordinating conversation orchestrates them.**
 
 | Agent | Mandate |
 |---|---|
-| **Junia** | Orchestrate — planning & delegation |
+| **Junia** | Plan — request → plan/to-do (or a sprint) + its Cadrage |
 | **Brian** | Build — web development |
-| **Sage** | Prove — test architecture |
+| **Sage** | Prove — the observed proof of a journey, then its regression test |
 | **Watson** | Repair — reliability & ops |
 | **Kasper** | Guard — security |
-| **Vera** | Judge — review & validation (no commits) |
+| **Vera** | Judge — one review per slice, at the Recette (no commits) |
 | **Nova** | Draw — design system + tokens |
-| **Gordon** | Sell — sales, marketing & growth |
+| **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, ads |
+| **Iris** | Study & deliverables — client-grade studies; owns anonymisation/GDPR |
+| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` |
 
-#### Dormant (delegable on explicit request)
+#### Dormant (not loaded, not delegable)
 
-Parked under `.claude/_dormant/`: still documented and still invocable by name, simply out of the routing tables and the default rotation.
+Parked under `.claude/_dormant/`, outside the directories Claude Code scans: documented, never loaded. Bringing one back is a `git mv` plus a release.
 
-| Agent | Was | Why dormant |
+| Agent | Was | Covered by |
 |---|---|---|
-| **Teddy** | Mobile Development | Mobile is a mode, not a person — no mobile app in flight. |
-| **Aiko** | AI Integration | Wiring AI is building; that is Brian's mandate. |
-| **April** | Vision, Copy, CUJ | Her CUJ Gate belonged to the sprint regime, now retired. |
-| **Lucia** | Method Curator | METHOD curation happens in conversation, not by delegation. |
-| **Iris** | Research & Analysis | A generic `Agent()` already does exactly this. |
+| **Teddy** | Mobile Development | Brian |
+| **Aiko** | AI Integration | Brian |
+| **April** | Vision, Copy, CUJ | Junia's Cadrage draft + Gordon |
 
 > **Advisory hat (not executable):** Riley (API & multi-agent automation) is wielded in a
 > Desktop chat — no sub-agent or Skill. See `agents-method.md`.
@@ -194,9 +244,9 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 | **Native sub-agents** (default) | `.claude/agents/*.md` delegated inside one Claude Code session | Sequential |
 | **Agent Teams** | Sub-agents fanned out across git worktrees | ✅ true parallel |
 | **Cowork** | Desktop's local Code tab (same `.claude/agents` + `.claude/commands`) | Sequential |
-| **Swanifly** | `Swanifly/web/lib/engine/` spawns the `claude` CLI per persona for unattended runs | ✅ orchestrated batch |
+| **Swanifly** *(parked)* | `Swanifly/web/lib/engine/` spawned the `claude` CLI per persona for unattended runs | ✅ orchestrated batch |
 
-**Flow (Junia orchestrates):** the chain is defined once, in `agents-method.md` → "Orchestration chain". Mechanically enforced: the Bash blocklist (`.claude/settings.json` `permissions.deny`) and `vera`→review-only (she holds no write tool). **Prompt-enforced only:** `sage`→tests-only and `iris`→`docs/analysis/` — their frontmatter grants `Write, Edit` with no path restriction. See `.claude/agents/README.md`.
+**Flow (the coordinating conversation orchestrates):** the chain is defined once, in `agents-method.md` → "Orchestration chain". Mechanically enforced: the Bash blocklist (`.claude/settings.json` `permissions.deny`) and `vera`→review-only (she holds no write tool). **Prompt-enforced only:** `sage`→tests + proof records only and `iris`→`docs/analysis/` + the named deliverable path — their frontmatter grants `Write, Edit` with no path restriction. See `.claude/agents/README.md`.
 
 **See:** `agents-engineering-method.md`, `.claude/agents/README.md`.
 
@@ -204,11 +254,12 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 316.a  
-**Previous:** 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 318.a  
+**Previous:** 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
-**Cohort refactor (8 active + 5 dormant)** ships as the single release **316.a** — see
-`versioning.md` for the renumbering note and the full changelog.
+**The cohort fitted to practice (10 + 3), SOUL split, five synced `CLAUDE.md` sections, a sync that
+cannot clobber, mechanical Cadrage and a telemetry ledger no hook commits** ship as **318.a** — see `versioning.md` for
+the full changelog.
 
 **See:** `versioning.md` for full changelog.
 

@@ -1,7 +1,7 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 315.a  
+**Version:** 318.a  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -11,69 +11,74 @@
 
 ### By Agent
 
-> Cohort = **8 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
-> **5 dormant** agent files listed below the table. An agent earns a name when its mandate is one
-> you would otherwise have to retype.
-> **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row.
+> Cohort = **10 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
+> **3 dormant** agent files listed below the table — not loaded, not delegable. An agent earns a
+> name when its mandate is one you would otherwise have to retype.
+> **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row. An app
+> MAY still re-use a demoted name as a repo-specific domain owner, if its business pack declares it
+> (`agents-method.md` → "Domain owners & the business pack (app-level)").
 
-| Agent   | Mandate     | Sub-agent              | Entry Files                                                       |
-|---------|-------------|------------------------|-------------------------------------------------------------------|
-| Junia   | orchestrate | `junia`                | `agents-method.md` → `sprints-method.md` → `project/` (all)      |
-| Brian   | build       | `brian`                | `method-core.md` → `project/DESIGN.md` → sprint task file         |
-| Sage    | prove       | `sage`                 | `tests-method.md` → `project/ROADMAP.*.md` → sprint task file     |
-| Watson  | repair      | `watson`               | `method-core.md` → `tests-method.md` → `project/STATE.md`        |
-| Kasper  | guard       | `kasper`               | `code-rules.md` → `project/` → security configs                  |
-| Vera    | judge       | `vera` (read-only)     | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task/sprint file |
-| Nova    | draw        | `nova`                 | `design-method.md` → `project/DESIGN.md`                          |
-| Gordon  | sell        | `gordon`               | `project/VISION.md` → `project/ROADMAP.*.md` → analytics          |
+| Agent   | Mandate     | Sub-agent              | Default model | Entry Files                                                       |
+|---------|-------------|------------------------|---------------|-------------------------------------------------------------------|
+| Junia   | plan        | `junia`                | opus          | `sprints-method.md` → `project/` (STATE, FOCUS, journeys)         |
+| Brian   | build       | `brian`                | sonnet        | `method-core.md` → `project/DESIGN.md` → task file                |
+| Sage    | prove       | `sage`                 | sonnet        | `tests-method.md` → task / intervention file → `journeys/{cuj}.md` |
+| Watson  | repair      | `watson`               | sonnet        | `method-core.md` → `tests-method.md` → `project/STATE.md`        |
+| Kasper  | guard       | `kasper`               | opus          | `method-core.md` (Security Baseline) → `project/SCHEMA.md` → the diff |
+| Vera    | judge       | `vera` (read-only)     | opus          | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task file |
+| Nova    | draw        | `nova`                 | sonnet        | `design-method.md` → `project/DESIGN.md`                          |
+| Gordon  | commercial & growth | `gordon`       | sonnet        | `agents-method.md` → `project/VISION.md` → `docs/growth/`         |
+| Iris    | study & deliverables | `iris` (read-only on code) | sonnet | `method-core-lite.md` → `project/STATE.md` → the object of study |
+| Lucia   | METHOD release | `lucia`             | opus          | `versioning.md` → `METHOD.md` → the files the change touches      |
 
-#### Dormant (delegable on explicit request)
+#### Dormant (not loaded, not delegable)
 
-Out of the routing tables and the default rotation. Agent files parked under `.claude/_dormant/`;
-their entry files stand.
+Agent files parked under `.claude/_dormant/`, outside the scanned agent root. Bringing one back is
+a `git mv` and a release — the operator's call.
 
-| Agent  | Sub-agent               | Entry Files                                                       | Why dormant |
-|--------|-------------------------|-------------------------------------------------------------------|-------------|
-| Teddy  | `teddy`                 | `method-core.md` → `project/DESIGN.md` → `project/mobile-*.md` → sprint task file | mobile is a mode, not a person — no mobile app in flight |
-| Aiko   | `aiko`                  | `ai-infra-method.md` → `project/AI-INFRA.md` → sprint task file   | wiring AI is building — Brian's mandate |
-| April  | `april`                 | `agents-method.md` → `project/VISION.md`                          | her CUJ Gate belonged to the sprint regime, now retired |
-| Lucia  | `lucia`                 | ALL `method/` files                                               | METHOD curation happens in conversation |
-| Iris   | `iris` (read-only on code) | `method-core-lite.md` → `project/STATE.md` → `docs/analysis/` | a generic `Agent()` already does exactly this |
+| Agent  | Was | Covered by |
+|--------|-----|------------|
+| Teddy  | mobile development | Brian — mobile is a mode, not a person; no mobile app in flight |
+| Aiko   | AI integration | Brian — wiring AI is building |
+| April  | vision, copy, CUJ gate | Junia's Cadrage draft (vision) + Gordon (copy) |
 
 ### By Task Type
 
 | Task         | Entry Files                                                |
 |--------------|------------------------------------------------------------|
-| Build        | `method-core.md` → `project/DESIGN.md` → sprint task       |
+| Build        | `method-core.md` → `project/DESIGN.md` → task              |
 | Debug        | `method-core.md` → `tests-method.md` → logs/status         |
 | Design       | `design-method.md` → `project/DESIGN.md`                   |
 | Plan         | `sprints-method.md` → `project/ROADMAP.*.md` → `journeys/` |
 | Map structure | `project/STRUCTURE.md` → `project/VISION.md`              |
-| Test         | `tests-method.md` → sprint task                            |
-| AI Feature   | `ai-infra-method.md` → `project/AI-INFRA.md` → sprint task |
+| Prove        | `tests-method.md` → task / intervention file → `journeys/{cuj}.md` |
+| Study / deliverable | `method-core-lite.md` → `project/STATE.md` → the object of study |
+| AI Feature   | `ai-infra-method.md` → `project/AI-INFRA.md` → task        |
 | i18n         | `method-core.md` (i18n section) → `locales/`               |
-| Review       | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task/sprint |
+| Review       | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task |
+| METHOD release | `versioning.md` → `METHOD.md` → the files the change touches |
 | Port design  | `design-method.md` → `docs/porting/PORTING-PLAYBOOK.md` → PORT-MAP → screen |
 
 ### By Slash-Command (Claude Code rituals)
 
 | Command         | Driver | What it does | Delegates to |
 |-----------------|--------|--------------|--------------|
-| `/plan-sprint`  | Junia  | Create sprint folder + task files | — |
-| `/review`       | Vera   | Run the Review Gate (read-only) | — |
-| `/intervention` | Junia  | Open a METHOD intervention RFC (was Lucia — dormant; curation happens in conversation) | — |
-| `/port`         | Nova/Brian | Port one screen from the app's living `proto/` directive to code | `brian` |
-| `/relay`        | any    | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
-| `/land`         | any    | Commit + local verify gate + merge to `main` — **the default close** | — |
-| `/ship`         | any    | Commit + push + open/update the PR — **the exception path** | — |
+| `/land`         | the coordinator | Commit + local verify gate + merge to the trunk — **the default close** (LANDED, nothing more) | — |
+| `/ship`         | the coordinator | Commit + push + open/update the PR — **the exception path** | — |
+| `/intervention` | the coordinator | Open and run a targeted slice: Cadrage → build → Recette → land | the lane owner |
+| `/plan-sprint`  | the coordinator | Cadrage with the operator, then a sprint folder + task files (exception mode) | `junia` |
+| `/review`       | the coordinator | Run the slice's one Review Gate (read-only, opus) | `vera` |
+| `/brief`        | the coordinator | Pick up a fresh conversation from git, PRs and memory (Flight Deck) | — |
+| `/port` *(optional)* | Nova/Brian | Port one screen from the app's living `proto/` directive — one screen = one land | `brian` |
+| `/relay` *(optional)* | the coordinator | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
 
-> 7 rituals, all in `.claude/commands/`. The orchestration chain Junia drives is defined **once**,
-> in `agents-method.md` → "Orchestration chain" — reference it, never restate it here.
-> A slice closes on **`/land`** (`main` is the deploy; the gate is local — there is no CI on this
-> account); `/ship` is reserved for the exception list in `method-core.md` → "Landing (the default)
-> & the exception list".
-> Only the sprint conversation runs `/relay` — one `## Resume here` per app
-> (`sprints-method.md` → "Conversation Naming").
+> Rituals (8), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
+> **once**, in `agents-method.md` → "Orchestration chain" — reference it, never restate it here.
+> A slice closes on **`/land`**: the trunk is then **LANDED** — `DEPLOYED` and `PROVEN` need their
+> own evidence (a served revision, an observed run); the gate is local, there is no CI on this
+> account. `/ship` is reserved for the exception list in `method-core.md` → "Landing (the default)
+> & the exception list". Only one conversation per app runs `/relay` (one `## Resume here` per app,
+> `sprints-method.md` → "Sessions & branches").
 
 ---
 
@@ -96,7 +101,7 @@ carries the decision, not the raw material.
 | Form | When | Cost |
 |---|---|---|
 | **Sub-agent** (`Agent`) | **default** — a bounded task that returns a conclusion, with no round-trip through the operator | fresh context; the coordinator's stays clean |
-| **Workflow** | ≥ 3 near-identical items, or work that earns an adversarial verification pass | parallel, deterministic |
+| **Workflow** | ≥ 3 near-identical items, or work that earns an adversarial verification pass — **every worker gets an explicit `model`** (default sonnet) | parallel, deterministic |
 | **Parallel sessions** | only on an **observed** trigger, never a predicted one: 3rd build→test→fix loop on the same task · a different repo · a deploy loop with the operator in it · two tasks writing code at once (→ one branch + worktree each) | one human click |
 
 Nothing else justifies a second window — not size, not an estimate, not "it looks big".
@@ -105,26 +110,40 @@ Nothing else justifies a second window — not size, not an estimate, not "it lo
 
 | Tier | Work | Claude | Other tools (Cursor / Codex / …) |
 |---|---|---|---|
-| **T1 — Judge / Orchestrator** | plan, arbitrate, review gate, security, architecture, METHOD curation | Fable / Opus | strongest reasoning model available (GPT-5.x-class, Opus-class) |
-| **T2 — Builder** | implement, port, write tests, debug/ops, docs needing judgment | Sonnet | mid-tier coding model |
+| **T1 — Judge / Orchestrator** | plan, arbitrate, review gate, security, architecture, METHOD release, ranked recommendations | Fable / Opus | strongest reasoning model available (GPT-5.x-class, Opus-class) |
+| **T2 — Builder** | implement, port, design code, prove/write tests, debug/ops, copy, studies, docs needing judgment | Sonnet | mid-tier coding model |
 | **T3 — Mechanical** | scaffolding, renames, i18n extraction, bulk edits, mirror/doc sync, formatting | Haiku | cheapest competent model |
 
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
-- **T1 (opus):** `junia`, `vera`, `kasper`, `nova`, `gordon`
-- **T2 (sonnet):** `brian`, `sage`, `watson`
+- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`
+- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
-- **Dormant agents** keep their tiers if you call one explicitly: T1 `april`, `lucia`, `aiko`, `iris` · T2 `teddy`
+- **Opus by override (318.a):** `nova` for a deep UX-architecture study · `gordon` for a pricing or
+  positioning recommendation · `iris` for a ranked recommendation the operator will act on
+- **Dormant agents** (`teddy`, `aiko`, `april`) are not loaded, so they have no tier to route to.
+
+**Why 318.a moved Nova and Gordon to sonnet.** Over 120 days opus produced **61.4%** of output tokens
+and haiku **0.4%**; delegated work ran 58% on opus. Design code and copy are T2 work by this table's
+own definition, and Vera ran once per task (172 opus passes). Defaults now match the tier table;
+judgement stays one override away.
 
 ### Delegation-time overrides (the orchestrator's job)
 
-1. **At planning**, Junia tags each task file with its tier (`Tier: T1|T2|T3`) next to the owner.
+1. **At planning**, Junia (or the coordinator, for a plan written inline) tags each item with its
+   tier (`Tier: T1|T2|T3`) next to the owner.
 2. **At delegation**, pass a `model` override when the task's tier differs from the sub-agent's
    default — e.g. `brian` + `model: haiku` for pure scaffolding; `sage` + `model: opus` for a
    hard test-architecture call. No override needed when tier and default already match.
 3. **Escalation rule:** at most **one retry at the same tier**; a second failure escalates one
    tier. Never burn three cheap attempts — a failed T3 loop costs more than starting at T2.
-4. **Quality floors:** the Vera review gate and Kasper security passes never run below T1.
+4. **Quality floors:** the Vera review gate and Kasper security passes never run below T1. Vera
+   runs **once per slice, at the Recette** — not after every task.
+5. **Workflow workers** (the `Workflow` tool) get an **explicit `model` per worker — default
+   `sonnet`**; `haiku` for purely mechanical items (renames, extraction, formatting), `opus` only for
+   a verification or judgement pass. A worker with no `model` inherits the coordinator's (usually
+   opus) — in practice the model was unrecorded for half of 6,180 workflow workers, which is how
+   mechanical fan-out ended up billed at T1.
 
 ### Environment awareness (know your surface before routing)
 
@@ -151,8 +170,9 @@ available onto the tiers — never assume the Claude lineup exists everywhere:
 
 ### What it captures (Claude Code, on by default since v312.a)
 
-A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to
-`docs/project/telemetry/sessions.jsonl` in the current repo:
+A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per invocation to the
+repo's **local** ledger, `docs/project/telemetry/sessions.jsonl` — gitignored. Hooks no longer commit
+the ledger (318.a); the file becomes untracked in a follow-up once every checkout runs the 318.a hooks.
 
 - **Tokens** — input / output / cache-creation / cache-read, split into `mainLoop` (the top-level
   conversation) and `subAgents` (every delegated sub-agent and Workflow-tool agent spawned during
@@ -167,17 +187,17 @@ A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per
   for routing.
 - **Shape** — user-message count, assistant API-call count, start/end timestamps, duration,
   git branch, app (repo folder name).
-- **No prompt text, ever.** The row is committed and pushed automatically, so operator wording
-  must never enter it. There is no `topic` field.
+- **No prompt text, ever.** The ledger is local, but aggregators read it and reports quote it, so
+  operator wording must never enter it. There is no `topic` field.
 - **Best-effort hint** — `sprint`, a regex match on sprint paths seen in the transcript. It accepts
-  `docs/sprints/{NNN}` and `docs/project/sprints/{YYYY}/week-{N}/{NNN}` (the layout this fleet
-  actually uses), skips the year/week segments, and requires a non-digit after the 3 digits so a
-  year can't be captured. Can be `null`. *Before the 2026-09-01 fix it matched 3 digits after
-  `docs/sprints/`, so `…/2025/…` logged sprint `"202"` — 219 of the hub's 227 rows say `"202"`.
-  Those rows are wrong and stay wrong: the ledger is append-only and history is never rewritten.*
-- **`outcome` / `efficiencyNote`** — always `null` from the hook. These are **manual, optional**
-  fields — the closing agent or Vera can backfill them (e.g. during a Review Gate or a
-  periodic audit) when there's a real verdict worth recording. Don't force every row to have one.
+  `docs/sprints/{NNN}` and `docs/project/sprints/{YYYY}/week-{N}/{NNN}`, skips the year/week
+  segments, and requires a non-digit after the 3 digits so a year can't be captured. Can be `null`.
+  *Before the 2026-09-01 fix it matched 3 digits after `docs/sprints/`, so `…/2025/…` logged sprint
+  `"202"` — those rows are wrong and stay wrong: the ledger is append-only and history is never
+  rewritten.*
+- **`outcome` / `efficiencyNote`** — always `null` from the hook. **Manual, optional** fields; in
+  120 days of practice they were filled **0%** of the time, so do not plan on them — the accepted
+  outcome lives in the Recette (the intervention or task file), not in the ledger.
 - **No dollar cost.** Pricing changes and varies by plan — the ledger stores exact raw token
   counts only; apply your current rate card when you actually need a $ figure.
 
@@ -191,33 +211,30 @@ A **Stop hook** (`.claude/hooks/session-telemetry.mjs`) appends one JSON row per
 - **Fails open.** Any error (missing file, malformed JSON, mid-write truncation) is swallowed
   silently — a telemetry bug must never block Claude from stopping.
 - **Silent on success** — no `systemMessage`, to avoid noise on every single turn.
-- **It commits and pushes its own row** (since 2026-08-01). Because it fires every turn, the
-  ledger otherwise leaves the working tree dirty after *every* turn — including turns that touched
-  no file at all. The git-check Stop hook then asks the agent to commit and push, and since a
-  merged PR cannot track new work, the agent opens a **fresh PR per turn**. That is not
-  hypothetical: three pull requests were merged whose entire content was hook output before this
-  was added. The ledger cleans up after itself.
-  - **Pathspec commit only** — `git commit -- docs/project/telemetry/sessions.jsonl`, never
-    `git add -A`. Sweeping the agent's in-progress work into a telemetry commit would be far
-    worse than the noise it removes; the agent's staged index is left untouched.
-  - **Never on `main`/`master` or a detached HEAD**, same rule as `ship-push.sh`.
-  - **Committer pinned to `noreply@anthropic.com`**, or GitHub renders the commit *Unverified*
-    and the git-check hook correctly objects.
-  - **Never force-pushes, never auto-rebases.** A rejected push leaves the row committed locally
-    and the next turn retries — an unpushed commit is a real state worth reporting.
+- **Hooks no longer commit the ledger (318.a).** From 2026-08-01 the hook committed and pushed its row
+  (every `Stop`, then once per `SessionEnd` from 317.a). Over 120 days that was **364
+  `chore(telemetry)` commits — 6.5% of all commits** — for a ledger nobody aggregated. The ledger is
+  now gitignored and the `--commit` step is gone (the flag is still accepted and ignored): the hook
+  only appends. The file becomes untracked in a follow-up once every checkout runs the 318.a hooks —
+  until then a repo that tracked it keeps tracking it, and rows already committed stay in history.
+
+### Reading it — `npm run telemetry:report`
+
+`scripts/telemetry-aggregate.mjs` (in the hub) reads the local ledgers of the hub and of the sibling
+repos on this machine, keeps the **newest row per `sessionId`** (never sums cumulative snapshots),
+and reports tokens and models per scope (main loop vs sub-agents), per repo and per month. A repo
+with no ledger is reported as missing, never extrapolated.
 
 ### Where it lives / how it ships
 
-- **Hub-owned copy:** `.claude/hooks/session-telemetry.mjs` + wired in `.claude/settings.json`
-  → `hooks.Stop`.
+- **Hub-owned copy:** `.claude/hooks/session-telemetry.mjs`, wired in `.claude/settings.json` →
+  `hooks.Stop` (append only).
 - **Fleet distribution:** mirrored at
   `docs/METHOD/tools/swanifly-claude-addon/payload/hooks/session-telemetry.mjs`; the installer
-  (`install.mjs`) copies it into every app and merges the `Stop` hook entry into the app's own
-  `.claude/settings.json` idempotently (preserves any hook the app already has, incl. its own
-  custom `Stop` hooks — appends alongside, never replaces).
-- **Per-repo, not centralized.** Each app accumulates its own `docs/project/telemetry/sessions.jsonl`.
-  There is no fleet-wide rollup (yet) — if you want one, delegate a generic `Agent()` to walk the
-  fleet and aggregate.
+  (`install.mjs`) copies it into every app and merges its hook entry into the app's own
+  `.claude/settings.json` idempotently (preserves any hook the app already has — appends alongside,
+  never replaces).
+- **Per-repo and local.** Each checkout accumulates its own ledger; the aggregator is the rollup.
 
 ### Cross-tool status (Codex, Cursor)
 
@@ -229,7 +246,7 @@ Not wired — no automated equivalent exists today:
   tracking" API) — per-conversation export isn't natively available; treat as a known gap, not
   a bug, until Cursor ships it or the team builds a scraper against the Enterprise API.
 - If you're working in Codex or Cursor, self-report the same fields manually in the task report
-  (tokens from `/usage` or the dashboard, topic/sprint/outcome by hand) rather than leaving the
+  (tokens from `/usage` or the dashboard, sprint/outcome by hand) rather than leaving the
   ledger silently thinner for that tool's work.
 
 ---
@@ -255,8 +272,9 @@ Compression applies to the **conversation**, never to the **artifact**.
 Two edge cases the table doesn't settle on its own:
 
 - **A delegated agent's final report is a handoff, not narration** — right column. It reads like
-  build chatter, but the orchestrator has no other view of that work; `junia → brian → junia` is
-  the default execution path, so a compressed sub-agent report loses the sprint's actual state.
+  build chatter, but the orchestrator has no other view of that work; `coordinator → brian →
+  coordinator` is the default execution path, so a compressed sub-agent report loses the slice's
+  actual state.
 - **Commit subjects stay conventional-terse** (`type(scope): summary`); commit **bodies** are an
   artifact and follow the right column.
 
@@ -296,12 +314,14 @@ short sessions the saving is thin.
 
 ## Review Gate
 
-After every task, treat `✅` as **executor done / ready for review** and `☑️` as **validated**.
+Treat `✅` as **executor done / ready for review** and `☑️` as **validated**. Vera reviews **once
+per slice, at the Recette** (always opus), covering every task in the slice — not after each task.
 
 - **Executor:** `⬜` → `✅`
-- **Vera (high-model Analyzer):** `✅` → `☑️` (pass) OR `⚠️` (fail with must-fix + follow-ups)
+- **Vera (high-model Analyzer), once per slice:** every `✅` in the slice → `☑️` (pass) OR `⚠️` (fail
+  with must-fix + follow-ups)
 
-Use `docs/METHOD/templates/REVIEW-TEMPLATE.md` for task and sprint reviews.
+Use `docs/METHOD/templates/REVIEW-TEMPLATE.md` for slice and sprint reviews.
 
 ---
 
@@ -458,11 +478,11 @@ Task: Fix caching issue, update 010-b report with fix details.
 
 ---
 
-#### Step 6: Back to Junia (Consolidation)
+#### Step 6: Back to the coordinator (Consolidation)
 
 **Prompt to LLM:**
 ```
-[Back to Junia]
+[Back to the coordinator]
 
 Context to load:
 - All task files from sprint 010
@@ -526,11 +546,11 @@ Output: Append review to sprint folder as `010-z ☑️ Vera - sprint review.md`
 
 ---
 
-#### Step 8: Back to Junia (Close Sprint)
+#### Step 8: Back to the coordinator (Close Sprint)
 
 **Prompt to LLM:**
 ```
-[Back to Junia]
+[Back to the coordinator]
 
 Vera has passed the Review Gate with minor follow-ups.
 
@@ -540,7 +560,7 @@ Task: Close sprint 010.
 ```
 
 **LLM Output:**
-- Commits sprint artifacts
+- Commits sprint artifacts and lands them (`npm run land`) — LANDED, not deployed
 - Closes sprint 010
 - Adds follow-up to next sprint backlog
 

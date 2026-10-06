@@ -2,24 +2,28 @@
 // .claude/hooks/session-telemetry.mjs — Stop hook.
 // Appends one JSONL row per invocation summarizing this Claude Code session's cost/shape:
 // tokens (main loop + delegated sub-agents/workflows, deduped per API call), message counts,
-// duration, model(s), best-effort sprint. It deliberately records NO prompt text: the row is
-// committed and pushed automatically, so operator wording must never enter it. Feeds
-// docs/project/telemetry/sessions.jsonl so
-// Iris (or a human) can mine it later for METHOD efficiency signal — see routing-method.md ->
-// "Session Telemetry Ledger". Fails open on any error: never blocks Claude from stopping.
+// duration, model(s), best-effort sprint. It deliberately records NO prompt text: operator
+// wording must never enter the ledger, whatever happens to the file later. Feeds
+// docs/project/telemetry/sessions.jsonl so Iris (or a human) can mine it later for METHOD
+// efficiency signal — see routing-method.md -> "Session Telemetry Ledger". Fails open on any
+// error: never blocks Claude from stopping.
+//
+// v318.a — this hook no longer commits the ledger. The file is gitignored (and becomes untracked in a
+// follow-up, once every checkout runs the 318.a hooks) and this hook never touches git: it
+// used to cost one `chore(telemetry)` commit per conversation (hundreds fleet-wide) for a ledger
+// whose outcome fields stay empty. Read it across the fleet with `npm run telemetry:report`
+// (scripts/telemetry-aggregate.mjs). From a linked git worktree the row goes to the MAIN
+// checkout's ledger — a gitignored file inside a worktree would be lost with the worktree.
+// `--commit` is still accepted (fleet settings.json files wired it on SessionEnd) and ignored.
 //
 // Stop fires after every assistant turn, not just at the "true" end of a conversation, so this
 // runs many times per session. Each run re-parses the whole transcript and writes a fresh,
 // cumulative snapshot — appended, never rewritten in place (append-only is what makes this safe
 // under concurrent sessions). Consumers should dedupe by sessionId and keep the newest row.
 //
-// Because it runs every turn, it also COMMITS AND PUSHES its own row (see
-// commitAndPushLedger at the bottom) — otherwise the ledger leaves the working tree dirty after
-// every turn, the git-check Stop hook asks the agent to commit it, and the agent opens a pull
-// request per turn. That happened three times before this was added.
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { join, dirname, basename } from 'node:path';
+import { join, dirname, basename, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 function readStdin() {
@@ -221,62 +225,29 @@ function main() {
     efficiencyNote: null, // optional — same
   };
 
-  const outDir = join(projectDir, 'docs', 'project', 'telemetry');
+  const outDir = join(ledgerRoot(projectDir), 'docs', 'project', 'telemetry');
   const outFile = join(outDir, 'sessions.jsonl');
   mkdirSync(outDir, { recursive: true });
   appendFileSync(outFile, JSON.stringify(row) + '\n', 'utf8');
-  commitAndPushLedger(projectDir, outFile);
 }
 
 /**
- * Commit and push THIS ROW, and nothing else.
- *
- * Why the hook does its own git: Stop fires after every assistant turn, so this
- * file goes dirty every turn — including turns that touched no file at all. The
- * companion git-check Stop hook then reports an uncommitted change and asks the
- * agent to commit and push, and because a merged PR cannot track new work, the
- * agent opens a fresh PR. The observed result was three merged pull requests
- * whose entire content was hook output. The ledger has to clean up after itself.
- *
- * SAFETY, in order of how badly each would hurt:
- *   1. A PATHSPEC commit — `git commit -- <sessions.jsonl>`. NEVER `git add -A`.
- *      Sweeping the agent's in-progress work into a telemetry commit would be
- *      far worse than the noise this removes. A pathspec commit also leaves the
- *      agent's staged index untouched.
- *   2. Never on main/master or a detached HEAD — same rule ship-push.sh follows.
- *   3. Committer identity pinned to noreply@anthropic.com, or GitHub renders the
- *      commit "Unverified" and the git-check hook (correctly) objects.
- *   4. Never force-pushes. A rejected push leaves the row committed locally; the
- *      next turn retries, and an unpushed commit is a real state worth reporting.
- *   5. Fails open at every step. Telemetry must never block Claude from stopping.
+ * Where the ledger lives: the MAIN checkout of this repository. A linked worktree has its own
+ * working tree, and the ledger is gitignored (v318.a) — a row written inside the worktree would
+ * vanish with it. `--git-common-dir` is the shared `.git` of the main checkout (`.git` itself
+ * when this IS the main checkout); its parent is the main checkout. Anything unexpected (not a
+ * repo, a bare layout, git missing) falls back to the project dir.
  */
-function commitAndPushLedger(projectDir, outFile) {
-  const git = (args) =>
-    spawnSync('git', args, { cwd: projectDir, encoding: 'utf8', timeout: 10_000 });
-
-  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout?.trim();
-  if (!branch || ['main', 'master', 'HEAD'].includes(branch)) return;
-  if (!git(['remote']).stdout?.trim()) return;
-
-  // Nothing staged or unstaged for this path ⇒ the row is already committed.
-  const dirty = git(['status', '--porcelain', '--', outFile]).stdout?.trim();
-  if (!dirty) return;
-
-  const commit = git([
-    '-c', 'user.email=noreply@anthropic.com',
-    '-c', 'user.name=Claude',
-    'commit',
-    '-m', 'chore(telemetry): append session row',
-    '-m', 'Written by the session-telemetry Stop hook. Ledger data only — this\ncommit touches docs/project/telemetry/sessions.jsonl and nothing else.',
-    '--', outFile,
-  ]);
-  if (commit.status !== 0) return;
-
-  // Push only what is already committed, exactly like ship-push.sh. A failure
-  // here is deliberately silent and unretried: no force, no auto-rebase.
-  const hasUpstream =
-    git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']).status === 0;
-  git(hasUpstream ? ['push'] : ['push', '-u', 'origin', branch]);
+function ledgerRoot(projectDir) {
+  try {
+    const r = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: projectDir, encoding: 'utf8', timeout: 5_000 });
+    const common = r.status === 0 ? (r.stdout ?? '').trim() : '';
+    if (!common) return projectDir;
+    const abs = resolve(projectDir, common);
+    return basename(abs) === '.git' ? dirname(abs) : projectDir;
+  } catch {
+    return projectDir;
+  }
 }
 
 try {

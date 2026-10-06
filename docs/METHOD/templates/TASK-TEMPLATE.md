@@ -10,6 +10,8 @@
 - **Prerequisites**: <none | list task ids that must be ☑️>
 - **Status**: ⬜
 - **Created**: YYYY-MM-DD
+- **Journey:** docs/project/journeys/{cuj}.md
+- **Proof:** <run observé · environnement · données · cas d'échec>
 
 ---
 
@@ -45,14 +47,13 @@
 
 **Before starting, verify:**
 
-- [ ] CUJ Precision Gate validé pour ce CUJ (`journeys/{cuj}.md` → section Precision Gate ✅ + validation humaine)
+- [ ] Cadrage done — Journey + Proof filled (`method-core.md` → "The two-moment contract — Cadrage · Recette")
 - [ ] Acceptance criteria are clear (no >5% uncertainty)
 - [ ] Required project/ docs are current (VISION, DESIGN, etc.)
 - [ ] Previous task in sequence is `☑️` validated (if prerequisites exist)
 - [ ] Entry files loaded
 
-**If any fails:** Stop. Update docs or clarify with Junia before proceeding.  
-**CUJ Precision Gate absent ?** → Déclencher April en mode CUJ Definition Session.
+**If any fails:** Stop. Update docs or clarify with Junia before proceeding.
 
 ---
 

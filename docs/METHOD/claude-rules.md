@@ -228,7 +228,7 @@ npm run sync-method:all:dry   # preview drift; run sync-method:all to apply
 
 ## When to Ask for Clarification
 
-**If uncertainty > 5%** (Managers only: April, Junia, Nova, Sage, Lucia):
+**If uncertainty > 5%** (planners only: Junia, Nova, Lucia):
 1. Batch concise questions (2-5)
 2. Ask user
 3. Update docs FIRST (VISION, ROADMAP, DESIGN, AI-INFRA)

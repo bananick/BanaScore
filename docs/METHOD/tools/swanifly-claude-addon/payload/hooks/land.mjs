@@ -5,7 +5,8 @@
  *
  * The METHOD default is **land, not ship**: a pull request is the *exception* —
  * something a human must actually look at — never the normal path. Reaching
- * `main` is the end of a conversation, and `main` is the deploy.
+ * the trunk is the end of a conversation. `main` is LANDED; deploy is a separate step with its
+ * own evidence (landing deploys nothing — DEPLOYED and PROVEN are claimed on their own proof).
  *
  * Order of operations. Any step failing leaves the work on the branch, intact:
  *   1. refuse on trunk / detached HEAD / dirty tree / nothing ahead of origin/main
@@ -18,6 +19,12 @@
  *
  * Never: force-push · `gh pr merge --admin` · `git rebase` · check out the trunk
  * (worktree-safe by construction — the trunk is never checked out anywhere).
+ *
+ * Worktrees run the MAIN checkout's hooks. `.claude/` is gitignored, so each git worktree
+ * carries its own frozen copy of these files while `install.mjs` only refreshes the main
+ * checkout's — a worktree copy silently re-trips every gate bug already fixed at the root.
+ * So this file re-execs `<main>/.claude/hooks/land.mjs` when it is not that file, and the
+ * gate it runs is `<main>/.claude/hooks/verify-gate.mjs` (`git rev-parse --git-common-dir`).
  *
  * Usage:
  *   node .claude/hooks/land.mjs                  # land this branch          (`npm run land`)
@@ -32,8 +39,9 @@
  * that documents these markers does not trip them.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const argv = process.argv.slice(2);
 const has = (n) => argv.includes(`--${n}`);
@@ -45,7 +53,14 @@ const SWEEP = has('sweep');
 const APPLY = has('apply');
 const AS_JSON = has('json');
 const LANE = String(flag('lane', 'all'));
-const TRUNK = String(flag('trunk', 'main'));
+// The trunk is the remote's default branch (`refs/remotes/origin/HEAD` → strip `origin/`), `main`
+// when that ref is not set (a repo cloned without it). `--trunk <name>` always wins.
+function defaultTrunk() {
+  const r = spawnSync('git', ['symbolic-ref', '--quiet', 'refs/remotes/origin/HEAD'], { encoding: 'utf8', timeout: 30_000 });
+  const m = r.status === 0 ? /^refs\/remotes\/origin\/(.+)$/.exec((r.stdout ?? '').trim()) : null;
+  return m ? m[1] : 'main';
+}
+const TRUNK = String(flag('trunk', defaultTrunk()));
 const MAX_FILES = Number(flag('max-files', 60));
 const MAX_DELETIONS = Number(flag('max-deletions', 2000));
 
@@ -58,6 +73,29 @@ const gh = (args) => spawnSync('gh', args, { encoding: 'utf8', timeout: 120_000 
 const REPO = out(['rev-parse', '--show-toplevel']);
 if (!REPO) done({ landed: false, reasons: ['not a git repository'] });
 process.chdir(REPO);
+
+// ── which copy of the hooks runs (worktrees) ────────────────────────────────
+// `--git-common-dir` is the shared `.git` of the main checkout (`.git` itself when this IS
+// the main checkout); its parent is the main checkout, whose `.claude/hooks/` is the copy
+// `install.mjs` maintains. A worktree's own copy is only a fallback when the main one is
+// missing (fresh clone, hooks never installed).
+const MAIN_ROOT = dirname(resolve(REPO, out(['rev-parse', '--git-common-dir']) || '.git'));
+const MAIN_HOOKS = join(MAIN_ROOT, '.claude', 'hooks');
+const HOOKS = existsSync(join(MAIN_HOOKS, 'verify-gate.mjs')) ? MAIN_HOOKS : join(REPO, '.claude', 'hooks');
+const samePath = (a, b) => {
+  try {
+    const norm = (p) => (process.platform === 'win32' ? realpathSync(p).toLowerCase() : realpathSync(p));
+    return norm(a) === norm(b);
+  } catch { return false; }
+};
+// Trampoline: a worktree copy of this file hands over to the main checkout's copy with the
+// same arguments and inherited stdio (hook mode included), so stale worktree logic never
+// runs. The env marker stops recursion if the two copies ever disagree on what "main" is.
+const MAIN_LAND = join(MAIN_HOOKS, 'land.mjs');
+if (!process.env.METHOD_LAND_REEXEC && existsSync(MAIN_LAND) && !samePath(MAIN_LAND, fileURLToPath(import.meta.url))) {
+  const r = spawnSync(process.execPath, [MAIN_LAND, ...argv], { stdio: 'inherit', env: { ...process.env, METHOD_LAND_REEXEC: '1' } });
+  process.exit(r.status ?? 1);
+}
 
 /**
  * The "sauf exception" catalogue — machine-checked, fail-closed. Anything here
@@ -86,9 +124,12 @@ function landCurrentBranch() {
   // Untrimmed on purpose: trimming the whole porcelain output eats the leading space of an
   // unstaged modification and shifts the first line's path by one char (same bug as
   // verify-gate had). `.method/` is the gate's own scratch state and never counts as dirty.
+  // The telemetry ledger is per-machine and gitignored since v318.a (hooks no longer commit it), but a repo that
+  // still tracks it keeps a modified file after every turn — that is not work to commit either.
   const dirty = (git(['status', '--porcelain']).stdout ?? '').split('\n')
     .filter((l) => l.length >= 4)
-    .filter((l) => !l.slice(3).trim().startsWith('.method/'));
+    .filter((l) => !l.slice(3).trim().startsWith('.method/'))
+    .filter((l) => l.slice(3).trim().replace(/\\/g, '/') !== 'docs/project/telemetry/sessions.jsonl');
   if (dirty.length) return done({ landed: false, quiet: AUTO, reasons: [`uncommitted changes (${dirty.length} path(s)) — commit, then land`] });
 
   git(['fetch', 'origin', TRUNK, '--quiet']);
@@ -128,8 +169,11 @@ function landCurrentBranch() {
   }
 
   // 5 ─ the verify gate is the only brake; a stale marker is not a green light
-  const verify = spawnSync(process.execPath, ['.claude/hooks/verify-gate.mjs', '--base', base, ...(AS_JSON || AUTO ? ['--quiet'] : [])], {
-    stdio: AS_JSON || AUTO ? 'ignore' : 'inherit', timeout: 30 * 60_000,
+  // The gate caps every script it runs at 30 min (its TIMEOUT; `build` explicitly), so this
+  // outer cap is a last resort only — lint + typecheck + test + build at their maximum.
+  // At 30 min it used to kill an honest gate before the gate's own caps could speak.
+  const verify = spawnSync(process.execPath, [join(HOOKS, 'verify-gate.mjs'), '--base', base, ...(AS_JSON || AUTO ? ['--quiet'] : [])], {
+    stdio: AS_JSON || AUTO ? 'ignore' : 'inherit', timeout: 4 * 30 * 60_000,
   });
   const marker = readMarker();
   const head = out(['rev-parse', 'HEAD']);
@@ -143,9 +187,20 @@ function landCurrentBranch() {
 
   // 6 ─ land
   if (DRY) return done({ landed: false, dryRun: true, mode: marker.mode, files: files.length, reasons: [`dry-run — would land ${ahead.length} commit(s) on ${TRUNK}`] });
-  const push = git(['push', 'origin', `HEAD:refs/heads/${TRUNK}`]);
+  // The verify gate above IS the quality gate. An app's own `pre-push` hook re-running
+  // lint/typecheck/build here is redundant — and this fleet's hooks include a prod build that
+  // outlives git()'s 2 min cap, so the push died with an EMPTY stderr ("rejected: ") every
+  // time (2026-09-16). `SKIP_QUALITY_GATES=1` is the bypass those hooks honour; they still run
+  // (the proto anti-leak guard sits before the bypass on purpose), only their gates are skipped.
+  // `--no-verify` would skip that guard too, so it is not used. 10 min covers the light path.
+  const push = git(['push', 'origin', `HEAD:refs/heads/${TRUNK}`], {
+    env: { ...process.env, SKIP_QUALITY_GATES: '1' }, timeout: 10 * 60_000,
+  });
   if (push.status !== 0) {
-    return blocked(branch, [`push to ${TRUNK} rejected: ${(push.stderr ?? '').trim().split('\n').slice(-2).join(' ')}`]);
+    const why = push.error?.code === 'ETIMEDOUT'
+      ? 'push timed out after 10 min (a pre-push hook that ignores SKIP_QUALITY_GATES?)'
+      : (push.stderr ?? '').trim().split('\n').slice(-2).join(' ') || `git exit ${push.status ?? push.error?.code ?? '?'}`;
+    return blocked(branch, [`push to ${TRUNK} rejected: ${why}`]);
   }
 
   const pr = findPr(branch);

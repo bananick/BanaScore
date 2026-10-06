@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 315.c  
+**Version:** 318.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -46,7 +46,7 @@ Documents are either:
 
 **One standard way of working with quality built in.**
 
-Core Loop handles most work (Junia → Brian → Vera). Specialists join when their domain is touched.
+Core Loop handles most work — plan (Junia) → build (Brian) → one review per slice (Vera) → land → prove (Sage). Specialists join when their domain is touched; the coordinating conversation runs the loop.
 
 Governance scales naturally based on what you're building.
 
@@ -57,9 +57,9 @@ Governance scales naturally based on what you're building.
 **No heavy process unless needed.**
 
 Quality gates are built into the workflow:
-- Pre-Flight: Check clarity before starting
-- Review Gate: Vera validates after completion
-- Kill Gate: Junia consolidates before closing sprint
+- Pre-Flight: Check clarity before starting (the Cadrage)
+- Review Gate: Vera validates once per slice, at the Recette
+- Kill Gate: the coordinator consolidates before closing a sprint (sprint mode only)
 
 **Governance scales with what you're building.**
 
@@ -87,7 +87,7 @@ Quality gates are built into the workflow:
 
 ### Ops
 - **Hosting:** Firebase App Hosting in `europe-west1` / `europe-west4` for Next.js web backends, EAS for mobile
-- **CI/CD:** none — gates run **locally** before merge (see "Merge Gate" below); GitHub Actions is billing-blocked account-wide, by choice, unrelated to the active GCP/Firebase billing (`SOUL.md` → "Boundaries"). Merging to `main` **is** the deploy.
+- **CI/CD:** none — gates run **locally** before merge (see "Merge Gate" below); GitHub Actions is billing-blocked account-wide, by choice, unrelated to the active GCP/Firebase billing (`SOUL.md` → "Boundaries"). Merging to `main` is **LANDED** — deploying is its own step, with its own evidence (the served revision).
 - **Monitoring:** Firebase Crashlytics, Cloud Logging
 - **Analytics:** Firebase Analytics
 
@@ -168,24 +168,28 @@ match /databases/{database}/documents {
 
 **Standard DoD for all tasks (9 items — streamlined in v305.a):**
 
-- [ ] Feature works (smoke test)
+- [ ] Journey proven — the named CUJ observed end-to-end on the named environment; state reported as CODED · LANDED · DEPLOYED · PROVEN with evidence
 - [ ] Critical path tests pass
 - [ ] TypeScript strict (no `any`)
 - [ ] i18n strings externalized (EN/FR)
 - [ ] No lint errors
 - [ ] Task report appended
-- [ ] Committed + pushed to GitHub
-- [ ] Review Gate passed (Vera) → task marked `☑️`
+- [ ] Committed + landed (`/land`) — reported as LANDED; DEPLOYED / PROVEN only with their own evidence
+- [ ] Review Gate passed (Vera, once per slice at the Recette) → tasks marked `☑️`
 - [ ] FOCUS.md / STATE.md updated if objective completed
 
 > **Task-specific gates** (apply when the task touches that area, not on every task):
 > Zod schemas + `project/SCHEMA.md` updated (data touched) · empty/error/loading states (UI)
 > · security check, see `docs/definition/security/PROJECT SECURITY.md` (sensitive ops).
 
+> **Machine-checked since 318.a:** `/land` (`.claude/hooks/verify-gate.mjs`, every app) refuses a
+> **newly added** intervention or task file that does not carry `**Journey:**` and `**Proof:**`.
+> Older files are never retro-failed. The rest of the list is honour-system.
+
 **Quality gates:**
 - **Pre-Flight:** Check clarity before starting (see task template)
-- **Review Gate:** Vera validates after completion
-- **Kill Gate:** Junia consolidates before closing sprint (see sprints-method.md)
+- **Review Gate:** Vera validates once per slice, at the Recette (always opus)
+- **Kill Gate:** the coordinator consolidates before closing a sprint (see sprints-method.md)
 
 **When to add more:**
 - E2E tests for critical user journeys
@@ -194,6 +198,41 @@ match /databases/{database}/documents {
 - Architectural tests when enforcing boundaries
 - Visual regression when design precision matters
 - Full a11y audit (WCAG AA) for public-facing features
+
+---
+
+## The two-moment contract — Cadrage · Recette
+
+The operator is invited into the choices at the **two ends** of the work, never the middle.
+
+**🎯 Cadrage — before building anything substantial.** Substantial = touches app code, spans more
+than one step, or implies a choice. One `AskUserQuestion` (≤ 4 questions, recommended answer always
+first) fixes: **Journey** (which CUJ(s) this work closes — an existing
+`docs/project/journeys/{cuj}.md` or a new one), **Proof** (which observed run, on which
+environment, with which real data, proves it — failure/recovery case included when the journey has
+one), **Out of scope** (what is explicitly parked), and *when needed* the one real
+strategy/architecture choice with concrete trade-offs. Answers are written into the task /
+intervention file (`Journey:` · `Proof:`) before the first edit — and since 318.a `/land` refuses a
+newly added intervention or task file that lacks them, in every app. Skipped for a question, a
+lookup, a one-line fix. (Junia may draft the quiz; only the coordinating conversation can ask it.)
+
+**Middle — autonomous.** No "shall I continue?", no naming questions, no mid-build check-ins. Only
+the conflict gate (data model, permissions, scope, irreversible) stops for a `### Needs decision`.
+
+**✅ Recette — before the Debrief.** (1) The **recette table**: each deliverable asked at Cadrage →
+shown (link / evidence) or not; a test count never substitutes for the thing asked. (2) **Four
+states, never merged:** `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`. Landed is a push; it is never
+reported as deployed or proven without its own evidence (served revision · observed run). (3) When
+a journey is claimed `PROVEN`, one `AskUserQuestion`: **accept / reopen / defer**, with a ≤ 3-minute
+test script the operator can run. (4) `Avancement` in the Debrief counts journeys proven, not tasks
+closed. **Who does what at the Recette:** `vera` reviews the slice once (opus) before it lands;
+`sage` runs the `Proof:` on the environment it names, with real data, and records it — so `PROVEN`
+is an observation, never the coordinator's say-so.
+
+**The CUJ is the unit.** Every conversation, sprint and task names the journey(s) it closes. A
+journey has one shape, `docs/METHOD/templates/CUJ-TEMPLATE.md`, and lives in
+`docs/project/journeys/{cuj}.md`. No gatekeeper agent: the shape plus the `Journey:`/`Proof:` fields
+plus the landing gate (and the hub doctor's E9) are the whole law.
 
 ---
 
@@ -274,8 +313,10 @@ is no longer where work *waits* — it is where work is *assembled*, for minutes
 
 ### Landing (the default) & the exception list
 
-**The operator does not manage pull requests.** Every conversation ends by **landing on `main`**, and
-`main` is the deploy. A PR is the **exception** — the artifact of something a human must decide — not
+**The operator does not manage pull requests.** Every conversation ends by **landing on `main`** (the
+trunk — `land.mjs` reads it from `origin/HEAD`, so a `master` repo lands the same way), and the
+result is **LANDED**: `DEPLOYED` and `PROVEN` need their own evidence — `land.mjs` deploys nothing.
+A PR is the **exception** — the artifact of something a human must decide — not
 the normal path. If you are opening a PR out of habit, you are adding a chore the operator has to
 remember.
 
@@ -299,6 +340,23 @@ this plan. So the gate is **local and machine-checked**, not prose an agent can 
 For the `app` lane, green means all four of `npm run lint` · `npx tsc --noEmit` (or the app's
 `typecheck` script) · `npm test` · `npm run build`, plus `npx playwright test` where E2E exists.
 If any is red: fix it before anything else — nothing downstream will catch it for you.
+
+**What the gate actually runs (317.b, after three landings went red for reasons unrelated to
+the diff):** where a root exposes **`test:gate`** — the allowlist `prebuild` runs in the build
+container — the gate runs *that*, not the full `test` (emulator + network, > 10 min); each script
+gets **30 min** (`build` replays `prebuild`); the spawn buffer is **64 MB**, because under
+`CI=true` vitest's reporter emits > 1 MB of JSON and the 1 MB default turned 2 695 green tests into
+"`test:gate` failed" with an empty tail (`ENOBUFS`); and `src/**/*.json` (i18n catalogues) is
+**app** lane, not "unclassifiable". A red gate with an empty tail is a gate bug, not a test — read
+`.method/verify-ok.json` before touching the code.
+
+**Worktrees run the main checkout's hooks.** `.claude/` is gitignored, so every git worktree
+carries its own copy of `land.mjs` / `verify-gate.mjs`, frozen at creation, while
+`install.mjs` only ever refreshes the main checkout's. Since 317.b `land.mjs` resolves the main
+checkout (`git rev-parse --git-common-dir`) and runs **its** `verify-gate.mjs`; a worktree copy of
+`land.mjs` re-execs the main copy. Worktrees created **before** 317.b still hold the old
+`land.mjs`: recopy once — `cp <main>/.claude/hooks/*.mjs .claude/hooks/` — before the first
+`/land`, and never patch a hook inside a worktree (the fix belongs in the addon payload).
 
 **The exception list — fail-closed, and the only reasons a PR is correct:**
 
@@ -330,7 +388,8 @@ Landing is what keeps conversations small, and small conversations are the cost 
   context is filling up, the slice was too big — land what is green, `/relay`, and start fresh.
 - **Landing beats relaying.** A landed slice needs no handoff prose at all: `main` *is* the state.
   `/relay` is for a slice that genuinely spans windows, not a substitute for finishing one.
-- **Route residue-heavy work to sub-agents** (Iris / Explore) that return conclusions only — see
+- **Route residue-heavy work to sub-agents** (Explore for a lookup, Iris for a study) that return
+  conclusions only — see
   "Project State & Handoff".
 - **A PR is a token liability**: it means the work is coming back later, in a new window, with the
   context re-derived from scratch.
@@ -342,7 +401,7 @@ Landing is what keeps conversations small, and small conversations are the cost 
 ```bash
 # After every ✅ task, on your branch:
 git add . && git commit -m "feat(notifications): implement FCM"
-npm run land          # verify → fast-forward main → deploy (there is no CI)
+npm run land          # verify → fast-forward main = LANDED (deploying is its own step; no CI)
 ```
 
 **Why:** progress is never lost, `main` is always the truth, and no queue of pull requests
@@ -384,16 +443,16 @@ memory holds durable cross-session facts about the user/project. Keep them separ
 one into the other.
 
 **Keep Relays rare — offload to sub-agents:** route residue-heavy exploration / research through
-sub-agents (Iris / Explore) that return **conclusions only**. The main context then accumulates less
+sub-agents (Explore for a lookup, Iris for a study) that return **conclusions only**. The main context then accumulates less
 residue, so it needs fewer Relays in the first place.
 
 **Sub-agent vs. separate session — the two halves.** A **sub-agent** returns a conclusion into a
 context you keep: you stay the owner of the thread, the branch and the Relay. A **separate session**
 carries the context away and gives back a *document* — it owns its own branch and worktree, and it
-does **not** relay (there is one `## Resume here` per app, and the sprint conversation holds it). So
+does **not** relay (there is one `## Resume here` per app, and the main conversation holds it). So
 offloading is the default and splitting is the exception. The four observed facts that justify the
 split, plus the `Stop`-hook mechanism that makes two sessions on one branch diverge silently:
-`sprints-method.md` → "Conversation Naming".
+`sprints-method.md` → "Sessions & branches".
 
 ---
 
@@ -433,7 +492,8 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 
 {Une ligne : ce qui vient d'être fait, en langage opérateur.}
 
-**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N unité} · {fait git / PR / test réel}
+**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N journeys proven} · {state reached: CODED · LANDED · DEPLOYED ·
+PROVEN, with its evidence}
 
 **🧠 À retenir**
 - {fait clé}
@@ -459,12 +519,14 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 - **The status emoji in the title carries the real state:** `✅` fait · `🟡` besoin de toi · `🔴`
   bloqué · `👀` en observation. The section emojis (📊 🧠 🤝 ⚖️ ➡️ ⚠️) are **fixed** — they are
   landmarks the eye learns, not decoration, so they never vary from one card to the next.
-- **`Avancement` positions the work in the global project, not in the turn.** Sprint tasks closed,
-  plan to-dos done, screens ported, PRs open — a 5-block bar (🟩 filled / ⬜ empty) plus the ratio.
-  Only render a ratio when something countable was actually read this turn: sprint task files by
-  status marker, plan checkboxes, `PORT-MAP.md` rows, the PR list. On Claude Code the `/brief`
-  context script already emits `sprint` and `sprint_progress` for free. Nothing countable → name the
-  lane and its position in words. **Never invent a ratio.**
+- **`Avancement` positions the work in the global project, not in the turn.** The unit is **journeys
+  proven** (see "The two-moment contract — Cadrage · Recette"), not tasks closed — a 5-block bar
+  (🟩 filled / ⬜ empty) plus the ratio, plus the state reached (`CODED` · `LANDED` · `DEPLOYED` ·
+  `PROVEN`) with its evidence. Only render a ratio when something countable was actually read this
+  turn: journeys in `docs/project/journeys/`, sprint task files by status marker, `PORT-MAP.md` rows.
+  Nothing countable → name the lane and its position in words. **Never invent a ratio.**
+- **The recette table (asked → shown/not) precedes the Debrief whenever a Cadrage happened.** A test
+  count never substitutes for the deliverable that was actually asked at Cadrage.
 - **`À retenir` is the brief itself — 2 to 4 bullets.** What the operator must hold in his head
   tomorrow: what now works, what changed shape, what got ruled out, what surprised us. Include one
   **🤝 `Décidé pour toi`** bullet whenever a reversible call was made without asking, so it can be
@@ -502,7 +564,7 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 **Who renders it.** Only the agent speaking to the operator — the orchestrator, or a single agent
 working directly with him. A **delegated sub-agent never emits a Debrief**: its report goes to its
 orchestrator as a handoff (3-line header + task report, uncompressed per Output Compression), and
-the orchestrator folds those reports into one card. Otherwise a `junia → brian → sage → vera` chain
+the orchestrator folds those reports into one card. Otherwise a `brian → watson → vera → sage` chain
 lands four cards in one answer and the format dies of noise.
 
 **Relation to the 3-line header.** `Done / State / Next` remains the opening header of **written
@@ -745,7 +807,7 @@ GEMINI_API_KEY=...                    # ⛔ Server-only — never NEXT_PUBLIC_ o
 
 ## Next Steps
 
-- **First sprint:** Load `sprints-method.md` → plan sprint
+- **First slice:** `/intervention` (or `junia` for a plan); a sprint only by exception (`sprints-method.md`)
 - **Task execution:** Load `routing-method.md` → check agent entry files
 - **Review workflow:** Load `agents-method.md` → understand Core Loop vs On-Demand
 

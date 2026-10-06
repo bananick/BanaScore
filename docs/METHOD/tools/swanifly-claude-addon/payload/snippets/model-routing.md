@@ -1,7 +1,7 @@
 ## Model Routing (default: orchestrate high, execute cheap)
 
 > Canonical policy — **do not restate it here**: `docs/METHOD/routing-method.md` → "Model Routing".
-> This section is synced from the METHOD hub; change the policy there, never in this repo.
+> This section is synced from the METHOD hub; change the policy there, never in an app.
 
 - **Delegation is the default, not an option.** Standing order — it never has to be re-requested
   per task: never do yourself, in the main conversation, work a cheaper sub-agent can hand back.
@@ -12,11 +12,19 @@
   only its conclusion. The coordinator's context carries the decision, not the raw material.
 - **Coordinator high, delegates cheap.** The orchestrator runs on the strongest model the surface
   exposes; every delegated task runs on the **cheapest model that meets its quality bar**.
-- **Tiers:** **T1** judge/plan/review/security → opus · **T2** build/tests/ops → sonnet ·
-  **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
-- **Defaults + overrides:** each sub-agent's `model:` frontmatter is its default tier; the planner
-  tags tasks `Tier: T1|T2|T3` and passes a `model` override at delegation when they differ. One
-  retry max at a tier, then escalate one tier. Review and security never run below T1.
+- **Tiers:** **T1** judge/plan/review/security/METHOD release → opus · **T2** build/prove/ops/design/
+  copy/study → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
+- **Defaults + overrides:** each sub-agent's `model:` frontmatter is its default tier (opus: junia,
+  vera, kasper, lucia · sonnet: brian, sage, watson, nova, gordon, iris); pass a `model` override at
+  delegation when the task's tier differs. One retry max at a tier, then escalate one tier. Review
+  and security never run below T1, and **Vera runs once per slice, at the Recette** — not per task.
+- **Workflow at ≥ 3 near-identical items** (+ a verification pass), and **every Workflow worker gets
+  an explicit `model`** — default sonnet, haiku for mechanical items, opus only for a judgement pass.
+  A worker without one inherits the coordinator's model.
+- **A parallel session only on an observed trigger**, never a predicted one: a 3rd build→test→fix
+  loop on the same task · another repo · a deploy loop with the operator in it · two tasks writing
+  code at once (each its own branch + worktree). Rule: `docs/METHOD/sprints-method.md` → "Sessions &
+  branches".
 - **Environment awareness:** on a non-Claude surface (Cursor, Codex), inventory the models the tool
   actually exposes, map them onto T1/T2/T3 by capability and price, then apply the same policy.
   Missing tier → nearest available, preferring upward. Single-model surface → run inline and flag
@@ -26,12 +34,13 @@
 
 ### Session Telemetry Ledger
 
-A Claude Code Stop hook appends token usage, message count, duration and model(s) to
-`docs/project/telemetry/sessions.jsonl` — append-only, one row per invocation (dedupe by
-`sessionId`, keep the newest row; never sum them). It is how the tiers above get checked against
-real usage instead of guessed. Raw tokens only, no dollar estimate. Codex/Cursor have no automated
-equivalent — self-report the same fields by hand in the task report. Schema:
-`docs/METHOD/routing-method.md` → "Session Telemetry Ledger".
+A Claude Code Stop hook appends token usage, message count, duration and model(s) to the repo's
+local ledger `docs/project/telemetry/sessions.jsonl` — gitignored. Hooks no longer commit the
+ledger (318.a); the file becomes untracked in a follow-up once every checkout runs the 318.a
+hooks. One cumulative row per turn: dedupe by `sessionId`, keep the newest row, never sum. The
+hub rolls the ledgers up with `npm run telemetry:report`. Raw tokens only, no dollar estimate.
+Codex/Cursor have no automated equivalent — self-report the same fields by hand in the task report.
+Schema: `docs/METHOD/routing-method.md` → "Session Telemetry Ledger".
 
 ### Output Compression
 

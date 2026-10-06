@@ -1,15 +1,15 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 311.b  
+**Version:** 318.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
 > one only for work that is genuinely multi-task and planned ahead — several ordered tasks with
 > real dependencies, more than one owner/agent, or a milestone that warrants a review gate. The
 > **nominal** mode is a single targeted slice: an **intervention** (`/intervention`, logged in
-> `docs/interventions/`) or a **plan** executed to the end, then the local merge gate, then merge
-> on `main` = deploy. A single fix, a single screen, a single analysis is never a sprint — wrapping
+> `docs/interventions/`) or a **plan** executed to the end, then the local merge gate, then the
+> landing on `main` (LANDED — deploying is its own step, with its own evidence). A single fix, a single screen, a single analysis is never a sprint — wrapping
 > one in sprint ceremony produces folders nobody closes. Everything below remains the reference for
 > the sprint mode, and applies in full once a sprint is actually open. See `CLAUDE.md` →
 > "Work Modes" for the nominal path.
@@ -37,11 +37,11 @@
 Work one CUJ step at a time (from `docs/journeys/`).
 
 **Process:**
-1. Junia reviews ROADMAP + active CUJ
+1. Junia reviews ROADMAP + active CUJ and drafts the Cadrage
 2. Identifies next step
-3. Creates task files for current week
-4. Agents execute (sequence or parallel)
-5. Junia consolidates → updates project/ → closes sprint
+3. Creates task files
+4. The coordinating conversation runs them (sequence or parallel)
+5. The coordinator consolidates → updates project/ → lands → closes sprint
 
 ---
 
@@ -54,6 +54,7 @@ Expert or manager conducts focused mission.
 2. Execute mission
 3. Managers sync: update VISION/ROADMAP/DESIGN/AI-INFRA as needed
 4. Link back to sprint or roadmap items
+5. The file carries `**Journey:**` + `**Proof:**` from its Cadrage — `/land` refuses a new one without them (318.a)
 
 ---
 
@@ -238,18 +239,19 @@ None. FCM setup complete.
 
 **Goal:** One deliberate “high model” pass to catch cross-cutting misses: **security**, **vision/scope**, **design/a11y**, **tests/i18n**, and **docs consistency**.
 
-### Task Review
+### Slice Review (once per slice — 318.a)
 
-- **Trigger:** Task is marked `✅` (executor done; ready for review)
-- **Reviewer:** **Vera** — **T1 floor**: strongest reasoning model available (Fable/Opus on Claude; GPT-5.x-class elsewhere). The Review Gate never runs below T1 (`routing-method.md` → "Model Routing")
-- **Output:** Reviewer appends a short review (use `docs/METHOD/templates/REVIEW-TEMPLATE.md`) and updates status:
+- **Trigger:** the slice's tasks are `✅` (executor done) and the slice is about to land — Vera runs
+  **once per slice, at the Recette**, not after every task
+- **Reviewer:** **Vera** — **T1 floor, always**: strongest reasoning model available (Fable/Opus on Claude; GPT-5.x-class elsewhere). The Review Gate never runs below T1 (`routing-method.md` → "Model Routing")
+- **Output:** a short review (use `docs/METHOD/templates/REVIEW-TEMPLATE.md`) persisted by the coordinator, and every task in the slice updated:
   - `☑️` = approved / validated
   - `⚠️` = rejected (must-fix items + follow-up tasks required)
-- **Fast-Track:** For micro-fixes (typos, one-line changes), Vera can validate immediately without full review
+- **Fast-Track:** a slice that meets every Fast-Track condition (`agents-method.md` → Vera) lands without a review
 
 ### Sprint Review
 
-- **Trigger:** Junia is ready to close the sprint
+- **Trigger:** the sprint's closing slice — its Slice Review is the sprint review
 - **Artifact:** `{sprint}-z ☑️ Vera - sprint review.md` in the sprint folder
 - **Rule:** Sprint should not close until Review Gate is either **passed** or explicitly **deferred with follow-up tasks**.
 
@@ -259,14 +261,13 @@ None. FCM setup complete.
 
 ### Junia (Sprint Planning)
 
-**When:** When previous sprint completes (or starting new work)
+**When:** the operator asks for a sprint, or a request is genuinely multi-task and planned ahead
 
 **Steps:**
-0. **CUJ Precision Gate** ← *Nouvelle étape obligatoire (v303.e)*
-   - Vérifier que le CUJ actif (`docs/journeys/{cuj}.md`) a une section **Precision Gate ✅** complétée et validée par l'opérateur humain
-   - **Si absent ou incomplet** → STOP. Convoquer April en mode **CUJ Definition Session** (voir `agents-method.md` → April)
-   - **Si ambigu** (critère de succès pas testable) → Relancer April pour révision
-   - **Ne pas continuer** avant que le Precision Gate soit ✅
+0. **🎯 Cadrage** — Junia drafts it (Journey · Proof · out-of-scope, recommended answer first); the
+   coordinating conversation asks the operator and hands the answers back. No planning before the
+   answers are written into the sprint folder. (The CUJ Precision Gate and April's CUJ Definition
+   Session were retired in 317.a / 316.a; the slim `CUJ-TEMPLATE.md` + `Journey:`/`Proof:` replace them.)
 
 1. **Check next sprint number:**
    - Review `docs/sprints/` folders
@@ -274,11 +275,8 @@ None. FCM setup complete.
 
 2. **Run Managers Sync** (see below)
 
-3. **Run METHOD sync:**
-   ```bash
-   npm run sync-method:all:dry   # preview drift; run sync-method:all to apply
-   ```
-   If drift detected, resolve before planning.
+3. **METHOD current?** `npm run doctor` in the hub; a pending release or sync goes to Lucia — never
+   sync from a planning step.
 
 4. **Review active CUJ step** (`docs/journeys/`)
 
@@ -290,7 +288,7 @@ None. FCM setup complete.
 
 7. **Include agent instructions** in each task file (entry files to load)
 
-8. **Issue prompts** (one conversation, role-switching as needed) — name that conversation `{NNN} {topic}`, starting with the sprint number (see *Conversation Naming* under Sprint Numbering)
+8. **Hand the plan back** to the coordinating conversation, which runs it (see *Sessions & branches* under Sprint Numbering)
 
 ---
 
@@ -300,12 +298,11 @@ None. FCM setup complete.
 
 **Checklist:**
 
-- [ ] **Junia:** `project/STRUCTURE.md` current? Routes/features/status accurate?
-- [ ] **April:** `project/VISION.md` current? Any persona/JTBD changes?
+- [ ] **Junia:** `project/STRUCTURE.md` current? Routes/features/status accurate? `VISION.md` personas/JTBD still true (the operator decides)?
 - [ ] **Nova:** `project/DESIGN.md` current? New tokens/components documented?
-- [ ] **Riley:** `project/AI-INFRA.md` current? New agents/evals/models added?
-- [ ] **Sage:** Tech decisions documented? Hex boundaries clear?
-- [ ] **Lucia:** METHOD synced? (`sync-method.mjs --check`)
+- [ ] **Brian:** `project/AI-INFRA.md` current, if the sprint touches AI wiring?
+- [ ] **Kasper:** any security surface (rules, auth, API routes) in scope?
+- [ ] **Lucia:** METHOD current? (`npm run doctor` green in the hub; app on the latest release)
 
 **If any outdated:** Create intervention to update, THEN plan sprint.
 
@@ -315,17 +312,14 @@ None. FCM setup complete.
 
 ### 95% Certainty Gate (Managers Only)
 
-**Applies to:** April, Junia, Nova, Riley, Sage, Lucia
+**Applies to:** Junia, Nova, Lucia
 
 **Rule:** If uncertainty about vision/requirements/scope > 5%, STOP and resolve before planning.
 
 **Process:**
 1. Batch concise questions (2-5)
-2. Interview relevant expert:
-   - Vision unclear? → April
-   - Design unclear? → Nova
-   - AI infra unclear? → Riley
-   - Architecture unclear? → Sage
+2. Return the questions to the coordinator, who asks the operator (vision, scope) or delegates the
+   lane owner (design → Nova, security → Kasper, a study → Iris)
 3. Update docs FIRST (VISION, ROADMAP, DESIGN, AI-INFRA)
 4. THEN plan sprint
 
@@ -368,14 +362,15 @@ None. FCM setup complete.
 4. **Execute task** → follow DoD
 5. **Append report** to task file (see canonical example above)
 6. **Update status tag:** `⬜` → `✅` (ready for review) or `⚠️` (problem)
-7. **Review Gate:** Vera reviews → sets `☑️` or `⚠️`
-8. **Notify Junia**
+7. **Report** to the coordinating conversation (Done / State / Next)
+8. **Review Gate:** Vera reviews the whole slice once, at the Recette → `☑️` or `⚠️`
 
 ---
 
-### Junia (Consolidation)
+### Consolidation (the coordinating conversation)
 
-**When:** All sprint tasks are `✅` (ready for review) or `⚠️` (problem)
+**When:** All sprint tasks are `✅` (ready for review) or `⚠️` (problem). Since 318.a the
+coordinator consolidates and lands; Junia plans, she no longer closes sprints.
 
 **Steps:**
 1. **Read all task reports** in sprint folder
@@ -405,15 +400,15 @@ None. FCM setup complete.
    - Name: `{sprint}-{feature}-{state}.png` (e.g., `015-notifications-enabled.png`)
    - Append thumbnail paths to the sprint review file as visual proof
    - **Purpose:** Visual validation that the UI renders correctly; serves as regression baseline
-8. **Firebase deploy (if sprint touches production):**
-   - Run Firebase Deployment Readiness checklist (see `method-core.md`)
-   - Deploy to staging → verify → then deploy to production
-9. **Commit and push sprint artifacts:**
+8. **Commit and land sprint artifacts** — LANDED, nothing more:
    ```bash
    git add docs/sprints/ docs/project/
    git commit -m "chore(sprint): complete 015 - notifications"
-   git push origin main
+   npm run land
    ```
+9. **Deploy (if the sprint touches production)** — Firebase Deployment Readiness checklist
+   (`method-core.md`), staging → verify → production, with the **served revision** recorded
+   (DEPLOYED). Then `sage` runs the journey's Proof there (PROVEN) and the operator accepts.
 10. **Close sprint** → plan next sprint
 
 ---
@@ -437,68 +432,57 @@ None. FCM setup complete.
 - Create new folder: `docs/sprints/{sprintNumber}/`
 - Archive old sprints as needed (optional)
 
-### Conversation Naming
+### Sessions & branches
 
-> **Canonical home of the session-splitting rule.** Anything elsewhere in the METHOD that tells you
-> how many windows to open — `agents-engineering-method.md` §5 and §9, `method-core.md`,
-> `method-core-lite.md` — points here and does not restate the rule.
+> **Canonical home of the session-splitting rule** (formerly "Conversation Naming"). Anything
+> elsewhere in the METHOD that tells you how many windows to open — `agents-engineering-method.md`
+> §5 and §9, `method-core.md`, `method-core-lite.md` — points here and does not restate the rule.
+>
+> **318.a dropped the conversation-title convention** (`{NNN} {topic}` / `INT {date} {topic}`): in
+> 120 days, **0 of 301** titled conversations followed it. Traceability lives where it already
+> works — the branch, the intervention or task file, and the commits. Name a conversation however
+> you like.
 
-**Rule:** Every Desktop/Code conversation that works a sprint **starts its name with the sprint number** — `{NNN} {topic}` (e.g., `309 — METHOD refresh`).
+#### One slice = one conversation = one branch = one worktree
 
-- **Why:** a session is instantly traceable to its sprint (and its task files / folder) without opening it.
-- **Non-sprint work** (interventions) uses the intervention slug instead: `INT {YYYY-MM-DD} {topic}` — mirrors `docs/interventions/YYYY-MM-DD-{Agent}-{topic}.md`.
-
-#### One sprint = one conversation = one branch = one worktree
-
-This is the settled arbitration. It supersedes the older "one thread per task" wording, and it is
+This is the settled arbitration (sprint mode: one sprint = one conversation, same reasoning). It is
 **not a style preference** — it is dictated by what `.claude/settings.json` actually wires.
 
-Two `Stop` hooks run at the end of every Claude Code turn, and both write to git:
+A `Stop` hook runs at the end of every Claude Code turn and writes to git:
 
 | Hook | What it does at Stop |
 |---|---|
 | `.claude/hooks/ship-push.sh` | `exit 0` on `main`/`master`/`HEAD`; otherwise pushes the current branch (`git push`, or `git push -u origin "$branch"` when no upstream). Never commits, never force-pushes. |
-| `.claude/hooks/session-telemetry.mjs` | Appends one row to `docs/project/telemetry/sessions.jsonl`, then commits and pushes **that row only** — same guard: `if (!branch \|\| ['main','master','HEAD'].includes(branch)) return;`. |
 
-Both are branch-scoped and both **swallow a rejected push**. `ship-push.sh` redirects the push to
-`>/dev/null 2>&1`, and the telemetry hook documents the same choice in its own comments: *"Never
-force-pushes. A rejected push leaves the row committed locally; the next turn retries."*
+(`session-telemetry.mjs` also runs at `Stop`, but since 318.a it only appends to a local, gitignored
+ledger — it no longer commits or pushes anything.)
 
-Two consequences follow directly, and they are the whole reason for the rule:
+The hook is branch-scoped and **swallows a rejected push** (`ship-push.sh` redirects the push to
+`>/dev/null 2>&1`). Two consequences follow directly, and they are the whole reason for the rule:
 
 1. **Two sessions on the same branch ⇒ silent divergence.** The second session's push is rejected
    non-fast-forward and the rejection is discarded. The work exists locally; every downstream reader
-   — `/brief`, the telemetry ledger, GitHub, the operator — sees that branch as stalled. Nothing
-   surfaces the error. This is the expensive failure mode: not a lost commit, a *lie about progress*.
+   — `/brief`, GitHub, the operator — sees that branch as stalled. Nothing surfaces the error. This is
+   the expensive failure mode: not a lost commit, a *lie about progress*.
 2. **Two sessions in the same worktree ⇒ a shared index.** `git add` in `/ship` stages whatever the
    other session is mid-edit. One session's commit ships the other's half-finished file.
 
-Neither hook is defensive against concurrency, and neither should become so — the cheap fix is the
-naming rule, not more hook logic. *(If you are reading this in an app mirror and the two hooks above
-are not what `.claude/settings.json` wires there, trust the file, not this table, and report the
+The hook is not defensive against concurrency, and should not become so — the cheap fix is one
+branch and one worktree per session. *(If you are reading this in an app mirror and the hook above
+is not what `.claude/settings.json` wires there, trust the file, not this table, and report the
 drift.)*
 
-#### The three lanes
+#### The lanes (branches, not titles)
 
-Conversation titles are **ASCII, sprint number first**. Do not put a literal emoji in a conversation
-title or a branch name: a `.ps1` without a BOM is read as the ANSI codepage by PowerShell 5.1, so a
-literal emoji silently breaks every `match` — the precedent is recorded in `versioning.md` (v313.a,
-`flight-deck.ps1`: *"The file is kept **pure ASCII** — emoji are matched by Unicode code-point
-escapes … literal emoji would silently break every match"*), and v306.b logs the mirror-image bug
-(`[ ]` read as a PowerShell wildcard). Emoji belong in **file** status markers, never in titles.
+Do not put a literal emoji in a branch name: a `.ps1` without a BOM is read as the ANSI codepage by
+PowerShell 5.1, so a literal emoji silently breaks every `match` (precedent: `versioning.md`, v313.a
+`flight-deck.ps1`). Emoji belong in **file** status markers.
 
-| Lane | Title | Branch | Lifespan |
-|---|---|---|---|
-| **Sprint** (default) | `{NNN} {sujet}` | `sprint/{NNN}-{slug}` | one sprint |
-| **Split** (exception) | `{NNN} {sujet} · {seq} {titre}` | `sprint/{NNN}-{seq}` + its own worktree | one card |
-| **Intervention** | `INT {YYYY-MM-DD} {sujet}` | `int/{date}-{slug}` | one fix |
-
-**Non-sprint lanes.** Outside a sprint the operator already uses an uppercase lane prefix in
-practice — `PILOT - …`, `PROD - …`, `AUTOM - …`, `GROWTH - …`. That form is the documented shape for
-conversations that belong to no sprint: it sorts cleanly, it does not compete with `{NNN}` (a lane
-prefix and a sprint number are visibly different at a glance), and a naming convention already in use
-beats a stricter one that gets ignored. `INT {YYYY-MM-DD} {topic}` stays the form for a *tracked*
-intervention — the one that writes `docs/interventions/YYYY-MM-DD-{Agent}-{topic}.md`.
+| Lane | Branch | Lifespan |
+|---|---|---|
+| **Slice** (default — intervention or plan) | `{type}/{scope}` (cloud sessions: `claude/{concern}`) | one slice |
+| **Sprint** (exception) | `sprint/{NNN}-{slug}` | one sprint |
+| **Split** (exception inside a sprint) | `sprint/{NNN}-{seq}` + its own worktree | one card |
 
 #### Choosing the lane — a runtime rule, never a planning-time one
 
@@ -506,34 +490,34 @@ The choice is made **while executing**, on an observed fact — never predicted 
 At planning time the planner holds the least information it will ever hold about the card: it has not
 seen the code, the test output, or how many fix loops the card will actually cost. A session split
 decided in advance is a guess, and a wrong guess is expensive in both directions (a needless window
-loses the sprint's context; a missing one produces the silent-divergence failure above).
+loses the slice's context; a missing one produces the silent-divergence failure above).
 
 ```
-DÉFAUT : sous-agent, dans la conversation du sprint.
-WORKFLOW si : ≥ 3 items quasi-identiques + une passe de vérification.
+DÉFAUT : sous-agent, dans la conversation.
+WORKFLOW si : ≥ 3 items quasi-identiques + une passe de vérification
+              (chaque worker reçoit un `model` explicite — sonnet par défaut).
 NOUVELLE SESSION seulement si l'un de ces faits est DÉJÀ survenu :
   1. la 3e boucle build → test → fix a commencé sur la même carte, ou
-  2. la carte vit dans un autre repo que celui du sprint, ou
+  2. la carte vit dans un autre repo, ou
   3. elle demande sa propre boucle déploiement + vérification avec l'opérateur dedans, ou
   4. deux cartes qui écrivent du code doivent tourner en même temps
-     (→ chacune sa branche sprint/{NNN}-{seq} et son worktree).
+     (→ chacune sa branche et son worktree).
 Rien d'autre. Ni la taille, ni l'estimation, ni « ça a l'air gros ».
 ```
 
 **No `Session:` field is added to the task template — deliberately.** Its neighbour `Tier:` has been
 mandatory since v311.a and is present in `TASK-TEMPLATE.md`, yet a grep over `Apps/*/docs/sprints/`
-finds it filled in **0 of 85** task files (every `tier` hit in those files is domain prose — customer
-tiers, pricing tiers). A second unfilled field next to an unfilled field is not automation; it is
-more surface to sync. The trigger list above is checked by whoever is executing, at the moment the
-trigger fires, and needs no field to live in.
+found it filled in **0 of 85** task files. A second unfilled field next to an unfilled field is not
+automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
+the moment the trigger fires, and needs no field to live in.
 
 #### One conversation relays
 
 `method-core.md` → "`## Resume here` — the Relay home" states: *"One `## Resume here` block per app;
 each `/relay` overwrites the previous."* There is exactly one slot, so exactly one lane may write it:
-**the sprint conversation**. A split session hands back through its **task file and its commits** —
-never `/relay`, which would overwrite the sprint's own resume state with a single card's context. An
-intervention lane relays only if it is the sole active lane on that app.
+**the main conversation of the app** (the sprint conversation, in sprint mode). A split session hands
+back through its **task file and its commits** — never `/relay`, which would overwrite the main
+resume state with a single card's context. `/relay` is optional: a landed slice needs no relay at all.
 
 ---
 
@@ -722,13 +706,13 @@ Readiness work compounds. If the current loop is dishonest or fragile, adding an
 → Log in `interventions/`; link to sprint if related
 
 **Prerequisites unclear?**
-→ Ask Junia; don't guess dependencies
+→ Ask the coordinator (or have Junia re-plan); don't guess dependencies
 
 ---
 
 ## Next Steps
 
-1. **Today:** Junia runs Managers Sync before planning
+1. **Today:** Managers Sync before planning a sprint (Junia drafts, the coordinator checks)
 2. **Next sprint:** Agents use canonical task format (see example above)
 3. **Ongoing:** Refine DoD based on real usage (lighter or stricter?)
 4. **Future:** Automate task routing with external orchestration (ADK/MCP)

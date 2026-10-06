@@ -37,3 +37,12 @@ hosting/.cache
 /firebase-*.zip
 /.firebase/
 /emulator-ui/
+
+# Landing gate scratch state (HEAD-pinned verify marker, last-reported block reasons)
+.method/
+
+# Session telemetry ledger — per-machine; hooks no longer commit it (318.a), the file becomes untracked in a follow-up; read it with `npm run telemetry:report` in the hub
+docs/project/telemetry/sessions.jsonl
+
+# Raw study extracts (Iris) — personal data stays local and out of git
+docs/deliverables/**/raw/

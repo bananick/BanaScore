@@ -1,7 +1,7 @@
 # Design Method
 
 **Owner:** Nova  
-**Version:** 309.b  
+**Version:** 318.a  
 **Purpose:** Global design constraints only (project-level UI lives in project/DESIGN.md)
 
 ---
@@ -1262,7 +1262,7 @@ pills, tables) · Rail · Layout (spacing, drawer, search, elevation, scrollbars
 
 ## Design Port Loop (Claude Design → code)
 
-**Owner:** Nova (directive) + Brian/Teddy (port) · **Ritual:** `/port` · **Added in v309.a · Evolved in v309.b (living `proto/` directive).**
+**Owner:** Nova (directive; mobile port) + Brian (web port) · **Ritual:** `/port` · **Added in v309.a · Evolved in v309.b (living `proto/` directive).**
 
 > Promoted from `docs/porting/PORTING-PLAYBOOK.md` (pilot-validated 2026-06-15). This is how a
 > prototype crosses into a live React/Firebase app — across many apps — **without restating
@@ -1315,7 +1315,7 @@ This is the only place app specifics are encoded — review it before building.
 
 ### Foundation / token bridge first
 
-Port in dependency order: **foundation (tokens) → nav / shell → one page per PR.** The first
+Port in dependency order: **foundation (tokens) → nav / shell → one page per land.** The first
 `/port foundation` run establishes the token bridge so every later screen inherits it.
 
 > [!IMPORTANT]
@@ -1327,39 +1327,34 @@ Port in dependency order: **foundation (tokens) → nav / shell → one page per
 > **Icon swap is its own step.** MUI-icons → Lucide is cross-cutting and dependency-adding — never
 > bundle it with a screen port.
 
-### One screen per PR
+### One screen per land
 
-Each `/port <page>` run opens **one PR**. Claude-in-Chrome (or Cowork) reviews it side-by-side with
-the prototype — Chrome/Cowork are your **eyes (supervisor), not the decider**. The back-and-forth
-runs through PR review comments, not retyped prompts. Merge, then port the next screen.
+Each `/port <page>` run is **one slice that lands** (`/land`) — no PR unless the landing gate holds it
+back (a conflict-gate item, below). Claude-in-Chrome (or Cowork) compares the result side-by-side with
+the prototype — Chrome/Cowork are your **eyes (supervisor), not the decider**. Land, then port the
+next screen. (Until 318.a this section said "one screen per PR"; landing replaced the PR as the
+default close in 313.a.)
 
 ### Conflict gate — reconcile, don't overwrite
 
 The design is **directive** for UX / IA / features. It is **reconciled, never authoritative**, over
 **schema, permissions, and feature scope** — a prototype ran on fake data and knows nothing about the
-tenant model or business rules. Any such change **stops for the operator**, listed in the PR under
-**"Needs decision"**. The builder never changes the data model on its own.
+tenant model or business rules. Any such change **stops for the operator**: it is on the landing
+exception list, so it goes to a PR with a **"Needs decision"** block. The builder never changes the
+data model on its own.
 
 ### Updating the directive
 
 Changed the design? **Evolve `proto/` in place and commit**, then re-port the affected screen(s) —
-one PR each. The `/port` command and the `CLAUDE.md` block already say *"follow the current proto"* —
+one land each. The `/port` command and the `CLAUDE.md` block already say *"follow the current proto"* —
 nothing to retype, no re-export loop.
 
-### CLAUDE.md block (paste into each app)
+### CLAUDE.md block (synced — never paste it by hand)
 
-```
-## Design port directive
-- The current UI directive for this app is the living HTML prototype in `proto/` at the app
-  root (seeded from Claude Design, evolved in place). Follow it for UX, layout, IA and features.
-- `proto/` never ships: fake data lives there and only there; nothing in the app may import,
-  link or copy from it — ports re-implement against live data.
-- `docs/project/design/PORT-MAP.md` is the proto-screen→component→data map and checklist.
-- Reconcile, never overwrite: if the proto implies a schema / permission / feature change,
-  STOP and list it in the PR under "Needs decision" — do not change the data model yourself.
-- Design changes go proto-first, then a re-port PR. Tokens first, then nav / shell, then one
-  page per PR. Run with `/port`.
-```
+The `## Design port directive` section is one of the five `CLAUDE.md` sections the METHOD sync merges
+into every app (318.a). Its canonical text is the section of the same name in
+`docs/METHOD/tools/swanifly-claude-addon/payload/CLAUDE.md`; edit it there, in the hub, and sync.
+Its last rule: tokens first, then nav / shell, then **one page per land**.
 
 > **Runner note.** Today the loop runs on a Claude Code (web) or **Cowork** session driving `/port`,
 > supervised via GitHub PRs. When **Swanifly** is ready it can drive Brian per task instead (it has

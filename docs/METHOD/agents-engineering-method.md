@@ -1,7 +1,7 @@
 # Agents Engineering & AI Agent Team Architecture
 
 **Owner:** Lucia (method-level) + Developers
-**Version:** 311.c
+**Version:** 318.a
 **Purpose:** Define the agent team architecture on the **Claude suite** — the native sub-agent layer, runners & orchestration, parallel + fleet execution, hard gates via hooks, agent-to-Skill mapping, the Desktop/Code division of labour, Artifacts-based design, and context management protocols.
 
 ---
@@ -35,8 +35,8 @@ The METHOD runs on three Claude surfaces. Each has a distinct sweet spot:
 │ • Talk to agents      │  │ • Sub-agents             │  │ • Interactive HTML/React │
 │   (Skills, by name)   │  │   (.claude/agents) —     │  │   prototypes as          │
 │ • App context via     │  │   delegate, scoped tools │  │   Artifacts              │
-│   Projects + custom   │  │ • Junia orchestrates via │  │ • Generated from the     │
-│   instructions        │  │   the Agent tool         │  │   spec book + M3 tokens  │
+│   Projects + custom   │  │ • The coordinator        │  │ • Generated from the     │
+│   instructions        │  │   orchestrates (Agent)   │  │   spec book + M3 tokens  │
 │ • Connectors (MCP):   │  │ • Slash commands         │  │ • Live, click-through    │
 │   GitHub, filesystem  │  │   (.claude/commands)     │  │   navigation             │
 │ • Generate Artifacts  │  │ • Hooks (hard gates),    │  │ • Replaces proto-kit +   │
@@ -47,18 +47,18 @@ The METHOD runs on three Claude surfaces. Each has a distinct sweet spot:
 ```
 
 - **Claude Desktop = cockpit.** Where you think, plan, review, design, and talk to the agent cohort (as Skills). Holds app context, connectors, and model selection.
-- **Claude Code = autopilot.** Autonomous, multi-file, runs commands and verifies results. Runs **natively as delegatable sub-agents** (`.claude/agents/`, each with scoped tools) in Claude Code on the web **and** the local **Code tab in Cowork**. **Junia** orchestrates them via the `Agent` tool.
+- **Claude Code = autopilot.** Autonomous, multi-file, runs commands and verifies results. Runs **natively as delegatable sub-agents** (`.claude/agents/`, each with scoped tools) in Claude Code on the web **and** the local **Code tab in Cowork**. The **coordinating conversation** orchestrates them via the `Agent` tool (Junia plans; she does not orchestrate).
 - **Claude Design (Artifacts) = the prototype surface.** Generates interactive prototypes in Desktop from the spec, replacing the old proto-kit live tuner.
 
-> **Runners (one cohort, several drivers).** The same cohort can be driven by: native sub-agents (default), **Agent Teams** (parallel fan-out), **Cowork** (the local Code tab + agent UI), or **Swanifly** (the home-grown engine that spawns the `claude` CLI per persona — `Swanifly/web/lib/engine/`). Swanifly is **one runner, not THE engine**.
+> **Runners (one cohort, several drivers).** The same cohort can be driven by: native sub-agents (default), **Agent Teams** (parallel fan-out), **Cowork** (the local Code tab + agent UI), or **Swanifly** (the home-grown engine that spawned the `claude` CLI per persona — `Swanifly/web/lib/engine/`, **parked**). Swanifly was **one runner, not THE engine**, and nothing in the METHOD depends on it today.
 
 ---
 
 ## 3. Claude Desktop vs Claude Code — Decision Tree
 
 **Use Claude Desktop when:**
-- You're planning a sprint or closing one (Junia)
-- You're scoping / defining a CUJ (April)
+- You're planning a slice or a sprint (Junia)
+- You're answering a Cadrage (the operator, on Junia's draft)
 - You're reviewing work (Vera) and want a deliberate high-model pass
 - You're designing UI and want to generate or iterate an **Artifact** prototype (Nova)
 - You need a connector (GitHub, filesystem, web) in an interactive conversation
@@ -66,10 +66,10 @@ The METHOD runs on three Claude surfaces. Each has a distinct sweet spot:
 - You're making a decision, not yet writing files
 
 **Use Claude Code when:**
-- You're executing one or more sprint tasks (Brian, Teddy, Sage, Watson, Kasper) — multi-file edits across the codebase
+- You're executing one or more tasks (Brian, Watson, Kasper) or proving a journey (Sage) — multi-file edits across the codebase
 - You want parallel task execution (delegated sub-agents, one git worktree each — see §5.2)
 - You need to run commands + verify results + iterate autonomously (typecheck, tests, build)
-- You want the full sprint loop run for you — by Junia delegating sub-agents, or **through a runner** (Agent Teams / Cowork / Swanifly) that drives Claude Code per task and opens a PR
+- You want the full loop run for you — by the coordinating conversation delegating sub-agents, or **through a runner** (Agent Teams / Cowork) that drives Claude Code per task
 - You're debugging a complex issue across many files
 - You want autonomous execution while you do other things
 
@@ -85,33 +85,33 @@ The METHOD runs on three Claude surfaces. Each has a distinct sweet spot:
 
 Every METHOD agent is a **Claude Skill** — a folder with a `SKILL.md` that Claude auto-invokes by name. Skills are **version-controlled in the repo** (`.claude/skills/{agent}/`), so they travel with the project and work identically in Claude Desktop and Claude Code.
 
-> **Source of truth:** `.claude/agents/{agent}.md` is the canonical persona text (Identity, mandate, cohort-wide Non-negotiables). `Swanifly/web/lib/engine/agent-personas.ts` is a **derived artifact** generated from it (the prompts Swanifly feeds to Claude Code); Skill `SKILL.md` files are **stubs that load the agent file**. Edit the agent file — never a Skill stub, never the engine — so a human in Desktop and the Swanifly engine invoke the *same* agent.
+> **Source of truth:** `.claude/agents/{agent}.md` is the canonical persona text (Identity, mandate, cohort-wide Non-negotiables); Skill `SKILL.md` files are **stubs that load the agent file**. Edit the agent file — never a Skill stub. (`Swanifly/web/lib/engine/agent-personas.ts` is **not** generated from it: no generator exists; the file is hand-maintained and parked with the Swanifly engine.)
 
 | Agent | Skill | Primary surface | Model default | Commits? |
 |:--|:--|:--|:--|:--|
-| **Junia** | `junia` | Desktop (planning) | Opus | yes (plans) |
+| **Junia** | `junia` | Desktop or Code (planning) | Opus | yes (plans) |
 | **Brian** | `brian` | Claude Code (build) | Sonnet → Opus for hard logic | yes |
-| **Nova** | `nova` | Desktop (design + Artifacts) | Opus | yes (CSS/JSX) |
-| **Vera** | `vera` | Desktop (review) | Opus | **no** (review only) |
-| **Sage** | `sage` | Claude Code (tests) | Sonnet | yes (tests only) |
+| **Sage** | `sage` | Claude Code (proof: browser/e2e) | Sonnet | yes (tests + proof records) |
 | **Watson** | `watson` | Claude Code (ops/debug) | Sonnet | yes |
-| **Gordon** | `gordon` | Desktop + Code (growth) | Opus | yes (docs) |
 | **Kasper** | `kasper` | Claude Code (security) | Opus | yes (hardening) |
+| **Vera** | `vera` | Code or Desktop (one review per slice) | Opus | **no** (review only) |
+| **Nova** | `nova` | Desktop (design + Artifacts) + Code | Sonnet → Opus by override | yes (CSS/JSX) |
+| **Gordon** | `gordon` | Desktop + Code (commercial & growth) | Sonnet → Opus by override | yes (docs, copy) |
+| **Iris** | `iris` | Code + Desktop (study & deliverables) | Sonnet → Opus for ranked recommendations | yes (analysis/deliverables only) |
+| **Lucia** | `lucia` | Claude Code (METHOD release) | Opus | yes (METHOD docs) |
 
-#### Dormant (delegable on explicit request only)
+#### Dormant (not loaded, not delegable)
 
-| Agent | Was | Why dormant |
+| Agent | Was | Covered by |
 |:--|:--|:--|
-| **Teddy** | Mobile Development | Mobile is a mode, not a person — Brian's mandate. |
-| **Aiko** | AI Integration | Wiring AI is building — Brian's mandate. |
-| **April** | Vision, Copy, CUJ | Product copy & vision — Gordon's mandate (operator arbitrates). |
-| **Lucia** | Method Curator | METHOD curation happens in conversation — Junia's. |
-| **Iris** | Research & Analysis | Open-ended study — Junia's / this conversation. |
+| **Teddy** | Mobile Development | Brian — mobile is a mode, not a person. |
+| **Aiko** | AI Integration | Brian — wiring AI is building. |
+| **April** | Vision, Copy, CUJ | Junia's Cadrage draft (vision) + Gordon (copy); the operator decides. |
 
 **Notes:**
 - **Model default ≠ lock — but route by tier.** Defaults live in `.claude/agents/` frontmatter (T1 opus / T2 sonnet); override per delegation, escalate one tier after a failed retry. Haiku = T3 mechanical, delegation-time override only. Canonical: `routing-method.md` → "Model Routing".
 - **Vera never commits** (`expectsCommits: false` in the engine). A build agent that produces **zero commits** is treated as a **failed task** by Swanifly — review agents are the exception.
-- **One advisory hat remains** (API / multi-agent orchestration, ex-Riley) — wielded inside a Desktop chat with `ai-infra-method.md` loaded, not executable. **Gordon, Kasper and Iris are first-class executable sub-agents + Skills since v309.a.** See `agents-method.md`.
+- **One advisory hat remains** (API / multi-agent orchestration, ex-Riley) — wielded inside a Desktop chat with `ai-infra-method.md` loaded, not executable. **Gordon and Kasper have been first-class executable sub-agents + Skills since v309.a; Iris and Lucia came back as active mandates in 318.a.** See `agents-method.md`.
 
 ---
 
@@ -128,7 +128,7 @@ Claude Code can spawn **subagents** via the Task tool, giving each a fresh conte
 > **Subagent is the default; a separate session is the exception.** A subagent returns a conclusion
 > into the context you keep; a separate session carries the context away and returns a document.
 > The four triggers that justify a separate session — and the one-sprint/one-conversation/one-branch/
-> one-worktree rule behind them — live in `sprints-method.md` → "Conversation Naming".
+> one-worktree rule behind them — live in `sprints-method.md` → "Sessions & branches".
 
 ### Model routing at delegation (default)
 Delegation is also a **cost decision**: the orchestrator stays on the strongest model; each spawned
@@ -163,24 +163,24 @@ then chained:
   - sage   → 015-c (test settings) # depends on 015-a → runs after
 ```
 
-> **Swanifly does this for you.** The engine's `sprint-executor.ts` reads the sprint folder, runs `⬜`/`⚠️` tasks in `-seq` order, handles multi-owner tasks (`Brian+Nova`) as a sequential sub-loop handing each owner the prior owner's diff, then commits the status rename and pushes a PR. Running a sprint by hand in Claude Code mirrors that loop.
+> **Swanifly did this for you (parked).** The engine's `sprint-executor.ts` reads the sprint folder, runs `⬜`/`⚠️` tasks in `-seq` order, handles multi-owner tasks (`Brian+Nova`) as a sequential sub-loop handing each owner the prior owner's diff, then commits the status rename and pushes a PR. Running a sprint by hand in Claude Code mirrors that loop.
 
 ---
 
 ## 6. The Sprint Execution Loop
 
 ```
-1. PLAN     │ Junia (Desktop)            │ Sprint plan → task files created
-2. SCOPE    │ April (Desktop)            │ CUJ Precision Gate if scope unclear
-3. DESIGN   │ Nova (Desktop + Artifacts) │ Prototype the view as an Artifact (if new UI)
+1. PLAN     │ Junia                      │ Plan (or sprint) + Cadrage draft
+2. CADRAGE  │ the operator               │ Journey · Proof · out-of-scope answered
+3. DESIGN   │ Nova (Desktop + Artifacts) │ Prototype the view (if new UI)
 4. EXECUTE  │ Brian (Claude Code)        │ Subagents per independent task; commit per task
-5. TEST     │ Sage (Claude Code)         │ Chain after Brian completes
-6. VERIFY   │ Watson (Claude Code)       │ Smoke test + screenshot capture
-7. REVIEW   │ Vera (Desktop)             │ Review Gate → PASS or FAIL
-8. CLOSE    │ Junia (Desktop)            │ Consolidate, commit, push
+5. FIX      │ Watson (Claude Code)       │ Only if the gate goes red
+6. REVIEW   │ Vera (opus)                │ One review per slice, at the Recette
+7. LAND     │ the coordinator            │ /land → LANDED (deploy = its own step)
+8. PROVE    │ Sage (Claude Code)         │ The Proof, observed → PROVEN + regression test
 ```
 
-**Automated path:** Steps 4–6 (and the commit/push/PR) run end-to-end through **Swanifly**, which drives Claude Code per task. Steps 1–3 and 7–8 are human-in-the-loop in Desktop.
+**Who runs it:** the coordinating conversation runs steps 3–8 by delegation; the operator owns step 2 and the accept / reopen / defer at the end. (Swanifly used to automate steps 4–6; it is parked.)
 
 ---
 
@@ -194,8 +194,8 @@ The METHOD assumes a specific Desktop configuration. Set this up once per machin
 - **Project knowledge** = add the small, stable docs the agents always need: `project/STATE.md`, `project/DESIGN.md` (if it exists), `project/SCHEMA.md` (if it exists). Do **not** dump the whole repo — keep it surgical (see Context Hygiene).
 
 ### 7.2 Skills (the agent cohort)
-- Install the agent Skills from `.claude/skills/` so Claude can invoke **Brian, Vera, Junia, Nova, April, Sage, Watson, Aiko, Teddy, Lucia** by name.
-- Enable the relevant Skills per Project. A web app project rarely needs Teddy; a METHOD-curation project mostly needs Lucia.
+- Install the agent Skills from `.claude/skills/` so Claude can invoke **Junia, Brian, Sage, Watson, Kasper, Vera, Nova, Gordon, Iris, Lucia** by name.
+- Enable the relevant Skills per Project. A consulting project mostly needs Iris; a METHOD-release project mostly needs Lucia.
 
 ### 7.3 Connectors (MCP)
 - **GitHub connector** — for reading PRs/issues and pushing changes from Desktop.
@@ -244,7 +244,7 @@ The PROTOTYPE phase of the Definition Pipeline now runs on **Claude Artifacts**,
 
 Long threads lose context ("context rot"). Maintain strict hygiene:
 
-1.  **One sprint = one conversation = one branch = one worktree.** The default for a sprint task is a **subagent inside the sprint's conversation**, not a new window. Open a separate session only once one of four facts has *already* happened (3rd build→test→fix loop on the same card · the card lives in another repo · it needs its own deploy+verify loop with the operator · two code-writing cards must run concurrently, each on `sprint/{NNN}-{seq}` in its own worktree). Never on size or estimate. Full rule, lanes, title/branch forms and the hook mechanism that forces it: **`sprints-method.md` → "Conversation Naming"**. *(This supersedes the former "one thread per task".)*
+1.  **One slice = one conversation = one branch = one worktree** (sprint mode: one sprint). The default for a task is a **subagent inside the conversation**, not a new window. Open a separate session only once one of four facts has *already* happened (3rd build→test→fix loop on the same card · the card lives in another repo · it needs its own deploy+verify loop with the operator · two code-writing cards must run concurrently, each on its own branch in its own worktree). Never on size or estimate. Full rule, lanes, branch forms and the hook mechanism that forces it: **`sprints-method.md` → "Sessions & branches"**. *(This supersedes the former "one thread per task".)*
 2.  **Explicit context loading.** Reference METHOD/project docs in your prompt. In Claude Code, rely on `CLAUDE.md` auto-load for conventions; reference task-specific docs explicitly. In Desktop, lean on Project knowledge + the Skill.
 3.  **Wipe and restart.** If an agent spins for more than ~3 turns, **stop**. Revert to the last checkpoint, start a fresh chat, provide only essential state + error logs.
 4.  **Subagent isolation.** Claude Code subagents start clean by design — this naturally prevents rot for parallel tasks.

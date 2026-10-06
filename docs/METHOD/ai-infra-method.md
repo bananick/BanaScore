@@ -1,6 +1,6 @@
 # AI Infrastructure Guidelines
 
-**Owner:** Aiko  
+**Owner:** Brian  
 **Version:** 309.a  
 **Purpose:** Multi-provider architecture, task-type routing, ADK/MCP/A2A readiness, Vertex AI, observability, cost controls
 

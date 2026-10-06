@@ -1,6 +1,6 @@
 ## Design port directive
 
-> How a design crosses into this live app. Standing order — never restate it; run `/port`.
+> How a design crosses into this live app. Standing order — never restate it; run `/port` (an optional ritual: only apps with a living `proto/` use it).
 > Full operating guide: `docs/porting/PORTING-PLAYBOOK.md`. Method spec: `docs/METHOD/design-method.md` → "Design Port Loop".
 
 - **Directive = the living proto, committed.** The current UI directive for this app is the HTML
@@ -21,5 +21,6 @@
   the theme; Tailwind v4 → alias the contract over `@theme`; Tailwind v3 → config). Never feed
   `var(--…)` into a MUI palette — it throws.
 - **Conflict gate — reconcile, never overwrite.** If the proto implies a schema / permission /
-  feature change, STOP and list it in the PR under "Needs decision" — never change the data model yourself.
-- **Order:** tokens (foundation) → nav / shell → one page per PR. Each `/port <screen>` = one PR.
+  feature change, STOP: it is on the landing exception list, so surface it in a `### Needs decision`
+  block (PR) — never change the data model yourself.
+- **Order:** tokens (foundation) → nav / shell → one page per land. Each `/port <screen>` = one land.

@@ -1,8 +1,8 @@
 ﻿# Definition Pipeline Method
 
-**Owner:** April + Nova  
-**Version:** 308.a  
-**Last Updated:** 2026-06-01  
+**Owner:** Nova (vision: the operator, through the Cadrage)  
+**Version:** 318.a  
+**Last Updated:** 2026-10-06  
 **Purpose:** Structured pre-BUILD pipeline to define, specify, and prototype apps
 
 ---
@@ -23,7 +23,7 @@ DISCOVER ──→ SPECIFY ──→ PROTOTYPE ──→ BUILD
 
 ## Phase 1: DISCOVER
 
-**Agent:** April  
+**Agent:** Junia drafts, the operator decides (April is parked — 318.a); Iris for the competitive study  
 **Output folder:** `docs/definition/fundations/`  
 **Duration:** ~1 week  
 **Gate:** Human validates brief
@@ -68,7 +68,7 @@ DISCOVER ──→ SPECIFY ──→ PROTOTYPE ──→ BUILD
 
 ## Phase 2: SPECIFY
 
-**Agent:** April (content) + Nova (design chapters) + Aiko (AI chapters)  
+**Agent:** Junia (content) + Gordon (copy) + Nova (design chapters) + Brian (AI chapters)  
 **Output folder:** `docs/definition/specs/`  
 **Duration:** 1-2 weeks  
 **Gate:** Human validates spec book

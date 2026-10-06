@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 315.c-lite  
+**Version:** 318.a-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -26,6 +26,15 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 ## Definition of Done
 
 One canonical list: **`method-core.md` → "Definition of Done"** (9 standard items + the task-specific gates below it). Do not restate it here — this file previously carried an 11-item variant that silently disagreed with the template every task file is generated from.
+
+## The two-moment contract — Cadrage · Recette
+
+The operator is invited in at the two ends only: **🎯 Cadrage** (one `AskUserQuestion` fixing
+Journey/Proof/out-of-scope before the first edit) and **✅ Recette** (recette table + the four
+states `CODED`/`LANDED`/`DEPLOYED`/`PROVEN`, never merged) before the Debrief. `/land` refuses a
+newly added intervention or task file without `Journey:` + `Proof:` (318.a). At the Recette, `vera`
+reviews the slice once (opus) and `sage` runs the Proof. Canonical spec:
+**`method-core.md` → "The two-moment contract — Cadrage · Recette"**.
 
 ## Code Conventions
 
@@ -58,7 +67,7 @@ renders small, unstyled and unclickable). Canonical spec: **`method-core.md` →
 
 {Une ligne : ce qui vient d'être fait.}
 
-**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N unité} · {fait git / PR / test réel}
+**📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N journeys proven} · {state: CODED · LANDED · DEPLOYED · PROVEN}
 
 **🧠 À retenir**
 - {fait clé}
@@ -82,20 +91,21 @@ renders small, unstyled and unclickable). Canonical spec: **`method-core.md` →
 
 ## Sessions
 
-**Un sprint = une conversation = une branche = un worktree.** Défaut : sous-agent dans la
-conversation du sprint. Nouvelle session seulement si un fait est **déjà** survenu : 3e boucle
+**Une slice = une conversation = une branche = un worktree.** Défaut : sous-agent dans la
+conversation. Nouvelle session seulement si un fait est **déjà** survenu : 3e boucle
 build→test→fix sur la même carte · carte dans un autre repo · sa propre boucle déploiement+vérif avec
-l'opérateur · deux cartes qui écrivent du code en parallèle (chacune sa branche `sprint/{NNN}-{seq}`
-+ son worktree). Jamais sur la taille ou l'estimation. Deux sessions sur une même branche : le push
-de la seconde est rejeté et **avalé** par les hooks `Stop` — le travail paraît à l'arrêt.
-Titres ASCII, numéro d'abord. Règle complète : `sprints-method.md` → "Conversation Naming".
+l'opérateur · deux cartes qui écrivent du code en parallèle (chacune sa branche + son worktree).
+Jamais sur la taille ou l'estimation. Deux sessions sur une même branche : le push de la seconde est
+rejeté et **avalé** par le hook `Stop` — le travail paraît à l'arrêt. Aucune convention de titre de
+conversation. Règle complète : `sprints-method.md` → "Sessions & branches".
 
 ## Git
 
 - Format: `type(scope): message` (feat/fix/chore/docs/test/refactor)
-- Branch per **slice** (what one conversation can finish): `feat/{sprint}-{seq}-{scope}`
+- Branch per **slice** (what one conversation can finish): `{type}/{scope}` (cloud sessions: `claude/{concern}`)
 - **Land, don't ship.** Close the conversation with `npm run land` (`/land`) — it verifies, then
-  fast-forwards `main`. `main` is the deploy. The operator never manages PRs.
+  fast-forwards `main` (or the repo's trunk). That is **LANDED**: `DEPLOYED` and `PROVEN` need their
+  own evidence (a served revision, an observed run). The operator never manages PRs.
 - There is no CI and no branch protection on this account, so the gate is local and machine-checked:
   `.claude/hooks/verify-gate.mjs` stamps a HEAD-pinned green marker, `.claude/hooks/land.mjs` refuses
   to land without it. Never force-push, never `git rebase`, never `gh pr merge --admin`.
