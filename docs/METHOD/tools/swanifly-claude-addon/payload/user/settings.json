@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL": "0"
+  },
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"__HOME__\\.claude\\scripts\\flight-deck.ps1\" -Mode resume-hook",
+            "timeout": 10,
+            "statusMessage": "Preparing Flight Deck..."
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"__HOME__\\.claude\\scripts\\flight-deck.ps1\" -Mode statusline",
+    "padding": 1,
+    "refreshInterval": 30
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "autoMode": {
+    "soft_deny": [
+      "$defaults",
+      "Bash(gcloud * iam *:*) scoped to bananaevents Cloud Run resources — treat as Protected IaC scope given scripts/fix-cloud-run-iam.mjs and scripts/diagnose-cloud-run-iam.mjs exist for manual IAM fixes",
+      "Bash(firebase deploy:*) without an explicit target — Production Deploy risk given multiple hosted.app/web.app targets observed"
+    ]
+  }
+}

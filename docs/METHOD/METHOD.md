@@ -1,4 +1,4 @@
-# METHOD v318.a
+# METHOD v319.a
 
 ## Quick Start
 
@@ -22,12 +22,41 @@
 | **Sell, market, run ads** | `agents-method.md` → `project/VISION.md` → `docs/growth/` | Gordon |
 | **Study / client deliverable** | `method-core-lite.md` → `project/STATE.md` | Iris |
 | **Evolve METHOD** | `versioning.md` → the files the change touches | Lucia |
+| **Measure token spend / coach on it** | `routing-method.md` → `project/telemetry/` → the ledgers | Penny |
 
-> Agents named here are the **10 active** mandates. `teddy` `aiko` `april` are dormant
+> Agents named here are the **11 active** mandates. `teddy` `aiko` `april` are dormant
 > (`.claude/_dormant/`) — not loaded, so not delegable. Their mandates are covered above (Brian,
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v319.a
+1. **Token economy, measured then ruled.** 14 days, 2,934 transcripts: **$14,714** API-equivalent,
+   sub-agents and Workflows **86.2 %** (opus 50.2 %), Workflows **37.5 %**, cache reads + writes
+   **85.6 %** — a session costs *calls × context*, not output. New rules in `routing-method.md` →
+   "Token economy", short form in every app's `CLAUDE.md` → "Model Routing": a **review→fix loop stops
+   after 2 rounds** (re-review on the diff only, one reviewer per point, full gates once at the end);
+   **tiers beat modes** (Ultracode never overrides T1/T2/T3); **every Workflow announces its cost at
+   Cadrage** and stays **< 10 agents** unless the operator agrees; **minimal sub-agent context** (paths,
+   not pasted inventories; screenshots only for Nova/Sage; tool calls capped in the brief);
+   **`MEMORY.md` ≤ 5 kB**; the unit is the **cost of a finished task**; `general-purpose` never on opus
+   unless the task is judgement.
+2. **A default sub-agent model backs the routing rule.** 122 sub-agents pinned neither per
+   call nor by frontmatter ran on opus in 14 days ($1,456, 9.8 % of cost). Review, verify and judgement workers still name
+   `opus` explicitly — the default makes forgetting cheap, not safe. `install.mjs --user` writes a user-level default sub-agent model
+   (sonnet) — below the per-call `model` and the frontmatter, so it never replaces an explicit one
+   (never use the `_FORCE` variant); doctor W7 warns when it is missing, W6 when a `MEMORY.md` passes
+   5 kB.
+3. **Penny joins the cohort — 11 active mandates + 3 dormant.** Telemetry & token-economy coach
+   (sonnet): measures by project, task type, period, sprint, agent and model; owns
+   `npm run telemetry:report` (now with a model / inheritance split, `--days`, `--json`), the periodic
+   `docs/project/telemetry/REPORT-YYYY-MM-DD.md` and the J+7 measurements; coaches; proposes METHOD
+   changes to Lucia. At the Recette of a slice that ran a Workflow or > 10 sub-agents, her
+   one-paragraph cost note joins the Debrief — a note, not a gate.
+4. **The ledger reaches more of the fleet.** Repos the METHOD never reached (`LEDGER_ONLY_REPOS`:
+   Talkation, IApocalypse) get the telemetry hook alone; `telemetry:report` reads the
+   transcripts too and names any "Ledger gap" (77.8 % of sessions had a ledger). Five blocking repos
+   sit in `SKIP_REPOS` for this sync, to be reconciled one by one.
 
 ## What's New in v318.a
 1. **The cohort follows the practice: 10 active mandates + 3 dormant.** Measured on 120 days
@@ -170,7 +199,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 ## METHOD Files (17 docs + native layer)
 
 > 17 synced METHOD docs (9 Core + 8 Support), **plus** the repo-root native layer:
-> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (10 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (8 rituals).
+> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (11 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (8 rituals).
 
 ### Core (9) — Always synced
 
@@ -178,7 +207,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 |---|---|---|---|
 | `METHOD.md` | Lucia | This file. Entry point + routing. | ~16 KB |
 | `method-core.md` | Lucia | Principles, tech stack, DoD | ~13 KB |
-| `agents-method.md` | Lucia | 10 active + 3 dormant agents, roles, rituals | ~40 KB |
+| `agents-method.md` | Lucia | 11 active + 3 dormant agents, roles, rituals | ~49 KB |
 | `sprints-method.md` | Junia | Sprint system, gates, rituals | ~16 KB |
 | `design-method.md` | Nova | M3 design constraints, nav patterns | ~25 KB |
 | `ai-infra-method.md` | Brian | Multi-provider AI architecture | ~41 KB |
@@ -203,7 +232,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 | `agent-launch-prompts.md` | Pre-built launch prompts per METHOD agent |
 
 > Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (agent personas as Skills),
-> **`.claude/agents/` (10 active delegatable sub-agents + README), and `.claude/commands/` (8 rituals:
+> **`.claude/agents/` (11 active delegatable sub-agents + README), and `.claude/commands/` (8 rituals:
 > `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, and the optional `/port`,
 > `/relay`)**. See `agents-engineering-method.md`.
 
@@ -338,9 +367,9 @@ npm run sync-method:all:dry    # preview without writing
 
 ---
 
-## Agent Cohort (10 active mandates + 3 dormant)
+## Agent Cohort (11 active mandates + 3 dormant)
 
-Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable by name in Claude Desktop) and as a delegatable **native sub-agent** in `.claude/agents/` (Claude Code — web + Cowork's local Code tab). `.claude/agents/{agent}.md` is the canonical persona text. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from it.) An agent earns a name when its mandate is one you would otherwise have to retype; ten mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
+Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable by name in Claude Desktop) and as a delegatable **native sub-agent** in `.claude/agents/` (Claude Code — web + Cowork's local Code tab). `.claude/agents/{agent}.md` is the canonical persona text. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from it.) An agent earns a name when its mandate is one you would otherwise have to retype; eleven mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
 
 | Agent | Mandate | Entry Files |
 |---|---|---|
@@ -354,6 +383,7 @@ Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable 
 | **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, ads | `agents-method.md` → `project/VISION.md` → `docs/growth/` |
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | `method-core-lite.md` → `project/STATE.md` |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | `versioning.md` → `METHOD.md` |
+| **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia | `routing-method.md` → `project/telemetry/` |
 
 ### Dormant (not loaded, not delegable)
 
@@ -462,7 +492,7 @@ docs/sprints/007 ⬜ venue-proto/
 | 1 | Modular Architecture — 15 focused files | `METHOD.md` |
 | 2 | Multi-Entry Routing — load 2-3 files, not 15 | `routing-method.md` |
 | 3 | Two Namespaces — `method/` (synced) + `project/` (local) | `versioning.md` |
-| 4 | Global Agent Cohort — 10 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
+| 4 | Global Agent Cohort — 11 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
 | 5 | **Definition Pipeline** — DISCOVER → SPECIFY → PROTOTYPE | `definition-method.md` |
 | 6 | **Focus System** — Single-objective taquet per app | `project/FOCUS.md` |
 | 7 | **Cross-App Governance** — BanaPilot drift detection | `versioning.md` |
@@ -485,9 +515,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 318.a  
+**Current Version:** 319.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-06
+**Released:** 2026-10-10
 
 ### Version Scheme
 

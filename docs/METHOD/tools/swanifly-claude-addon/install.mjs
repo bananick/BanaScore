@@ -53,8 +53,15 @@
  * the section of the same name inside `payload/CLAUDE.md` (or `payload/AGENTS.md` for AGENTS.md).
  * Edit them there, never in an app repo.
  *
+ * USER LEVEL (`--user`, separate from the per-app install above): payload/user/{CLAUDE.md,settings.json,scripts/flight-deck.ps1}
+ * -> ~/.claude/ (or $CLAUDE_HOME). Three files, nothing else — never memory/, credentials, logins or .env.
+ * A target that exists and differs is backed up as `<name>.bak-<YYYYMMDD-HHMMSS>` first; an identical one is
+ * skipped. settings.json carries `__HOME__`, replaced by os.homedir() when written. Run it on a new machine.
+ *
  * Usage (standalone):   node install.mjs <appRoot> [--dry-run] [--force]
- * Programmatic:         import { installClaudeAddon, mergeSection } from './install.mjs'
+ *                       node install.mjs --user [--dry-run] [--only settings.json] [--env-only]
+ *                       (--env-only writes just the missing env.CLAUDE_CODE_SUBAGENT_MODEL; exit 1 if settings.json is invalid JSON)
+ * Programmatic:         import { installClaudeAddon, installUserLevel, mergeSection } from './install.mjs'
  *
  * Called automatically per app by scripts/sync-method-to-all-apps.mjs and
  * Apps/script/sync-method-to-github.mjs.
@@ -62,6 +69,7 @@
 import {
   readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, copyFileSync, statSync,
 } from "fs";
+import { homedir } from "os";
 import { join, dirname, resolve } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 
@@ -125,7 +133,7 @@ export function eolOf(s) {
   const bare = (s.match(/(?<!\r)\n/g) ?? []).length;
   return crlf > bare ? "\r\n" : "\n";
 }
-const h1Of = (s) => lf(s).replace(/^﻿/, "").split("\n").find((l) => /^#\s/.test(l))?.trim() ?? "";
+const h1Of = (s) => lf(s).replace(/^\uFEFF/, "").split("\n").find((l) => /^#\s/.test(l))?.trim() ?? "";
 const normHeading = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
 const startsWithHeading = (heading, prefix) => normHeading(heading).startsWith(normHeading(prefix));
 const equalsHeading = (heading, name) => normHeading(heading) === normHeading(name);
@@ -658,11 +666,152 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   return res;
 }
 
+// ── user level (~/.claude) ──────────────────────────────────────────────────
+
+/** The only files `--user` ever writes (three; the script is what the settings hooks call), relative to payload/user/ and to the Claude dir. */
+export const USER_FILES = ["CLAUDE.md", "settings.json", "scripts/flight-deck.ps1"];
+
+/** Replace the `__HOME__` placeholder in every string of a parsed JSON value (JSON-safe on Windows backslashes). */
+function fillHome(v, home) {
+  if (typeof v === "string") return v.replaceAll("__HOME__", home);
+  if (Array.isArray(v)) return v.map((x) => fillHome(x, home));
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fillHome(x, home)]));
+  return v;
+}
+
+/**
+ * Keys `--user` guarantees in the user's settings.json `env` block (added only when absent — an explicit
+ * operator value always wins). CLAUDE_CODE_SUBAGENT_MODEL is the default model of a sub-agent that has
+ * neither an explicit `model` param nor a `model:` in its agent frontmatter (otherwise it inherits the
+ * coordinator, i.e. opus). Never use the `_FORCE` variant: it would override explicit opus for review/security.
+ */
+export const USER_ENV_DEFAULTS = { CLAUDE_CODE_SUBAGENT_MODEL: "sonnet" };
+
+const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+/**
+ * Merge the payload settings into the operator's existing ones: the existing value always wins, the payload
+ * only fills what is missing (`env` is merged key by key). Idempotent; never drops a machine-specific key.
+ */
+export function mergeUserSettings(existing, payload) {
+  const out = { ...existing };
+  for (const [k, v] of Object.entries(payload)) {
+    if (!(k in out)) out[k] = v;
+    else if (k === "env" && isObj(out.env) && isObj(v)) out.env = { ...v, ...out.env };
+  }
+  return out;
+}
+
+/** The text `--user` would write for one payload file; settings.json gets `__HOME__` filled, CLAUDE.md is verbatim. */
+function renderUserFile(name, raw, home) {
+  if (name !== "settings.json") return raw;
+  return JSON.stringify(fillHome(JSON.parse(raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw), home), null, 2) + "\n";
+}
+
+const stamp = (d = new Date()) => {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+};
+
+/**
+ * `--user --env-only`: write ONLY the USER_ENV_DEFAULTS keys that are absent from the user's settings.json `env`
+ * (today: CLAUDE_CODE_SUBAGENT_MODEL=sonnet). Permissions, hooks, statusLine and autoMode are never read from the
+ * payload — this is the safe fix for the doctor's W7 on a machine whose settings.json is already tuned.
+ * @returns {{claudeDir:string, files:{path:string, outcome:"written"|"identical"|"backed-up+written"|"skipped-invalid", backup?:string}[]}}
+ */
+export function installUserEnv({ claudeDir, home = homedir(), dryRun = false, now = new Date() } = {}) {
+  const target = claudeDir ?? process.env.CLAUDE_HOME ?? join(home, ".claude");
+  const dest = join(target, "settings.json");
+  const res = { claudeDir: target, files: [] };
+  const out = (outcome, backup) => res.files.push({ path: "settings.json", outcome, ...(backup ? { backup } : {}) });
+  let current = {};
+  if (existsSync(dest)) {
+    try { current = JSON.parse(readFileSync(dest, "utf8").replace(/^\uFEFF/, "")); } catch { current = null; }
+    if (!isObj(current) || (current.env !== undefined && !isObj(current.env))) { out("skipped-invalid"); return res; }
+  }
+  const env = current.env ?? {};
+  const missing = Object.entries(USER_ENV_DEFAULTS).filter(([k]) => !(k in env));
+  if (!missing.length) { out("identical"); return res; }
+  const next = { ...current, env: { ...env, ...Object.fromEntries(missing) } };
+  if (!existsSync(dest)) {
+    if (!dryRun) { mkdirSync(dirname(dest), { recursive: true }); writeFileSync(dest, JSON.stringify(next, null, 2) + "\n", "utf8"); }
+    out("written");
+    return res;
+  }
+  const backup = `settings.json.bak-${stamp(now)}`;
+  if (!dryRun) { copyFileSync(dest, join(target, backup)); writeFileSync(dest, JSON.stringify(next, null, 2) + "\n", "utf8"); }
+  out("backed-up+written", backup);
+  return res;
+}
+
+/**
+ * Restore the operator's user-level Claude config on a new machine.
+ * settings.json is MERGED into the existing one (existing keys win, missing keys are filled, `env` per key,
+ * USER_ENV_DEFAULTS guaranteed); the other files are replaced with a .bak backup.
+ * @param {{addonDir?:string, claudeDir?:string, home?:string, dryRun?:boolean, now?:Date, only?:string[]}} [opts]
+ *   `claudeDir` defaults to $CLAUDE_HOME, else `<os.homedir()>/.claude`; `only` restricts to some USER_FILES.
+ * @returns {{claudeDir:string, files:{path:string, outcome:"written"|"identical"|"backed-up+written"|"skipped-invalid", backup?:string}[]}}
+ */
+export function installUserLevel({ addonDir = HERE, claudeDir, home = homedir(), dryRun = false, now = new Date(), only } = {}) {
+  const src = join(addonDir, "payload", "user");
+  const target = claudeDir ?? process.env.CLAUDE_HOME ?? join(home, ".claude");
+  const res = { claudeDir: target, files: [] };
+  for (const name of USER_FILES) {
+    if (only && !only.includes(name)) continue;
+    const from = join(src, name);
+    if (!existsSync(from)) continue; // a payload without a file simply skips it
+    let text = renderUserFile(name, readFileSync(from, "utf8"), home);
+    const dest = join(target, name);
+    if (name === "settings.json" && existsSync(dest)) {
+      let current;
+      try { current = JSON.parse(readFileSync(dest, "utf8").replace(/^\uFEFF/, "")); } catch { current = null; }
+      if (!isObj(current)) { res.files.push({ path: name, outcome: "skipped-invalid" }); continue; }
+      const merged = mergeUserSettings(current, JSON.parse(text));
+      merged.env = { ...USER_ENV_DEFAULTS, ...(isObj(merged.env) ? merged.env : {}) };
+      if (JSON.stringify(merged) === JSON.stringify(current)) { res.files.push({ path: name, outcome: "identical" }); continue; }
+      const backup = `${name}.bak-${stamp(now)}`;
+      if (!dryRun) { copyFileSync(dest, join(target, backup)); writeFileSync(dest, JSON.stringify(merged, null, 2) + "\n", "utf8"); }
+      res.files.push({ path: name, outcome: "backed-up+written", backup });
+      continue;
+    }
+    if (name === "settings.json") text = JSON.stringify({ ...JSON.parse(text), env: { ...USER_ENV_DEFAULTS, ...(JSON.parse(text).env ?? {}) } }, null, 2) + "\n";
+    if (!existsSync(dest)) {
+      if (!dryRun) { mkdirSync(dirname(dest), { recursive: true }); writeFileSync(dest, text, "utf8"); }
+      res.files.push({ path: name, outcome: "written" });
+      continue;
+    }
+    const current = readFileSync(dest, "utf8");
+    if (lf(current) === lf(text)) { res.files.push({ path: name, outcome: "identical" }); continue; }
+    const backup = `${name}.bak-${stamp(now)}`;
+    if (!dryRun) { copyFileSync(dest, join(target, backup)); writeFileSync(dest, text, "utf8"); }
+    res.files.push({ path: name, outcome: "backed-up+written", backup });
+  }
+  return res;
+}
+
 // --- standalone CLI ---
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const force = args.includes("--force");
+  if (args.includes("--user")) {
+    const oi = args.indexOf("--only");
+    const only = oi >= 0 && args[oi + 1] ? args[oi + 1].split(",") : undefined;
+    const envOnly = args.includes("--env-only");
+    const r = envOnly ? installUserEnv({ dryRun }) : installUserLevel({ dryRun, only });
+    console.log(`[swanifly-claude-addon --user${envOnly ? " --env-only" : ""}]${dryRun ? " (dry-run)" : ""} ${r.claudeDir}`);
+    for (const f of r.files) {
+      const verb = { written: "write ", identical: "skip  ", "backed-up+written": "backup", "skipped-invalid": "SKIP  " }[f.outcome];
+      console.log(`  ${verb} : ${f.path}${f.backup ? ` (previous -> ${f.backup})` : f.outcome === "identical" ? " (identical)" : f.outcome === "skipped-invalid" ? " (existing file is not valid JSON — left untouched)" : ""}`);
+    }
+    const n = (o) => r.files.filter((f) => f.outcome === o).length;
+    console.log(`  summary : ${n("written")} written, ${n("backed-up+written")} backed up + written, ${n("identical")} identical, ${n("skipped-invalid")} skipped (invalid JSON)${dryRun ? " — nothing written" : ""}`);
+    if (n("skipped-invalid")) {
+      console.error(`  WARNING : ${n("skipped-invalid")} file(s) NOT fixed — the existing settings.json is not valid JSON. Repair it by hand, then re-run.`);
+      process.exit(1);
+    }
+    process.exit(0);
+  }
   const appRoot = args.find((a) => !a.startsWith("--"));
   if (!appRoot) {
     console.error("Usage: node install.mjs <appRoot> [--dry-run] [--force]");

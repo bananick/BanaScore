@@ -11,7 +11,7 @@ first-class citizen of the methodology in **every** app, not just Bana-Share.
 | App `AGENTS.md` | the non-Claude mirror | refreshed from the payload, unless the app owns its identity files (the BanaLazer 041-g rule, upstreamed in 318.a: CRLF-insensitive compare, app-owned identity kept) |
 | App `CLAUDE.md` | the whole file (seed) | **create-if-missing** — an existing `CLAUDE.md` is app-owned |
 | App `CLAUDE.md` | five hub-owned sections: `## Agent Cohort` · `## Model Routing` · `## Landing & conversation size` · `## Communication Contract` · `## Design port directive` | **merge** — matched by heading prefix, added when absent, refreshed when the hub text changes; the rest of the file is left alone. An app keeps its own version of one by listing it in `docs/METHOD/app-settings.json` → `claudeAddon.ownedSections`. |
-| `.claude/agents/` | the 10 active cohort agents | **overwrite** — except an **app-enriched** agent (carries `## Frontières`, `## Pièges` or `## Règle de GO`, or is listed in `claudeAddon.ownedAgents`), which is kept as is |
+| `.claude/agents/` | the 11 active cohort agents | **overwrite** — except an **app-enriched** agent (carries `## Frontières`, `## Pièges` or `## Règle de GO`, or is listed in `claudeAddon.ownedAgents`), which is kept as is |
 | `.claude/agents/` → `.claude/_dormant/agents/` | `teddy`, `aiko`, `april` | **move** (never delete) — unless the app lists the agent in `claudeAddon.activeAgents` |
 | `.claude/commands/` | `brief`, `intervention`, `land`, `plan-sprint`, `port`, `relay`, `review`, `ship` (8) | **overwrite** — canonical METHOD rituals (`port` and `relay` are optional) |
 | `.claude/skills/` | `ads-ops`, `deploy`, `hubspot-sync`, `implement-plan`, `landing-page`, `media`, `ux-review` (7) | **overwrite** — canonical tooling (`sprint` and `ship-check` parked in 318.a) |
@@ -61,6 +61,22 @@ Loop". Per app: seed `proto/`, generate `PORT-MAP.md` from the template, then ru
 ```bash
 node docs/METHOD/tools/swanifly-claude-addon/install.mjs <path-to-app> [--dry-run]
 ```
+
+## User level (`--user`)
+
+Separate from the per-app install: restores the operator's **user-level** Claude Code config on a new machine.
+
+```bash
+node docs/METHOD/tools/swanifly-claude-addon/install.mjs --user [--dry-run] [--only <file[,file]>] [--env-only]
+```
+
+- **Installs** exactly three files from `payload/user/` into `~/.claude/` (override the target with `CLAUDE_HOME`): `CLAUDE.md` (the operator's global instructions, verbatim), `settings.json` (permissions, `SessionStart` + `statusLine` hooks, notification flags, `autoMode.soft_deny`) and `scripts/flight-deck.ps1` (the PowerShell script those hooks call; verbatim, no secrets or machine paths). `__HOME__` in `settings.json` is replaced by `os.homedir()`.
+- **Backup rule:** a target that exists and differs is copied to `<name>.bak-<YYYYMMDD-HHMMSS>` first (beside the file, e.g. `scripts/flight-deck.ps1.bak-...`), then overwritten; an identical one is skipped. `--dry-run` prints the actions and writes nothing.
+- **`settings.json` is merged, not replaced (319.a).** Every key already in the operator's file wins; the payload only fills the keys that are missing, and `env` is merged key by key — a machine-specific value is never dropped. `env.CLAUDE_CODE_SUBAGENT_MODEL = "sonnet"` is guaranteed (added when absent, an explicit operator value still wins): it is the model of a sub-agent with neither a per-call `model` nor a `model:` frontmatter, which would otherwise inherit the coordinator (opus). The `_FORCE` variant is never written — it would override the explicit opus of `vera` and `kasper`. A changed file is backed up first as above; an existing file that is not valid JSON is left untouched (`SKIP`) and the run exits 1 with a counted warning. Policy: `docs/METHOD/routing-method.md` → "Delegation-time overrides", rule 5.
+- **`--only <file[,file]>`** restricts the install to some of the three files, e.g. `--only settings.json` to merge the settings without touching `CLAUDE.md`.
+- **`--env-only`** writes only `env.CLAUDE_CODE_SUBAGENT_MODEL` into `~/.claude/settings.json`, and only when it is absent — no other key, no other file. It is the fix doctor W7 prints.
+- **NOT synced:** logins and OAuth sessions, API tokens, connectors (MCP), `.env` files, `memory/`, transcripts, and anything else under `~/.claude/`. `settings.json` is sanitized: machine-specific `env` (temp dirs), temp-path permissions and the transcript-mined `autoMode.environment` block are left out.
+- **New machine:** install Claude Code and log in -> clone BanaShare -> `node docs/METHOD/tools/swanifly-claude-addon/install.mjs --user --dry-run`, then without `--dry-run` -> reconnect connectors by hand -> restart Claude Code. Re-run after editing `payload/user/` in the hub; the previous file is kept as `.bak-*`.
 
 ## Notes
 

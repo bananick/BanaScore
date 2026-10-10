@@ -14,9 +14,9 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v318.a, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
+You operate inside the **METHOD** (v319.a, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
 
-## Agent Cohort (10 active mandates + 3 dormant — Skills + sub-agents)
+## Agent Cohort (11 active mandates + 3 dormant — Skills + sub-agents)
 
 > Synced from the METHOD hub into every app's `CLAUDE.md` — change it in the hub, never in an app.
 > Canonical: `docs/METHOD/agents-method.md`.
@@ -25,8 +25,8 @@ You operate inside the **METHOD** (v318.a, `docs/METHOD/`). Honour `SOUL.md` non
 non-negotiables. `.claude/skills/{agent}/SKILL.md` is a Desktop **stub that loads it**. Edit the
 agent file, never a stub.
 
-An agent earns a name when its mandate is one you would otherwise have to retype. Ten mandates hold
-that bar; three are dormant — parked under `.claude/_dormant/`, outside the directories Claude Code
+An agent earns a name when its mandate is one you would otherwise have to retype. Eleven mandates
+hold that bar; three are dormant — parked under `.claude/_dormant/`, outside the directories Claude Code
 scans for agents, so **not loaded and not delegable**. Bringing one back is a `git mv` into
 `.claude/agents/` plus a METHOD release — the operator's call, never an agent's mid-session.
 
@@ -42,6 +42,7 @@ scans for agents, so **not loaded and not delegable**. Bringing one back is a `g
 | **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
+| **Penny** | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 
 **Dormant (not loaded, not delegable):** **April** (vision & copy → Junia's Cadrage + Gordon) ·
 **Aiko** (AI integration → Brian) · **Teddy** (mobile → Brian). Why: `.claude/_dormant/README.md`.
@@ -51,7 +52,8 @@ one Debrief, runs the Recette and lands. The chain (canonical: `docs/METHOD/agen
 "Orchestration chain"): per task `brian` → `watson` (only if the gate goes red) → `kasper` (only when
 rules / auth / API routes are touched); once per slice, at the Recette, `vera` (one review, opus) →
 `/land` → `sage` (runs the Proof where it says → PROVEN) → the operator accepts. Fan-out: `nova`
-design · `gordon` commercial · `iris` study · `lucia` METHOD.
+design · `gordon` commercial · `iris` study · `lucia` METHOD · `penny` token economy — when a slice
+ran a Workflow or > 10 sub-agents, her one-paragraph cost note joins the Debrief (a note, not a gate).
 
 Rituals (8, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
 `/intervention` · `/plan-sprint` · `/review` · `/brief` · `/port` (optional) · `/relay` (optional).
@@ -209,12 +211,32 @@ artifact of a decision only the operator can make — never the normal path.
 - **Tiers:** **T1** judge/plan/review/security/METHOD release → opus · **T2** build/prove/ops/design/
   copy/study → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
 - **Defaults + overrides:** each sub-agent's `model:` frontmatter is its default tier (opus: junia,
-  vera, kasper, lucia · sonnet: brian, sage, watson, nova, gordon, iris); pass a `model` override at
-  delegation when the task's tier differs. One retry max at a tier, then escalate one tier. Review
-  and security never run below T1, and **Vera runs once per slice, at the Recette** — not per task.
+  vera, kasper, lucia · sonnet: brian, sage, watson, nova, gordon, iris, penny); pass a `model`
+  override at delegation when the task's tier differs. One retry max at a tier, then escalate one
+  tier. Review and security never run below T1, and **Vera runs once per slice, at the Recette** —
+  not per task. A `general-purpose` sub-agent never runs on opus unless the task is judgement
+  ($11.5/agent on opus vs $4.1 on sonnet).
 - **Workflow at ≥ 3 near-identical items** (+ a verification pass), and **every Workflow worker gets
   an explicit `model`** — default sonnet, haiku for mechanical items, opus only for a judgement pass.
-  A worker without one inherits the coordinator's model.
+  Since 319.a a worker or sub-agent that names none runs on the user-level default, **sonnet**
+  (`CLAUDE_CODE_SUBAGENT_MODEL`, set by `install.mjs --user`); before it, unpinned sub-agents
+  inherited the coordinator's opus (122 of 123 truly unpinned, $1,456 = 9.8 % of 14 days' cost). The default makes forgetting cheap,
+  not safe: **review, verify and judgement workers name `opus` explicitly**. It never replaces an
+  explicit `model`; never use its `_FORCE` variant (it would downgrade `vera`/`kasper`).
+  **A Workflow announces its cost at Cadrage** (agents × expected calls, as a share of the weekly quota) and stays **< 10 agents**
+  unless the operator agrees — Workflows were 37.5 % of 14 days' cost.
+- **Token economy (319.a) — cost = calls × context, not output** (cache 85.6 % of cost). Canonical:
+  `routing-method.md` → "Token economy".
+  - **Review→fix loop: 2 rounds max**, then the operator decides; a re-review reads the diff only;
+    one reviewer per point (`vera` *or* `kasper`); full gates (suite, build, e2e) once at the end of
+    the slice. (One loop ran 5 rounds and cost 34 % of a ~$610 session.)
+  - **Tiers beat modes** — Ultracode or "cost is not a constraint" never overrides T1/T2/T3
+    (57/70 sub-agents ran on opus under one).
+  - **Minimal sub-agent context** — pass file paths, never pasted inventories; screenshots only for
+    `nova`/`sage`, only the needed ones; cap tool calls in the brief (≈ 55 calls per sub-agent on
+    average, each re-reading ≈ 200–260k tokens).
+  - **`MEMORY.md` ≤ 5 kB**, one-line pointers — loaded every turn; the doctor warns above it.
+  - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
 - **A parallel session only on an observed trigger**, never a predicted one: a 3rd build→test→fix
   loop on the same task · another repo · a deploy loop with the operator in it · two tasks writing
   code at once (each its own branch + worktree). Rule: `docs/METHOD/sprints-method.md` → "Sessions &

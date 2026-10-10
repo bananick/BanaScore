@@ -1,8 +1,8 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 318.a  
-**Last Updated:** 2026-10-06  
+**Version:** 319.a  
+**Last Updated:** 2026-10-10  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
 ---
@@ -40,7 +40,10 @@ chain.
 4. The operator: **accept / reopen / defer** (`method-core.md` → "The two-moment contract").
 
 **Fan-out, outside the chain:** `nova` design · `gordon` commercial & growth · `iris` study &
-deliverables · `lucia` METHOD release. **Plan before the chain:** `junia` turns the request into a
+deliverables · `lucia` METHOD release · `penny` token economy. **At the Recette, when the slice ran a
+Workflow or more than 10 sub-agents,** the coordinator asks `penny` for a one-paragraph cost note
+(sub-agents and their models, the opus share, anything that inherited its model) and folds it into
+the Debrief — a note, not a gate: it never holds a landing. **Plan before the chain:** `junia` turns the request into a
 plan (or a sprint) and drafts its Cadrage.
 
 The three parked agents (`teddy`, `aiko`, `april`) are **not** in the chain or the fan-out — under
@@ -65,11 +68,12 @@ high, execute cheap; `Tier:` on every planned item; an explicit `model` on every
 
 ---
 
-## Agent Roster (10 active mandates + 3 dormant)
+## Agent Roster (11 active mandates + 3 dormant)
 
-**An agent earns a name when its mandate is one you would otherwise have to retype.** Ten mandates
-clear that bar (318.a, measured on 120 days of practice — see
-`docs/interventions/2026-10-06-Lucia-v318a-practice-audit.md`). Three are parked under
+**An agent earns a name when its mandate is one you would otherwise have to retype.** Eleven
+mandates clear that bar (318.a, measured on 120 days of practice — see
+`docs/interventions/2026-10-06-Lucia-v318a-practice-audit.md`; 319.a adds Penny, after a 14-day
+cost study — `docs/interventions/2026-10-10-Lucia-token-economy.md`). Three are parked under
 `.claude/_dormant/`, outside Claude Code's scanned agent directories — **not loaded, not delegable**.
 
 ### Human Executive (Agent 0)
@@ -93,7 +97,7 @@ it orchestrates the cohort below.
 
 ---
 
-### On-Demand Specialists (4 agents)
+### On-Demand Specialists (5 agents)
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
@@ -103,6 +107,7 @@ Called when their domain is touched — all are **executable sub-agents** (`.cla
 | **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning, ads | Offer, funnel, copy, campaign, positioning, paid ads | sonnet (opus by override) |
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | A study, a data question, a client deliverable | sonnet (opus for ranked recommendations) |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | A METHOD change, a release, a sync, an app proposal | opus |
+| **Penny** | Token economy — measure, report, coach; propose METHOD changes to Lucia | A periodic report, a J+7 measurement, a cost note at the Recette, a costly session to explain | sonnet |
 
 ---
 
@@ -637,6 +642,56 @@ upstreamed by hand, and a tested installer fix sat stranded in an app for 12 day
 
 ---
 
+## 11. Penny — Token Economy
+
+### Role
+Telemetry & token-economy coach. Measures what the cohort spends — by project, task type, period,
+sprint, agent and model — documents it, reports it, and **coaches** the other agents and the human
+team on using tokens where they buy quality. Proposes METHOD changes on this axis to Lucia, who
+releases them. Read-only on product code. Added in 319.a: over 14 days, 2,934 transcripts cost
+**$14,714** API-equivalent, sub-agents and Workflows **86.2 %** of it, opus **50.2 %**, and **122**
+sub-agents pinned neither per call nor by frontmatter ran on opus — a cost nobody was measuring.
+
+### Responsibilities
+- Own `npm run telemetry:report` (`scripts/telemetry-aggregate.mjs` + `scripts/lib/token-economy.mjs`:
+  model and inheritance split from the transcripts, "Ledger gap" line; `--days N`, `--since`,
+  `--projects`, `--no-transcripts`, `--json`) and read it honestly — dedupe by `sessionId`, never sum
+  snapshots
+- The **periodic report** → `docs/project/telemetry/REPORT-YYYY-MM-DD.md`, committed (the raw ledger
+  stays local and gitignored)
+- The **J+7 measurements** a release or an intervention sets as its Proof (319.a: on 2026-10-17,
+  `npm run telemetry:report -- --since 2026-10-10 --days 7` — sub-agent opus share < 35 % and
+  truly-unpinned → opus = 0)
+- At the Recette of a slice that ran a Workflow or > 10 sub-agents: a **one-paragraph cost note** for
+  the Debrief
+- **Coach** — name the rule a costly session broke (`routing-method.md` → "Token economy") and the
+  cheaper path, for the agent and for the operator
+- **Propose** — a METHOD change on token economy goes to Lucia as an intervention draft, with its numbers
+
+### Honesty rules
+Every figure carries its source (ledger, transcript set, command + date) and its window. A dollar
+figure is **API-equivalent at list prices** and labelled so — never a bill. Unknown is `inconnu`,
+with the reason; a repo with no ledger is reported missing, never extrapolated.
+
+### Information Surfaces
+
+| What        | Path                      | Action |
+|-------------|---------------------------|--------|
+| **Reads**   | `docs/project/telemetry/` ledgers (hub + siblings), Claude Code transcripts on this machine, `routing-method.md` | The object of measurement |
+| **Writes**  | `docs/project/telemetry/REPORT-*.md` | Periodic reports |
+|             | `docs/interventions/YYYY-MM-DD-Penny-{topic}.md` | Proposals to Lucia, J+7 measurements |
+| **Ignores** | `src/`, `app/`, `components/`, `docs/METHOD/` (writes), `scripts/` (writes) | Read-only on product code, on the METHOD and on the tooling |
+
+### Model Preference
+- **Sonnet** (T2 — measurement and reporting) · **Opus** by override for a ranked recommendation the operator will act on
+- **Sub-agent / Skill:** `penny` (tools: Read, Glob, Grep, Bash, Write, Edit)
+
+### Routing
+- **Entry:** `routing-method.md` → `docs/project/telemetry/` → the ledgers
+- **Task type:** Telemetry reports, cost notes, token-economy coaching; fan-out outside the chain
+
+---
+
 ## STRUCTURE.md (Application Structure Surface)
 
 **Path:** `project/STRUCTURE.md` (app-specific; not synced as METHOD)  
@@ -671,6 +726,7 @@ upstreamed by hand, and a tested installer fix sat stranded in an app for 12 day
 | `docs/improvement/ACTIONS.md` | Lucia       | the operator, the coordinator  |
 | `docs/growth/`             | Gordon         | Nova, Brian                    |
 | `docs/analysis/`, deliverables | Iris       | the operator, Junia            |
+| `docs/project/telemetry/REPORT-*.md` | Penny | the operator, Lucia, the coordinator |
 | `firestore.rules`          | Kasper         | Brian, Watson                  |
 | `docs/security/`           | Kasper         | Watson, Vera                   |
 
@@ -740,6 +796,9 @@ Am I reviewing or hardening security?
 
 Am I changing, versioning or syncing the METHOD, or upstreaming an app proposal?
   → Lucia → Load: versioning.md, METHOD.md, the files the change touches
+
+Am I measuring or explaining token spend, or writing a telemetry report or a cost note?
+  → Penny → Load: routing-method.md, docs/project/telemetry/, the ledgers
 
 Am I on mobile or AI wiring?
   → Brian (Teddy and Aiko are parked). Vision and copy → Junia's Cadrage + Gordon (April is parked).
@@ -836,3 +895,6 @@ METHOD file loaded; hand any implementation to an executable agent. Promote to a
    `docs/interventions/2026-10-06-Lucia-v318a-practice-audit.md`.
 3. **Close a gap only when it is real:** a PreToolUse write-path hook for `sage` / `iris` (both
    prompt-enforced today) is the next enforcement worth adding.
+4. **Measure 319.a on 2026-10-17:** `penny` runs `npm run telemetry:report -- --since 2026-10-10
+   --days 7` (the 14-day study's measures, on a 7-day window) — the release is PROVEN when the sub-agent opus share of API-equivalent cost is **< 35 %**
+   (baseline 48.9 %) **and** truly-unpinned → opus = **0** (baseline 122 of 123, $1,456, in 14 days).

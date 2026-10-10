@@ -15,12 +15,32 @@
 - **Tiers:** **T1** judge/plan/review/security/METHOD release → opus · **T2** build/prove/ops/design/
   copy/study → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
 - **Defaults + overrides:** each sub-agent's `model:` frontmatter is its default tier (opus: junia,
-  vera, kasper, lucia · sonnet: brian, sage, watson, nova, gordon, iris); pass a `model` override at
-  delegation when the task's tier differs. One retry max at a tier, then escalate one tier. Review
-  and security never run below T1, and **Vera runs once per slice, at the Recette** — not per task.
+  vera, kasper, lucia · sonnet: brian, sage, watson, nova, gordon, iris, penny); pass a `model`
+  override at delegation when the task's tier differs. One retry max at a tier, then escalate one
+  tier. Review and security never run below T1, and **Vera runs once per slice, at the Recette** —
+  not per task. A `general-purpose` sub-agent never runs on opus unless the task is judgement
+  ($11.5/agent on opus vs $4.1 on sonnet).
 - **Workflow at ≥ 3 near-identical items** (+ a verification pass), and **every Workflow worker gets
   an explicit `model`** — default sonnet, haiku for mechanical items, opus only for a judgement pass.
-  A worker without one inherits the coordinator's model.
+  Since 319.a a worker or sub-agent that names none runs on the user-level default, **sonnet**
+  (`CLAUDE_CODE_SUBAGENT_MODEL`, set by `install.mjs --user`); before it, unpinned sub-agents
+  inherited the coordinator's opus (122 of 123 truly unpinned, $1,456 = 9.8 % of 14 days' cost). The default makes forgetting cheap,
+  not safe: **review, verify and judgement workers name `opus` explicitly**. It never replaces an
+  explicit `model`; never use its `_FORCE` variant (it would downgrade `vera`/`kasper`).
+  **A Workflow announces its cost at Cadrage** (agents × expected calls, as a share of the weekly quota) and stays **< 10 agents**
+  unless the operator agrees — Workflows were 37.5 % of 14 days' cost.
+- **Token economy (319.a) — cost = calls × context, not output** (cache 85.6 % of cost). Canonical:
+  `routing-method.md` → "Token economy".
+  - **Review→fix loop: 2 rounds max**, then the operator decides; a re-review reads the diff only;
+    one reviewer per point (`vera` *or* `kasper`); full gates (suite, build, e2e) once at the end of
+    the slice. (One loop ran 5 rounds and cost 34 % of a ~$610 session.)
+  - **Tiers beat modes** — Ultracode or "cost is not a constraint" never overrides T1/T2/T3
+    (57/70 sub-agents ran on opus under one).
+  - **Minimal sub-agent context** — pass file paths, never pasted inventories; screenshots only for
+    `nova`/`sage`, only the needed ones; cap tool calls in the brief (≈ 55 calls per sub-agent on
+    average, each re-reading ≈ 200–260k tokens).
+  - **`MEMORY.md` ≤ 5 kB**, one-line pointers — loaded every turn; the doctor warns above it.
+  - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
 - **A parallel session only on an observed trigger**, never a predicted one: a 3rd build→test→fix
   loop on the same task · another repo · a deploy loop with the operator in it · two tasks writing
   code at once (each its own branch + worktree). Rule: `docs/METHOD/sprints-method.md` → "Sessions &

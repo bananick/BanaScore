@@ -1,7 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 318.a  
+**Version:** 319.a  
+**Last Updated:** 2026-10-10  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -11,7 +12,7 @@
 
 ### By Agent
 
-> Cohort = **10 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
+> Cohort = **11 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
 > **3 dormant** agent files listed below the table — not loaded, not delegable. An agent earns a
 > name when its mandate is one you would otherwise have to retype.
 > **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row. An app
@@ -30,6 +31,7 @@
 | Gordon  | commercial & growth | `gordon`       | sonnet        | `agents-method.md` → `project/VISION.md` → `docs/growth/`         |
 | Iris    | study & deliverables | `iris` (read-only on code) | sonnet | `method-core-lite.md` → `project/STATE.md` → the object of study |
 | Lucia   | METHOD release | `lucia`             | opus          | `versioning.md` → `METHOD.md` → the files the change touches      |
+| Penny   | token economy | `penny` (read-only on code) | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 
 #### Dormant (not loaded, not delegable)
 
@@ -57,6 +59,7 @@ a `git mv` and a release — the operator's call.
 | i18n         | `method-core.md` (i18n section) → `locales/`               |
 | Review       | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task |
 | METHOD release | `versioning.md` → `METHOD.md` → the files the change touches |
+| Token economy / telemetry report | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 | Port design  | `design-method.md` → `docs/porting/PORTING-PLAYBOOK.md` → PORT-MAP → screen |
 
 ### By Slash-Command (Claude Code rituals)
@@ -101,7 +104,7 @@ carries the decision, not the raw material.
 | Form | When | Cost |
 |---|---|---|
 | **Sub-agent** (`Agent`) | **default** — a bounded task that returns a conclusion, with no round-trip through the operator | fresh context; the coordinator's stays clean |
-| **Workflow** | ≥ 3 near-identical items, or work that earns an adversarial verification pass — **every worker gets an explicit `model`** (default sonnet) | parallel, deterministic |
+| **Workflow** | ≥ 3 near-identical items, or work that earns an adversarial verification pass — **every worker gets an explicit `model`** (default sonnet), the **cost is announced at Cadrage**, **< 10 agents** unless the operator agrees ("Token economy" below) | parallel, deterministic |
 | **Parallel sessions** | only on an **observed** trigger, never a predicted one: 3rd build→test→fix loop on the same task · a different repo · a deploy loop with the operator in it · two tasks writing code at once (→ one branch + worktree each) | one human click |
 
 Nothing else justifies a second window — not size, not an estimate, not "it looks big".
@@ -117,7 +120,7 @@ Nothing else justifies a second window — not size, not an estimate, not "it lo
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
 - **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`
-- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`
+- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
 - **Opus by override (318.a):** `nova` for a deep UX-architecture study · `gordon` for a pricing or
   positioning recommendation · `iris` for a ranked recommendation the operator will act on
@@ -141,9 +144,64 @@ judgement stays one override away.
    runs **once per slice, at the Recette** — not after every task.
 5. **Workflow workers** (the `Workflow` tool) get an **explicit `model` per worker — default
    `sonnet`**; `haiku` for purely mechanical items (renames, extraction, formatting), `opus` only for
-   a verification or judgement pass. A worker with no `model` inherits the coordinator's (usually
-   opus) — in practice the model was unrecorded for half of 6,180 workflow workers, which is how
-   mechanical fan-out ended up billed at T1.
+   a verification or judgement pass. Before 319.a a worker with no `model` inherited the
+   coordinator's (usually opus) — the model was unrecorded for half of 6,180 workflow workers, which is
+   how mechanical fan-out ended up billed at T1. The rule alone did not hold: 14 days after 318.a,
+   122 of the 123 sub-agents that were pinned neither per call nor by frontmatter ran on opus ($1,456, 9.8 % of API-equivalent cost; 2,032 named a model per call, 61 were pinned by frontmatter). Since
+   319.a a **user-level default sub-agent model** backs the rule for the sub-agents that name none:
+   `env.CLAUDE_CODE_SUBAGENT_MODEL = "sonnet"` in `~/.claude/settings.json`, guaranteed by
+   `install.mjs --user` (doctor **W7** warns when it is missing). **Precedence, highest first:** the
+   per-call `model` of the delegation → the agent's `model:` frontmatter → `CLAUDE_CODE_SUBAGENT_MODEL`
+   → the parent's model. So the default never replaces an explicit `model`, and the T1 floors of rule 4
+   still win. A frontmatter or per-call value of **`inherit`** is explicit: it takes the parent's model
+   and does **not** fall through to the env default. **Never set `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`** —
+   it outranks every explicit `model`, so it would silently downgrade `vera` and `kasper` below T1, and
+   it applies to Workflow workers too. **The default makes forgetting cheap, not safe:** a review,
+   verification or judgement worker that forgets its `model` now runs on sonnet, below its floor — so
+   those workers always name `opus` explicitly.
+6. **A `general-purpose` sub-agent never runs on opus** unless its task is judgement (T1 by the
+   table above): measured at **$11.5 per agent on opus vs $4.1 on sonnet** for the same kind of work.
+
+### Token economy (319.a) — the unit is the cost of a finished task
+
+> Measured over 14 days on 2,934 transcripts (2026-10-09, API-equivalent at list prices, not a bill —
+> `docs/interventions/2026-10-10-Lucia-token-economy.md`): **$14,714**, of which sub-agents and
+> Workflows **86.2 %** (opus 50.2 %), Workflows alone **37.5 %** (71 runs, 1,170 agents), and the
+> main thread 13.8 % (cache writes at 1.25×; restated by `npm run telemetry:report -- --days 14 --json` on 2026-10-10 with 1-hour cache writes priced at 2×: total $14,805, cache writes 24.6 %, sub-agent opus 48.9 % of total cost (58.3 % of sub-agent cost)). **Cache reads were 62.9 % of
+> cost, cache writes 22.7 %, output 14.4 %** — a
+> session costs *calls × context*, not what it writes. The rules below act on calls and context.
+
+1. **A review→fix loop stops after 2 rounds** — then the operator decides (accept with the open
+   point recorded, reopen with a narrower scope, or drop the point). A re-review reads **the diff
+   since the last round only**, never the whole slice again. **One reviewer per point** — `vera` *or*
+   `kasper`, not both on the same findings. **Full gates** (complete test suite, build, e2e
+   campaigns) run **once, at the end of the slice** — not after every round. *Why:* one review loop
+   on one verdict ran 5 rounds without converging and cost 34 % of a ~$610 session (BanaLog,
+   2026-10-09).
+2. **Tiers beat modes.** Ultracode, "cost is not a constraint" or any other session mode never
+   overrides T1/T2/T3: a mode changes how hard an agent works, not which tier it runs on. *Why:*
+   57 of 70 sub-agents ran on opus under Ultracode in that same session.
+3. **Every Workflow announces its cost at Cadrage** — agents × expected calls per agent, stated as
+   a share of the weekly quota — and stays **under 10 agents** unless the operator agrees; every
+   worker has an explicit `model` ("Delegation-time overrides", rule 5). *Why:* Workflows were
+   37.5 % of 14 days' cost.
+4. **Minimal sub-agent context.** A delegation prompt passes **file paths, never pasted inventories**
+   (the sub-agent reads what it needs). **Screenshots and images** enter a sub-agent's context only for
+   `nova` or `sage`, and only the ones the task needs. The brief **caps the sub-agent's tool calls**
+   when the task is bounded. *Why:* a sub-agent made ≈ 55 calls on average (124,966 calls / 2,262
+   sub-agents), each re-reading ≈ 198k tokens of cache on opus and ≈ 261k on sonnet; Nova agents carrying screenshots wrote ≈ 6× the cache of Brian agents.
+5. **Memory index budget — `MEMORY.md` ≤ 5 kB**, one-line pointers only; the detail lives in the
+   memory files it points to. It is loaded on every turn of every session. `npm run doctor` warns
+   above 5 kB. *Why:* the two costliest repos carried the two heaviest indexes (BanaLog 17.7 kB,
+   bananaevents 16.4 kB; 57.1 % of cost between them).
+6. **Cost per finished task is the unit**, not cost per call: a cheaper tier that needs three passes
+   is not cheaper. One retry at a tier, then escalate ("Delegation-time overrides", rule 3) — the
+   same rule, read as economics.
+
+**Who watches it: `penny`** (T2) — measures by project, task type, period, sprint, agent and model;
+publishes a periodic report; coaches the cohort and the operator; proposes METHOD changes on this
+axis to `lucia`, who releases them. At the Recette, when a slice ran a Workflow or more than 10
+sub-agents, the Debrief carries Penny's one-paragraph cost note — a note, not a gate.
 
 ### Environment awareness (know your surface before routing)
 
@@ -225,6 +283,39 @@ repos on this machine, keeps the **newest row per `sessionId`** (never sums cumu
 and reports tokens and models per scope (main loop vs sub-agents), per repo and per month. A repo
 with no ledger is reported as missing, never extrapolated.
 
+**Token economy part (319.a, `scripts/lib/token-economy.mjs`).** The ledger stores per-scope totals,
+so a scope that ran two models reads as one lump ("opus+sonnet"). The report therefore also reads the
+raw Claude Code transcripts and prints the **API-equivalent** cost (list prices, not a bill) split
+main thread vs sub-agents per model family, the Workflow share, agent type × model, per-repo totals
+(worktrees folded), every sub-agent classed as **explicit** (a per-call `model`), **frontmatter-pinned**
+(`model:` in its agent file) or **truly unpinned** (neither — the Proof metric, `proof.unpinnedOpus` in
+`--json`) with the opus count of each, and a **"Ledger gap"** line naming the repos that spent in the window
+but have no ledger. Flags:
+
+| Flag | Effect |
+|---|---|
+| `--days N` | transcript window, default **7** |
+| `--since <date>` | narrows the window start (e.g. the day a rule went live) |
+| `--projects <dir>` | transcripts directory, default `~/.claude/projects` |
+| `--no-transcripts` | ledger roll-up only |
+| `--json` | machine-readable: the ledger roll-up plus an `economy` block |
+
+**The 319.a J+7 measurement:** `npm run telemetry:report -- --since 2026-10-10 --days 7` — PROVEN
+when the sub-agent opus share is < 35 % **and** truly-unpinned → opus = 0 (no sub-agent pinned neither
+per call nor by frontmatter ran on opus). The window opens ≈ 6 h before the env default went live
+(2026-10-10 06:14).
+
+Its owner is **`penny`**, who turns it into a periodic report,
+`docs/project/telemetry/REPORT-YYYY-MM-DD.md` — committed, unlike the raw ledger.
+
+**Doctor checks (319.a, warnings only).** `npm run doctor` → **W6**: this repo's Claude memory index
+(`~/.claude/projects/<slug>/memory/MEMORY.md`, the larger of the worktree's and the main checkout's)
+is over 5 kB; **W7**: the user settings carry no default sub-agent model (fix:
+`node docs/METHOD/tools/swanifly-claude-addon/install.mjs --user --env-only`, which writes only
+`env.CLAUDE_CODE_SUBAGENT_MODEL` when it is absent and touches nothing else).
+`npm run doctor:fleet` adds a **`MEMORY.md`** column (size per repo, `!` over 5 kB, skipped repos
+included — they are not synced but still pay for their index).
+
 ### Where it lives / how it ships
 
 - **Hub-owned copy:** `.claude/hooks/session-telemetry.mjs`, wired in `.claude/settings.json` →
@@ -235,6 +326,15 @@ with no ledger is reported as missing, never extrapolated.
   `.claude/settings.json` idempotently (preserves any hook the app already has — appends alongside,
   never replaces).
 - **Per-repo and local.** Each checkout accumulates its own ledger; the aggregator is the rollup.
+- **Ledger-only repos (319.a).** The sync discovers targets by their `docs/METHOD`, so a repo the
+  METHOD never reached had no ledger. `LEDGER_ONLY_REPOS` (`scripts/lib/fleet-ledger.mjs`; today
+  `Talkation`, `IApocalypse`) gets **only** the ledger from `sync-method:all`: the hook
+  file, its `Stop` wiring in `.claude/settings.json`, and the three paths in the repo's local
+  `.git/info/exclude` — no METHOD mirror, no `CLAUDE.md`, no tracked change. A differing hook file is
+  kept unless `--force`; a `settings.json` that git tracks, or that is not a JSON object, is left
+  alone. `IAcademy` left the list: it is in `SKIP_REPOS`, because the GitHub sync matches by remote
+  name and `Respirit`'s origin is `bananick/IAcademy`. **Accepted gap:** a session in a *worktree* of such a repo leaves no row —
+  the hook and its wiring live, untracked, in the main checkout only.
 
 ### Cross-tool status (Codex, Cursor)
 
@@ -572,7 +672,3 @@ Task: Close sprint 010.
 ⚠️ No parallelization, role-confusion risk, long context windows — which is exactly why this is the
 **fallback**, not the default (see "Delegation is the default" above).
 
----
-
-**Owner:** Lucia  
-**Last Updated:** 2026-08-01

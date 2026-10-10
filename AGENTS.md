@@ -44,7 +44,14 @@ Orient (load entry files + `STATE.md`, be surgical) → **Frame = 🎯 Cadrage**
 - **Coordinator high, delegates cheap.** The orchestrating agent runs on the strongest model the tool exposes; every delegated/sub task runs on the **cheapest model that meets its quality bar**.
 - **Tiers:** **T1** judge/plan/review/security → strongest reasoning model (Fable/Opus/GPT-5.x-class) · **T2** build/tests/ops → mid-tier coding model (Sonnet-class) · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → cheapest competent model (Haiku-class).
 - **Environment awareness first:** before routing, **inventory the models actually available in this tool/workspace** (Cursor: the workspace's enabled model list; Codex: the CLI's model options; Claude Code: `.claude/agents/` frontmatter + per-delegation override) and map them onto T1/T2/T3 by capability and price. Never assume a specific vendor lineup.
-- **Escalation:** one retry max at a tier, then escalate one tier. Review/security tasks never run below T1; the review runs once per slice, at the Recette. Workflow / fan-out workers each get an explicit model (default: the T2 model). Missing tier → nearest available, preferring upward. Single-model tool → run inline and flag the tier mismatch in the report.
+- **Escalation:** one retry max at a tier, then escalate one tier. Review/security tasks never run below T1; the review runs once per slice, at the Recette. Workflow / fan-out workers each get an explicit model (default: the T2 model); review, verify and judgement workers name the T1 model explicitly — a T2 default makes forgetting cheap, not safe. Missing tier → nearest available, preferring upward. Single-model tool → run inline and flag the tier mismatch in the report.
+- **Token economy (319.a) — cost = calls × context, not output** (cache reads + writes were 85.6 % of 14 days' cost). Canonical: `routing-method.md` → "Token economy".
+  - **Review→fix loop: 2 rounds max**, then the operator decides; a re-review reads the diff only; one reviewer per point (review *or* security, not both on the same findings); full gates (suite, build, e2e) once at the end of the slice. (One loop ran 5 rounds and cost 34 % of a ~$610 session.)
+  - **Tiers beat modes** — no session mode ("ultra", "cost is not a constraint") overrides T1/T2/T3 (57/70 sub-agents ran on the T1 model under one).
+  - **Fan-out announces its cost first** — agents × expected calls, as a share of the weekly quota — and stays **< 10 agents** unless the operator agrees (fan-out was 37.5 % of cost). A general-purpose sub-agent runs on T2 unless its task is judgement ($11.5/agent on T1 vs $4.1 on T2).
+  - **Minimal sub-agent context** — pass file paths, never pasted inventories; images only to the design or proof agent, only the needed ones; cap tool calls in the brief (≈ 55 calls per sub-agent on average, each re-reading ≈ 200–260k tokens).
+  - **Memory index ≤ 5 kB** (`MEMORY.md` or the tool's equivalent), one-line pointers — it is loaded every turn.
+  - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
 
 ### Session Telemetry Ledger
 

@@ -1,4 +1,4 @@
-## Agent Cohort (10 active mandates + 3 dormant — Skills + sub-agents)
+## Agent Cohort (11 active mandates + 3 dormant — Skills + sub-agents)
 
 > Synced from the METHOD hub into every app's `CLAUDE.md` — change it in the hub, never in an app.
 > Canonical: `docs/METHOD/agents-method.md`.
@@ -7,8 +7,8 @@
 non-negotiables. `.claude/skills/{agent}/SKILL.md` is a Desktop **stub that loads it**. Edit the
 agent file, never a stub.
 
-An agent earns a name when its mandate is one you would otherwise have to retype. Ten mandates hold
-that bar; three are dormant — parked under `.claude/_dormant/`, outside the directories Claude Code
+An agent earns a name when its mandate is one you would otherwise have to retype. Eleven mandates
+hold that bar; three are dormant — parked under `.claude/_dormant/`, outside the directories Claude Code
 scans for agents, so **not loaded and not delegable**. Bringing one back is a `git mv` into
 `.claude/agents/` plus a METHOD release — the operator's call, never an agent's mid-session.
 
@@ -24,6 +24,7 @@ scans for agents, so **not loaded and not delegable**. Bringing one back is a `g
 | **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
+| **Penny** | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 
 **Dormant (not loaded, not delegable):** **April** (vision & copy → Junia's Cadrage + Gordon) ·
 **Aiko** (AI integration → Brian) · **Teddy** (mobile → Brian). Why: `.claude/_dormant/README.md`.
@@ -33,7 +34,8 @@ one Debrief, runs the Recette and lands. The chain (canonical: `docs/METHOD/agen
 "Orchestration chain"): per task `brian` → `watson` (only if the gate goes red) → `kasper` (only when
 rules / auth / API routes are touched); once per slice, at the Recette, `vera` (one review, opus) →
 `/land` → `sage` (runs the Proof where it says → PROVEN) → the operator accepts. Fan-out: `nova`
-design · `gordon` commercial · `iris` study · `lucia` METHOD.
+design · `gordon` commercial · `iris` study · `lucia` METHOD · `penny` token economy — when a slice
+ran a Workflow or > 10 sub-agents, her one-paragraph cost note joins the Debrief (a note, not a gate).
 
 Rituals (8, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
 `/intervention` · `/plan-sprint` · `/review` · `/brief` · `/port` (optional) · `/relay` (optional).
