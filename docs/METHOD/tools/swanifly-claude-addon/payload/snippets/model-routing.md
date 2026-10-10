@@ -15,7 +15,7 @@
 - **Tiers:** **T1** judge/plan/review/security/METHOD release → opus · **T2** build/prove/ops/design/
   copy/study → sonnet · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → haiku.
 - **Defaults + overrides:** each sub-agent's `model:` frontmatter is its default tier (opus: junia,
-  vera, kasper, lucia · sonnet: brian, sage, watson, nova, gordon, iris, penny); pass a `model`
+  vera, kasper, lucia, oscar · sonnet: brian, sage, watson, nova, gordon, iris, penny); pass a `model`
   override at delegation when the task's tier differs. One retry max at a tier, then escalate one
   tier. Review and security never run below T1, and **Vera runs once per slice, at the Recette** —
   not per task. A `general-purpose` sub-agent never runs on opus unless the task is judgement

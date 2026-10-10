@@ -1,7 +1,7 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 319.a  
+**Version:** 320.a  
 **Last Updated:** 2026-10-10  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
@@ -12,7 +12,7 @@
 
 ### By Agent
 
-> Cohort = **11 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
+> Cohort = **12 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
 > **3 dormant** agent files listed below the table — not loaded, not delegable. An agent earns a
 > name when its mandate is one you would otherwise have to retype.
 > **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row. An app
@@ -32,6 +32,7 @@
 | Iris    | study & deliverables | `iris` (read-only on code) | sonnet | `method-core-lite.md` → `project/STATE.md` → the object of study |
 | Lucia   | METHOD release | `lucia`             | opus          | `versioning.md` → `METHOD.md` → the files the change touches      |
 | Penny   | token economy | `penny` (read-only on code) | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
+| Oscar   | coach         | `oscar` (read-only on code) | opus | `method-core.md` → `project/STATE.md` + `FOCUS.md` → the week's evidence |
 
 #### Dormant (not loaded, not delegable)
 
@@ -60,6 +61,7 @@ a `git mv` and a release — the operator's call.
 | Review       | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task |
 | METHOD release | `versioning.md` → `METHOD.md` → the files the change touches |
 | Token economy / telemetry report | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
+| Weekly retro / coaching | `/retro` → Penny's numbers → `oscar` → `docs/project/coaching/RETRO-YYYY-Www.md` |
 | Port design  | `design-method.md` → `docs/porting/PORTING-PLAYBOOK.md` → PORT-MAP → screen |
 
 ### By Slash-Command (Claude Code rituals)
@@ -72,10 +74,11 @@ a `git mv` and a release — the operator's call.
 | `/plan-sprint`  | the coordinator | Cadrage with the operator, then a sprint folder + task files (exception mode) | `junia` |
 | `/review`       | the coordinator | Run the slice's one Review Gate (read-only, opus) | `vera` |
 | `/brief`        | the coordinator | Pick up a fresh conversation from git, PRs and memory (Flight Deck) | — |
+| `/retro`        | the coordinator | The weekly coaching pass (or on demand after a slice that closes a journey) — never once per Debrief | `penny` (sonnet) → `oscar` (opus) |
 | `/port` *(optional)* | Nova/Brian | Port one screen from the app's living `proto/` directive — one screen = one land | `brian` |
 | `/relay` *(optional)* | the coordinator | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
 
-> Rituals (8), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
+> Rituals (9), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
 > **once**, in `agents-method.md` → "Orchestration chain" — reference it, never restate it here.
 > A slice closes on **`/land`**: the trunk is then **LANDED** — `DEPLOYED` and `PROVEN` need their
 > own evidence (a served revision, an observed run); the gate is local, there is no CI on this
@@ -119,7 +122,7 @@ Nothing else justifies a second window — not size, not an estimate, not "it lo
 
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
-- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`
+- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`, `oscar`
 - **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
 - **Opus by override (318.a):** `nova` for a deep UX-architecture study · `gordon` for a pricing or
@@ -243,6 +246,19 @@ the ledger (318.a); the file becomes untracked in a follow-up once every checkou
   `mainLoop.models = ["opus"]` + `subAgents.models = ["sonnet"]` actually proves the policy held.
   Rows written before the 2026-09-01 hook fix carry the union alone and cannot be audited
   for routing.
+- **Which agent ran (319.b, `schemaVersion` 2).** `subAgents.byAgent` has one entry per sub-agent transcript that
+  made a call (capped at 150 per row, costliest first; `byAgentTruncated` counts the rest):
+  `{ agentType, description, workflowId, requestedModel, model, pin, calls, inputTokens, outputTokens,
+  cacheCreationInputTokens, cacheReadInputTokens, apiCostUsd, startedAt, endedAt }`. `model` is the family that cost
+  most inside that agent; `pin` is `explicit` (a per-call `model` in `meta.json`), `frontmatter` (`model:` in
+  `.claude/agents/<agentType>.md`, looked up in the agent's cwd, the project dir, then the main checkout; `inherit`
+  counts as none) or `unpinned` (neither — it inherits the coordinator unless the user-level default is set).
+  `subAgents.byType` is the complete roll-up, keyed `"<agentType>|<model>"`: `{ count, calls, inputTokens,
+  outputTokens, cacheCreationInputTokens, cacheReadInputTokens, apiCostUsd, pins: { explicit, frontmatter, unpinned } }`.
+  `description` is the short task label the caller gave the agent (`meta.json`), whitespace-collapsed and cut to 80
+  chars, `null` when absent — a label, never a prompt. Rows written before 319.b (`schemaVersion` 1) have neither
+  field and stay valid; the hook is standalone, so its price table and pin lookup are duplicated from
+  `scripts/lib/token-economy.mjs` and a test asserts the two agree.
 - **Shape** — user-message count, assistant API-call count, start/end timestamps, duration,
   git branch, app (repo folder name).
 - **No prompt text, ever.** The ledger is local, but aggregators read it and reports quote it, so
@@ -256,8 +272,9 @@ the ledger (318.a); the file becomes untracked in a follow-up once every checkou
 - **`outcome` / `efficiencyNote`** — always `null` from the hook. **Manual, optional** fields; in
   120 days of practice they were filled **0%** of the time, so do not plan on them — the accepted
   outcome lives in the Recette (the intervention or task file), not in the ledger.
-- **No dollar cost.** Pricing changes and varies by plan — the ledger stores exact raw token
-  counts only; apply your current rate card when you actually need a $ figure.
+- **No billed cost.** Pricing changes and varies by plan — the token counters are exact and raw. The
+  only money field is `apiCostUsd` on `byAgent` / `byType` (319.b): an **API-equivalent** figure at list prices (cache
+  read 0.1x, cache write 1.25x / 2x for the 5-minute / 1-hour tier), good for comparing agents, not a bill.
 
 ### Mechanics worth knowing
 
@@ -277,6 +294,11 @@ the ledger (318.a); the file becomes untracked in a follow-up once every checkou
   until then a repo that tracked it keeps tracking it, and rows already committed stay in history.
 
 ### Reading it — `npm run telemetry:report`
+
+**From the ledger alone (319.b).** When rows carry `byType`, the report prints **"Sub-agents by type × model"** (agents,
+calls, tokens, API-equivalent cost, and the explicit / frontmatter / unpinned split) and **"per sprint / branch"**
+(agents, cost, opus share, unpinned-on-opus) — both work with `--no-transcripts`. `--json` adds `byAgentType`,
+`bySprintOrBranch` and `agentRows`. Rows are cumulative per session: the tables use the newest row per `sessionId`.
 
 `scripts/telemetry-aggregate.mjs` (in the hub) reads the local ledgers of the hub and of the sibling
 repos on this machine, keeps the **newest row per `sessionId`** (never sums cumulative snapshots),

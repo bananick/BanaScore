@@ -1,4 +1,4 @@
-# METHOD v319.a
+# METHOD v320.a
 
 ## Quick Start
 
@@ -23,10 +23,32 @@
 | **Study / client deliverable** | `method-core-lite.md` → `project/STATE.md` | Iris |
 | **Evolve METHOD** | `versioning.md` → the files the change touches | Lucia |
 | **Measure token spend / coach on it** | `routing-method.md` → `project/telemetry/` → the ledgers | Penny |
+| **Look back at the week (retro)** | `/retro` → `project/STATE.md` + `FOCUS.md` → the week's evidence | Oscar |
 
-> Agents named here are the **11 active** mandates. `teddy` `aiko` `april` are dormant
+> Agents named here are the **12 active** mandates. `teddy` `aiko` `april` are dormant
 > (`.claude/_dormant/`) — not loaded, so not delegable. Their mandates are covered above (Brian,
 > Junia's Cadrage, Gordon).
+
+---
+
+## What's New in v320.a
+1. **Oscar, the coach — 12 active mandates + 3 dormant.** Opus. A **weekly retro** (`/retro`, the 9th
+   ritual), and on demand at the Recette of a slice that closes a journey — never once per Debrief (an
+   opus pass costs ~$2–5). He reads the week's evidence across the fleet (git, each app's `STATE.md` +
+   `FOCUS.md`, the week's interventions and reports, Penny's numbers) and writes one file,
+   `docs/project/coaching/RETRO-YYYY-Www.md`: objectives vs journeys proven, focus, three sourced
+   observations, one habit to change, 0–2 METHOD proposals for Lucia, last week's habit held or not.
+   Every claim sourced, `inconnu` when unknown, never an invented ratio. Closes IMP-010; IMP-011 (a
+   centralised, Scrum-like method) is his to design with Junia next.
+
+## What's New in v319.b
+
+1. **The ledger says which agent ran.** Each ledger row (`schemaVersion` 2) carries `subAgents.byAgent` — one
+   entry per sub-agent transcript: `agentType`, a ≤ 80-char task label, `workflowId`, `requestedModel`, the
+   `model` that ran (majority by cost), `pin` (`explicit` / `frontmatter` / `unpinned`), calls, tokens and
+   timestamps — and a complete `subAgents.byType` roll-up keyed `<agentType>|<model>`. `npm run telemetry:report`
+   prints "by agent type × model" and "per sprint / branch" tables from the ledger alone, so the question
+   "did anything inherit opus?" no longer needs the transcripts. v1 rows still parse. No prompt text enters the row.
 
 ---
 
@@ -199,7 +221,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 ## METHOD Files (17 docs + native layer)
 
 > 17 synced METHOD docs (9 Core + 8 Support), **plus** the repo-root native layer:
-> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (11 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (8 rituals).
+> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (12 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (9 rituals).
 
 ### Core (9) — Always synced
 
@@ -207,7 +229,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 |---|---|---|---|
 | `METHOD.md` | Lucia | This file. Entry point + routing. | ~16 KB |
 | `method-core.md` | Lucia | Principles, tech stack, DoD | ~13 KB |
-| `agents-method.md` | Lucia | 11 active + 3 dormant agents, roles, rituals | ~49 KB |
+| `agents-method.md` | Lucia | 12 active + 3 dormant agents, roles, rituals | ~52 KB |
 | `sprints-method.md` | Junia | Sprint system, gates, rituals | ~16 KB |
 | `design-method.md` | Nova | M3 design constraints, nav patterns | ~25 KB |
 | `ai-infra-method.md` | Brian | Multi-provider AI architecture | ~41 KB |
@@ -232,8 +254,8 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 | `agent-launch-prompts.md` | Pre-built launch prompts per METHOD agent |
 
 > Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (agent personas as Skills),
-> **`.claude/agents/` (11 active delegatable sub-agents + README), and `.claude/commands/` (8 rituals:
-> `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, and the optional `/port`,
+> **`.claude/agents/` (12 active delegatable sub-agents + README), and `.claude/commands/` (9 rituals:
+> `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, and the optional `/port`,
 > `/relay`)**. See `agents-engineering-method.md`.
 
 ### Tools (synced to all apps)
@@ -367,9 +389,9 @@ npm run sync-method:all:dry    # preview without writing
 
 ---
 
-## Agent Cohort (11 active mandates + 3 dormant)
+## Agent Cohort (12 active mandates + 3 dormant)
 
-Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable by name in Claude Desktop) and as a delegatable **native sub-agent** in `.claude/agents/` (Claude Code — web + Cowork's local Code tab). `.claude/agents/{agent}.md` is the canonical persona text. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from it.) An agent earns a name when its mandate is one you would otherwise have to retype; eleven mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
+Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable by name in Claude Desktop) and as a delegatable **native sub-agent** in `.claude/agents/` (Claude Code — web + Cowork's local Code tab). `.claude/agents/{agent}.md` is the canonical persona text. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from it.) An agent earns a name when its mandate is one you would otherwise have to retype; twelve mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
 
 | Agent | Mandate | Entry Files |
 |---|---|---|
@@ -384,6 +406,7 @@ Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable 
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | `method-core-lite.md` → `project/STATE.md` |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | `versioning.md` → `METHOD.md` |
 | **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia | `routing-method.md` → `project/telemetry/` |
+| **Oscar** | Coach — weekly retro: effectiveness, focus, objectivity, lucidity, objectives | `method-core.md` → `project/STATE.md` + `FOCUS.md` |
 
 ### Dormant (not loaded, not delegable)
 
@@ -492,7 +515,7 @@ docs/sprints/007 ⬜ venue-proto/
 | 1 | Modular Architecture — 15 focused files | `METHOD.md` |
 | 2 | Multi-Entry Routing — load 2-3 files, not 15 | `routing-method.md` |
 | 3 | Two Namespaces — `method/` (synced) + `project/` (local) | `versioning.md` |
-| 4 | Global Agent Cohort — 11 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
+| 4 | Global Agent Cohort — 12 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
 | 5 | **Definition Pipeline** — DISCOVER → SPECIFY → PROTOTYPE | `definition-method.md` |
 | 6 | **Focus System** — Single-objective taquet per app | `project/FOCUS.md` |
 | 7 | **Cross-App Governance** — BanaPilot drift detection | `versioning.md` |
@@ -515,7 +538,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 319.a  
+**Current Version:** 320.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-10
 

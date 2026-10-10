@@ -1,7 +1,7 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 319.a  
+**Version:** 320.a  
 **Last Updated:** 2026-10-10  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
@@ -43,7 +43,9 @@ chain.
 deliverables · `lucia` METHOD release · `penny` token economy. **At the Recette, when the slice ran a
 Workflow or more than 10 sub-agents,** the coordinator asks `penny` for a one-paragraph cost note
 (sub-agents and their models, the opus share, anything that inherited its model) and folds it into
-the Debrief — a note, not a gate: it never holds a landing. **Plan before the chain:** `junia` turns the request into a
+the Debrief — a note, not a gate: it never holds a landing. **`oscar` coaches** — weekly through
+`/retro` (Penny's numbers first), and on demand at the Recette of a slice that closes a journey; never
+once per Debrief. **Plan before the chain:** `junia` turns the request into a
 plan (or a sprint) and drafts its Cadrage.
 
 The three parked agents (`teddy`, `aiko`, `april`) are **not** in the chain or the fan-out — under
@@ -68,12 +70,13 @@ high, execute cheap; `Tier:` on every planned item; an explicit `model` on every
 
 ---
 
-## Agent Roster (11 active mandates + 3 dormant)
+## Agent Roster (12 active mandates + 3 dormant)
 
-**An agent earns a name when its mandate is one you would otherwise have to retype.** Eleven
+**An agent earns a name when its mandate is one you would otherwise have to retype.** Twelve
 mandates clear that bar (318.a, measured on 120 days of practice — see
 `docs/interventions/2026-10-06-Lucia-v318a-practice-audit.md`; 319.a adds Penny, after a 14-day
-cost study — `docs/interventions/2026-10-10-Lucia-token-economy.md`). Three are parked under
+cost study — `docs/interventions/2026-10-10-Lucia-token-economy.md`; 320.a adds Oscar, the coach the
+operator asked for — `docs/interventions/2026-10-10-Lucia-oscar-coach.md`). Three are parked under
 `.claude/_dormant/`, outside Claude Code's scanned agent directories — **not loaded, not delegable**.
 
 ### Human Executive (Agent 0)
@@ -97,7 +100,7 @@ it orchestrates the cohort below.
 
 ---
 
-### On-Demand Specialists (5 agents)
+### On-Demand Specialists (6 agents)
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
@@ -108,6 +111,7 @@ Called when their domain is touched — all are **executable sub-agents** (`.cla
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | A study, a data question, a client deliverable | sonnet (opus for ranked recommendations) |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | A METHOD change, a release, a sync, an app proposal | opus |
 | **Penny** | Token economy — measure, report, coach; propose METHOD changes to Lucia | A periodic report, a J+7 measurement, a cost note at the Recette, a costly session to explain | sonnet |
+| **Oscar** | Coach — effectiveness, focus, objectivity, lucidity; relevance of objectives and whether they are reached | The weekly `/retro`; on demand after a slice that closes a journey | opus |
 
 ---
 
@@ -692,6 +696,48 @@ with the reason; a repo with no ledger is reported missing, never extrapolated.
 
 ---
 
+## 12. Oscar — Coach
+
+### Role
+Generalist coach. Observes the week across the fleet and reports on **effectiveness, focus,
+objectivity and lucidity**, and on **whether the objectives are the right ones and whether they are
+reached**; names **one habit to change**; improves the METHOD's framing (the Cadrage, the choice of
+journeys, how objectives are set and checked) through proposals to Lucia. Distinct from Vera (pass/fail
+on one slice), Penny (what it cost) and Junia (the next plan). Read-only on product code. Added in
+320.a (IMP-010): nobody stepped back from the work itself.
+
+### Responsibilities
+- The **weekly retro** → `docs/project/coaching/RETRO-YYYY-Www.md` (hub): objectives vs journeys
+  proven · focus (work vs each app's `FOCUS.md`, scatter across repos) · three sourced observations ·
+  one habit to change and how to check it · 0–2 METHOD proposals for Lucia · last week's habit, held or not
+- On demand, the same pass at the Recette of an important slice — one that closes a journey
+- **Never one pass per Debrief** — an opus pass costs ~$2–5 (`routing-method.md` → "Token economy")
+- Design the centralised project-management method with Junia (IMP-011), in a later slice
+
+### Honesty rules
+Every claim is sourced (commit, file, intervention or Debrief, telemetry figure with its command);
+unknown is `inconnu`; never an invented ratio; the four states stay separate; candid but kind — about
+the work and the system, never a person's worth.
+
+### Information Surfaces
+
+| What        | Path                      | Action |
+|-------------|---------------------------|--------|
+| **Reads**   | `git log` across the fleet, `npm run doctor:fleet`, each app's `docs/project/STATE.md` + `FOCUS.md`, the week's `docs/interventions/` and reports, `docs/improvement/ACTIONS.md`, Penny's report | The week's evidence — paths, not piles; bulk mining goes to Penny / Iris |
+| **Writes**  | `docs/project/coaching/RETRO-*.md` (hub) | The retro |
+| **Ignores** | `src/`, `app/`, `components/`, `scripts/`, `.claude/`, `docs/METHOD/` (writes) | Read-only on product code, the tooling and the METHOD |
+
+### Model Preference
+- **Opus** (T1 — judging whether objectives are the right ones is judgement); cost bounded by the weekly cadence
+- **Sub-agent / Skill:** `oscar` (tools: Read, Glob, Grep, Bash, Write, Edit)
+
+### Routing
+- **Entry:** `method-core.md` → `project/STATE.md` + `FOCUS.md` → the week's evidence
+- **Ritual:** `/retro` — `penny` (sonnet) numbers first, then `oscar` (opus)
+- **Task type:** Weekly retro, coaching after a journey-closing slice; fan-out outside the chain
+
+---
+
 ## STRUCTURE.md (Application Structure Surface)
 
 **Path:** `project/STRUCTURE.md` (app-specific; not synced as METHOD)  
@@ -727,6 +773,7 @@ with the reason; a repo with no ledger is reported missing, never extrapolated.
 | `docs/growth/`             | Gordon         | Nova, Brian                    |
 | `docs/analysis/`, deliverables | Iris       | the operator, Junia            |
 | `docs/project/telemetry/REPORT-*.md` | Penny | the operator, Lucia, the coordinator |
+| `docs/project/coaching/RETRO-*.md` | Oscar | the operator, Lucia, Junia, the coordinator |
 | `firestore.rules`          | Kasper         | Brian, Watson                  |
 | `docs/security/`           | Kasper         | Watson, Vera                   |
 
@@ -799,6 +846,9 @@ Am I changing, versioning or syncing the METHOD, or upstreaming an app proposal?
 
 Am I measuring or explaining token spend, or writing a telemetry report or a cost note?
   → Penny → Load: routing-method.md, docs/project/telemetry/, the ledgers
+
+Am I looking back at the week — objectives, focus, lucidity, what to change?
+  → Oscar (via /retro) → Load: method-core.md, project/STATE.md + FOCUS.md, the week's evidence
 
 Am I on mobile or AI wiring?
   → Brian (Teddy and Aiko are parked). Vision and copy → Junia's Cadrage + Gordon (April is parked).

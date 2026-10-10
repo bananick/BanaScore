@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 319.a  
+**Version:** 320.a  
 **Last Updated:** 2026-10-10  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 319.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 320.a (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,29 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**320.a** (2026-10-10) — **Major: Oscar, the coach — 12 active mandates + 3 dormant, and the `/retro` ritual (9)**
+
+- **Problem.** IMP-010 (recorded in 319.a): nobody stepped back from the work itself. Vera judges one slice pass/fail against its Cadrage, Penny measures what it cost, Junia plans the next one — no mandate asked whether the week served the objectives, whether the focus held, or whether the reports were lucid. Intervention: `docs/interventions/2026-10-10-Lucia-oscar-coach.md`.
+- **Operator decisions (Cadrage, 2026-10-10), binding:** cadence — a weekly retro plus on demand at the end of an important slice, **never one per Debrief** (an opus pass costs ~$2–5 under the 319.a token rules); deliverable — the retro file only; the Scrum-like method (IMP-011) is designed by Oscar with Junia in a later slice; name — Oscar; tier — opus (he judges objectives). Parked: a "🪞 Regard du coach" Debrief line, `OBJECTIVES.md` tracking.
+- **NEW — Oscar, generalist coach (`.claude/agents/oscar.md` + Desktop stub `.claude/skills/oscar/SKILL.md`), opus.** Observes, reports, advises and improves the METHOD's framing on effectiveness, focus, objectivity and lucidity, and on whether the objectives are the right ones and are reached. Inputs: git across the fleet (`npm run doctor:fleet`, `git log`), each app's `docs/project/STATE.md` + `FOCUS.md`, the week's `docs/interventions/` and reports, Penny's `npm run telemetry:report -- --since <monday> --days 7 --json`, last week's retro. Output: `docs/project/coaching/RETRO-YYYY-Www.md` in the hub — objectives vs journeys proven · focus (work vs `FOCUS.md`, scatter across repos) · three sourced observations · one habit to change and how to check it · 0–2 METHOD proposals for Lucia · last week's habit held or not. Every claim sourced, `inconnu` when unknown, never an invented ratio, candid but kind; read-only on product code (writes only the retro, prompt-enforced); reads paths and delegates bulk mining to Penny / Iris (sonnet). A delegate: he reports up and never renders the Debrief.
+- **NEW — `/retro` (`.claude/commands/retro.md` + payload copy).** Step 0 is a **hub-only guard**: without `scripts/telemetry-aggregate.mjs` and `scripts/method-doctor-fleet.mjs` (hub-only tooling) the ritual stops and says to run it from the Bana-Share hub; `oscar.md` carries the same line. Synced anyway, so an app operator learns the ritual exists (Vera, 320.a review — option (a) over excluding it from the payload). Penny's numbers first (`model: sonnet`), then Oscar (`model: opus`) writes the retro; the habit and the proposals reach the operator under `Tu décides`, accepted proposals become `ACTIONS.md` rows. **Rituals: 8 → 9** — `CLAUDE.md` (+ payload + snippet), `routing-method.md`, `.claude/agents/README.md`, `METHOD.md`, `README.md`, the addon README.
+- **CHANGED — cohort: 12 active mandates + 3 dormant.** Oscar in every current cohort table and count (`CLAUDE.md` + payload + `snippets/agent-cohort.md`, `AGENTS.md` + payload, `agents-method.md` — roster, chain, new section 12, surfaces, decision tree —, `routing-method.md` — cohort table, task type, rituals, T1 defaults —, `.claude/agents/README.md`, `.claude/skills/README.md`, `METHOD.md`, `README.md`, the addon README). Orchestration: fan-out — weekly through `/retro`, and on demand at the Recette of a slice that closes a journey. **Synced `CLAUDE.md` sections changed:** `## Agent Cohort` (heading count, table row, chain, rituals 9) and `## Model Routing` (Oscar added to the opus defaults: junia, vera, kasper, lucia, oscar) — each byte-identical in the hub `CLAUDE.md`, `payload/CLAUDE.md` and its `payload/snippets/` file. `SOUL.md` carries no count since 319.a and is not touched.
+- **Improvement register.** IMP-010 → IN PROGRESS, answered by Oscar; its completion proof is revised to the first accepted retro (the per-Debrief note is parked). IMP-011 → owners Oscar + Junia, first step: one design intervention drafted together.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = the first real `/retro`, on the week 2026-10-05 → 2026-10-11, produces `docs/project/coaching/RETRO-2026-W41.md` with every claim grounded in a sourced fact, and the operator accepts it.
+- **What the sync does to apps.** Every app receives `.claude/agents/oscar.md`, `.claude/commands/retro.md` and the updated `## Agent Cohort` / `## Model Routing` sections (hub-owned). No app-owned file is touched.
+- **Why Major, and why 320.a.** A new agent in the cohort and a new slash-command ritual are both on the Major list (`versioning.md` → "When to Increment"), and a Major increments the number: `NNN.z → (NNN+1).a`. Drafted as "319.c" and renumbered **320.a** after Vera's review — the rule applied as written.
+- **Landing exception list.** None of it: no schema / rules, auth, secrets, `SOUL.md`, dependency or lockfile, migration, or deploy wiring; well under 60 files.
+
+**319.b** (2026-10-10) — **Minor: the ledger records which agent ran**
+
+- **Problem.** The 319.a ledger stored `subAgents` as one aggregate (totals, a model set, a file count), so "which agent type ran on which model, and did anything inherit opus?" could only be answered from the raw transcripts — not from the ledger, and not in a repo whose transcripts are gone. A session that ran vera on opus and brian on sonnet read as `models: ["opus","sonnet"]`.
+- **`session-telemetry.mjs` (`schemaVersion` 2)** — hub hook and addon payload copy, kept byte-identical (`npm run doctor` E5). Each row gains **`subAgents.byAgent`**: one entry per sub-agent transcript that made a call — `agentType`, `description` (the short task label from `meta.json`, whitespace-collapsed and cut to 80 chars, `null` when absent — never a prompt), `workflowId`, `requestedModel`, `model` (the family that cost most), `pin`, `calls`, the four token counters, `apiCostUsd`, `startedAt`, `endedAt` — capped at 150 entries per row (costliest first, `byAgentTruncated` counts the rest) because the row is rewritten every Stop turn; and **`subAgents.byType`**, the complete roll-up keyed `<agentType>|<model>` (`count`, `calls`, tokens, `apiCostUsd`, `pins`). `pin` is the 319.a classification: `explicit` (`meta.json` `model`), else `frontmatter` (`model:` in `.claude/agents/<agentType>.md`, looked up in the agent's cwd, the project dir, then the main checkout; `inherit` = none), else `unpinned`. The hook stays self-contained (copied standalone into app repos): the price table and the pin lookup are duplicated from `scripts/lib/token-economy.mjs`, and `tests/token-economy-tooling.test.mjs` runs both on one fixture and asserts they agree on pin, model, agent count and cost.
+- **v1 rows stay valid** — the new fields are additive; every reader dedupes by `sessionId` as before and a row without `byType` is skipped by the agent tables, not rejected.
+- **`scripts/telemetry-aggregate.mjs`** — when rows carry `byType`, `npm run telemetry:report` prints **"Sub-agents by type × model"** (agents, calls, tokens, API-equivalent cost, explicit / frontmatter / unpinned) and **"per sprint / branch"** (agents, cost, opus share, unpinned-on-opus) from the ledger alone — they work with `--no-transcripts`. `--json` adds `byAgentType`, `bySprintOrBranch`, `agentRows`. The tables fill as sessions run under the new hook: old rows are not rewritten.
+- **Reverse:** restore the 319.a hook (hub + payload); rows keep their extra fields and every reader ignores them.
+
+---
 
 **319.a** (2026-10-10) — **Major: token economy — measured rules, a default sub-agent model, Penny (11 + 3), a fleet-wide ledger**
 

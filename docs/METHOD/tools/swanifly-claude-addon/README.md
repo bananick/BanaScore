@@ -11,9 +11,9 @@ first-class citizen of the methodology in **every** app, not just Bana-Share.
 | App `AGENTS.md` | the non-Claude mirror | refreshed from the payload, unless the app owns its identity files (the BanaLazer 041-g rule, upstreamed in 318.a: CRLF-insensitive compare, app-owned identity kept) |
 | App `CLAUDE.md` | the whole file (seed) | **create-if-missing** — an existing `CLAUDE.md` is app-owned |
 | App `CLAUDE.md` | five hub-owned sections: `## Agent Cohort` · `## Model Routing` · `## Landing & conversation size` · `## Communication Contract` · `## Design port directive` | **merge** — matched by heading prefix, added when absent, refreshed when the hub text changes; the rest of the file is left alone. An app keeps its own version of one by listing it in `docs/METHOD/app-settings.json` → `claudeAddon.ownedSections`. |
-| `.claude/agents/` | the 11 active cohort agents | **overwrite** — except an **app-enriched** agent (carries `## Frontières`, `## Pièges` or `## Règle de GO`, or is listed in `claudeAddon.ownedAgents`), which is kept as is |
+| `.claude/agents/` | the 12 active cohort agents | **overwrite** — except an **app-enriched** agent (carries `## Frontières`, `## Pièges` or `## Règle de GO`, or is listed in `claudeAddon.ownedAgents`), which is kept as is |
 | `.claude/agents/` → `.claude/_dormant/agents/` | `teddy`, `aiko`, `april` | **move** (never delete) — unless the app lists the agent in `claudeAddon.activeAgents` |
-| `.claude/commands/` | `brief`, `intervention`, `land`, `plan-sprint`, `port`, `relay`, `review`, `ship` (8) | **overwrite** — canonical METHOD rituals (`port` and `relay` are optional) |
+| `.claude/commands/` | `brief`, `intervention`, `land`, `plan-sprint`, `port`, `relay`, `retro`, `review`, `ship` (9) | **overwrite** — canonical METHOD rituals (`port` and `relay` are optional) |
 | `.claude/skills/` | `ads-ops`, `deploy`, `hubspot-sync`, `implement-plan`, `landing-page`, `media`, `ux-review` (7) | **overwrite** — canonical tooling (`sprint` and `ship-check` parked in 318.a) |
 | `docs/project/design/` | `PORT-MAP-TEMPLATE.md` | **overwrite** — reference template the `/port` loop starts from (the live `PORT-MAP.md` is never touched) |
 | `.claude/hooks/` | `no-mock-guard.ps1`, `session-telemetry.mjs`, `ship-push.sh`, `land.mjs`, `verify-gate.mjs`, `flight-deck.mjs`, `pilotage-refresh.mjs` | **overwrite** |

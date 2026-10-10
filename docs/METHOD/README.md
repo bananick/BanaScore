@@ -1,6 +1,6 @@
-# METHOD v319.a
+# METHOD v320.a
 
-**Version:** 319.a  
+**Version:** 320.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-10  
 **Status:** ✅ Production-Ready
@@ -34,8 +34,8 @@
 ```
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
-.claude/agents/                                 ← 11 active sub-agents + README (3 dormant in .claude/_dormant/)
-.claude/commands/                               ← 8 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /port (optional), /relay (optional)
+.claude/agents/                                 ← 12 active sub-agents + README (3 dormant in .claude/_dormant/)
+.claude/commands/                               ← 9 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /retro, /port (optional), /relay (optional)
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 .claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
 .claude/hooks/verify-gate.mjs                   ← The local gate: lane-aware checks + HEAD-pinned marker
@@ -48,7 +48,7 @@ scripts/method-doctor.mjs                       ← `npm run doctor`: METHOD con
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
-  agents-method.md           # 11 active + 3 dormant agents, roles, rituals, models
+  agents-method.md           # 12 active + 3 dormant agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
   routing-method.md          # Entry points, agent routing, model routing (tiers), session telemetry
   ai-infra-method.md         # Multi-provider architecture
@@ -66,8 +66,27 @@ docs/METHOD/                                    ← Synced across all apps
 docs/project/                                   ← App-specific (local)
   VISION.md, DESIGN.md, SCHEMA.md, FOCUS.md, STATE.md, ROADMAP.web.md, AI-INFRA.md
   telemetry/REPORT-YYYY-MM-DD.md  # Penny's periodic token report (committed)
+  coaching/RETRO-YYYY-Www.md       # Oscar's weekly retro (committed; hub)
   telemetry/sessions.jsonl   # Session telemetry ledger (auto-appended by the Stop hook; local, gitignored — hooks no longer commit it (318.a), untracked in a follow-up)
 ```
+
+---
+
+## What's New in v320.a
+
+1. **Oscar — the coach** joins the cohort (12 active + 3 dormant, opus): a weekly `/retro` (9th ritual),
+   on demand after a slice that closes a journey, never once per Debrief. One file per week,
+   `docs/project/coaching/RETRO-YYYY-Www.md` — objectives vs journeys proven, focus, three sourced
+   observations, one habit to change, 0–2 METHOD proposals for Lucia.
+
+## What's New in v319.b
+
+1. **The ledger says which agent ran.** Each ledger row (`schemaVersion` 2) carries `subAgents.byAgent` — one
+   entry per sub-agent transcript: `agentType`, a ≤ 80-char task label, `workflowId`, `requestedModel`, the
+   `model` that ran (majority by cost), `pin` (`explicit` / `frontmatter` / `unpinned`), calls, tokens and
+   timestamps — and a complete `subAgents.byType` roll-up keyed `<agentType>|<model>`. `npm run telemetry:report`
+   prints "by agent type × model" and "per sprint / branch" tables from the ledger alone, so the question
+   "did anything inherit opus?" no longer needs the transcripts. v1 rows still parse. No prompt text enters the row.
 
 ---
 
@@ -210,9 +229,9 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## Agent Cohort (11 active mandates + 3 dormant)
+## Agent Cohort (12 active mandates + 3 dormant)
 
-Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; eleven mandates hold that bar. **The coordinating conversation orchestrates them.**
+Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; twelve mandates hold that bar. **The coordinating conversation orchestrates them.**
 
 | Agent | Mandate |
 |---|---|
@@ -227,6 +246,7 @@ Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegat
 | **Iris** | Study & deliverables — client-grade studies; owns anonymisation/GDPR |
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` |
 | **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia |
+| **Oscar** | Coach — weekly retro: effectiveness, focus, objectivity, lucidity, objectives |
 
 #### Dormant (not loaded, not delegable)
 
@@ -272,11 +292,11 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 319.a  
-**Previous:** 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 320.a  
+**Previous:** 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
-ledger** ship as **319.a** — see `versioning.md` for the full changelog.
+ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a** — see `versioning.md` for the full changelog.
 
 **See:** `versioning.md` for full changelog.
 
