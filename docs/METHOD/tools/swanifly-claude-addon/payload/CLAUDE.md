@@ -14,7 +14,7 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v320.a, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
+You operate inside the **METHOD** (v320.c, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
 
 ## Agent Cohort (12 active mandates + 3 dormant — Skills + sub-agents)
 

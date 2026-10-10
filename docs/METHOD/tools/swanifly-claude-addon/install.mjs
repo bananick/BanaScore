@@ -61,7 +61,10 @@
  * Usage (standalone):   node install.mjs <appRoot> [--dry-run] [--force]
  *                       node install.mjs --user [--dry-run] [--only settings.json] [--env-only]
  *                       (--env-only writes just the missing env.CLAUDE_CODE_SUBAGENT_MODEL; exit 1 if settings.json is invalid JSON)
- * Programmatic:         import { installClaudeAddon, installUserLevel, mergeSection } from './install.mjs'
+ *                       node install.mjs --user --telemetry [--dry-run]
+ *                       (v319.c: ~/.claude/hooks/session-telemetry.mjs + one Stop entry in ~/.claude/settings.json, so every repo and
+ *                       worktree feeds the central Firestore store; inert until `npm run telemetry:enroll`)
+ * Programmatic:         import { installClaudeAddon, installUserLevel, installUserTelemetry, mergeSection } from './install.mjs'
  *
  * Called automatically per app by scripts/sync-method-to-all-apps.mjs and
  * Apps/script/sync-method-to-github.mjs.
@@ -789,11 +792,65 @@ export function installUserLevel({ addonDir = HERE, claudeDir, home = homedir(),
   return res;
 }
 
+/**
+ * `--user --telemetry` (v319.c): the central-store hook at USER level, so sessions in repos and worktrees that carry no
+ * hook of their own still reach the central Firestore store. Writes exactly two things and nothing else:
+ *   - `<claudeDir>/hooks/session-telemetry.mjs`  (byte copy of payload/hooks/session-telemetry.mjs)
+ *   - one Stop entry in `<claudeDir>/settings.json` running it with `--user` (central store only — it never writes a
+ *     ledger file into a repo). Merge, existing wins: if a Stop hook already mentions session-telemetry, nothing is added.
+ * The repo-level hook and this one may both fire for the same Stop; the hook's per-(session, transcript size) claim
+ * makes the first one send and the second skip. Inert until `npm run telemetry:enroll` wrote ~/.claude/telemetry/config.json.
+ * @returns {{claudeDir:string, files:{path:string, outcome:"written"|"identical"|"backed-up+written"|"skipped-invalid"|"missing-payload", backup?:string}[]}}
+ */
+export function installUserTelemetry({ addonDir = HERE, claudeDir, home = homedir(), dryRun = false, now = new Date() } = {}) {
+  const target = claudeDir ?? process.env.CLAUDE_HOME ?? join(home, ".claude");
+  const res = { claudeDir: target, files: [] };
+  const from = join(addonDir, "payload", "hooks", "session-telemetry.mjs");
+  const hookDest = join(target, "hooks", "session-telemetry.mjs");
+  if (!existsSync(from)) { res.files.push({ path: "hooks/session-telemetry.mjs", outcome: "missing-payload" }); return res; }
+  if (existsSync(hookDest) && readFileSync(hookDest).equals(readFileSync(from))) res.files.push({ path: "hooks/session-telemetry.mjs", outcome: "identical" });
+  else {
+    if (!dryRun) { mkdirSync(dirname(hookDest), { recursive: true }); copyFileSync(from, hookDest); }
+    res.files.push({ path: "hooks/session-telemetry.mjs", outcome: "written" });
+  }
+
+  const dest = join(target, "settings.json");
+  let current = {};
+  if (existsSync(dest)) {
+    try { current = JSON.parse(readFileSync(dest, "utf8").replace(/^﻿/, "")); } catch { current = null; }
+    if (!isObj(current) || (current.hooks !== undefined && !isObj(current.hooks)) || (isObj(current.hooks) && current.hooks.Stop !== undefined && !Array.isArray(current.hooks.Stop))) {
+      res.files.push({ path: "settings.json", outcome: "skipped-invalid" });
+      return res;
+    }
+  }
+  const stop = current.hooks?.Stop ?? [];
+  if (JSON.stringify(stop).includes("session-telemetry")) { res.files.push({ path: "settings.json", outcome: "identical" }); return res; }
+  const entry = { hooks: [{ type: "command", command: "node", args: [hookDest, "--user"], timeout: 20 }] };
+  const next = { ...current, hooks: { ...(current.hooks ?? {}), Stop: [...stop, entry] } };
+  const existed = existsSync(dest);
+  const backup = `settings.json.bak-${stamp(now)}`;
+  if (!dryRun) {
+    mkdirSync(target, { recursive: true });
+    if (existed) copyFileSync(dest, join(target, backup));
+    writeFileSync(dest, JSON.stringify(next, null, 2) + "\n", "utf8");
+  }
+  res.files.push({ path: "settings.json", outcome: existed ? "backed-up+written" : "written", ...(existed ? { backup } : {}) });
+  return res;
+}
+
 // --- standalone CLI ---
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const force = args.includes("--force");
+  if (args.includes("--user") && args.includes("--telemetry")) {
+    const r = installUserTelemetry({ dryRun });
+    console.log(`[swanifly-claude-addon --user --telemetry]${dryRun ? " (dry-run)" : ""} ${r.claudeDir}`);
+    for (const f of r.files) console.log(`  ${f.outcome.padEnd(17)}: ${f.path}${f.backup ? ` (previous -> ${f.backup})` : ""}`);
+    console.log("  next    : npm run telemetry:enroll   (writes ~/.claude/telemetry/config.json; until then the hook sends nothing)");
+    if (r.files.some((f) => f.outcome === "skipped-invalid" || f.outcome === "missing-payload")) process.exit(1);
+    process.exit(0);
+  }
   if (args.includes("--user")) {
     const oi = args.indexOf("--only");
     const only = oi >= 0 && args[oi + 1] ? args[oi + 1].split(",") : undefined;

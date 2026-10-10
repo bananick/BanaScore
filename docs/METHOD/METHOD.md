@@ -1,4 +1,4 @@
-# METHOD v320.a
+# METHOD v320.c
 
 ## Quick Start
 
@@ -30,6 +30,17 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v320.c
+1. **`/retro` feeds an interactive dashboard.** The weekly retro is also published to the "Swanifly Rétro"
+   dashboard (https://claude.ai/artifact/5A1FizSAz47bTczU4ZqwJN): Oscar writes `docs/project/coaching/dashboard/YYYY-Www.json`
+   beside the committed `RETRO-YYYY-Www.md`, the coordinator publishes it (`ArtifactData`, `retros/{week}`),
+   the operator answers in the page (`feedback/{week}`), and next week's retro reads those answers first.
+
+## What's New in v320.b
+1. **Hub repo renamed Swanifly** (Patch). `Bana-Share` → `Swanifly` (GitHub repo + local folder): the fleet skip list
+   carries both names, repo URLs and the sync commit message say Swanifly, and
+   `scripts/ops/rename-hub-to-swanifly.ps1` is the operator's one-shot, idempotent, fail-closed rename.
 
 ## What's New in v320.a
 1. **Oscar, the coach — 12 active mandates + 3 dormant.** Opus. A **weekly retro** (`/retro`, the 9th
@@ -538,7 +549,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 320.a  
+**Current Version:** 320.c  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-10
 

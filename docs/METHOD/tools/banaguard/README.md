@@ -19,7 +19,7 @@ BanaGuard runs silently in the background and monitors your system every 30 seco
 
 ```powershell
 # Launch BanaGuard (silently, no console window)
-wscript.exe "D:\Apps\BanaShare\docs\METHOD\tools\banaguard\start.vbs"
+wscript.exe "D:\Apps\Swanifly\docs\METHOD\tools\banaguard\start.vbs"
 ```
 
 Or double-click `start.vbs` in Explorer.

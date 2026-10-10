@@ -1,6 +1,6 @@
-# METHOD v320.a
+# METHOD v320.c
 
-**Version:** 320.a  
+**Version:** 320.c  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-10  
 **Status:** ✅ Production-Ready
@@ -71,6 +71,16 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v320.c
+
+1. **`/retro` feeds the "Swanifly Rétro" dashboard** — a JSON doc beside the retro file, published by the
+   coordinator; the operator's answers in the page are read first by next week's retro.
+
+## What's New in v320.b
+
+1. **Hub repo renamed Swanifly** (Patch). The fleet skip list knows both names, repo URLs and the sync commit message
+   say Swanifly, and `scripts/ops/rename-hub-to-swanifly.ps1` performs the operator's side of the rename.
 
 ## What's New in v320.a
 
@@ -292,11 +302,11 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 320.a  
-**Previous:** 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 320.c  
+**Previous:** 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
-ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a** — see `versioning.md` for the full changelog.
+ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.
 
 **See:** `versioning.md` for full changelog.
 

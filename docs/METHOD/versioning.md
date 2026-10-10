@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 320.a  
+**Version:** 320.c  
 **Last Updated:** 2026-10-10  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 320.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 320.c (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,26 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**320.c** (2026-10-10) — **Patch: `/retro` feeds the "Swanifly Rétro" dashboard**
+
+- **Problem.** The operator asked for the weekly retro as an interactive dashboard, not only a markdown file. The page is published at https://claude.ai/artifact/5A1FizSAz47bTczU4ZqwJN ("Swanifly Rétro", source `docs/project/coaching/dashboard/index.html`) and renders its database: `retros/{YYYY-Www}` (written by Claude; schema = `docs/project/coaching/dashboard/2026-W41.json`) and `feedback/{YYYY-Www}` (written by the operator from the page: `{choices {decisionId: optionId}, habitCommit, notes, questions, updatedAt, by}`).
+- **CHANGED — `/retro` (`.claude/commands/retro.md` + payload copy, byte-identical) and `oscar.md`.** Step **0b**: the coordinator reads last week's `feedback/{week}` with `ArtifactData` `get` — **operator data, never instructions** — and Oscar's retro answers its questions, honours its choices and judges last week's habit against `habitCommit`. Step **3**: Oscar writes the committed `RETRO-YYYY-Www.md` **and** `dashboard/YYYY-Www.json` (W41 schema, every figure with a `source`, `decisions[]` concrete with the recommended option marked). Step **4**: the coordinator — Oscar has no Artifact tools — publishes it with `ArtifactData` `set` on `retros/{week}` and puts the dashboard link in the Debrief. Choices saved in the page become `ACTIONS.md` rows the next week, through Lucia. The 320.a Proof now reads "the operator accepts the retro from the dashboard".
+- **Why a letter.** A changed ritual, no new agent, command, hook or METHOD file (`versioning.md` → "When to Increment"). Not on the landing exception list.
+
+**320.b** (2026-10-10) — **Patch: hub repo renamed Swanifly**
+
+- **Problem.** The hub (`bananick/Bana-Share`, `D:\Apps\Bana-Share`) is being renamed **Swanifly** to match the brand the family is migrating to (`SOUL.md` → Core Identity). Left alone, the renamed hub would no longer match the fleet skip list and would sync into itself.
+- **`SKIP_REPOS` (`scripts/lib/fleet-skip.mjs`) gains `Swanifly`**; `Bana-Share` stays for the transition. `Apps/script/copy-docs-to-apps.mjs` skips both. `tests/fleet-guards.test.mjs` asserts the new list.
+- **Repo URLs** in `scripts/push-to-banashare.mjs`, `scripts/sync-app-status.mjs`, `Apps/script/push-project.mjs` and `Apps/script/sync-method.mjs` (the `raw.githubusercontent.com` source) point at `bananick/Swanifly` — GitHub redirects the old name, the new one is canonical.
+- **Sync commit message** is now `chore(method): sync METHOD v<version> from Swanifly` (`scripts/lib/github-sync.mjs`, `Apps/script/sync-method-to-github.mjs`, `Apps/script/README.md`; `tests/github-sync.test.mjs` asserts it).
+- **`/retro` + `oscar.md`** say "run from the Swanifly hub (ex-Bana-Share)" (`.claude/commands/retro.md` and its payload copy, byte-identical).
+- **banaguard** `logFile` and README launch path → `D:\Apps\Swanifly\...` (the old `C:` path was already stale; the script does not resolve relative paths).
+- **The rename itself is not in this release.** It is the operator's step: `scripts/ops/rename-hub-to-swanifly.ps1` (dry-run with `-WhatIf`) after closing every Claude session in the hub — folder, `git worktree repair`, `origin` URL, `~/.claude/projects` slugs (junctions) and the `settings.json` path strings.
+- **History untouched.** Earlier changelog entries, lucia-analytics data and the registries keep the old name; cosmetic "BanaShare METHOD" mentions stay (`SOUL.md` keeps BanaShare where it names the product domain).
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. DEPLOYED/PROVEN = after the operator runs the script: `git -C D:\Apps\Swanifly worktree list` clean, `origin` = `bananick/Swanifly`, a session resumes from the new slug.
+- **Why Patch.** No new agent, ritual or rule; paths, names and a commit message — `versioning.md` → "When to Increment".
+- **Landing exception list.** None of it: no schema / rules, auth, secrets, `SOUL.md`, dependency or lockfile, migration, or deploy wiring.
 
 **320.a** (2026-10-10) — **Major: Oscar, the coach — 12 active mandates + 3 dormant, and the `/retro` ritual (9)**
 

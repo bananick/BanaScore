@@ -13,6 +13,7 @@
  *
  *   doc      docs/, *.md, proto/, qa/, prompts/, *.jsonl → nothing to run (green)
  *   tooling  scripts/, .claude/, tools/, registries      → `node --check` on JS
+ *   rules    telemetry-backend/firestore.{rules,indexes.json} → parsed and sanity-checked (below)
  *   app      real app code under an app root             → that app's npm checks
  *
  * Toolchain policy (operator's call, 2026-08-10): most roots in this fleet have no
@@ -124,6 +125,10 @@ const TOOLING = [
   // first crew diff that touched them (bananaevents crew reshape 6ab923b0, 2026-09-28).
   /(^|\/)\.codex\//,
 ];
+// Firestore rules + indexes of the telemetry backend (`telemetry-backend/`, project swanifly-ia). Scoped to
+// that folder on purpose: everywhere else these files stay "unclassifiable (fail closed)". Its `functions/`
+// folder is an ordinary app root (own package.json: typecheck + test + build, needs `npm ci`).
+const RULES = [/^telemetry-backend\/firestore\.(rules|indexes\.json)$/];
 const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|css|scss|html)$/i;
 // Narrower than CODE_EXT on purpose: the set a repo-root app's typecheck/test/build
 // scripts would actually plausibly compile. css/html/vue/svelte at the repo root stay
@@ -174,6 +179,7 @@ function rootHasVerifyingScript() {
 function classify(file) {
   if (DOC.some((r) => r.test(file))) return { lane: 'doc' };
   if (TOOLING.some((r) => r.test(file))) return { lane: 'tooling' };
+  if (RULES.some((r) => r.test(file))) return { lane: 'rules' };
   const root = appRootOf(file);
   if (root && root !== '.') return { lane: 'app', root };
   if (root === '.' && ROOT_APP_EXT.test(file) && rootHasVerifyingScript()) return { lane: 'app', root: '.' };
@@ -237,6 +243,43 @@ function needsInstall(command) {
   return command.trim().split(/\s+/)[0] !== 'node';
 }
 
+/**
+ * Static checks for the rules lane — no emulator, no firebase CLI. Indexes must parse as JSON with an
+ * `indexes` array; rules must be non-empty, declare `rules_version` + `service cloud.firestore`, and
+ * have balanced braces (comments and string literals stripped first). A deleted file is red: firebase.json
+ * still points at it.
+ */
+function rulesCheck(files) {
+  const bad = [];
+  for (const f of files) {
+    const abs = join(REPO, f);
+    if (!existsSync(abs)) { bad.push(`${f}: missing (firebase.json still references it)`); continue; }
+    const body = readFileSync(abs, 'utf8');
+    if (/\.json$/i.test(f)) {
+      try {
+        const j = JSON.parse(body);
+        if (!j || typeof j !== 'object' || !Array.isArray(j.indexes)) bad.push(`${f}: no "indexes" array`);
+      } catch (e) { bad.push(`${f}: invalid JSON (${e.message})`); }
+      continue;
+    }
+    const code = body
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '')
+      .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g, '""');
+    if (!code.trim()) { bad.push(`${f}: empty`); continue; }
+    if (!/^\s*rules_version\s*=/m.test(code)) bad.push(`${f}: no rules_version`);
+    if (!/service\s+cloud\.firestore\s*\{/.test(code)) bad.push(`${f}: no "service cloud.firestore" block`);
+    let depth = 0;
+    let broken = false;
+    for (const ch of code) {
+      if (ch === '{') depth++;
+      else if (ch === '}' && --depth < 0) { broken = true; break; }
+    }
+    if (broken || depth !== 0) bad.push(`${f}: unbalanced braces`);
+  }
+  return { count: files.length, bad };
+}
+
 function nodeSyntaxCheck(files) {
   const targets = files.filter((f) => /\.(mjs|cjs|js)$/i.test(f) && existsSync(join(REPO, f)));
   const bad = [];
@@ -249,7 +292,7 @@ function nodeSyntaxCheck(files) {
 
 // ── run ─────────────────────────────────────────────────────────────────────
 const files = changedFiles();
-const lanes = { doc: [], tooling: [], app: [], unknown: [] };
+const lanes = { doc: [], tooling: [], rules: [], app: [], unknown: [] };
 const appRoots = new Set();
 for (const f of files) {
   const c = classify(f);
@@ -297,6 +340,13 @@ if (lanes.tooling.length) {
       if (!r.ok) { verdict = 'red'; reasons.push('gate self-test failed'); }
     }
   }
+}
+
+if (lanes.rules.length) {
+  const rc = rulesCheck(lanes.rules);
+  checks.push({ root: '.', check: 'rules static check', ok: rc.bad.length === 0, files: rc.count, tail: rc.bad.join('\n') });
+  if (rc.bad.length) { verdict = 'red'; reasons.push(`${rc.bad.length} invalid Firestore rules/indexes file(s): ${rc.bad.slice(0, 3).join('; ')}`); }
+  say(`rules    ${rc.count} file(s) · static check ${rc.bad.length ? '✗' : '✓'}`);
 }
 
 for (const root of [...appRoots].sort()) {
@@ -429,7 +479,7 @@ if (noCadrage.length) {
   say(`cadrage  ${noCadrage.length} new file(s) without Journey/Proof ✗`);
 }
 
-const mode = appRoots.size ? 'app' : lanes.tooling.length ? 'tooling' : 'docs-only';
+const mode = appRoots.size ? 'app' : lanes.rules.length ? 'rules' : lanes.tooling.length ? 'tooling' : 'docs-only';
 const marker = {
   sha: HEAD,
   branch: BRANCH,

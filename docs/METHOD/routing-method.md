@@ -358,6 +358,33 @@ included — they are not synced but still pay for their index).
   name and `Respirit`'s origin is `bananick/IAcademy`. **Accepted gap:** a session in a *worktree* of such a repo leaves no row —
   the hook and its wiring live, untracked, in the main checkout only.
 
+### Central store (319.c) — one Firestore store for every repo and worktree on a machine
+
+The per-repo ledgers cannot see a worktree of a repo that has no hook, and Penny would have to walk every checkout.
+So the same row also goes to **Firestore project `swanifly-ia`**, `teams/banana/telemetrySessions/{sessionId}`
+(schema: `docs/project/SCHEMA.md` → "Telemetry store"). **Numbers only:** the hook sends no `cwd`, no `gitBranch`, no
+`app`, no `topic` and no `description` — `project` (main checkout name) + `worktree` (boolean) + `sprint` replace them —
+and free text is refused by the strict Zod schema. `CLAUDE_TELEMETRY_DIR` (hook and enroll) is test-only: honoured
+only with `CLAUDE_TELEMETRY_TEST=1`.
+
+- **Write path:** the hook POSTs the row (3 s timeout) to the HTTPS function `ingestTelemetry` (europe-west1,
+  `telemetry-backend/`) with `Authorization: Bearer <machineId>.<secret>`. The function stores only a SHA-256 of the
+  secret per machine (`teams/banana/telemetryMachines/{machineId}`), writes with the Admin SDK in a transaction
+  (newest `capturedAt` wins, never summed), and refuses without a valid token (401/403, nothing written).
+  Firestore rules deny every client read/write on `teams/*/telemetry*`.
+- **Offline:** a failed send is queued in `~/.claude/telemetry/outbox.jsonl` (newest row per session, bounded) and
+  retried on the next Stop. No `~/.claude/telemetry/config.json` → no network, behaviour unchanged.
+- **Enrol a machine:** `npm run telemetry:enroll` (needs `npm --prefix telemetry-backend/functions install` and
+  `gcloud auth application-default login`). `--rotate` replaces a token, `--revoke <id>` kills one.
+- **Cover repos without the hook:** `node docs/METHOD/tools/swanifly-claude-addon/install.mjs --user --telemetry`
+  puts the hook in `~/.claude/hooks` with one `Stop` entry run as `--user` (central store only, never writes a ledger
+  into a repo). When the repo-level and user-level hook both fire for one Stop, a per-(session, transcript size) claim
+  in `~/.claude/telemetry/claims/` makes the first send and the second skip.
+- **Read:** `npm run telemetry:report -- --source firestore [--project X] [--days N | --since DATE] [--json]` — same
+  aggregation, worktrees folded into their repo, no local transcripts unless `--with-transcripts`.
+- **Deploy:** `cd telemetry-backend && firebase deploy --only functions,firestore:rules --project swanifly-ia`
+  (the project must be on the Blaze plan). Deploying the rules file replaces the project's whole Firestore ruleset.
+
 ### Cross-tool status (Codex, Cursor)
 
 Not wired — no automated equivalent exists today:

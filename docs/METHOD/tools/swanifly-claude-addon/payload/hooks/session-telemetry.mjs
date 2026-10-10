@@ -30,12 +30,32 @@
 // "frontmatter", else "unpinned" (inherits the coordinator unless CLAUDE_CODE_SUBAGENT_MODEL is set).
 // Privacy is unchanged: `description` is the short task LABEL from meta.json, whitespace-collapsed and cut to 80
 // chars (null when absent) — never a prompt, never transcript text. v1 rows (no byAgent/byType) stay valid.
+// v319.c — central store. When ~/.claude/telemetry/config.json exists ({ endpoint, machineId, token }) the same row,
+// numbers only (every `description` stripped), is POSTed to the `ingestTelemetry` Cloud Function of project swanifly-ia
+// (teams/banana/telemetrySessions/{sessionId}); see "Central store" at the bottom of this file. `--user` = the copy that
+// `install.mjs --user --telemetry` puts in ~/.claude/hooks for repos without a hook of their own (central store only).
 // This file is copied standalone into app repos: keep it free of imports from the hub.
 //
 
-import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync, renameSync, statSync, unlinkSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join, dirname, basename, resolve, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
+
+// `--user`: the copy installed at ~/.claude/hooks by `install.mjs --user --telemetry`. It covers repos and worktrees that
+// carry no hook of their own: central store only, never a ledger file written into a repo.
+const USER_MODE = process.argv.includes('--user');
+// CLAUDE_TELEMETRY_DIR is TEST-ONLY: it is honoured solely together with CLAUDE_TELEMETRY_TEST=1, so an env block in a
+// repo's settings.json cannot redirect where the machine's token is read from.
+const TELEMETRY_DIR = process.env.CLAUDE_TELEMETRY_TEST === '1' && process.env.CLAUDE_TELEMETRY_DIR
+  ? process.env.CLAUDE_TELEMETRY_DIR
+  : join(homedir(), '.claude', 'telemetry');
+const POST_TIMEOUT_MS = 3000;     // per request
+const TOTAL_BUDGET_MS = 8000;     // current row + outbox retries, never more
+const OUTBOX_RETRY_MAX = 10;      // sessions retried per Stop
+const OUTBOX_MAX_SESSIONS = 100;  // newest sessions kept
+const OUTBOX_COMPACT_BYTES = 2 * 1024 * 1024;
+const ORPHAN_MS = 2 * 60_000;     // a *.work file this old belongs to a hook that died
 
 function readStdin() {
   try {
@@ -45,7 +65,8 @@ function readStdin() {
   }
 }
 
-const BY_AGENT_CAP = 150; // a session can spawn >1000 agents; the row is rewritten every Stop turn, so bound it
+const BY_AGENT_CAP = 40; // a session can spawn >1000 agents and the row is appended on EVERY Stop turn: keep the 40 costliest (byType stays complete)
+const SYNTHETIC_MODEL = '<synthetic>';
 const PRICE = { haiku: [1, 5], sonnet: [2, 10], opus: [4, 20], fable: [10, 50] }; // USD per M tokens in/out (list)
 
 const familyOf = (model) => Object.keys(PRICE).find((f) => String(model ?? '').toLowerCase().includes(f)) ?? null;
@@ -105,13 +126,13 @@ function summarizeTranscript(filePath) {
   try {
     raw = readFileSync(filePath, 'utf8');
   } catch {
-    return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintText: '' };
+    return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintHit: null };
   }
 
-  let sprintText = '';
+  let sprintHit = null; // first sprint path mentioned in this file — matched line by line, never a concatenated corpus
   for (const line of raw.split('\n')) {
     if (!line.trim()) continue;
-    sprintText += line; // cheap corpus for the best-effort sprint-number regex below
+    if (sprintHit === null) sprintHit = sprintFromLine(line);
     let entry;
     try {
       entry = JSON.parse(line);
@@ -136,6 +157,9 @@ function summarizeTranscript(filePath) {
 
     if (entry.type === 'assistant' && entry.message?.role === 'assistant') {
       const msg = entry.message;
+      // '<synthetic>' is the harness's own placeholder on injected messages (no API call, no usage): not a model that
+      // ran, so it is neither a model, nor a call, nor part of any byType key.
+      if (msg.model === SYNTHETIC_MODEL) continue;
       if (msg.model) models.add(msg.model);
       const id = msg.id;
       if (id && !seenMessageIds.has(id)) {
@@ -154,7 +178,7 @@ function summarizeTranscript(filePath) {
     }
   }
 
-  return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintText };
+  return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintHit };
 }
 
 function addTotals(a, b) {
@@ -267,29 +291,34 @@ function summarizeAgents(subAgentsDir, subSummaries, projectDirs) {
 //      - `(?!\d)` forces a separator after the 3 digits, so a millesime can never be captured.
 //        Without it `docs/sprints/2025/…` yielded a phantom sprint "202".
 //   3. Failing that, null.
-function guessSprint(branch, text) {
-  const b = (branch ?? '').match(/^sprint[\\/](\d{3})(?!\d)/);
-  if (b) return b[1];
-  const m = (text ?? '').match(
-    /docs[\\/]+(?:project[\\/]+)?sprints[\\/]+(?:\d{4}[\\/]+(?:week-\d{1,2}[\\/]+)?)?(\d{3})(?!\d)/,
-  );
-  return m ? m[1] : null;
+// The transcript scan is per line (a sprint path never spans lines), stops at the first hit per file, and the
+// sub-agent transcripts are only consulted when the branch and the main transcript gave nothing. No corpus is ever
+// concatenated: on a 477 MB session that string used to reach 89 % of V8's maximum string length.
+const SPRINT_PATH = /docs[\\/]+(?:project[\\/]+)?sprints[\\/]+(?:\d{4}[\\/]+(?:week-\d{1,2}[\\/]+)?)?(\d{3})(?!\d)/;
+
+function sprintFromBranch(branch) {
+  return (branch ?? '').match(/^sprint[\\/](\d{3})(?!\d)/)?.[1] ?? null;
+}
+
+function sprintFromLine(line) {
+  if (!line.includes('sprints')) return null; // cheap pre-filter before the regex
+  return SPRINT_PATH.exec(line)?.[1] ?? null;
 }
 
 function main() {
   const raw = readStdin();
-  if (!raw) return; // nothing on stdin — exit quietly
+  if (!raw) return null; // nothing on stdin — exit quietly
   let payload;
   try {
     payload = JSON.parse(raw);
   } catch {
-    return;
+    return null;
   }
 
   const sessionId = payload.session_id ?? payload.sessionId;
   const transcriptPath = payload.transcript_path ?? payload.transcriptPath;
   const projectDir = process.env.CLAUDE_PROJECT_DIR || payload.cwd || process.cwd();
-  if (!sessionId || !transcriptPath || !existsSync(transcriptPath)) return;
+  if (!sessionId || !transcriptPath || !existsSync(transcriptPath)) return null;
 
   const main_ = summarizeTranscript(transcriptPath);
 
@@ -299,24 +328,24 @@ function main() {
   const models = new Set(main_.models);
   const subModels = new Set();
   const subSummaries = [];
-  let subSprintText = '';
+  let subSprint = null; // first hit across the sub-agent files, in file order
   for (const f of subFiles) {
     const s = summarizeTranscript(f);
     subSummaries.push([f, s]);
     addTotals(subTotals, s.totals);
     for (const m of s.models) { models.add(m); subModels.add(m); }
-    subSprintText += s.sprintText || '';
+    subSprint ??= s.sprintHit;
   }
 
-  const lroot = ledgerRoot(projectDir);
+  const repo = repoInfo(projectDir);
+  const lroot = repo.root;
   const agents = summarizeAgents(subAgentsDir, subSummaries, [projectDir, lroot]);
 
   const totals = addTotals(addTotals(zeroTotals(), main_.totals), subTotals);
   totals.allTokens = totals.inputTokens + totals.outputTokens
     + totals.cacheCreationInputTokens + totals.cacheReadInputTokens;
 
-  const sprint = guessSprint(main_.gitBranch, main_.sprintText)
-    ?? guessSprint(main_.gitBranch, subSprintText);
+  const sprint = sprintFromBranch(main_.gitBranch) ?? main_.sprintHit ?? subSprint;
 
   const row = {
     schemaVersion: 2,
@@ -326,6 +355,9 @@ function main() {
     app: basename(projectDir),
     cwd: projectDir,
     gitBranch: main_.gitBranch,
+    // What the central store keeps INSTEAD of app / cwd / gitBranch: the main checkout's name, and whether this ran in a worktree.
+    project: basename(lroot).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100) || 'unknown',
+    worktree: repo.worktree,
     sprint,
     // Global union, kept for existing readers. It CANNOT verify routing on its own:
     // ["opus","sonnet"] reads the same whether opus coordinated and sonnet executed (compliant)
@@ -343,10 +375,15 @@ function main() {
     efficiencyNote: null, // optional — same
   };
 
-  const outDir = join(lroot, 'docs', 'project', 'telemetry');
-  const outFile = join(outDir, 'sessions.jsonl');
-  mkdirSync(outDir, { recursive: true });
-  appendFileSync(outFile, JSON.stringify(row) + '\n', 'utf8');
+  if (!USER_MODE) { // the user-level copy (--user) feeds the central store only; it never writes into a repo
+    const outDir = join(lroot, 'docs', 'project', 'telemetry');
+    const outFile = join(outDir, 'sessions.jsonl');
+    mkdirSync(outDir, { recursive: true });
+    appendFileSync(outFile, JSON.stringify(row) + '\n', 'utf8');
+  }
+  let size = 0;
+  try { size = statSync(transcriptPath).size; } catch { /* claim key degrades to size 0 */ }
+  return { row, claimKey: `${sessionId}-${size}` };
 }
 
 /**
@@ -355,21 +392,181 @@ function main() {
  * vanish with it. `--git-common-dir` is the shared `.git` of the main checkout (`.git` itself
  * when this IS the main checkout); its parent is the main checkout. Anything unexpected (not a
  * repo, a bare layout, git missing) falls back to the project dir.
+ * `worktree` is true for a linked worktree: its own git dir differs from the shared one.
+ * @returns {{root: string, worktree: boolean}}
  */
-function ledgerRoot(projectDir) {
+function repoInfo(projectDir) {
   try {
-    const r = spawnSync('git', ['rev-parse', '--git-common-dir'], { cwd: projectDir, encoding: 'utf8', timeout: 5_000 });
-    const common = r.status === 0 ? (r.stdout ?? '').trim() : '';
-    if (!common) return projectDir;
-    const abs = resolve(projectDir, common);
-    return basename(abs) === '.git' ? dirname(abs) : projectDir;
+    // --path-format=absolute (git >= 2.31) makes git print both paths in the same spelling (a short 8.3 Windows temp path
+    // otherwise differs from the long one git reports); older git falls back to the plain form.
+    for (const flags of [['--path-format=absolute'], []]) {
+      const r = spawnSync('git', ['rev-parse', ...flags, '--git-common-dir', '--git-dir'], { cwd: projectDir, encoding: 'utf8', timeout: 5_000 });
+      if (r.status !== 0) continue;
+      const [common, gitDir] = (r.stdout ?? '').trim().split(/\r?\n/);
+      if (!common) break;
+      const abs = resolve(projectDir, common);
+      return {
+        root: basename(abs) === '.git' ? dirname(abs) : projectDir,
+        worktree: Boolean(gitDir) && resolve(projectDir, gitDir) !== abs,
+      };
+    }
+  } catch { /* fall through */ }
+  return { root: projectDir, worktree: false };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Central store (v319.c). After the local ledger row, POST the same row — numbers only — to the
+// `ingestTelemetry` function (project swanifly-ia) when ~/.claude/telemetry/config.json exists:
+//   { "endpoint": "https://…/ingestTelemetry", "machineId": "<id>", "token": "<secret>" }
+// No config -> no network, behaviour exactly as before. Never throws, never prints, never sends the
+// token anywhere but the Authorization header of that endpoint. A failed send goes to outbox.jsonl
+// (newest row per session, bounded) and is retried on the next Stop; a 401/403 drops the row and skips the drain.
+// Only numbers and `project` + `worktree` leave the machine (see centralRow). Enrol with `npm run telemetry:enroll`.
+// ---------------------------------------------------------------------------------------------
+
+function readCentralConfig() {
+  try {
+    const c = JSON.parse(readFileSync(join(TELEMETRY_DIR, 'config.json'), 'utf8'));
+    const url = new URL(c.endpoint);
+    const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+    if (url.protocol !== 'https:' && !(url.protocol === 'http:' && local)) return null; // never send a token in clear
+    if (typeof c.machineId !== 'string' || !c.machineId || typeof c.token !== 'string' || !c.token) return null;
+    return { endpoint: url.href, bearer: `Bearer ${c.machineId}.${c.token}` };
   } catch {
-    return projectDir;
+    return null;
   }
 }
 
+// The row minus everything that identifies a path, a branch or a task: `cwd`, `gitBranch`, `app` (a worktree's dir name)
+// and the legacy `topic` never leave the machine — `project` + `worktree` replace them — nor do the sub-agent labels (`description`).
+function centralRow(row) {
+  const out = { ...row };
+  for (const k of ['cwd', 'gitBranch', 'app', 'topic']) delete out[k];
+  if (Array.isArray(row.subAgents?.byAgent)) {
+    out.subAgents = { ...row.subAgents, byAgent: row.subAgents.byAgent.map(({ description: _d, ...rest }) => rest) };
+  }
+  return out;
+}
+
+// 'ok' sent · 'drop' the server will never accept this row (don't queue it) · 'auth' 401/403: token refused, row dropped
+// and no outbox drain this run · 'retry' queue it. A redirect is an error: the token must only ever reach the configured URL.
+async function postRow(cfg, row, timeoutMs) {
+  try {
+    const res = await fetch(cfg.endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: cfg.bearer },
+      body: JSON.stringify(centralRow(row)),
+      signal: AbortSignal.timeout(timeoutMs),
+      redirect: 'error',
+    });
+    if (res.ok) return 'ok';
+    if (res.status === 401 || res.status === 403) return 'auth';
+    return res.status === 400 || res.status === 413 ? 'drop' : 'retry';
+  } catch {
+    return 'retry';
+  }
+}
+
+const outboxFile = () => join(TELEMETRY_DIR, 'outbox.jsonl');
+
+// Newest row per session, newest sessions first, bounded.
+function newestPerSession(rows) {
+  const by = new Map();
+  for (const r of rows) {
+    if (!r || typeof r.sessionId !== 'string') continue;
+    const prev = by.get(r.sessionId);
+    if (!prev || String(r.capturedAt) >= String(prev.capturedAt)) by.set(r.sessionId, r);
+  }
+  return [...by.values()].sort((a, b) => String(b.capturedAt).localeCompare(String(a.capturedAt))).slice(0, OUTBOX_MAX_SESSIONS);
+}
+
+function parseJsonl(text) {
+  const rows = [];
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    try { rows.push(JSON.parse(line)); } catch { /* truncated line */ }
+  }
+  return rows;
+}
+
+function enqueue(row) {
+  mkdirSync(TELEMETRY_DIR, { recursive: true });
+  appendFileSync(outboxFile(), JSON.stringify(row) + '\n', 'utf8');
+  try {
+    if (statSync(outboxFile()).size > OUTBOX_COMPACT_BYTES) { // offline for a long time: keep only the newest per session
+      const claimed = `${outboxFile()}.${process.pid}.compact`;
+      renameSync(outboxFile(), claimed);
+      const kept = newestPerSession(parseJsonl(readFileSync(claimed, 'utf8')));
+      unlinkSync(claimed);
+      for (const r of kept) appendFileSync(outboxFile(), JSON.stringify(r) + '\n', 'utf8');
+    }
+  } catch { /* another hook got there first */ }
+}
+
+// Claims the outbox by renaming it (atomic), plus any work file a crashed hook left behind.
+function claimOutbox() {
+  const claimed = [];
+  try {
+    for (const f of readdirSync(TELEMETRY_DIR)) {
+      if (!/^outbox\.jsonl\.\d+\.work$/.test(f)) continue;
+      const p = join(TELEMETRY_DIR, f);
+      if (Date.now() - statSync(p).mtimeMs > ORPHAN_MS) claimed.push(p);
+    }
+  } catch { return []; }
+  if (existsSync(outboxFile())) {
+    const mine = `${outboxFile()}.${process.pid}.work`;
+    try { renameSync(outboxFile(), mine); claimed.push(mine); } catch { /* raced */ }
+  }
+  return claimed;
+}
+
+async function drainOutbox(cfg, sent, deadline) {
+  const files = claimOutbox();
+  if (!files.length) return;
+  const rows = [];
+  for (const f of files) {
+    try { rows.push(...parseJsonl(readFileSync(f, 'utf8'))); } catch { /* unreadable */ }
+    try { unlinkSync(f); } catch { /* gone */ }
+  }
+  // A session whose newer row just went out needs nothing older.
+  const pending = newestPerSession(rows).filter((r) => !(sent.has(r.sessionId) && String(r.capturedAt) <= sent.get(r.sessionId)));
+  let failed = false;
+  for (const [i, r] of pending.entries()) {
+    const left = deadline - Date.now();
+    if (failed || i >= OUTBOX_RETRY_MAX || left < 500) { enqueue(r); continue; }
+    const out = await postRow(cfg, r, Math.min(POST_TIMEOUT_MS, left));
+    if (out === 'retry' || out === 'auth') { failed = true; enqueue(r); }
+  }
+}
+
+function claimSend(key) {
+  try {
+    const dir = join(TELEMETRY_DIR, 'claims');
+    mkdirSync(dir, { recursive: true });
+    for (const f of readdirSync(dir)) { // housekeeping: claims only matter for the seconds around one Stop
+      try { if (Date.now() - statSync(join(dir, f)).mtimeMs > 24 * 3600e3) unlinkSync(join(dir, f)); } catch { /* ignore */ }
+    }
+    writeFileSync(join(dir, key.replace(/[^\w.-]/g, '_')), '', { flag: 'wx' });
+    return true;
+  } catch (e) {
+    return e?.code !== 'EEXIST'; // any other failure: send anyway, the server keeps the newest row
+  }
+}
+
+async function syncCentral(result) {
+  const cfg = readCentralConfig();
+  if (!cfg) return;
+  // The repo-level hook and the user-level one (--user) both fire for the same Stop: first claim sends.
+  if (!claimSend(result.claimKey)) return;
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  const outcome = await postRow(cfg, result.row, POST_TIMEOUT_MS);
+  if (outcome === 'retry') { enqueue(result.row); return; } // offline: don't burn time retrying the backlog
+  if (outcome === 'ok') await drainOutbox(cfg, new Map([[result.row.sessionId, String(result.row.capturedAt)]]), deadline);
+}
+
 try {
-  main();
+  const result = main();
+  if (result) await syncCentral(result);
 } catch {
   // Fail open — a telemetry bug must never block Claude from stopping.
 }
