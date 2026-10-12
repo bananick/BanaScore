@@ -1,18 +1,18 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 318.a  
+**Version:** 321.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
-> one only for work that is genuinely multi-task and planned ahead — several ordered tasks with
-> real dependencies, more than one owner/agent, or a milestone that warrants a review gate. The
+> one only for work that is **planned ahead, multi-owner and needs a review gate** — all three. The
 > **nominal** mode is a single targeted slice: an **intervention** (`/intervention`, logged in
 > `docs/interventions/`) or a **plan** executed to the end, then the local merge gate, then the
 > landing on `main` (LANDED — deploying is its own step, with its own evidence). A single fix, a single screen, a single analysis is never a sprint — wrapping
 > one in sprint ceremony produces folders nobody closes. Everything below remains the reference for
 > the sprint mode, and applies in full once a sprint is actually open. See `CLAUDE.md` →
-> "Work Modes" for the nominal path.
+> "Work Modes" for the nominal path. Several code-writing slices without that ceremony make a
+> **chantier**, not a sprint: "Sessions & branches" → "The chantier".
 
 ---
 
@@ -483,16 +483,22 @@ PowerShell 5.1, so a literal emoji silently breaks every `match` (precedent: `ve
 | **Slice** (default — intervention or plan) | `{type}/{scope}` (cloud sessions: `claude/{concern}`) | one slice |
 | **Sprint** (exception) | `sprint/{NNN}-{slug}` | one sprint |
 | **Split** (exception inside a sprint) | `sprint/{NNN}-{seq}` + its own worktree | one card |
+| **Supervision** (chantier — ≥ 2 code-writing slices) | none of its own: each sub-session holds a **Slice** branch + its own worktree | one chantier |
 
-#### Choosing the lane — a runtime rule, never a planning-time one
+#### Choosing the lane — splits inside a slice are a runtime rule, never a planning-time one
 
-The choice is made **while executing**, on an observed fact — never predicted while planning.
+One exception, decided at the start: a workstream of ≥ 2 code-writing slices is a **chantier** (below)
+— the slices are a known fact, not a prediction. Every split **inside** a slice is made **while
+executing**, on an observed fact — never predicted while planning.
 At planning time the planner holds the least information it will ever hold about the card: it has not
 seen the code, the test output, or how many fix loops the card will actually cost. A session split
 decided in advance is a guess, and a wrong guess is expensive in both directions (a needless window
 loses the slice's context; a missing one produces the silent-divergence failure above).
 
 ```
+CHANTIER si : le workstream compte ≥ 2 slices qui écrivent du code
+              → une session de supervision + une sous-session par slice (voir ci-dessous).
+DANS UNE SLICE —
 DÉFAUT : sous-agent, dans la conversation.
 WORKFLOW si : ≥ 3 items quasi-identiques + une passe de vérification
               (chaque worker reçoit un `model` explicite — sonnet par défaut).
@@ -511,12 +517,39 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
+#### The chantier — one supervision session, one sub-session per slice (321.a)
+
+A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
+multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
+named), so it is decided at the start. Intervention: `docs/interventions/2026-10-11-Lucia-supervision-sessions.md`.
+
+- **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
+  slice, arbitrates, runs each slice's Recette, lands each sub-session and closes the chantier with
+  **one** folded Debrief. Opus.
+- **One sub-session = one slice = one branch = one worktree** — the rule above, not bypassed. The
+  supervisor starts it (whether that needs an operator click — no start tool is exposed, a
+  suggested-task chip takes one — is recorded by the Proof). Sonnet by default (opus only for a
+  judgement slice). Inside it, sub-agents stay the default and the four observed triggers still
+  govern any further split.
+- **Reports travel by message**, in `Done / State / Next`, never as a pasted transcript; a
+  sub-session never renders the Debrief and never runs `/relay`.
+- **One sidebar group per chantier**, created by the supervisor with the sidebar tools (`create_group`,
+  `move_sessions`, `archive_session`) and named `{app} · {chantier}`; each sub-session is filed in it
+  and **archived once landed**; the group goes when the chantier closes.
+- **Unchanged per sub-session:** review→fix 2 rounds max, Vera once per slice, `Journey:` + `Proof:`
+  in its task or intervention file.
+
+**Chantier vs sprint.** The sprint stays the exception for work **planned ahead, multi-owner, with a
+review gate** (`/plan-sprint`, Vera's closing review). A chantier needs none of that ceremony: it is
+the default as soon as there is more than one code-writing slice.
+
 #### One conversation relays
 
 `method-core.md` → "`## Resume here` — the Relay home" states: *"One `## Resume here` block per app;
 each `/relay` overwrites the previous."* There is exactly one slot, so exactly one lane may write it:
-**the main conversation of the app** (the sprint conversation, in sprint mode). A split session hands
-back through its **task file and its commits** — never `/relay`, which would overwrite the main
+**the main conversation of the app** (the sprint conversation in sprint mode, the supervisor in a
+chantier). A split session or a sub-session hands
+back through its **task file and its commits** (a sub-session also by message) — never `/relay`, which would overwrite the main
 resume state with a single card's context. `/relay` is optional: a landed slice needs no relay at all.
 
 ---

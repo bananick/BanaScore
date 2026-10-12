@@ -71,6 +71,10 @@ function defaultTrunk() {
 const BASE = String(flag('base', `origin/${defaultTrunk()}`));
 
 // ── the changed set (committed vs trunk + anything still in the tree) ────────
+// Deleted paths are NOT code to verify: a deleted `package.json` must not become an app root
+// ("no verify capability"), a deleted root dump must not be "unclassifiable". They are collected
+// apart (`deletedFiles`) and only reported. land.mjs computes its own deletion exception.
+const deletedFiles = new Set();
 function changedFiles() {
   const out = new Set();
   // `core.quotepath` (on by default) wraps any path holding a non-ASCII byte — an
@@ -85,8 +89,11 @@ function changedFiles() {
   const unquote = (f) => f.replace(/^"|"$/g, '');
   const mergeBase = gitOut(['merge-base', 'HEAD', BASE], REPO);
   if (mergeBase) {
-    for (const f of gitOut(['diff', '--name-only', `${mergeBase}..HEAD`], REPO).split('\n')) {
+    for (const f of gitOut(['diff', '--name-only', '--diff-filter=d', `${mergeBase}..HEAD`], REPO).split('\n')) {
       if (f) out.add(unquote(f));
+    }
+    for (const f of gitOut(['diff', '--name-only', '--diff-filter=D', `${mergeBase}..HEAD`], REPO).split('\n')) {
+      if (f) deletedFiles.add(unquote(f));
     }
   }
   // `git status --porcelain` lines carry a 2-char status field, and for an UNSTAGED
@@ -97,8 +104,11 @@ function changedFiles() {
   for (const line of status.split('\n')) {
     if (line.length < 4) continue;
     const f = unquote(line.slice(3).split(' -> ').pop().trim());
-    if (f) out.add(f);
+    if (!f) continue;
+    if (line.slice(0, 2).includes('D')) deletedFiles.add(f); else out.add(f);
   }
+  // A path deleted then re-created (or still present) is live, not deleted.
+  for (const f of out) deletedFiles.delete(f);
   // `.method/` is this gate's own scratch state — never part of the diff it judges,
   // whether or not the repo has gotten around to gitignoring it.
   return [...out].filter(Boolean).map((f) => f.replace(/\\/g, '/')).filter((f) => !f.startsWith('.method/'));
@@ -306,7 +316,9 @@ const skipped = [];
 let verdict = 'green';
 
 if (!files.length) {
-  reasons.push('nothing changed against ' + BASE);
+  reasons.push(deletedFiles.size
+    ? `deletion-only change against ${BASE}: ${deletedFiles.size} path(s) removed, nothing to verify`
+    : 'nothing changed against ' + BASE);
 }
 
 if (lanes.unknown.length) {
@@ -489,6 +501,7 @@ const marker = {
   verdict,
   reasons,
   files: files.length,
+  deleted: deletedFiles.size,
   lanes: Object.fromEntries(Object.entries(lanes).map(([k, v]) => [k, v.length])),
   apps: [...appRoots],
   skipped,

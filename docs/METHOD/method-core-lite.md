@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 318.a-lite  
+**Version:** 321.a-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -97,7 +97,8 @@ build→test→fix sur la même carte · carte dans un autre repo · sa propre b
 l'opérateur · deux cartes qui écrivent du code en parallèle (chacune sa branche + son worktree).
 Jamais sur la taille ou l'estimation. Deux sessions sur une même branche : le push de la seconde est
 rejeté et **avalé** par le hook `Stop` — le travail paraît à l'arrêt. Aucune convention de titre de
-conversation. Règle complète : `sprints-method.md` → "Sessions & branches".
+conversation. ≥ 2 slices qui écrivent du code → **chantier** (une session de supervision + une
+sous-session par slice). Règle complète : `sprints-method.md` → "Sessions & branches".
 
 ## Git
 

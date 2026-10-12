@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 318.a  
+**Version:** 321.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -451,7 +451,8 @@ context you keep: you stay the owner of the thread, the branch and the Relay. A 
 carries the context away and gives back a *document* — it owns its own branch and worktree, and it
 does **not** relay (there is one `## Resume here` per app, and the main conversation holds it). So
 offloading is the default and splitting is the exception. The four observed facts that justify the
-split, plus the `Stop`-hook mechanism that makes two sessions on one branch diverge silently:
+split, the `Stop`-hook mechanism that makes two sessions on one branch diverge silently, and the
+**chantier** (≥ 2 code-writing slices → a supervision session + one sub-session per slice):
 `sprints-method.md` → "Sessions & branches".
 
 ---

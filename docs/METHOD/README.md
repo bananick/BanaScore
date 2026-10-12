@@ -1,8 +1,8 @@
-# METHOD v320.c
+# METHOD v321.a
 
-**Version:** 320.c  
+**Version:** 321.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-10  
+**Released:** 2026-10-11  
 **Status:** ✅ Production-Ready
 
 ---
@@ -71,6 +71,16 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v321.a
+
+1. **The chantier** — ≥ 2 code-writing slices → one supervision session (opus, no code) + one sub-session per
+   slice (sonnet, own branch + worktree), grouped as `{app} · {chantier}`; sub-agents stay the default inside a slice.
+
+## What's New in v320.d
+
+1. **The verify gate ignores deleted paths** — a deleted `package.json` is no longer an app root, deletions are
+   counted apart (`deleted` in the marker), and a deletion-only change is green; `land.mjs`'s mass-deletion exception is unchanged.
 
 ## What's New in v320.c
 
@@ -302,8 +312,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 320.c  
-**Previous:** 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 321.a  
+**Previous:** 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

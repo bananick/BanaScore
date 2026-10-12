@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 320.a  
-**Last Updated:** 2026-10-10  
+**Version:** 321.a  
+**Last Updated:** 2026-10-11  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -84,7 +84,8 @@ a `git mv` and a release — the operator's call.
 > own evidence (a served revision, an observed run); the gate is local, there is no CI on this
 > account. `/ship` is reserved for the exception list in `method-core.md` → "Landing (the default)
 > & the exception list". Only one conversation per app runs `/relay` (one `## Resume here` per app,
-> `sprints-method.md` → "Sessions & branches").
+> `sprints-method.md` → "Sessions & branches"). A workstream of ≥ 2 code-writing slices runs as a
+> **chantier** — one supervision session + one sub-session per slice — same section.
 
 ---
 

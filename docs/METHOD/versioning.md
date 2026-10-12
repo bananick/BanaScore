@@ -1,8 +1,8 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 320.c  
-**Last Updated:** 2026-10-10  
+**Version:** 321.a  
+**Last Updated:** 2026-10-11  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 320.c (Epoch 3: Modular & Multi-Entry)
+**Current:** 321.a (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,29 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**321.a** (2026-10-11) — **Major: the chantier — a supervision session + one sub-session per slice**
+
+- **Problem.** The METHOD had two shapes: one slice in one conversation, or a sprint (planned ahead, multi-owner, review gate). A workstream of several code-writing slices fitted neither: run in one conversation it overflows the context; split ad hoc, the sessions scatter in the sidebar and nobody folds their results. Intervention: `docs/interventions/2026-10-11-Lucia-supervision-sessions.md` (Cadrage ratified by the operator, 2026-10-11).
+- **NEW — the chantier (`sprints-method.md` → "Sessions & branches" → "The chantier").** A workstream of **≥ 2 code-writing slices** runs as one **supervision session** (opus; writes no code; frames, arbitrates, runs each Recette, lands each slice, closes with one folded Debrief) plus **one sub-session per slice** (sonnet, opus only for a judgement slice; one sub-session = one slice = one branch = one worktree). Reports travel by message in `Done / State / Next`; a sub-session never renders the Debrief nor runs `/relay`. **One sidebar group per chantier**, named `{app} · {chantier}`, sub-sessions archived once landed. Review→fix 2 rounds max, Vera once per slice, `Journey:` + `Proof:` unchanged per sub-session.
+- **CHANGED — "Choosing the lane".** The chantier is an explicit path decided at the start (the slices are a known fact); inside a slice, the sub-agent stays the default and the four observed triggers still govern any split. Lanes table gains a **Supervision** row. The sprint stays the exception for planned-ahead, multi-owner work with a review gate; the chantier is the nominal multi-slice shape.
+- **Pointers.** The `## Model Routing` bullet "A parallel session only on an observed trigger" now opens with the chantier — byte-identical in the hub `CLAUDE.md`, `payload/CLAUDE.md` and `payload/snippets/model-routing.md`; one-line pointers in `routing-method.md`, `method-core.md`, `method-core-lite.md`. No restatement.
+- **Aligned after Vera's review (round 1).** "Work Modes" (hub `CLAUDE.md` + `payload/CLAUDE.md`) and the header of `sprints-method.md` name the chantier as the nominal multi-slice shape; a sprint now needs work planned ahead, multi-owner **and** with a review gate. "Choosing the lane" is scoped to splits inside a slice, the chantier being the one start-time exception. The trigger "two tasks writing code at once" reads "within one slice; across slices → chantier".
+- **Out of scope.** No hook, script or `/supervise` ritual automating group creation or sub-session spawning (revisit after the Proof); no pilotage-dashboard view of sessions.
+- **Proof.** LANDED = `npm run doctor` green + `/land`. PROVEN = a real chantier run end to end — one supervision session, 2 sub-sessions grouped as `{app} · {chantier}`, both reports received by message, both slices LANDED on `main`, sub-sessions archived, one folded Debrief; it records whether spawning a sub-session needed an operator click.
+- **What the sync does to apps.** Every app receives the updated METHOD files and the `## Model Routing` section of `CLAUDE.md` (hub-owned, merged). No app-owned file is touched.
+- **Why Major.** A new work mode is a "significant process change" (`versioning.md` → "When to Increment"): `320.d → 321.a`. Not on the landing exception list (no `SOUL.md`, schema, auth, dependency or deploy change).
+- **Follow-up for the operator.** The user-level `~/.claude/CLAUDE.md` ("Délégation" → the form table, "Sessions parallèles") still states the observed-trigger rule alone; it is outside the hub and the sync, so only the operator edits it.
+
+**320.d** (2026-10-11) — **Minor: the verify gate ignores deleted paths**
+
+- **Problem.** Postarget PR #12 removed 6,904 tracked `node_modules` files, and `npm run verify` refused it: `.claude/hooks/verify-gate.mjs` fed every changed path — deletions included — into app-root detection and lane classification, so a deleted `node_modules/**/package.json` became an "app root" with no verify capability and deleted root files went "unclassifiable". A pure cleanup could not go green.
+- **FIXED — `verify-gate.mjs` (hub hook + addon payload copy, byte-identical, `npm run doctor` E5).** The committed diff is read with `--diff-filter=d` (deletions excluded); deletions are collected apart (`--diff-filter=D`, and any `git status --porcelain` line whose status field holds `D`). A path deleted then re-created stays live. Deleted paths never enter app-root detection or classification; they are only reported — the marker gains **`deleted`** (count), and a change that only removes files reads `deletion-only change against <base>: N path(s) removed, nothing to verify`.
+- **Unchanged.** `land.mjs` still computes its own landing exception (> 60 files or > 2,000 deleted lines → PR + `### Needs decision`): a mass deletion is still held for the operator — the gate simply no longer misreports it as unverifiable.
+- **Tests.** `tests/verify-gate.lanes.test.mjs` gains **i1** (untracking a vendored `functions/node_modules/**` and a root dump beside a real code edit is not blocked, adds no app root, and counts `deleted`) and **i2** (a deletion-only change is green, `files: 0`, `deleted` counted).
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = after the sync, `npm run verify` on Postarget PR #12's branch no longer names a deleted path as an app root or unclassifiable.
+- **What the sync does to apps.** Every app receives the new `.claude/hooks/verify-gate.mjs` (hub-owned). No app-owned file is touched.
+- **Why a letter.** A bug fix in an existing hook: no new agent, ritual, hook or METHOD file, and nothing new lands in an app (`versioning.md` → "When to Increment"). Not on the landing exception list.
 
 **320.c** (2026-10-10) — **Patch: `/retro` feeds the "Swanifly Rétro" dashboard**
 

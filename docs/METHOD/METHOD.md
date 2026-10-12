@@ -1,4 +1,4 @@
-# METHOD v320.c
+# METHOD v321.a
 
 ## Quick Start
 
@@ -30,6 +30,18 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v321.a
+1. **The chantier — a supervision session + one sub-session per slice.** A workstream of ≥ 2 code-writing
+   slices runs as one supervision session (opus, writes no code, lands each slice, one folded Debrief) and
+   one sub-session per slice (sonnet, own branch + worktree), reporting by message in `Done / State / Next`,
+   grouped in the sidebar as `{app} · {chantier}` and archived once landed. Sub-agents stay the default
+   inside a slice; the sprint stays the exception. `sprints-method.md` → "Sessions & branches".
+
+## What's New in v320.d
+1. **The verify gate ignores deleted paths.** `verify-gate.mjs` no longer treats a deleted `package.json` as an app
+   root or a deleted file as unclassifiable: deletions are counted apart (`deleted` in the marker) and a
+   deletion-only change is green. `land.mjs`'s own > 60 files / > 2,000 deleted lines exception is unchanged.
 
 ## What's New in v320.c
 1. **`/retro` feeds an interactive dashboard.** The weekly retro is also published to the "Swanifly Rétro"
@@ -549,9 +561,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 320.c  
+**Current Version:** 321.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-10
+**Released:** 2026-10-11
 
 ### Version Scheme
 

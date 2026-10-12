@@ -14,7 +14,7 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v320.c, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
+You operate inside the **METHOD** (v321.a, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
 
 ## Agent Cohort (12 active mandates + 3 dormant — Skills + sub-agents)
 
@@ -98,7 +98,8 @@ Every task, in order:
 ## Work modes
 
 - **Nominal — one demand, one slice:** an **intervention** (`/intervention`, logged in `docs/interventions/YYYY-MM-DD-{Agent}-{topic}.md`) or a **plan** executed to the end (`implement-plan`), then the Recette and `/land`.
-- **Exceptional — sprint mode:** only for genuinely multi-task, pre-planned work (`/plan-sprint`). Folder `docs/sprints/{NNN} {status} {name}/`, task file `{sprint}-{seq} {status} {Agent} - {title}.md`, status emoji `⬜` Todo · `✅` Done · `☑️` Validated · `⚠️` Problem.
+- **Nominal, multi-slice — the chantier:** ≥ 2 code-writing slices → one supervision session + one sub-session per slice (`docs/METHOD/sprints-method.md` → "Sessions & branches" → "The chantier").
+- **Exceptional — sprint mode:** only for work planned ahead, multi-owner and needing a review gate — all three (`/plan-sprint`). Folder `docs/sprints/{NNN} {status} {name}/`, task file `{sprint}-{seq} {status} {Agent} - {title}.md`, status emoji `⬜` Todo · `✅` Done · `☑️` Validated · `⚠️` Problem.
 - Commit after every task with explicit paths, then **land it** (`npm run land`). Don't leave finished work on a branch. No conversation-title convention.
 
 ## Definition of Done
@@ -241,10 +242,13 @@ artifact of a decision only the operator can make — never the normal path.
     average, each re-reading ≈ 200–260k tokens).
   - **`MEMORY.md` ≤ 5 kB**, one-line pointers — loaded every turn; the doctor warns above it.
   - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
-- **A parallel session only on an observed trigger**, never a predicted one: a 3rd build→test→fix
-  loop on the same task · another repo · a deploy loop with the operator in it · two tasks writing
-  code at once (each its own branch + worktree). Rule: `docs/METHOD/sprints-method.md` → "Sessions &
-  branches".
+- **A workstream of ≥ 2 code-writing slices is a chantier**: one supervision session (opus, writes
+  no code) + one sub-session per slice (sonnet, own branch + worktree), grouped as `{app} · {chantier}`.
+  **Inside a slice, a parallel session only on an observed trigger**, never a predicted one: a 3rd
+  build→test→fix loop on the same task · another repo · a deploy loop with the operator in it · two
+  tasks writing code at once within one slice (each its own branch + worktree; across slices →
+  chantier). Rule: `docs/METHOD/sprints-method.md`
+  → "Sessions & branches".
 - **Environment awareness:** on a non-Claude surface (Cursor, Codex), inventory the models the tool
   actually exposes, map them onto T1/T2/T3 by capability and price, then apply the same policy.
   Missing tier → nearest available, preferring upward. Single-model surface → run inline and flag
