@@ -1,8 +1,8 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 321.a  
-**Last Updated:** 2026-10-11  
+**Version:** 322.a  
+**Last Updated:** 2026-10-14  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 321.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 322.a (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,38 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**322.a** (2026-10-14) — **Major: Supervision v2 — a chantier runs on data, not reports; on events, not polling**
+
+- **Problem.** The 321.a chantier was doctrine only and never proven: no script, hook or command supported it. A sub-session reported three times — a `Done / State / Next` message, its task-file report, and the Debrief that `/land`, `/relay` and `/review` demanded (`method-core.md` → "Operator Reporting") — and the supervisor had no named tool to see a sub-session's state. Cadrage with the operator on 2026-10-14; study of 26 external sources: `docs/interventions/2026-10-14-Lucia-supervision-v2.md`.
+- **CHANGED — `sprints-method.md` → "The chantier" (v2).** The partition map `docs/chantiers/{chantier}/README.md` (slice · agent · object · branch · `touches` · `plan-first`), written by the supervisor; the **fiche** `docs/chantiers/{chantier}/{slice}.json`, schema `chantier-status/1` (15 fields, canonical in `docs/METHOD/templates/chantier-status.schema.json`), single writer = the sub-session, committed on the slice branch; the **sub-session contract** (no Debrief, no `Done / State / Next` message, no `STATE.md` edit, no `/relay`; questions in `decisions[]`, blockers in `operatorActions[]`, results in `review[]` with evidence and a quiz; plan first when the map says so; typed answers marked `consumed`); the **supervisor's event-driven loop** on the tools the session exposes (`list_sessions`, `list_events`, `SendMessage` with `notify_when_idle` — one-shot, re-subscribe —, `set_session_title`, `move_sessions`, `set_pinned`, `archive_session` on the operator's OK, `PushNotification` only for `waiting` / `blocked` / a new review, one suggested-task chip per slice); title grammar `{avatar} {slice} {title} · {state icon}`.
+- **NEW — `Stop` hook `.claude/hooks/chantier-status.mjs`** (hub + addon payload): a no-op unless a fiche names the current branch; blocks the stop while that fiche is invalid or stale (a non-`docs/chantiers/` commit newer than `updatedAt` + 120 s); loop-guarded; no new dependency. **NEW — `docs/METHOD/templates/chantier-status.schema.json`.**
+- **CHANGED — carve-outs, one line each:** `method-core.md` ("Operator Reporting" → who renders it, `STATE.md`, the DoD item), `method-core-lite.md`, `/land`, `/relay`, `/review` (hub + payload copies): in a chantier sub-session, update the fiche instead.
+- **CHANGED — avatars.** An Avatar column in `agents-method.md`'s cohort tables and in the synced "Agent Cohort" table (`CLAUDE.md`, payload `CLAUDE.md` + `snippets/agent-cohort.md`); the "Model Routing" chantier bullet names the fiche and the event-driven supervisor (+ `snippets/model-routing.md`).
+- **FIXED — `sprints-method.md` → "Sessions & branches".** The hook table listed only `ship-push.sh`; it now lists every `Stop` / `SessionEnd` / `SessionStart` hook actually wired, `chantier-status.mjs` included.
+- **Why Major.** A significant process change and a new enforcement hook wired in `settings.json` ("When to Increment").
+- **Sync effect.** Hub-owned surfaces only: `docs/METHOD/**`, the payload commands and hook, the merged `CLAUDE.md` sections Agent Cohort and Model Routing. The hook is a no-op in any app with no `docs/chantiers/`.
+- **Proof.** LANDED = `npm run doctor` green + `/land`. Fleet = `npm run sync-method:all` read back per repo. PROVEN = the intervention's Proof on **bananaevents · W42 cash** (a valid fiche after the first turn, the idle notice read, title + group applied, a stale fiche blocked once, one decision routed and shown `consumed`).
+
+**321.c** (2026-10-12) — **Patch: telemetry v3 reaches the fleet — work attachment, counters, Cockpit enrolment**
+
+- **Problem.** The telemetry row said how many tokens a session spent, not which journey, sprint or intervention it served, nor which tools, MCP servers, skills and commands it used — so the Cockpit could not attribute cost to work. Telemetry v3 shipped in the hub with Cockpit S1 (`27ca5c2a`, `7ad27559`) but lived only in the hub: the next sync is what puts it in every app. Distribution approved by the operator on 2026-10-12 (« Oui, après le landing »).
+- **CHANGED — `.claude/hooks/session-telemetry.mjs` (hub hook + addon payload copy, byte-identical), `schemaVersion` 3.** Adds `work` `{ journeyId, sprint, intervention }` read from the gitignored `.method/journey` (the regex sprint stays as a fallback, `sprintSource`), `tools` / `mcp` call and error counters, `skills` / `commands` counts, `launches` per `subagent_type|model`, `flow` and `result`. Names and counters only — never a prompt, argument, path or command line. Server side (`ingestTelemetry` v3 schema, enrolment functions, swanifly-ia) is already deployed and accepts v1/v2/v3 rows.
+- **CHANGED — `/intervention` (`.claude/commands/intervention.md` + payload copy).** The Cadrage step records the journey for the telemetry: `npm run method:journey -- --journey <id> --intervention <file>` in the hub, the `.method/journey` JSON by hand in an app.
+- **NEW (hub only) — `npm run method:journey`** (`scripts/method-journey.mjs`, `--show` / `--clear`), and `npm run telemetry:enroll -- --code XXXX-XXXX` for a machine enrolled from the Cockpit's « Enrôler cette machine ». Documented in `routing-method.md` → "Central store".
+- **Proof.** LANDED = `npm run doctor` green + `/land`. Fleet = `npm run sync-method:all` result read back per repo. PROVEN = a `schemaVersion` 3 row with a non-null `work.journeyId` from an app session, read in `teams/banana/telemetrySessions`.
+- **What the sync does to apps.** Every app receives the new hook and the changed `/intervention` (hub-owned) and the new version string; `.method/` is already gitignored by the installer. An app sends v3 only once its checkout pulls the synced commit. No app-owned file is touched.
+- **Why a letter.** An existing hook extended and an existing ritual changed: no new agent, ritual, hook or METHOD file (`versioning.md` → "When to Increment"), as 320.c and 320.d: `321.b → 321.c`. Not on the landing exception list.
+
+**321.b** (2026-10-12) — **Patch: the known domain owners, visible and coherent in the METHOD**
+
+- **Problem.** The hub named bananaevents' domain owners in one line ("Reference implementation") and nowhere else: their domains, models and deference were invisible from the hub, Gordon's dual status (cohort agent in the hub, domain owner in bananaevents) was implicit, and bananaevents' `elena.md` cites a generic `agents/elena.md` under the METHOD folder that exists in neither repo. Operator-approved docs release (2026-10-12).
+- **NEW — `agents-method.md` → "Known domain owners".** One row per owner — sacha (Ads/OCI/GA4), riley (CRM sync & integrations), elena (prices, quotes, margin), gordon (commercial, bananaevents only) — with app, domain, default model, deference and file path, read from the bananaevents agent files (`f89c6053`). States which file wins for Gordon in each repo (the app's own `gordon.md`, never overwritten by the sync), that the generic owner template is retired and an owner file is written per app, how a new owner is declared (business pack → agent file → hub row), and what Junia / Brian / Iris do, by pointer to the existing rules.
+- **Survey.** `D:\Apps\*\.claude\agents`, 2026-10-12: only bananaevents (and its two clones `be-debrief-saison`, `be-wt-t0-ids`) declares owners.
+- **Unchanged.** No owner joins the `CLAUDE.md` cohort table, the routing table or the addon payload; the synced `CLAUDE.md` sections are untouched (only the version string in "Identity" moves). bananaevents is not edited — its stale `elena.md` citation is the app's to fix.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`.
+- **What the sync does to apps.** Every app receives the updated METHOD files and the new version string. No app-owned file is touched.
+- **Why a letter.** Documentation clarification, no new agent, ritual, hook or METHOD file (`versioning.md` → "When to Increment"): `321.a → 321.b`. Not on the landing exception list.
 
 **321.a** (2026-10-11) — **Major: the chantier — a supervision session + one sub-session per slice**
 

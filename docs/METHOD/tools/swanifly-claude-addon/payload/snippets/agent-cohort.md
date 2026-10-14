@@ -12,20 +12,20 @@ hold that bar; three are dormant — parked under `.claude/_dormant/`, outside t
 scans for agents, so **not loaded and not delegable**. Bringing one back is a `git mv` into
 `.claude/agents/` plus a METHOD release — the operator's call, never an agent's mid-session.
 
-| Agent | Mandate | Default model | Entry files |
-|:--|:--|:--|:--|
-| **Junia** | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | opus | `sprints-method.md` → `docs/project/` |
-| **Brian** | Build — web development (incl. mobile and AI wiring) | sonnet | `method-core.md` → `docs/project/DESIGN.md` → task |
-| **Sage** | Prove — the observed proof of a journey (LANDED/DEPLOYED → PROVEN), then its regression test | sonnet | `tests-method.md` → task → `docs/project/journeys/` |
-| **Watson** | Repair — reliability & ops | sonnet | `method-core.md` → `tests-method.md` |
-| **Kasper** | Guard — security | opus | `method-core.md` (Security Baseline) → `docs/project/SCHEMA.md` |
-| **Vera** | Judge — one review per slice, at the Recette (no commits) | opus | `method-core.md` → `design-method.md` → task |
-| **Nova** | Draw — design system + tokens | sonnet | `design-method.md` → `docs/project/DESIGN.md` |
-| **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
-| **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
-| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
-| **Penny** | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
-| **Oscar** | Coach — weekly retro (`/retro`): effectiveness, focus, objectivity, lucidity, relevance of objectives and whether they are reached; one habit to change; METHOD proposals to Lucia; read-only on code | opus | `method-core.md` → `docs/project/STATE.md` + `FOCUS.md` → the week's evidence |
+| Agent | Avatar | Mandate | Default model | Entry files |
+|:--|:--|:--|:--|:--|
+| **Junia** | 🧙 | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | opus | `sprints-method.md` → `docs/project/` |
+| **Brian** | 🧑‍💻 | Build — web development (incl. mobile and AI wiring) | sonnet | `method-core.md` → `docs/project/DESIGN.md` → task |
+| **Sage** | 🧑‍🔬 | Prove — the observed proof of a journey (LANDED/DEPLOYED → PROVEN), then its regression test | sonnet | `tests-method.md` → task → `docs/project/journeys/` |
+| **Watson** | 🧑‍🚒 | Repair — reliability & ops | sonnet | `method-core.md` → `tests-method.md` |
+| **Kasper** | 💂 | Guard — security | opus | `method-core.md` (Security Baseline) → `docs/project/SCHEMA.md` |
+| **Vera** | 🧑‍⚖️ | Judge — one review per slice, at the Recette (no commits) | opus | `method-core.md` → `design-method.md` → task |
+| **Nova** | 🧑‍🎨 | Draw — design system + tokens | sonnet | `design-method.md` → `docs/project/DESIGN.md` |
+| **Gordon** | 🧑‍💼 | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
+| **Iris** | 🕵️ | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
+| **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
+| **Penny** | 🤵 | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
+| **Oscar** | 🧑‍🏫 | Coach — weekly retro (`/retro`): effectiveness, focus, objectivity, lucidity, relevance of objectives and whether they are reached; one habit to change; METHOD proposals to Lucia; read-only on code | opus | `method-core.md` → `docs/project/STATE.md` + `FOCUS.md` → the week's evidence |
 
 **Dormant (not loaded, not delegable):** **April** (vision & copy → Junia's Cadrage + Gordon) ·
 **Aiko** (AI integration → Brian) · **Teddy** (mobile → Brian). Why: `.claude/_dormant/README.md`.

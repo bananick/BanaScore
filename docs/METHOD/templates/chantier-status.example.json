@@ -1,0 +1,51 @@
+{
+  "v": 1,
+  "chantier": "example-chantier",
+  "slice": "T1",
+  "agent": "brian",
+  "title": "Example slice object",
+  "branch": "claude/example-chantier-t1",
+  "journey": "docs/project/journeys/example-journey.md",
+  "state": "waiting",
+  "updatedAt": "2026-01-01T09:00:00Z",
+  "head": "0123abc",
+  "gate": { "lint": "pass", "typecheck": "pass", "tests": "pass", "build": "skip" },
+  "progress": {
+    "done": ["Example step already finished"],
+    "doing": ["Example step in progress"],
+    "todo": ["Example step still to do"]
+  },
+  "decisions": [
+    {
+      "id": "d1",
+      "question": "Example question that shapes the end result?",
+      "options": ["A — example option", "B — other example option"],
+      "reco": "A — example reason",
+      "ifNoAnswer": "Proceed with A",
+      "status": "open",
+      "answer": null
+    }
+  ],
+  "operatorActions": [
+    {
+      "id": "a1",
+      "action": "Example thing only the operator can do",
+      "why": "Example reason it blocks the slice",
+      "status": "open"
+    }
+  ],
+  "review": [
+    {
+      "id": "r1",
+      "kind": "result",
+      "what": "Example result to evaluate",
+      "evidence": ["0123abc", "path/to/example-file.ext:42"],
+      "script": "1. Open the example screen. 2. Do the example action. 3. Check the example outcome.",
+      "questions": [
+        { "q": "Does the example outcome look right?", "options": ["accept", "reopen", "defer"], "reco": "accept" }
+      ],
+      "status": "open",
+      "feedback": null
+    }
+  ]
+}

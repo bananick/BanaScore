@@ -38,7 +38,10 @@
  *   - .claude/hooks/pilotage-refresh.mjs -> app/.claude  (OVERWRITE — rebuilds docs/pilotage/index.html
  *       at Stop, but ONLY when the turn touched docs/sprints/** or chantiers.mjs; inert and silent
  *       in an app that has no scripts/build-pilotage.mjs)
- *   - .gitignore                      -> app root         (APPEND `.method/`, the telemetry ledger and the raw-extracts line (RAW_EXTRACTS_IGNORE)
+ *   - .claude/hooks/chantier-status.mjs + .claude/hooks/lib/chantier-status.mjs -> app/.claude  (OVERWRITE — Supervision v2:
+ *       the Stop hook that blocks a stop while a chantier sub-session's fiche docs/chantiers/{chantier}/{slice}.json is
+ *       invalid or stale; a silent no-op in any session whose branch has no fiche)
+ *   - .gitignore                     -> app root         (APPEND `.method/`, the telemetry ledger and the raw-extracts line (RAW_EXTRACTS_IGNORE)
  *                                                          once each, only if a .gitignore exists)
  *   - .claude/settings.json           -> app/.claude      (MERGE the no-mock PostToolUse hook + the Stop/SessionEnd/SessionStart hooks, idempotent PER ENTRY)
  *
@@ -571,7 +574,9 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // port of the machine-local ~/.claude/scripts/flight-deck.ps1, so the pickup card works
   // on every checkout, not just the one PowerShell profile it used to be pinned to.
   // Each of these must travel with the METHOD, not live only on one machine.
-  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "flight-deck.mjs", "pilotage-refresh.mjs"]) {
+  // chantier-status (Supervision v2) is the Stop hook that keeps a chantier sub-session's fiche
+  // valid and fresh; it imports hooks/lib/chantier-status.mjs, so the two travel together.
+  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs"]) {
     const src = join(payload, "hooks", name);
     if (!existsSync(src)) continue;
     put(src, join(appRoot, ".claude", "hooks", name), `.claude/hooks/${name}`,
@@ -644,7 +649,7 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // entry carries a distinctive script name — use it as the idempotency marker.
   const markerOf = (entry) => {
     const s = JSON.stringify(entry);
-    for (const m of ["session-telemetry", "ship-push", "land.mjs", "no-mock-guard", "flight-deck", "pilotage-refresh"]) if (s.includes(m)) return m;
+    for (const m of ["session-telemetry", "ship-push", "land.mjs", "no-mock-guard", "flight-deck", "pilotage-refresh", "chantier-status"]) if (s.includes(m)) return m;
     return s;
   };
   for (const event of ["Stop", "SessionEnd", "SessionStart"]) {

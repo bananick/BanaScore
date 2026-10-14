@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 321.a  
-**Last Updated:** 2026-10-11  
+**Version:** 321.c  
+**Last Updated:** 2026-10-12  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -375,8 +375,17 @@ only with `CLAUDE_TELEMETRY_TEST=1`.
   Firestore rules deny every client read/write on `teams/*/telemetry*`.
 - **Offline:** a failed send is queued in `~/.claude/telemetry/outbox.jsonl` (newest row per session, bounded) and
   retried on the next Stop. No `~/.claude/telemetry/config.json` → no network, behaviour unchanged.
+- **Schema v3 (321.c) — names and counters only.** A row also carries `work` `{ journeyId, sprint, intervention }`,
+  read from the checkout's gitignored `.method/journey` (written at the Cadrage: `npm run method:journey -- --journey <id>
+  --intervention <file>` in the hub, the JSON file by hand elsewhere; `sprintSource` says `work` / `branch` / `regex`),
+  `tools` / `mcp` `{ <name>: { calls, errors } }`, `skills` / `commands` `{ <name>: n }`, `launches`
+  `{ "<subagent_type>|<model>": n }`, `flow` (workflows, compactions, max context, active time) and `result`
+  (`landed`, `landedSha`; `proven` / `operatorScore` / `veraVerdict` filled later). Never a prompt, an argument, a path
+  or a command line; a name outside the server's pattern is dropped. The function accepts v1, v2 and v3 rows.
 - **Enrol a machine:** `npm run telemetry:enroll` (needs `npm --prefix telemetry-backend/functions install` and
-  `gcloud auth application-default login`). `--rotate` replaces a token, `--revoke <id>` kills one.
+  `gcloud auth application-default login`). `--rotate` replaces a token, `--revoke <id>` kills one. A team member
+  without credentials uses the one-time code from the Cockpit's « Enrôler cette machine »:
+  `npm run telemetry:enroll -- --code XXXX-XXXX`.
 - **Cover repos without the hook:** `node docs/METHOD/tools/swanifly-claude-addon/install.mjs --user --telemetry`
   puts the hook in `~/.claude/hooks` with one `Stop` entry run as `--user` (central store only, never writes a ledger
   into a repo). When the repo-level and user-level hook both fire for one Stop, a per-(session, transcript size) claim

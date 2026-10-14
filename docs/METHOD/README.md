@@ -1,8 +1,8 @@
-# METHOD v321.a
+# METHOD v322.a
 
-**Version:** 321.a  
+**Version:** 322.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-11  
+**Released:** 2026-10-14  
 **Status:** ✅ Production-Ready
 
 ---
@@ -71,6 +71,21 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v322.a
+
+1. **Supervision v2** — one fiche per chantier sub-session (`chantier-status/1`, the only report), a `Stop` hook that
+   blocks an invalid or stale fiche, an event-driven supervisor on the session tools, `{avatar} {slice} {title} · {state}` titles.
+
+## What's New in v321.c
+
+1. **Telemetry v3** — sessions attach to a journey through `.method/journey` (Cadrage, `npm run method:journey`) and
+   carry tool / MCP / skill / command / launch counters, flow and result; names and counters only. Cockpit enrolment.
+
+## What's New in v321.b
+
+1. **Known domain owners** — `agents-method.md` lists the app-level owners (bananaevents: sacha, riley, elena,
+   gordon), which `gordon.md` wins where, and how to declare one; none joins the cohort or the payload.
 
 ## What's New in v321.a
 
@@ -312,8 +327,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 321.a  
-**Previous:** 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 322.a  
+**Previous:** 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

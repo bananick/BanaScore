@@ -1,8 +1,8 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 320.a  
-**Last Updated:** 2026-10-10  
+**Version:** 322.a  
+**Last Updated:** 2026-10-14  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
 ---
@@ -89,14 +89,16 @@ it orchestrates the cohort below.
 
 ### Core Loop (6 agents)
 
-| Agent | Mandate | When | Default model |
-|-------|---------|------|-------|
-| **Junia** | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | Before any multi-step build | opus |
-| **Brian** | Build — web development | Every build task | sonnet |
-| **Watson** | Repair — reliability & ops | When the gate or a run goes red | sonnet |
-| **Sage** | Prove — the observed proof of a journey, then its regression test | Once per slice, where the Proof says | sonnet |
-| **Vera** | Judge — review & validation | Once per slice, at the Recette | opus |
-| **Kasper** | Guard — security | When rules / auth / API routes are touched | opus |
+The **Avatar** is the agent's face in a chantier session title (`sprints-method.md` → "The chantier").
+
+| Agent | Avatar | Mandate | When | Default model |
+|-------|--------|---------|------|-------|
+| **Junia** | 🧙 | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | Before any multi-step build | opus |
+| **Brian** | 🧑‍💻 | Build — web development | Every build task | sonnet |
+| **Watson** | 🧑‍🚒 | Repair — reliability & ops | When the gate or a run goes red | sonnet |
+| **Sage** | 🧑‍🔬 | Prove — the observed proof of a journey, then its regression test | Once per slice, where the Proof says | sonnet |
+| **Vera** | 🧑‍⚖️ | Judge — review & validation | Once per slice, at the Recette | opus |
+| **Kasper** | 💂 | Guard — security | When rules / auth / API routes are touched | opus |
 
 ---
 
@@ -104,14 +106,14 @@ it orchestrates the cohort below.
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
-| Agent | Mandate | Call When | Default model |
-|-------|---------|-----------|-------|
-| **Nova** | Draw — design system + tokens | New components, design unclear, `/port` | sonnet (opus by override) |
-| **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning, ads | Offer, funnel, copy, campaign, positioning, paid ads | sonnet (opus by override) |
-| **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | A study, a data question, a client deliverable | sonnet (opus for ranked recommendations) |
-| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | A METHOD change, a release, a sync, an app proposal | opus |
-| **Penny** | Token economy — measure, report, coach; propose METHOD changes to Lucia | A periodic report, a J+7 measurement, a cost note at the Recette, a costly session to explain | sonnet |
-| **Oscar** | Coach — effectiveness, focus, objectivity, lucidity; relevance of objectives and whether they are reached | The weekly `/retro`; on demand after a slice that closes a journey | opus |
+| Agent | Avatar | Mandate | Call When | Default model |
+|-------|--------|---------|-----------|-------|
+| **Nova** | 🧑‍🎨 | Draw — design system + tokens | New components, design unclear, `/port` | sonnet (opus by override) |
+| **Gordon** | 🧑‍💼 | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning, ads | Offer, funnel, copy, campaign, positioning, paid ads | sonnet (opus by override) |
+| **Iris** | 🕵️ | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | A study, a data question, a client deliverable | sonnet (opus for ranked recommendations) |
+| **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | A METHOD change, a release, a sync, an app proposal | opus |
+| **Penny** | 🤵 | Token economy — measure, report, coach; propose METHOD changes to Lucia | A periodic report, a J+7 measurement, a cost note at the Recette, a costly session to explain | sonnet |
+| **Oscar** | 🧑‍🏫 | Coach — effectiveness, focus, objectivity, lucidity; relevance of objectives and whether they are reached | The weekly `/retro`; on demand after a slice that closes a journey | opus |
 
 ---
 
@@ -902,6 +904,46 @@ METHOD sync leaves it untouched, even when it shares a hub agent's name (bananae
 **Reference implementation:** `bananaevents` (`6ab923b0`, through `7590f733`, 2026-09-28) — sacha
 (Ads), riley (CRM & integrations), elena (pricing), gordon (commercial) — checked by
 `scripts/crew-doctor.mjs`: roster, `CLAUDE.md` table, Codex mirror, four sections and pack paths agree.
+
+### Known domain owners (321.b)
+
+The fleet's domain owners, for visibility only — **not** cohort members: they are absent from the
+`CLAUDE.md` cohort table and the routing table, the sync payload carries none of them, and each one's
+file lives in its app. Survey of `D:\Apps\*\.claude\agents` on 2026-10-12: only `bananaevents`
+declares owners (`be-debrief-saison` and `be-wt-t0-ids` are clones of the same repo, not other
+apps); every other app holds the hub cohort alone, plus stale dormant files in a few.
+
+| Owner | App | Domain | Default model | Defers to | File |
+|:--|:--|:--|:--|:--|:--|
+| **sacha** | bananaevents | Ads & measurement — Google Ads account, OCI, GA4 conversions, ChatGPT Ads pilot, SEO | opus | the operator on any strategy shift (Brand pause, bidding strategy, campaign kill) and every money-touching mutation; `riley` on the CRM data OCI reads; `elena` on conversion value | D:\Apps\bananaevents\.claude\agents\sacha.md |
+| **riley** | bananaevents | CRM sync & integrations — HubSpot mirror and write paths, PandaDoc, Bubble, Calendar, Cloud Scheduler crons, sync engine, quote follow-ups | sonnet | the operator on every prod write to HubSpot / PandaDoc / Bubble, bulk catch-up, job created or deleted; `kasper` on secrets and webhook signatures | D:\Apps\bananaevents\.claude\agents\riley.md |
+| **elena** | bananaevents | Prices, quotes & margin — clé-en-main policy, catalogue and tier prices, quote content and amounts, agency tariff, tender grids, deposit and invoicing | opus | the operator on every price, discount, take-rate, deposit rate and partner margin | D:\Apps\bananaevents\.claude\agents\elena.md |
+| **gordon** | bananaevents only | Commercial & partners — tenders, agency programme, client proof, referral, lead magnets and sequences, positioning and copy (no paid ads: Sacha's) | opus | the operator on brand voice and anything sent to a client or partner; `elena` on every price | D:\Apps\bananaevents\.claude\agents\gordon.md |
+
+- **Gordon has two statuses.** In the hub and every other app he is the cohort agent (sonnet, ads
+  included unless a pack names an ads owner — "Gordon" above). In `bananaevents` he is a domain owner,
+  and **the app's own `.claude/agents/gordon.md` wins**: it carries `## Frontières` / `## Pièges` /
+  `## Règle de GO`, so the sync never overwrites it. Each repo reads its own file; neither is a copy of
+  the other.
+- **Riley has two meanings.** The hub's Riley is the advisory hat below (no sub-agent); bananaevents'
+  `riley` is a real owner under the re-used name.
+- **No generic owner template.** `bananaevents`' `elena.md` cites a generic `agents/elena.md` under the METHOD folder
+  ("generic SaaS pricing strategist"). That template was retired: it exists in neither the hub nor the
+  app today, and the hub ships none. An owner file is **written per app**, against that app's business
+  pack, with the four sections above; the stale citation is the app's to fix, not the sync's.
+
+**Declaring a new owner.** Add a row to the app's `docs/project/business/README.md` (domain → agent ·
+human · file to load), write `.claude/agents/{name}.md` with the four sections, list it in the app's
+`CLAUDE.md` / agents README, and — if it re-uses a hub name — rely on the four sections or
+`app-settings.json` → `claudeAddon.ownedAgents` to keep it out of the sync. Then add its row here in a
+hub release. Never add it to the hub cohort table.
+
+**Who defers.** When a pack names an owner for the domain a task touches, the owner leads and the
+function agents work under its rules: **Junia** plans the item with the owner as its owner, **Brian**
+builds under the owner's `## Règle de GO` and `## Frontières`, **Iris** never writes to the owner's
+external system (her "Scope" in `.claude/agents/iris.md`). The routing rule itself is the app's — e.g.
+`bananaevents/.claude/agents/README.md` → "Règle de routage" — and the human-GO rule is the pack's
+(above); neither is restated here.
 
 ---
 

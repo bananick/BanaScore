@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 321.a  
+**Version:** 322.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -176,7 +176,7 @@ match /databases/{database}/documents {
 - [ ] Task report appended
 - [ ] Committed + landed (`/land`) — reported as LANDED; DEPLOYED / PROVEN only with their own evidence
 - [ ] Review Gate passed (Vera, once per slice at the Recette) → tasks marked `☑️`
-- [ ] FOCUS.md / STATE.md updated if objective completed
+- [ ] FOCUS.md / STATE.md updated if objective completed (in a chantier sub-session: the fiche instead)
 
 > **Task-specific gates** (apply when the task touches that area, not on every task):
 > Zod schemas + `project/SCHEMA.md` updated (data touched) · empty/error/loading states (UI)
@@ -414,7 +414,8 @@ accumulates behind the operator's attention.
 `project/STATE.md` is the durable single source of truth for **where the app is right now** — it is
 auto-loaded on every conversation (see Context Loading). Standard sections: a header (Last Updated,
 Current Sprint, Status, METHOD Version), then **Active Work**, **Blockers**, **Recent Decisions**,
-**Next Up**.
+**Next Up**. In a chantier only the supervisor edits it; a sub-session updates its fiche instead
+(`sprints-method.md` → "The chantier").
 
 ### `## Resume here` — the Relay home
 
@@ -566,7 +567,9 @@ PROVEN, with its evidence}
 working directly with him. A **delegated sub-agent never emits a Debrief**: its report goes to its
 orchestrator as a handoff (3-line header + task report, uncompressed per Output Compression), and
 the orchestrator folds those reports into one card. Otherwise a `brian → watson → vera → sage` chain
-lands four cards in one answer and the format dies of noise.
+lands four cards in one answer and the format dies of noise. **A chantier sub-session renders no
+card either** — not at `/land`, `/relay` or `/review`: it updates its fiche instead, and the
+supervisor's Debrief is the chantier's only card (`sprints-method.md` → "The chantier").
 
 **Relation to the 3-line header.** `Done / State / Next` remains the opening header of **written
 artifacts** — PR bodies, task reports, sub-agent reports. In chat with the operator the Debrief does

@@ -35,6 +35,14 @@
 // (teams/banana/telemetrySessions/{sessionId}); see "Central store" at the bottom of this file. `--user` = the copy that
 // `install.mjs --user --telemetry` puts in ~/.claude/hooks for repos without a hook of their own (central store only).
 // This file is copied standalone into app repos: keep it free of imports from the hub.
+// v3 (schemaVersion 3, Cockpit S1) — NAMES AND COUNTERS ONLY, never a prompt, an argument, a path or a command line:
+//   work       { journeyId, sprint, intervention } read from `.method/journey` (gitignored, written by the Cadrage); the
+//              regex `sprint` stays only as a fallback, marked `sprintSource: 'regex'` (`'work'` / `'branch'` otherwise)
+//   tools      { <tool name>: { calls, errors } } · mcp { <server>: { calls, errors } } · skills / commands { <name>: n }
+//   launches   { "<subagent_type>|<model>": n } — sub-agent launches
+//   flow       { workflows, workflowAgents, compactions, maxContextTokens, activeMs, statusPings }
+//   result     { landed, landedSha, proven, operatorScore, veraVerdict } — the last three stay null, filled later
+// Every name is sanitised to NAME_RE (the server schema refuses anything else); a name that does not fit is dropped.
 //
 
 import { readFileSync, appendFileSync, existsSync, mkdirSync, readdirSync, writeFileSync, renameSync, statSync, unlinkSync } from 'node:fs';
@@ -103,6 +111,80 @@ function findJsonlFiles(dir) {
   return out;
 }
 
+// ---- v3: names and counters --------------------------------------------------------------------
+const NAME_RE = /^[A-Za-z0-9_:.\-/]{1,80}$/;
+const ACTIVE_GAP_MS = 5 * 60_000;      // a pause longer than this is not "active" time
+const MAP_CAP = 100;                   // entries per name map; the server refuses more
+const PING_MAX_CHARS = 300;            // a status ping is short; a pasted brief that happens to contain the words is not one
+const PING_RE = /\bon en est o[uù](?![A-Za-zÀ-ÿ])|\bo[uù] en (?:est-on|sommes-nous|en sommes)\b|\bwhere (?:are )?we(?: are)? (?:at|now)\b|\bwhere (?:do )?we stand\b|\bwhat(?:'s| is) the (?:status|state|progress)\b|\bstatus\s*\?|\bquel(?:le)? est (?:l['’]?)?(?:état|avancement)\b|\bpoint d['’](?:étape|avancement)\b|\bquoi de neuf\b/i;
+
+/** A name that fits NAME_RE, or null — characters outside it become `_`, so `mcp server` is kept as `mcp_server`. */
+function cleanName(x) {
+  if (typeof x !== 'string') return null;
+  const n = x.trim().replace(/[^A-Za-z0-9_:.\-/]/g, '_').slice(0, 80);
+  return NAME_RE.test(n) ? n : null;
+}
+
+const newUsage = () => ({ tools: new Map(), mcp: new Map(), skills: new Map(), commands: new Map(), launches: new Map(), ids: new Map(), seenUse: new Set() });
+const bump = (map, key, field = 'calls') => {
+  if (key === null) return;
+  const e = map.get(key) ?? { calls: 0, errors: 0 };
+  e[field]++;
+  map.set(key, e);
+};
+const bumpCount = (map, key) => { if (key !== null) map.set(key, (map.get(key) ?? 0) + 1); };
+
+/** One `tool_use` block -> counters. Only the tool name, the Skill's name and a launch's type + model are read; nothing else of `input`. */
+function recordToolUse(u, block) {
+  if (typeof block.id === 'string') { if (u.seenUse.has(block.id)) return; u.seenUse.add(block.id); }
+  const name = typeof block.name === 'string' ? block.name : '';
+  const mcp = /^mcp__(.+?)__.+$/.exec(name);
+  const key = mcp ? cleanName(mcp[1]) : cleanName(name);
+  const map = mcp ? u.mcp : u.tools;
+  bump(map, key);
+  if (typeof block.id === 'string') u.ids.set(block.id, { map, key });
+  const input = block.input && typeof block.input === 'object' ? block.input : {};
+  if (name === 'Skill') bumpCount(u.skills, cleanName(input.skill));
+  if (name === 'Task' || name === 'Agent') {
+    bumpCount(u.launches, `${cleanName(input.subagent_type) ?? 'general-purpose'}|${cleanName(input.model) ?? 'default'}`);
+  }
+}
+
+function recordToolResult(u, block) {
+  if (block.is_error !== true || typeof block.tool_use_id !== 'string') return;
+  const t = u.ids.get(block.tool_use_id);
+  if (t) bump(t.map, t.key, 'errors');
+}
+
+/** The slash-command token of a user message (`/land`, `/retro` …): only the command name, never its arguments. */
+function commandOf(text, isMeta) {
+  const tag = /<command-name>\/?([^<\s]{1,100})<\/command-name>/.exec(text);
+  if (tag) return cleanName(tag[1]);
+  if (isMeta) return null;
+  const plain = /^\/([A-Za-z][A-Za-z0-9_:.-]{0,59})(?=\s|$)/.exec(text);
+  return plain ? cleanName(plain[1]) : null;
+}
+
+const addCallErr = (a, b) => ({ calls: (a?.calls ?? 0) + b.calls, errors: (a?.errors ?? 0) + b.errors });
+const addN = (a, b) => (a ?? 0) + b;
+function mergeMaps(into, from, add) {
+  for (const [k, v] of from) into.set(k, add(into.get(k), v));
+}
+
+function mergeUsage(into, from) {
+  mergeMaps(into.tools, from.tools, addCallErr);
+  mergeMaps(into.mcp, from.mcp, addCallErr);
+  mergeMaps(into.skills, from.skills, addN);
+  mergeMaps(into.commands, from.commands, addN);
+  mergeMaps(into.launches, from.launches, addN);
+}
+
+/** Map -> plain object, busiest first, bounded (the server refuses larger maps). */
+function toObject(map) {
+  const weight = (v) => (typeof v === 'number' ? v : v.calls);
+  return Object.fromEntries([...map.entries()].sort((a, b) => weight(b[1]) - weight(a[1])).slice(0, MAP_CAP));
+}
+
 // Sums usage across one transcript file, deduped by message.id (a single API response is often
 // split across several JSONL lines — one per streamed content block — all sharing the same id
 // and the same cumulative usage; summing every line would massively overcount).
@@ -122,11 +204,14 @@ function summarizeTranscript(filePath) {
   let gitBranch = null;
   let cwd = null;
   const costByFamily = {};
+  const usage = newUsage();
+  const flow = { compactions: 0, summaries: 0, maxContextTokens: 0, activeMs: 0, statusPings: 0 };
+  let prevMs = null;
   let raw;
   try {
     raw = readFileSync(filePath, 'utf8');
   } catch {
-    return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintHit: null };
+    return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintHit: null, usage, flow };
   }
 
   let sprintHit = null; // first sprint path mentioned in this file — matched line by line, never a concatenated corpus
@@ -141,6 +226,11 @@ function summarizeTranscript(filePath) {
     }
 
     if (entry.timestamp) {
+      const ms = Date.parse(entry.timestamp);
+      if (Number.isFinite(ms)) {
+        if (prevMs !== null && ms - prevMs >= 0 && ms - prevMs < ACTIVE_GAP_MS) flow.activeMs += ms - prevMs;
+        prevMs = ms;
+      }
       if (!firstTimestamp || entry.timestamp < firstTimestamp) firstTimestamp = entry.timestamp;
       if (!lastTimestamp || entry.timestamp > lastTimestamp) lastTimestamp = entry.timestamp;
     }
@@ -153,6 +243,16 @@ function summarizeTranscript(filePath) {
     if (entry.type === 'user' && entry.message?.role === 'user'
       && typeof entry.message.content === 'string' && !entry.isMeta) {
       totals.userMessages++;
+      const text = entry.message.content;
+      if (text.length <= PING_MAX_CHARS && !text.startsWith('<') && PING_RE.test(text)) flow.statusPings++;
+    }
+    if (entry.type === 'user' && typeof entry.message?.content === 'string') {
+      bumpCount(usage.commands, commandOf(entry.message.content, Boolean(entry.isMeta)));
+    }
+    if (entry.type === 'user' && entry.isCompactSummary === true) flow.summaries++;
+    if (entry.type === 'system' && entry.subtype === 'compact_boundary') flow.compactions++;
+    if (entry.type === 'user' && Array.isArray(entry.message?.content)) {
+      for (const b of entry.message.content) if (b && b.type === 'tool_result') recordToolResult(usage, b);
     }
 
     if (entry.type === 'assistant' && entry.message?.role === 'assistant') {
@@ -161,6 +261,9 @@ function summarizeTranscript(filePath) {
       // ran, so it is neither a model, nor a call, nor part of any byType key.
       if (msg.model === SYNTHETIC_MODEL) continue;
       if (msg.model) models.add(msg.model);
+      if (Array.isArray(msg.content)) {
+        for (const b of msg.content) if (b && b.type === 'tool_use') recordToolUse(usage, b);
+      }
       const id = msg.id;
       if (id && !seenMessageIds.has(id)) {
         seenMessageIds.add(id);
@@ -171,6 +274,8 @@ function summarizeTranscript(filePath) {
           totals.outputTokens += u.output_tokens ?? 0;
           totals.cacheCreationInputTokens += u.cache_creation_input_tokens ?? 0;
           totals.cacheReadInputTokens += u.cache_read_input_tokens ?? 0;
+          flow.maxContextTokens = Math.max(flow.maxContextTokens,
+            (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0));
           const fam = familyOf(msg.model);
           if (fam) costByFamily[fam] = (costByFamily[fam] ?? 0) + messageCost(fam, u);
         }
@@ -178,7 +283,7 @@ function summarizeTranscript(filePath) {
     }
   }
 
-  return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintHit };
+  return { totals, models, firstTimestamp, lastTimestamp, gitBranch, cwd, costByFamily, sprintHit, usage, flow };
 }
 
 function addTotals(a, b) {
@@ -305,6 +410,40 @@ function sprintFromLine(line) {
   return SPRINT_PATH.exec(line)?.[1] ?? null;
 }
 
+// `.method/journey` — written by the Cadrage, gitignored, one per checkout: { journeyId, sprint, intervention }.
+// Only identifiers survive: a value that is not a plain name (or a 3-digit sprint) becomes null, a path is cut to its basename.
+function readWork(dirs) {
+  for (const d of [...new Set(dirs.filter(Boolean))]) {
+    let j;
+    try { j = JSON.parse(readFileSync(join(d, '.method', 'journey'), 'utf8')); } catch { continue; }
+    if (!j || typeof j !== 'object') continue;
+    const id = (x) => (typeof x === 'string' ? cleanName(basename(x.trim().replace(/\\/g, '/')).replace(/\.md$/i, '')) : null);
+    const sprint = typeof j.sprint === 'string' || typeof j.sprint === 'number' ? String(j.sprint).padStart(3, '0') : null;
+    const out = { journeyId: id(j.journeyId), sprint: sprint && /^\d{3}$/.test(sprint) ? sprint : null, intervention: id(j.intervention) };
+    if (out.journeyId || out.sprint || out.intervention) return out;
+  }
+  return null;
+}
+
+// Landed = `/land` (land.mjs) recorded `landedSha` in `.method/land-state.json` AND that commit was made during this session.
+// land-state.json keeps the last landedSha forever (its `at` moves on every blocked attempt), so the commit date is what
+// stops a stale landing from being credited to a later session.
+function landedOf(dirs, startedAt, gitDir) {
+  try {
+    const t0 = Date.parse(startedAt ?? '');
+    for (const d of [...new Set(dirs.filter(Boolean))]) {
+      let st;
+      try { st = JSON.parse(readFileSync(join(d, '.method', 'land-state.json'), 'utf8')); } catch { continue; }
+      const sha = typeof st?.landedSha === 'string' && /^[0-9a-f]{7,40}$/.test(st.landedSha) ? st.landedSha : null;
+      if (!sha) continue;
+      const r = spawnSync('git', ['show', '-s', '--format=%cI', sha], { cwd: gitDir ?? d, encoding: 'utf8', timeout: 5_000 });
+      const at = r.status === 0 ? Date.parse((r.stdout ?? '').trim()) : NaN;
+      if (Number.isFinite(at) && Number.isFinite(t0) && at >= t0) return { landed: true, landedSha: sha.slice(0, 40) };
+    }
+  } catch { /* fail open */ }
+  return {};
+}
+
 function main() {
   const raw = readStdin();
   if (!raw) return null; // nothing on stdin — exit quietly
@@ -345,10 +484,34 @@ function main() {
   totals.allTokens = totals.inputTokens + totals.outputTokens
     + totals.cacheCreationInputTokens + totals.cacheReadInputTokens;
 
-  const sprint = sprintFromBranch(main_.gitBranch) ?? main_.sprintHit ?? subSprint;
+  // v3 work attachment: `.method/journey` wins; the branch and the regex are fallbacks and say so (`sprintSource`).
+  const work = readWork([repo.toplevel, projectDir, lroot]);
+  const fromBranch = sprintFromBranch(main_.gitBranch);
+  const fromRegex = main_.sprintHit ?? subSprint;
+  const sprint = work?.sprint ?? fromBranch ?? fromRegex;
+  const sprintSource = sprint === null ? null : work?.sprint ? 'work' : fromBranch ? 'branch' : 'regex';
+
+  // v3 names and counters: the main transcript plus every sub-agent transcript (same tool names, same errors).
+  const usage = main_.usage;
+  const wf = new Map(); // workflowId -> agents that made a call
+  for (const [f, s] of subSummaries) {
+    mergeUsage(usage, s.usage);
+    if (!s.totals.assistantApiCalls) continue;
+    const seg = relative(subAgentsDir, f).split(sep);
+    const wi = seg.indexOf('workflows');
+    if (wi >= 0 && seg[wi + 1]) wf.set(seg[wi + 1], (wf.get(seg[wi + 1]) ?? 0) + 1);
+  }
+  const flow = {
+    workflows: wf.size,
+    workflowAgents: [...wf.values()].reduce((a, b) => a + b, 0),
+    compactions: Math.max(main_.flow.compactions, main_.flow.summaries),
+    maxContextTokens: main_.flow.maxContextTokens,
+    activeMs: main_.flow.activeMs,
+    statusPings: main_.flow.statusPings,
+  };
 
   const row = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sessionId,
     hookEvent: payload.hook_event_name ?? payload.hookEventName ?? 'Stop',
     capturedAt: new Date().toISOString(),
@@ -359,6 +522,8 @@ function main() {
     project: basename(lroot).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 100) || 'unknown',
     worktree: repo.worktree,
     sprint,
+    sprintSource,
+    work,
     // Global union, kept for existing readers. It CANNOT verify routing on its own:
     // ["opus","sonnet"] reads the same whether opus coordinated and sonnet executed (compliant)
     // or the reverse (not). The per-scope `models` on mainLoop/subAgents below are what answer that.
@@ -371,7 +536,14 @@ function main() {
     mainLoop: { ...main_.totals, models: [...main_.models] },
     subAgents: { ...subTotals, models: [...subModels], fileCount: subFiles.length, ...agents },
     totals,
-    outcome: null,       // optional — filled in by the closing agent's DoD report, or by Vera/Iris
+    tools: toObject(usage.tools),
+    mcp: toObject(usage.mcp),
+    skills: toObject(usage.skills),
+    commands: toObject(usage.commands),
+    launches: toObject(usage.launches),
+    flow,
+    result: { landed: false, landedSha: null, proven: null, operatorScore: null, veraVerdict: null, ...landedOf([repo.toplevel, projectDir, lroot], main_.firstTimestamp, lroot) },
+    outcome: null,      // optional — filled in by the closing agent's DoD report, or by Vera/Iris
     efficiencyNote: null, // optional — same
   };
 
@@ -393,25 +565,27 @@ function main() {
  * when this IS the main checkout); its parent is the main checkout. Anything unexpected (not a
  * repo, a bare layout, git missing) falls back to the project dir.
  * `worktree` is true for a linked worktree: its own git dir differs from the shared one.
- * @returns {{root: string, worktree: boolean}}
+ * `toplevel` is this checkout's own root (where `.method/` lives), null when git could not say.
+ * @returns {{root: string, worktree: boolean, toplevel: string | null}}
  */
 function repoInfo(projectDir) {
   try {
     // --path-format=absolute (git >= 2.31) makes git print both paths in the same spelling (a short 8.3 Windows temp path
     // otherwise differs from the long one git reports); older git falls back to the plain form.
     for (const flags of [['--path-format=absolute'], []]) {
-      const r = spawnSync('git', ['rev-parse', ...flags, '--git-common-dir', '--git-dir'], { cwd: projectDir, encoding: 'utf8', timeout: 5_000 });
+      const r = spawnSync('git', ['rev-parse', ...flags, '--git-common-dir', '--git-dir', '--show-toplevel'], { cwd: projectDir, encoding: 'utf8', timeout: 5_000 });
       if (r.status !== 0) continue;
-      const [common, gitDir] = (r.stdout ?? '').trim().split(/\r?\n/);
+      const [common, gitDir, toplevel] = (r.stdout ?? '').trim().split(/\r?\n/);
       if (!common) break;
       const abs = resolve(projectDir, common);
       return {
         root: basename(abs) === '.git' ? dirname(abs) : projectDir,
         worktree: Boolean(gitDir) && resolve(projectDir, gitDir) !== abs,
+        toplevel: toplevel ? resolve(projectDir, toplevel) : null,
       };
     }
   } catch { /* fall through */ }
-  return { root: projectDir, worktree: false };
+  return { root: projectDir, worktree: false, toplevel: null };
 }
 
 // ---------------------------------------------------------------------------------------------

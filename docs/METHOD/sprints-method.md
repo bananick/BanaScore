@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 321.a  
+**Version:** 322.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -448,16 +448,22 @@ coordinator consolidates and lands; Junia plans, she no longer closes sprints.
 This is the settled arbitration (sprint mode: one sprint = one conversation, same reasoning). It is
 **not a style preference** — it is dictated by what `.claude/settings.json` actually wires.
 
-A `Stop` hook runs at the end of every Claude Code turn and writes to git:
+These hooks run at a session's edges (hub `.claude/settings.json` = addon `settings.snippet.json`, 322.a):
 
-| Hook | What it does at Stop |
-|---|---|
-| `.claude/hooks/ship-push.sh` | `exit 0` on `main`/`master`/`HEAD`; otherwise pushes the current branch (`git push`, or `git push -u origin "$branch"` when no upstream). Never commits, never force-pushes. |
+| Event | Hook | What it does |
+|---|---|---|
+| `Stop` | `.claude/hooks/ship-push.sh` | `exit 0` on `main`/`master`/`HEAD`; otherwise pushes the current branch (`git push`, or `git push -u origin "$branch"` when no upstream). Never commits, never force-pushes. |
+| `Stop` | `.claude/hooks/session-telemetry.mjs` | Appends one row to the local, gitignored ledger `docs/project/telemetry/sessions.jsonl`; commits and pushes nothing (318.a). |
+| `Stop` | `.claude/hooks/land.mjs --auto --lane docs` | Fast-forwards the trunk with the branch's **committed** docs/tooling work when the gate allows; never commits; quiet, always exits 0. |
+| `Stop` | `.claude/hooks/pilotage-refresh.mjs` | Regenerates `docs/pilotage/index.html` when the turn edited `docs/sprints/**` or `docs/pilotage/chantiers.mjs`; never commits; fails open. |
+| `Stop` | `.claude/hooks/chantier-status.mjs` | No-op unless a fiche in `docs/chantiers/*/*.json` names the current branch; then **blocks the stop** while that fiche is invalid or stale ("The chantier", below). |
+| `SessionEnd` | `.claude/hooks/land.mjs --auto` | Attempts a full land of the conversation on the trunk. |
+| `SessionStart` (`resume`) | `.claude/hooks/flight-deck.mjs --mode resume-hook` | Injects the Flight Deck pickup context; read-only. |
 
-(`session-telemetry.mjs` also runs at `Stop`, but since 318.a it only appends to a local, gitignored
-ledger — it no longer commits or pushes anything.)
+(`PostToolUse` also runs `no-mock-guard.ps1` on every Write/Edit; it writes nothing to git.)
 
-The hook is branch-scoped and **swallows a rejected push** (`ship-push.sh` redirects the push to
+Two of them write to git from every session: `ship-push.sh` pushes the branch and `land.mjs` moves
+the trunk. `ship-push.sh` is branch-scoped and **swallows a rejected push** (it redirects the push to
 `>/dev/null 2>&1`). Two consequences follow directly, and they are the whole reason for the rule:
 
 1. **Two sessions on the same branch ⇒ silent divergence.** The second session's push is rejected
@@ -467,9 +473,9 @@ The hook is branch-scoped and **swallows a rejected push** (`ship-push.sh` redir
 2. **Two sessions in the same worktree ⇒ a shared index.** `git add` in `/ship` stages whatever the
    other session is mid-edit. One session's commit ships the other's half-finished file.
 
-The hook is not defensive against concurrency, and should not become so — the cheap fix is one
-branch and one worktree per session. *(If you are reading this in an app mirror and the hook above
-is not what `.claude/settings.json` wires there, trust the file, not this table, and report the
+The hooks are not defensive against concurrency, and should not become so — the cheap fix is one
+branch and one worktree per session. *(If you are reading this in an app mirror and the hooks above
+are not what `.claude/settings.json` wires there, trust the file, not this table, and report the
 drift.)*
 
 #### The lanes (branches, not titles)
@@ -517,27 +523,90 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
-#### The chantier — one supervision session, one sub-session per slice (321.a)
+#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a)
 
 A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
 multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
-named), so it is decided at the start. Intervention: `docs/interventions/2026-10-11-Lucia-supervision-sessions.md`.
+named), so it is decided at the start. **v2 (322.a): data, not reports; events, not polling** — each
+sub-session keeps one typed status record, and the supervisor is woken when a sub-session stops.
+Interventions: `docs/interventions/2026-10-11-Lucia-supervision-sessions.md` (321.a) ·
+`docs/interventions/2026-10-14-Lucia-supervision-v2.md` (v2).
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
-  slice, arbitrates, runs each slice's Recette, lands each sub-session and closes the chantier with
-  **one** folded Debrief. Opus.
-- **One sub-session = one slice = one branch = one worktree** — the rule above, not bypassed. The
-  supervisor starts it (whether that needs an operator click — no start tool is exposed, a
-  suggested-task chip takes one — is recorded by the Proof). Sonnet by default (opus only for a
-  judgement slice). Inside it, sub-agents stay the default and the four observed triggers still
-  govern any further split.
-- **Reports travel by message**, in `Done / State / Next`, never as a pasted transcript; a
-  sub-session never renders the Debrief and never runs `/relay`.
-- **One sidebar group per chantier**, created by the supervisor with the sidebar tools (`create_group`,
-  `move_sessions`, `archive_session`) and named `{app} · {chantier}`; each sub-session is filed in it
-  and **archived once landed**; the group goes when the chantier closes.
+  slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
+  by `SendMessage`; the sub-session runs them — and closes the chantier with **one** folded Debrief.
+  Opus.
+- **One sub-session = one slice = one branch = one worktree** — the rule above, not bypassed. Sonnet
+  by default (opus only for a judgement slice). Inside it, sub-agents stay the default and the four
+  observed triggers still govern any further split.
 - **Unchanged per sub-session:** review→fix 2 rounds max, Vera once per slice, `Journey:` + `Proof:`
   in its task or intervention file.
+
+**The partition map — `docs/chantiers/{chantier}/README.md`.** Written by the supervisor when it
+opens the chantier, before any sub-session starts: one row per slice — slice · agent · object ·
+branch · `touches` (the globs that slice may write) · `plan-first` (`yes` by default for UI and
+strategy slices, `no` for mechanical ones) — plus the decisions every slice shares. Two slices never
+share a `touches` glob: partitioned writers are what lets sub-sessions run at once.
+
+**The fiche — `docs/chantiers/{chantier}/{slice}.json`, the only report.** One per sub-session,
+committed on the slice branch, so it lands with the slice and `main` keeps the chantier's history.
+**Single writer: the sub-session** — the supervisor reads it and never edits it. Schema
+`chantier-status/1`, 15 top-level fields, canonical in `docs/METHOD/templates/chantier-status.schema.json`:
+identity (`v` · `chantier` · `slice` · `agent` · `title` · `branch` · `journey`), status (`state` =
+`planning` · `working` · `waiting` (needs the operator) · `blocked` (cannot proceed) · `landed` ·
+`parked`; `updatedAt`; `head`; `gate`) and the operator's inbox (`progress` done / doing / to do ·
+`decisions[]` · `operatorActions[]` · `review[]`). **References, not summaries:** `evidence[]` holds a
+sha, a `file:line`, a URL or a screenshot path — never pasted prose. `updatedAt` is stamped from the
+real clock — `node -e "console.log(new Date().toISOString())"` — never guessed; the hook rejects a
+future time. On `landed`, `head` is the landed sha: the sub-session sets it after `/land` and commits
+the fiche, and the docs lane lands that commit.
+
+**The sub-session contract.**
+
+- **The fiche, the task or intervention file and the commits are the whole hand-back.** No Debrief,
+  no `Done / State / Next` message, no `STATE.md` edit, no `/relay` — `/land`, `/relay` and `/review`
+  say so in their own text. Spoken to directly by the operator, it answers him in
+  plain text, still without a Debrief.
+- **A question for the operator goes into `decisions[]`** (with `options[]`, `reco`, `ifNoAnswer`)
+  and the state becomes `waiting` — never only into chat. A blocker only he can lift goes into
+  `operatorActions[]`. A result to evaluate goes into `review[]` with its evidence, a ≤ 3-minute
+  script and 1–3 closed questions, recommendation first.
+- **Plan first** when the map says `plan-first: yes`: the first turn writes one `review` item of kind
+  `plan` (≤ 6 lines) and stops in `waiting`; building starts once it is accepted.
+- **A routed answer is applied, then recorded** in the fiche (`consumed`, the review's verdict, or
+  `done`) — it arrives as one typed message: `DECISION d2 = B — note` · `REVIEW r1 = reopen —
+  feedback` · `ACTION a1 = done`.
+- **Review and land are the sub-session's to run.** The supervisor asks for them by `SendMessage` —
+  `/review`, then `/land` — and the sub-session runs them: Vera's verdict goes into `review[]` (a
+  `result` item, with its evidence), the verify-gate outcome into `gate`; after `/land` it sets `state`
+  `landed` and `head` = the landed sha and commits the fiche (`/review` and `/land` say so too).
+- **The `Stop` hook holds it to this** (`chantier-status.mjs`): the stop is blocked, with a one-line
+  reason, while the fiche is invalid against the schema or stale — a commit touching anything outside
+  `docs/chantiers/` is newer than `updatedAt` (+120 s) — or `updatedAt` is in the future. When a Stop hook is already active it warns
+  and lets the stop through.
+
+**The supervisor's loop — event-driven, never polling.** Between two notices it does nothing.
+
+1. **Open** — write the partition map; create the sidebar group `{app} · {chantier}`, title itself
+   and pin it (`set_pinned`); offer **one suggested-task chip per slice** carrying that sub-session's
+   brief — no start tool is exposed, so starting a sub-session is one operator click.
+2. **Adopt** each new sub-session — `set_session_title`, `move_sessions` into the group, then
+   `SendMessage` with `notify_when_idle: true`. The notice is **one-shot**: re-subscribe after each.
+3. **On each idle notice** — read the fiche in the sub-session's worktree (its `cwd` comes from
+   `list_sessions`); read the transcript (`list_events`) **only** when the fiche is missing or stale;
+   update the title's state icon; fold new decisions, operator actions and reviews into the
+   control-tower table. `PushNotification` **only** for `waiting`, `blocked` or a new `review` item.
+4. **Route answers** — each operator answer becomes one typed `SendMessage` into that sub-session.
+5. **Close each slice** — `SendMessage` the sub-session `/review`, then `/land` (it runs both and
+   records Vera's verdict in its fiche) → Sage's proof → `archive_session` on the operator's OK; the
+   group goes when the chantier closes.
+6. **Report** — the supervisor's Debrief is the chantier's only card; its body is the control-tower
+   table, one row per slice, built from the fiches.
+
+**Titles — applied by the supervisor, not by discipline.** Supervisor: `🧑‍✈️ {app} · {chantier}`,
+pinned. Sub-session: `{avatar} {slice} {title} · {state icon}` — avatars from the cohort table
+(`agents-method.md`), state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 · `blocked` 🔴 ·
+`landed` ✅ · `parked` 💤. Emoji live in titles and file contents, never in branch names (above).
 
 **Chantier vs sprint.** The sprint stays the exception for work **planned ahead, multi-owner, with a
 review gate** (`/plan-sprint`, Vera's closing review). A chantier needs none of that ceremony: it is
@@ -549,7 +618,7 @@ the default as soon as there is more than one code-writing slice.
 each `/relay` overwrites the previous."* There is exactly one slot, so exactly one lane may write it:
 **the main conversation of the app** (the sprint conversation in sprint mode, the supervisor in a
 chantier). A split session or a sub-session hands
-back through its **task file and its commits** (a sub-session also by message) — never `/relay`, which would overwrite the main
+back through its **task file and its commits** (a sub-session also through its fiche) — never `/relay`, which would overwrite the main
 resume state with a single card's context. `/relay` is optional: a landed slice needs no relay at all.
 
 ---

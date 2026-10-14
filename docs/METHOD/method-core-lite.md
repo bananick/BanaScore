@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 321.a-lite  
+**Version:** 322.a-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -87,7 +87,8 @@ renders small, unstyled and unclickable). Canonical spec: **`method-core.md` →
 - `Avancement` = the global project, not the turn. Ratio only when actually counted; never invented.
 - Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Then the `▶ Prompt suivant`
   block, the only fenced thing in a closing.
-- Small answer → one landing line instead. Delegated sub-agents never emit a Debrief.
+- Small answer → one landing line instead. Delegated sub-agents never emit a Debrief, nor does a
+  chantier sub-session — it updates its fiche (`sprints-method.md` → "The chantier").
 
 ## Sessions
 

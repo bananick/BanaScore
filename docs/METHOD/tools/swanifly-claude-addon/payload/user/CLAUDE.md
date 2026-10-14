@@ -157,6 +157,7 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 - **Substantial answer** (code or docs changed, a slice closed, a decision taken, a handoff, `/brief`) → full Debrief.
 - **Small answer** (a question answered, a lookup, a one-line fix) → no card. One landing line instead: `✅ {ce qui est fait} · suite → {l'action}`.
 - **Nothing was done** (refusal, clarification, pure conversation) → no card at all.
+- **Chantier sub-session** (it keeps a fiche under `docs/chantiers/`) → no card: it updates its fiche instead (`sprints-method.md` → "The chantier"); spoken to directly, it answers in plain text.
 
 ### Prompt suivant
 

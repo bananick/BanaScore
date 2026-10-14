@@ -42,7 +42,9 @@
   - **`MEMORY.md` ≤ 5 kB**, one-line pointers — loaded every turn; the doctor warns above it.
   - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
 - **A workstream of ≥ 2 code-writing slices is a chantier**: one supervision session (opus, writes
-  no code) + one sub-session per slice (sonnet, own branch + worktree), grouped as `{app} · {chantier}`.
+  no code) + one sub-session per slice (sonnet, own branch + worktree), grouped as `{app} · {chantier}`;
+  each sub-session reports only through its fiche (`docs/chantiers/{chantier}/{slice}.json`) and the
+  supervisor is event-driven — woken when a sub-session goes idle (`sprints-method.md` → "The chantier").
   **Inside a slice, a parallel session only on an observed trigger**, never a predicted one: a 3rd
   build→test→fix loop on the same task · another repo · a deploy loop with the operator in it · two
   tasks writing code at once within one slice (each its own branch + worktree; across slices →

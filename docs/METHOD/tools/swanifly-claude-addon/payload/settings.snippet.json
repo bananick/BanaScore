@@ -72,6 +72,19 @@
             "statusMessage": "Refreshing the pilotage dashboard..."
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/chantier-status.mjs"
+            ],
+            "timeout": 15,
+            "statusMessage": "Checking the chantier fiche..."
+          }
+        ]
       }
     ],
     "SessionEnd": [

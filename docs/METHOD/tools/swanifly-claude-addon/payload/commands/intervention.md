@@ -8,6 +8,7 @@ Handle this intervention: $ARGUMENTS
 0. **🎯 Cadrage** — one `AskUserQuestion` (≤ 4 questions, recommended answer first) fixing **Journey**
    (which `docs/project/journeys/{cuj}.md` this closes), **Proof** (which observed run, environment,
    real data proves it), and **out-of-scope**. Skip only for a genuine one-line fix.
+   Then record it for the telemetry: hub: `npm run method:journey -- --journey <id> --intervention <file>`; elsewhere: write `.method/journey` as JSON `{journeyId, sprint, intervention}`.
 1. Create `docs/project/interventions/YYYY-MM-DD-{agent}-{topic}.md` stating: trigger, root-cause hypothesis, scope, plan, and the `**Journey:**` / `**Proof:**` answers from the Cadrage — `/land` refuses a new intervention file without them.
 2. Route to the right subagent via the `Agent` tool — **watson** (bugs/ops), **brian** (code, incl. mobile and AI wiring), **nova** (design), **gordon** (offer, funnel, copy, ads), **iris** (study, data, client deliverable), **kasper** (security), **lucia** (METHOD), **junia** (when it needs a plan first).
 3. Keep it a minimal, reviewable change — one concern. **Surface any data-model / scope / irreversible change to me instead of deciding it.**

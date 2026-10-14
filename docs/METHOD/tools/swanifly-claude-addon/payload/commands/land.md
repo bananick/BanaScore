@@ -35,6 +35,9 @@ revision; `sage`'s observed run of the Proof).
    runs the verify gate, and fast-forwards `origin/main` to HEAD. Any open PR for the branch closes
    itself as merged.
 3. **Report** — **Done / State / Next**, quoting the landed sha, or the exact reason it was held back.
+   In a chantier sub-session: no report, no Debrief — after landing, set the fiche to `landed` with
+   `head` = the landed sha and commit it; the docs lane lands that commit
+   (`docs/METHOD/sprints-method.md` → "The chantier").
 
 ## When it is held back
 

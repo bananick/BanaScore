@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "chantier-status/1",
+  "title": "chantier-status/1 — the fiche of one chantier sub-session",
+  "description": "Written by the sub-session only (single writer), at docs/chantiers/{chantier}/{slice}.json on the slice branch. A small typed record, not a report: evidence[] holds references (sha, file:line, URL, screenshot path), never pasted prose. Mirrored by hand in .claude/hooks/lib/chantier-status.mjs (validateFiche) — change both together.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["v", "chantier", "slice", "agent", "title", "branch", "journey", "state", "updatedAt", "head", "gate", "progress", "decisions", "operatorActions", "review"],
+  "properties": {
+    "v": { "const": 1, "description": "schema version" },
+    "chantier": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 60, "description": "the chantier slug (= sidebar group `{app} · {chantier}`)" },
+    "slice": { "type": "string", "minLength": 1, "maxLength": 8, "description": "slice code, e.g. T1" },
+    "agent": { "enum": ["junia", "brian", "sage", "watson", "kasper", "vera", "nova", "gordon", "iris", "lucia", "penny", "oscar"], "description": "owner of the slice (picks the avatar)" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 40, "description": "the object of the slice, in operator words" },
+    "branch": { "type": "string", "minLength": 1, "maxLength": 200, "description": "the slice branch — the Stop hook finds the fiche by it" },
+    "journey": { "type": "string", "minLength": 1, "maxLength": 200, "description": "CUJ slug or path" },
+    "state": { "enum": ["planning", "working", "waiting", "blocked", "landed", "parked"], "description": "waiting = needs Nicolas; blocked = cannot proceed" },
+    "updatedAt": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$", "description": "ISO-8601, last fiche write — stamped from the real clock, never guessed; later than now + 120 s is invalid" },
+    "head": { "type": ["string", "null"], "pattern": "^[0-9a-f]{7,40}$", "description": "commit the fiche describes (on `landed`: the landed sha); null before the first commit" },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lint", "typecheck", "tests", "build"],
+      "properties": {
+        "lint": { "$ref": "#/$defs/gateResult" },
+        "typecheck": { "$ref": "#/$defs/gateResult" },
+        "tests": { "$ref": "#/$defs/gateResult" },
+        "build": { "$ref": "#/$defs/gateResult" }
+      },
+      "description": "last local gate"
+    },
+    "progress": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["done", "doing", "todo"],
+      "properties": {
+        "done": { "$ref": "#/$defs/progressList" },
+        "doing": { "$ref": "#/$defs/progressList" },
+        "todo": { "$ref": "#/$defs/progressList" }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "questions that shape the end result; a question for Nicolas lives here (state `waiting`), never only in chat",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "question", "options", "reco", "ifNoAnswer", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 16 },
+          "question": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "options": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 120 } },
+          "reco": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "ifNoAnswer": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "status": { "enum": ["open", "answered", "consumed"] },
+          "answer": { "type": ["string", "null"], "maxLength": 500 }
+        }
+      }
+    },
+    "operatorActions": {
+      "type": "array",
+      "description": "things only Nicolas can do that block the slice",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "action", "why", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 16 },
+          "action": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "why": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "status": { "enum": ["open", "done"] }
+        }
+      }
+    },
+    "review": {
+      "type": "array",
+      "description": "results (or the plan) to evaluate, each with its quiz",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "what", "evidence", "script", "questions", "status"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 16 },
+          "kind": { "enum": ["plan", "result"] },
+          "what": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "evidence": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 200 }, "description": "links: commit sha, file:line, URL, screenshot path" },
+          "script": { "type": "string", "maxLength": 600, "description": "the <= 3-minute script Nicolas can play himself" },
+          "questions": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["q", "options", "reco"],
+              "properties": {
+                "q": { "type": "string", "minLength": 1, "maxLength": 200 },
+                "options": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 120 } },
+                "reco": { "type": "string", "minLength": 1, "maxLength": 120 }
+              }
+            }
+          },
+          "status": { "enum": ["open", "accepted", "reopened", "deferred"] },
+          "feedback": { "type": ["string", "null"], "maxLength": 500 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "gateResult": { "enum": ["pass", "fail", "skip", "unknown"] },
+    "progressList": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 100 } }
+  }
+}

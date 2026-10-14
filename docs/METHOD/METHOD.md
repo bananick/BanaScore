@@ -1,4 +1,4 @@
-# METHOD v321.a
+# METHOD v322.a
 
 ## Quick Start
 
@@ -30,6 +30,25 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v322.a
+1. **Supervision v2 — a chantier runs on data and events.** Each sub-session keeps one typed fiche
+   (`docs/chantiers/{chantier}/{slice}.json`, schema `chantier-status/1`) and renders no Debrief; a `Stop` hook
+   (`chantier-status.mjs`) blocks an invalid or stale fiche; the supervisor is woken by idle notices, retitles and
+   files each sub-session, pings the operator only for what needs him and routes his answers back by message.
+   Avatars join the cohort table. `sprints-method.md` → "The chantier".
+
+## What's New in v321.c
+1. **Telemetry v3 — a session knows which work it served.** The Stop hook (`session-telemetry.mjs`, hub + payload)
+   reads `.method/journey`, written at the `/intervention` Cadrage (`npm run method:journey` in the hub), and adds
+   names-and-counters only: tools, MCP servers, skills, commands, sub-agent launches, flow, result. Machines enrol
+   from the Cockpit with a one-time code. `routing-method.md` → "Central store".
+
+## What's New in v321.b
+1. **Known domain owners, visible in the hub.** `agents-method.md` → "Known domain owners" lists the fleet's
+   app-level owners (bananaevents: sacha, riley, elena, gordon), states that bananaevents' own `gordon.md`
+   wins there, retires the generic owner template, and says how a new owner is declared. Docs only; no
+   owner joins the cohort table or the sync payload.
 
 ## What's New in v321.a
 1. **The chantier — a supervision session + one sub-session per slice.** A workstream of ≥ 2 code-writing
@@ -561,9 +580,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 321.a  
+**Current Version:** 322.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-11
+**Released:** 2026-10-14
 
 ### Version Scheme
 

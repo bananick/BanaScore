@@ -30,20 +30,20 @@ hold that bar; three are dormant — parked under `.claude/_dormant/`, outside t
 scans for agents, so **not loaded and not delegable**. Bringing one back is a `git mv` into
 `.claude/agents/` plus a METHOD release — the operator's call, never an agent's mid-session.
 
-| Agent | Mandate | Default model | Entry files |
-|:--|:--|:--|:--|
-| **Junia** | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | opus | `sprints-method.md` → `docs/project/` |
-| **Brian** | Build — web development (incl. mobile and AI wiring) | sonnet | `method-core.md` → `docs/project/DESIGN.md` → task |
-| **Sage** | Prove — the observed proof of a journey (LANDED/DEPLOYED → PROVEN), then its regression test | sonnet | `tests-method.md` → task → `docs/project/journeys/` |
-| **Watson** | Repair — reliability & ops | sonnet | `method-core.md` → `tests-method.md` |
-| **Kasper** | Guard — security | opus | `method-core.md` (Security Baseline) → `docs/project/SCHEMA.md` |
-| **Vera** | Judge — one review per slice, at the Recette (no commits) | opus | `method-core.md` → `design-method.md` → task |
-| **Nova** | Draw — design system + tokens | sonnet | `design-method.md` → `docs/project/DESIGN.md` |
-| **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
-| **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
-| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
-| **Penny** | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
-| **Oscar** | Coach — weekly retro (`/retro`): effectiveness, focus, objectivity, lucidity, relevance of objectives and whether they are reached; one habit to change; METHOD proposals to Lucia; read-only on code | opus | `method-core.md` → `docs/project/STATE.md` + `FOCUS.md` → the week's evidence |
+| Agent | Avatar | Mandate | Default model | Entry files |
+|:--|:--|:--|:--|:--|
+| **Junia** | 🧙 | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | opus | `sprints-method.md` → `docs/project/` |
+| **Brian** | 🧑‍💻 | Build — web development (incl. mobile and AI wiring) | sonnet | `method-core.md` → `docs/project/DESIGN.md` → task |
+| **Sage** | 🧑‍🔬 | Prove — the observed proof of a journey (LANDED/DEPLOYED → PROVEN), then its regression test | sonnet | `tests-method.md` → task → `docs/project/journeys/` |
+| **Watson** | 🧑‍🚒 | Repair — reliability & ops | sonnet | `method-core.md` → `tests-method.md` |
+| **Kasper** | 💂 | Guard — security | opus | `method-core.md` (Security Baseline) → `docs/project/SCHEMA.md` |
+| **Vera** | 🧑‍⚖️ | Judge — one review per slice, at the Recette (no commits) | opus | `method-core.md` → `design-method.md` → task |
+| **Nova** | 🧑‍🎨 | Draw — design system + tokens | sonnet | `design-method.md` → `docs/project/DESIGN.md` |
+| **Gordon** | 🧑‍💼 | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
+| **Iris** | 🕵️ | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
+| **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
+| **Penny** | 🤵 | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
+| **Oscar** | 🧑‍🏫 | Coach — weekly retro (`/retro`): effectiveness, focus, objectivity, lucidity, relevance of objectives and whether they are reached; one habit to change; METHOD proposals to Lucia; read-only on code | opus | `method-core.md` → `docs/project/STATE.md` + `FOCUS.md` → the week's evidence |
 
 **Dormant (not loaded, not delegable):** **April** (vision & copy → Junia's Cadrage + Gordon) ·
 **Aiko** (AI integration → Brian) · **Teddy** (mobile → Brian). Why: `.claude/_dormant/README.md`.
@@ -129,7 +129,7 @@ One canonical list, 9 items: **`docs/METHOD/method-core.md` → "Definition of D
 
 Optimize for the operator's readability, not for completeness. Lead with the answer; keep process out.
 
-- **Close every substantial reply with the Debrief card.** It answers, without being asked: ce qui vient d'être fait · où ça met le **projet global** (`Avancement`, a real count — never an invented ratio) · ce qu'il faut retenir (dont `Décidé pour toi`) · ce que l'opérateur doit trancher · la suite + le `▶ Prompt suivant`. Rendered as **plain markdown, never a fenced block** (a fence renders small, unstyled and unclickable). Small answer → one landing line (`✅ {fait} · suite → {action}`); nothing done → no card. A delegated sub-agent never emits one — it reports to its orchestrator, which folds every report into a single card.
+- **Close every substantial reply with the Debrief card** — except in a chantier sub-session, which updates its fiche instead (`sprints-method.md` → "The chantier"). The card answers, without being asked: ce qui vient d'être fait · où ça met le **projet global** (`Avancement`, a real count — never an invented ratio) · ce qu'il faut retenir (dont `Décidé pour toi`) · ce que l'opérateur doit trancher · la suite + le `▶ Prompt suivant`. Rendered as **plain markdown, never a fenced block** (a fence renders small, unstyled and unclickable). Small answer → one landing line (`✅ {fait} · suite → {action}`); nothing done → no card. A delegated sub-agent never emits one — it reports to its orchestrator, which folds every report into a single card.
 - **Lead with the answer in chat.** First line of a substantial reply = what changed. The **3-line header** — **Done** (what changed) · **State** (🟢 on track · 🟡 needs your input · 🔴 blocked) · **Next** (immediate step, or `awaiting your call ↓`) — opens **written artifacts**: PR bodies, task reports, sub-agent reports. Never both a header and a Debrief for the same work.
 - **Surface decisions, never bury them.** When a choice is the operator's, add a `### Needs decision` block: the question, 2–4 options, **recommendation first**, and carry it into the Debrief's `Tu décides` row. Never decide irreversible / data-model / scope changes yourself — list and stop (the conflict gate).
 - **The CUJ is the unit.** Every conversation/sprint/task names the journey(s) it closes; `Avancement` counts journeys proven. States are four and never merged: `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`, each with its own evidence.
@@ -242,7 +242,9 @@ artifact of a decision only the operator can make — never the normal path.
   - **`MEMORY.md` ≤ 5 kB**, one-line pointers — loaded every turn; the doctor warns above it.
   - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
 - **A workstream of ≥ 2 code-writing slices is a chantier**: one supervision session (opus, writes
-  no code) + one sub-session per slice (sonnet, own branch + worktree), grouped as `{app} · {chantier}`.
+  no code) + one sub-session per slice (sonnet, own branch + worktree), grouped as `{app} · {chantier}`;
+  each sub-session reports only through its fiche (`docs/chantiers/{chantier}/{slice}.json`) and the
+  supervisor is event-driven — woken when a sub-session goes idle (`sprints-method.md` → "The chantier").
   **Inside a slice, a parallel session only on an observed trigger**, never a predicted one: a 3rd
   build→test→fix loop on the same task · another repo · a deploy loop with the operator in it · two
   tasks writing code at once within one slice (each its own branch + worktree; across slices →

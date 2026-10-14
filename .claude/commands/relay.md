@@ -34,6 +34,8 @@ isn't committed yet, finish the slice (or run `/ship`) first, then relay.
 
 Then close with the **Debrief** card (`docs/METHOD/method-core.md` → "Operator Reporting") — `Avancement` grounded in the sprint/plan count, `TU DÉCIDES` carrying anything left for the operator — followed by the `▶ Prompt suivant` block.
 
+**In a chantier sub-session: do not relay — update the fiche instead** (`docs/METHOD/sprints-method.md` → "The chantier"); the supervisor holds the `## Resume here` slot and the only Debrief.
+
 > **Relay ≠ memory.** Memory holds durable cross-session facts about the user/project; a Relay is
 > volatile per-workstream resume state, owned by `STATE.md`. Don't write workstream state into
 > memory, and don't promote user/project facts into the Relay.
