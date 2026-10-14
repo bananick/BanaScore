@@ -13,6 +13,9 @@
 //   context      — print `flight_deck_context:` (git + sprint + memory summary), used by the
 //                  /brief command's `!`...`` live-context injection.
 //   resume-hook  — same summary, wrapped as SessionStart hookSpecificOutput JSON.
+//   startup-hook — SessionStart `startup`: only the branch-lifecycle report (active work, alarms,
+//                  integrated residues) from lib/branch-hygiene.mjs; silent when there is nothing.
+// `context` and `resume-hook` also carry that report (active_work / branch_alarms / branch_residues).
 //
 // Deliberately NOT ported: `statusline` mode. The statusline is a per-machine terminal
 // decoration configured once in ~/.claude/settings.json; it already works across every repo
@@ -221,7 +224,30 @@ function getGitSummary(cwd, includePr) {
   };
 }
 
-function buildContext(cwd, git, memory, sprint) {
+// Branch lifecycle (read-only): what is actually in flight, and what is residue to clean. Fails open to null.
+async function getHygiene(cwd) {
+  try {
+    const lib = await import('./lib/branch-hygiene.mjs');
+    const report = lib.classify({ cwd, ghTimeout: 8000 });
+    if (report.error) return null;
+    const s = lib.summarize(report);
+    const lines = [];
+    lines.push(`  active_work: ${s.active.length}`);
+    for (const x of s.active) lines.push(`    - ${lib.describe(x)}${x.current ? ' (this session)' : ''}`);
+    if (s.alarms.length) {
+      lines.push(`  branch_alarms: ${s.alarms.length} (work that is NOT safely on GitHub)`);
+      for (const x of s.alarms) lines.push(`    - ${lib.describe(x)} - ${x.reasons.join('; ')}`);
+    }
+    const fix = 'the SessionStart sweep or `node .claude/hooks/land.mjs --sweep --apply` removes them';
+    lines.push(`  branch_residues: ${s.residues.length} to clean${s.residues.length ? ` (integrated; ${fix})` : ''}`);
+    for (const x of s.residues) lines.push(`    - ${lib.describe(x)}`);
+    return { lines, quiet: s.active.length + s.alarms.length + s.residues.length === 0 };
+  } catch {
+    return null;
+  }
+}
+
+function buildContext(cwd, git, memory, sprint, hygiene = null) {
   if (!git) {
     return ['flight_deck_context:', `  cwd: ${cwd}`, '  git: not a git repository'].join('\n');
   }
@@ -260,6 +286,7 @@ function buildContext(cwd, git, memory, sprint) {
     `  sprint_progress: ${sprintProgress}`,
     `  project_memory_dir: ${memoryDir}`,
     `  project_memory_files: ${memoryFiles}`,
+    ...(hygiene ? hygiene.lines : []),
   ].join('\n');
 }
 
@@ -280,7 +307,7 @@ function resolveCwd(explicitCwd, inputData) {
   }
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   const modeIdx = args.indexOf('--mode');
   const mode = modeIdx >= 0 ? args[modeIdx + 1] : 'context';
@@ -295,11 +322,23 @@ function main() {
   }
   const cwd = resolveCwd(explicitCwd, inputData);
 
+  // startup-hook (SessionStart `startup`): a fresh session gets no Flight Deck, only the branch
+  // lifecycle report — what is in flight and what is residue. Read-only; silent when there is nothing.
+  if (mode === 'startup-hook') {
+    const h = await getHygiene(cwd);
+    if (h && !h.quiet) {
+      const additionalContext = `Branch lifecycle (GitHub must mirror every active piece of work; integrated branches are residue):\n${h.lines.join('\n')}\n\nMention alarms and residues to the operator only if they change what they should do next.`;
+      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext } }));
+    }
+    return;
+  }
+
   const includePr = mode !== 'statusline';
   const git = getGitSummary(cwd, includePr);
   const memory = getMemorySummary(cwd);
   const sprint = git ? getSprintSummary(cwd, git.root) : null;
-  const context = buildContext(cwd, git, memory, sprint);
+  const hygiene = git && mode !== 'statusline' ? await getHygiene(cwd) : null;
+  const context = buildContext(cwd, git, memory, sprint, hygiene);
 
   if (mode === 'resume-hook') {
     const additionalContext = `Resume Flight Deck context:\n${context}\n\nOn the next assistant reply after this resume, start with the six-line Flight Deck from CLAUDE.md (pickup card). Keep it grounded in this context; read listed memory files only if needed. Close that reply with the Debrief card, using sprint_progress above for its Avancement row.`;
@@ -317,4 +356,4 @@ function main() {
   process.stdout.write(context + '\n');
 }
 
-main();
+main().catch(() => process.exit(0));

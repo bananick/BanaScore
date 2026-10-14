@@ -16,7 +16,7 @@ first-class citizen of the methodology in **every** app, not just Bana-Share.
 | `.claude/commands/` | `brief`, `intervention`, `land`, `plan-sprint`, `port`, `relay`, `retro`, `review`, `ship` (9) | **overwrite** — canonical METHOD rituals (`port` and `relay` are optional) |
 | `.claude/skills/` | `ads-ops`, `deploy`, `hubspot-sync`, `implement-plan`, `landing-page`, `media`, `ux-review` (7) | **overwrite** — canonical tooling (`sprint` and `ship-check` parked in 318.a) |
 | `docs/project/design/` | `PORT-MAP-TEMPLATE.md` | **overwrite** — reference template the `/port` loop starts from (the live `PORT-MAP.md` is never touched) |
-| `.claude/hooks/` | `no-mock-guard.ps1`, `session-telemetry.mjs`, `ship-push.sh`, `land.mjs`, `verify-gate.mjs`, `flight-deck.mjs`, `pilotage-refresh.mjs`, `chantier-status.mjs` + `lib/chantier-status.mjs` | **overwrite** |
+| `.claude/hooks/` | `no-mock-guard.ps1`, `session-telemetry.mjs`, `ship-push.sh`, `land.mjs`, `verify-gate.mjs`, `gate-lock.mjs`, `flight-deck.mjs`, `pilotage-refresh.mjs`, `chantier-status.mjs` + `lib/chantier-status.mjs` | **overwrite** |
 | `.claude/settings.json` | `PostToolUse(Write\|Edit)` no-mock guard · `Stop` (ship-push, session-telemetry append, land docs-lane, pilotage-refresh, chantier-status fiche guard) · `SessionEnd` (full land) · `SessionStart(resume)` (flight-deck) | **merge** — idempotent per hook, preserves other settings (incl. any custom hook the app already has) |
 
 Canonical text of the five merged sections: the sections of the same name in `payload/CLAUDE.md`

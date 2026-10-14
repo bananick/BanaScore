@@ -21,6 +21,15 @@ try {
               '\\tests?\\', '\.stories\.')
     foreach ($s in $skip) { if ($path -match $s) { exit 0 } }
 
+    # proto/ is the design workspace — the one place fake data is allowed (SOUL.md non-negotiable #1). Only the
+    # app-root proto/: a `proto` folder under src\, components\ or an app\ route folder is shipped code that
+    # merely carries the name (app\proto\page.tsx is a live Next.js route). Judged on the path INSIDE the project
+    # when CLAUDE_PROJECT_DIR is known, so a checkout that itself lives under C:\src\ keeps its proto/.
+    $rel = $path.Replace('/', '\')
+    $proj = if ($env:CLAUDE_PROJECT_DIR) { $env:CLAUDE_PROJECT_DIR.Replace('/', '\').TrimEnd('\') } else { '' }
+    if ($proj -and $rel.StartsWith($proj + '\', [System.StringComparison]::OrdinalIgnoreCase)) { $rel = $rel.Substring($proj.Length) }
+    if ($rel -match '\\proto\\' -and $rel -notmatch '\\(src|components|app|pages|lib|features)\\([^\\]+\\)*proto\\') { exit 0 }
+
     if (-not (Test-Path -LiteralPath $path)) { exit 0 }
     $content = Get-Content -LiteralPath $path -Raw -ErrorAction Stop
     if (-not $content) { exit 0 }

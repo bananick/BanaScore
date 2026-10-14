@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 322.b  
+**Version:** 322.f  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -452,19 +452,24 @@ These hooks run at a session's edges (hub `.claude/settings.json` = addon `setti
 
 | Event | Hook | What it does |
 |---|---|---|
-| `Stop` | `.claude/hooks/ship-push.sh` | `exit 0` on `main`/`master`/`HEAD`; otherwise pushes the current branch (`git push`, or `git push -u origin "$branch"` when no upstream). Never commits, never force-pushes. |
+| `Stop` | `.claude/hooks/ship-push.sh` | `exit 0` on `main`/`master`/`HEAD` and on a branch with nothing of its own ahead of the trunk; otherwise pushes the current branch (`git push`, or `git push -u origin "$branch"` when no upstream). Never commits, never force-pushes. A **rejected push is reported** (stderr + systemMessage + `<gitdir>/ship-push.last-error`, cleared by the next good push). Since 322.f it never pushes a checkout of the trunk, whatever its name, and the branch push runs with `SKIP_QUALITY_GATES=1` (the husky pre-push chain cannot finish inside the hook's 30 s; the land gate is the brake for `main`). |
+| `Stop` | `.claude/hooks/wip-sync.mjs` | Dirty tree on a feature branch: snapshots the uncommitted delta (untracked included) through a temporary index and pushes it to `refs/wip/<branch>` (forced on that private ref only); index, tree and branch are never touched. **Best-effort guards, fail closed (a denylist is not a guarantee):** only when HEAD is already on an `origin` branch and `origin` is positively private (`gh repo view <origin url>`; a PRIVATE answer is cached 1 h, nothing else); never unless origin has exactly one fetch URL and one equal push URL; `git config wip-sync.enabled false` (any git boolean: no/off/0/false) is the kill switch. Paths are filtered **before** `git add` (never hashed): secret-shaped names, build/dependency/auth dirs, files over 5 MB, and files whose **content** looks like a credential; the result is re-verified after `write-tree`. Skips and their reasons (names only): `<gitdir>/wip-sync.last-skipped`. Clean tree: deletes the WIP ref. A failure is reported (`<gitdir>/wip-sync.last-error`). Independent of the other Stop hooks (they run in parallel): safe in either order. |
 | `Stop` | `.claude/hooks/session-telemetry.mjs` | Appends one row to the local, gitignored ledger `docs/project/telemetry/sessions.jsonl`; commits and pushes nothing (318.a). |
-| `Stop` | `.claude/hooks/land.mjs --auto --lane docs` | Fast-forwards the trunk with the branch's **committed** docs/tooling work when the gate allows; never commits; quiet, always exits 0. |
+| `Stop` | `.claude/hooks/land.mjs --auto --lane docs` | Fast-forwards the trunk with the branch's **committed** docs/tooling work when the gate allows; never commits; quiet, always exits 0. After a landing it deletes `origin/<branch>` + `refs/wip/<branch>`, advances the local trunk when it is checked out nowhere, and records the branch in `<git-common-dir>/landed-branches`. Held back by an exception: pushes the branch and opens/updates a **draft PR** (reason + `### Needs decision`). Since 322.f it takes the repository's gate lock (`gate-lock.mjs`, below) before it merges the trunk. |
 | `Stop` | `.claude/hooks/pilotage-refresh.mjs` | Regenerates `docs/pilotage/index.html` when the turn edited `docs/sprints/**` or `docs/pilotage/chantiers.mjs`; never commits; fails open. |
 | `Stop` | `.claude/hooks/chantier-status.mjs` | No-op unless a fiche in `docs/chantiers/*/*.json` names the current branch; then **blocks the stop** while that fiche is invalid or stale ("The chantier", below). |
 | `SessionEnd` | `.claude/hooks/land.mjs --auto` | Attempts a full land of the conversation on the trunk. |
-| `SessionStart` (`resume`) | `.claude/hooks/flight-deck.mjs --mode resume-hook` | Injects the Flight Deck pickup context; read-only. |
+| `SessionStart` (`resume`) | `.claude/hooks/flight-deck.mjs --mode resume-hook` | Injects the Flight Deck pickup context, now with the branch-lifecycle report (active work, alarms, residues); read-only. |
+| `SessionStart` (`startup`) | `.claude/hooks/flight-deck.mjs --mode startup-hook` | Injects only the branch-lifecycle report (silent when empty); read-only. |
+| `SessionStart` (`startup`) | `.claude/hooks/branch-sweep.mjs --apply --landed-only --auto` | Deletes the worktree + local branch (and `origin/<branch>`, WIP ref) of branches **`land.mjs` landed** (its ledger `<git-common-dir>/landed-branches`) once they are `merged`/`gone`, clean, not the cwd nor the main checkout, carry no commit that is on neither the trunk nor a remote ref, and show **no activity for 2 h** (newest of: the branch's last reflog entry, the mtime of the worktree's `HEAD`/`index`/`logs/HEAD` admin files, the tip commit date). A separate script that can never merge a PR. Anything older is never auto-deleted: a manual, validated `branch-sweep.mjs --apply` (`npm run branch:sweep:apply`). |
+| *(library)* | `.claude/hooks/gate-lock.mjs` | Not an event hook: imported by `land.mjs` and `verify-gate.mjs` (322.f, from bananaevents `3e73289d`). **One landing / heavy gate at a time per repository:** the lock `<main checkout>/.method/gate.lock` (`.method/` is gitignored) is shared by every worktree, so parallel sessions stop starving the machine (vitest timeouts = false reds). Liveness is a heartbeat (a worker thread touching the lock's mtime; pids are display only); a stale lock heals itself (takeover under a mutex); the owner's child re-enters with `METHOD_GATE_LOCK_TOKEN`. `land.mjs` takes it **before** merging the trunk and gives it back right after the trunk push; `--lock-wait <min>` (default 180) is the manual queue, a hook (`--auto`) never queues and refuses a heavy gate. A scheduling aid, never a check: a missing or broken lock means "runs unserialized, as before". |
+| *(called by `land.mjs`)* | `.claude/hooks/verify-gate.mjs` | The lane gate (lint · typecheck · tests · build, per lane). 322.f: `--plan` (the weight of the diff) and the heavy phase under the lock; a repo-root `firestore.rules` / `storage.rules` is **tooling lane** (deploy config, anchored at the root — a nested rules file keeps its app's gate) but still held by `land.mjs`'s `schema` exception; an npm-workspaces member verifies through its parent root, the lane stays the file's own and a script-less root is `blocked`; `.snap` is code. |
 
-(`PostToolUse` also runs `no-mock-guard.ps1` on every Write/Edit; it writes nothing to git.)
+(`PostToolUse` also runs `no-mock-guard.ps1` on every Write/Edit; it writes nothing to git. Since 322.f it exempts the app-root `proto/` — never a `proto` folder under `src/`, `components/`, `app/`, `pages/`, `lib/` or `features/`.)
 
-Two of them write to git from every session: `ship-push.sh` pushes the branch and `land.mjs` moves
-the trunk. `ship-push.sh` is branch-scoped and **swallows a rejected push** (it redirects the push to
-`>/dev/null 2>&1`). Two consequences follow directly, and they are the whole reason for the rule:
+Three of them write to git from every session: `ship-push.sh` pushes the branch, `wip-sync.mjs` pushes
+the WIP ref and `land.mjs` moves the trunk. Before 322.d `ship-push.sh` **swallowed a rejected push**
+(it redirected the push to `>/dev/null 2>&1`); it now reports it. Two consequences follow directly, and they are the whole reason for the rule:
 
 1. **Two sessions on the same branch ⇒ silent divergence.** The second session's push is rejected
    non-fast-forward and the rejection is discarded. The work exists locally; every downstream reader
@@ -477,6 +482,17 @@ The hooks are not defensive against concurrency, and should not become so — th
 branch and one worktree per session. *(If you are reading this in an app mirror and the hooks above
 are not what `.claude/settings.json` wires there, trust the file, not this table, and report the
 drift.)*
+
+#### Invariants du cycle de vie des branches
+
+> Mechanism: `.claude/hooks/lib/branch-hygiene.mjs` (classifier: `merged` · `gone` · `orphan` · `held` ·
+> `active`) behind `wip-sync.mjs`, `ship-push.sh`, `land.mjs`, `branch-sweep.mjs` and the SessionStart report. No rule below
+> exists without a hook that enforces or reports it.
+
+1. **GitHub mirrors all active work** — committed (the branch, `ship-push.sh`), uncommitted (`refs/wip/<branch>`, `wip-sync.mjs`), retained (a draft PR, `land.mjs`). A push that fails is reported, never swallowed.
+2. **A branch has three exits only:** landed-and-deleted (local, `origin`, WIP ref), a draft PR (held by the exception list, reason + `### Needs decision`), or abandoned-and-deleted.
+3. **No mute branch locally:** commits on no remote (`orphan`) are an alarm in the SessionStart report, never a silent state.
+4. **Deletion is guarded, never forced:** only `merged`/`gone` branches, clean tree, not the cwd, not the main checkout, no commit that exists on neither the trunk nor a remote ref (merge commits included; an uncomputable answer means *keep*), and — when a worktree exists — no activity for 2 h (reflog, worktree `HEAD`/`index` mtime, tip date: not just the tip date). Deletion lives in `branch-sweep.mjs`, never behind `land.mjs --sweep --apply` (which merges PRs). It is automatic only for branches `land.mjs` landed itself; everything older goes through a manual `branch:sweep:apply` after the list is validated. No cap on active branches and no forced abandonment: the report tells the truth, the operator decides.
 
 #### The lanes (branches, not titles)
 
@@ -523,14 +539,16 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
-#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a)
+#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e)
 
 A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
 multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
 named), so it is decided at the start. **v2 (322.a): data, not reports; events, not polling** — each
 sub-session keeps one typed status record, and the supervisor is woken when a sub-session stops.
 Interventions: `docs/interventions/2026-10-11-Lucia-supervision-sessions.md` (321.a) ·
-`docs/interventions/2026-10-14-Lucia-supervision-v2.md` (v2).
+`docs/interventions/2026-10-14-Lucia-supervision-v2.md` (v2). **322.e** folds in the first live run
+(bananaevents · W42 cash): the fiche is found by branch, a sub-session is addressed by its `ListAgents`
+name, announces itself first and announces a land in flight, and a chantier has no `▶ Prompt suivant`.
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
   slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
@@ -568,9 +586,13 @@ the fiche, and the docs lane lands that commit.
 **The sub-session contract.**
 
 - **The fiche, the task or intervention file and the commits are the whole hand-back.** No Debrief,
-  no `Done / State / Next` message, no `STATE.md` edit, no `/relay` — `/land`, `/relay` and `/review`
+  no `▶ Prompt suivant`, no `Done / State / Next` message, no `STATE.md` edit, no `/relay` — `/land`, `/relay` and `/review`
   say so in their own text. Spoken to directly by the operator, it answers him in
   plain text, still without a Debrief.
+- **Adopt first (322.e).** The first action of a sub-session — before any read or edit — is one
+  `SendMessage` to the supervisor, addressed by the supervisor's `ListAgents` name (its brief carries it):
+  `adopt {slice}`. The brief also forbids `EnterWorktree` when the app already created a worktree for the
+  session: a second worktree hides the fiche from the supervisor.
 - **A question for the operator goes into `decisions[]`** (with `options[]`, `reco`, `ifNoAnswer`)
   and the state becomes `waiting` — never only into chat. A blocker only he can lift goes into
   `operatorActions[]`. A result to evaluate goes into `review[]` with its evidence, a ≤ 3-minute
@@ -584,31 +606,55 @@ the fiche, and the docs lane lands that commit.
   `/review`, then `/land` — and the sub-session runs them: Vera's verdict goes into `review[]` (a
   `result` item, with its evidence), the verify-gate outcome into `gate`; after `/land` it sets `state`
   `landed` and `head` = the landed sha and commits the fiche (`/review` and `/land` say so too).
+- **A land in flight is announced (322.e).** Before running `/land`, the sub-session writes `/land` into
+  `progress.doing` and refreshes the fiche (`updatedAt` from the real clock), so the supervisor sees a land
+  in progress from the fiche, without a transcript; after the land it moves that item to `progress.done`.
 - **The `Stop` hook holds it to this** (`chantier-status.mjs`): the stop is blocked, with a one-line
   reason, while the fiche is invalid against the schema or stale — a commit touching anything outside
   `docs/chantiers/` is newer than `updatedAt` (+120 s) — or `updatedAt` is in the future. When a Stop hook is already active it warns
   and lets the stop through.
 
+**Finding the fiche, addressing the session (322.e).** Both come from the first live run (bananaevents ·
+W42 cash), where the doctrine read the wrong place and used the wrong address.
+
+- **The fiche is found by its branch, never by the session's `cwd`.** The app may create a worktree and
+  the sub-session may then work in another, so `list_sessions` can point at the wrong one.
+  `git -C <app root> worktree list --porcelain` gives the worktree holding the fiche's `branch` — read
+  `docs/chantiers/{chantier}/{slice}.json` there: the latest copy, committed or not. No worktree holds the
+  branch → `git -C <app root> show <branch>:docs/chantiers/{chantier}/{slice}.json`.
+- **A sub-session is addressed by its `ListAgents` name** (+ `[ref]` when two share one) for
+  `SendMessage` and `notify_when_idle` — never by `sessionId`, which is refused (`only supported for
+  Claude sessions on this machine`). The name follows the session title: after every `set_session_title`
+  the supervisor re-reads `ListAgents` before its next `SendMessage` or re-subscription.
+
 **The supervisor's loop — event-driven, never polling.** Between two notices it does nothing.
 
 1. **Open** — write the partition map; create the sidebar group `{app} · {chantier}`, title itself
    and pin it (`set_pinned`); offer **one suggested-task chip per slice** carrying that sub-session's
-   brief — no start tool is exposed, so starting a sub-session is one operator click.
-2. **Adopt** each new sub-session — `set_session_title`, `move_sessions` into the group, then
-   `SendMessage` with `notify_when_idle: true`. The notice is **one-shot**: re-subscribe after each.
-3. **On each idle notice** — read the fiche in the sub-session's worktree (its `cwd` comes from
-   `list_sessions`); read the transcript (`list_events`) **only** when the fiche is missing or stale;
+   brief (its first action is the `adopt {slice}` message; it carries the supervisor's `ListAgents` name) —
+   no start tool is exposed, so starting a sub-session is one operator click.
+2. **Adopt** each new sub-session — on its `adopt {slice}` message, and on **every wake** any session of
+   the group not yet adopted (`list_sessions`, group filter: it may have started and stopped before the
+   supervisor looked) — `set_session_title`, `move_sessions` into the group, re-read `ListAgents`, then
+   `SendMessage` with `notify_when_idle: true` by its `ListAgents` name. The notice is **one-shot**:
+   re-subscribe after each.
+3. **On each idle notice** — read the fiche **by branch** ("Finding the fiche" above), never from the
+   session's `cwd`; read the transcript (`list_events`) **only** when the fiche is missing or stale;
    update the title's state icon; fold new decisions, operator actions and reviews into the
    control-tower table. `PushNotification` **only** for `waiting`, `blocked` or a new `review` item.
    On a `landed` fiche, run the archive check below.
-4. **Route answers** — each operator answer becomes one typed `SendMessage` into that sub-session.
+4. **Route answers** — each operator answer becomes one typed `SendMessage` into that sub-session,
+   addressed by its `ListAgents` name.
 5. **Close each slice** — `SendMessage` the sub-session `/review`, then `/land` (it runs both and
    records Vera's verdict in its fiche) → Sage's proof → **`archive_session` on its own, as soon as
    the slice is finished** (the four checks of "Archiving" below, no operator OK); the group goes
    when the chantier closes.
 6. **Report** — the supervisor's Debrief is the chantier's only card; its body is the control-tower
    table, one row per slice, built from the fiches. Every archive done since the last card is named
-   in it under `🤝 Décidé pour toi`.
+   in it under `🤝 Décidé pour toi`. **No `▶ Prompt suivant`** (operator rule, 2026-10-14): the next step is
+   an action the supervisor takes itself — a task chip carrying the brief, or a typed `SendMessage` to an
+   existing sub-session — recorded as the `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names
+   that action, with no copy-paste block.
 
 **Archiving — automatic and machine-checked (322.b; the operator's standing order, 2026-10-14).** A
 finished session left in the sidebar hides where attention is needed, so the supervisor archives a
@@ -618,8 +664,9 @@ all run by command, all true:
 1. **Landed on the trunk** — the fiche is `landed` and its `head` is on `origin/main`:
    `git fetch origin`, then `git merge-base --is-ancestor <head> origin/main`.
 2. **Idle and clean** — `list_sessions` shows `isRunning: false`, and its worktree holds nothing
-   that would be lost (archiving deletes the worktree): `git -C <cwd> status --porcelain` is empty
-   and `git -C <cwd> log origin/main..HEAD` is empty.
+   that would be lost (archiving deletes the worktree): `git -C <worktree> status --porcelain` is empty
+   and `git -C <worktree> log origin/main..HEAD` is empty (`<worktree>` = the one holding the branch,
+   "Finding the fiche").
 3. **Nothing open** — no `decisions[]`, `operatorActions[]` or `review[]` item with `status: open`.
 4. **Declared** — the archive is named in the supervisor's Debrief under `🤝 Décidé pour toi`; it is
    reversible (`unarchive_session`).
@@ -635,7 +682,8 @@ pinned. Sub-session: `{avatar} {slice} {title} · {state icon}` — avatars from
 (`agents-method.md`); a domain owner's avatar is the one declared for it in the app's business pack
 (`docs/project/business/README.md`), 🧑 by default; state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 · `blocked` 🔴 ·
 `landed` ✅ · `parked` 💤. A `landed` slice that cannot be archived yet is retitled 🟡 until it can ("Archiving" above). Emoji
-live in titles and file contents, never in branch names (above).
+live in titles and file contents, never in branch names (above). The `ListAgents` name follows the
+title: re-read it after each `set_session_title`.
 
 **Chantier vs sprint.** The sprint stays the exception for work **planned ahead, multi-owner, with a
 review gate** (`/plan-sprint`, Vera's closing review). A chantier needs none of that ceremony: it is

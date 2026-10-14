@@ -1,8 +1,8 @@
-# METHOD v322.b
+# METHOD v322.f
 
-**Version:** 322.b  
+**Version:** 322.f  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-14  
+**Released:** 2026-10-15  
 **Status:** ✅ Production-Ready
 
 ---
@@ -71,6 +71,28 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v322.f
+
+1. **A per-repository landing lock** — `gate-lock.mjs` serializes the heavy gate across worktrees (`<main>/.method/gate.lock`, heartbeat liveness); a scheduling aid, never a check.
+2. **The gate takes three app fixes** — npm-workspaces roll-up (fail-closed), a tooling lane for root `*.rules` (still held by the `schema` exception), `.snap` as code; `proto/` exempt from the no-mock guard.
+3. **Six names leave `SKIP_REPOS`** — fleet sync after each app's own cleanup (IMP-012).
+
+## What's New in v322.e
+
+1. **Supervision v2 proof fixes** — the chantier supervisor finds a fiche by branch and addresses a sub-session by its `ListAgents` name; a sub-session announces itself first ("adopt {slice}") and writes `/land` into `progress.doing` before landing.
+2. **No `▶ Prompt suivant` in a chantier** — the next step is the supervisor's own action (task chip or typed `SendMessage`) and a `Suite` row of the pilot dashboard.
+
+## What's New in v322.d
+
+1. **GitHub mirrors active work** — `wip-sync.mjs` (Stop, on by default, fail-closed guards, kill switch
+   `git config wip-sync.enabled false`) pushes uncommitted work to `refs/wip/<branch>`; rejected pushes are reported.
+2. **Three exits per branch** — landed-and-deleted, draft PR when held, abandoned-and-deleted; `branch-sweep.mjs` at
+   SessionStart cleans what `land.mjs` landed; "Travail actif" in the Flight Deck.
+
+## What's New in v322.c
+
+1. **Questions are quizzes, never prose** — every question to the operator is prepared and asked with `AskUserQuestion` (recommended first), never written into the chat text.
 
 ## What's New in v322.b
 
@@ -333,8 +355,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 322.b  
-**Previous:** 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 322.f  
+**Previous:** 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

@@ -1,4 +1,4 @@
-# METHOD v322.b
+# METHOD v322.f
 
 ## Quick Start
 
@@ -30,6 +30,44 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v322.f
+1. **One landing at a time, per repository.** `gate-lock.mjs` (upstreamed from bananaevents) serializes the heavy gate across
+   every worktree of a repo through `<main>/.method/gate.lock`; heartbeat liveness, self-healing stale locks, and it is only a
+   scheduling aid — no lock, no serialization, the gate still runs. A hook (`--auto`) never queues.
+2. **The gate learns three app fixes.** npm-workspaces members verify through their parent root (fail-closed: a script-less
+   root is `blocked`); root `firestore.rules` / `storage.rules` get a tooling lane but stay held by the `schema` exception
+   (`[land-anyway]` still overrides, operator's call 2026-10-15); `.snap` files are code.
+3. **`proto/` is exempt from the no-mock guard** — the app-root folder only, never a `proto` folder under `src/`, `components/`,
+   `app/`, `pages/`, `lib/` or `features/`. `ship-push.sh` never pushes the trunk and skips the husky chain on a branch push.
+4. **Six names leave `SKIP_REPOS`** (bananaevents, gites-groupes, LeMansFC, Respirit/IAcademy, Scapience) — after each app's own
+   cleanup, one fleet sync (IMP-012). `sprints-method.md` → "Sessions & branches" lists the new hook rows.
+
+## What's New in v322.e
+1. **Supervision v2 proof fixes** (first live run, bananaevents · W42 cash). The supervisor finds a sub-session's fiche
+   **by its branch** (`git worktree list --porcelain`, else `git show <branch>:…`), never by the session's `cwd`; it
+   addresses a sub-session by its **`ListAgents` name** (`SendMessage`, `notify_when_idle`), never by sessionId.
+2. **Adoption is announced.** A sub-session's first action is `SendMessage` "adopt {slice}" to the supervisor, and it never
+   `EnterWorktree`s in an app-created worktree; the supervisor adopts any unadopted session of the group on each wake.
+3. **A land in flight is visible** — `/land` is written into `progress.doing` before it runs.
+4. **No `▶ Prompt suivant` in a chantier.** The next step is an action the supervisor takes itself (a task chip or a typed
+   `SendMessage`) and a `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names it. `sprints-method.md` → "The chantier".
+
+## What's New in v322.d
+1. **GitHub always mirrors active work.** A new `Stop` hook, `wip-sync.mjs` (on by default), pushes the uncommitted
+   delta of a feature branch to `refs/wip/<branch>` — fail-closed: content scan + name denylist, HEAD already on
+   `origin`, `origin` PRIVATE (via `gh`, 1 h cache), a single push URL; kill switch `git config wip-sync.enabled false`.
+   `ship-push.sh` no longer swallows a rejected push and now publishes a branch cut from `origin/main`.
+2. **A branch has three exits.** Landed-and-deleted (local `main` fast-forwarded, remote branch + WIP ref removed),
+   a draft PR for a held landing (reason + `### Needs decision`), or abandoned-and-deleted. `branch-sweep.mjs` at
+   `SessionStart` cleans only branches `land.mjs` landed, and never merges a PR; the Flight Deck shows "Travail actif".
+   `sprints-method.md` → "Invariants du cycle de vie des branches".
+
+## What's New in v322.c
+1. **Questions are quizzes, never prose.** Every question to the operator (Cadrage, `Needs decision`, mid-build
+   ambiguity, accept/reopen/defer) is prepared in advance and asked with `AskUserQuestion` — ≤ 4 questions, 2–4
+   options, recommended first — never written as a question in the chat text. A sub-agent returns a
+   `Needs decision`; the coordinating conversation turns it into the quiz. `method-core.md` → "Questions are quizzes, never prose".
 
 ## What's New in v322.b
 1. **The fiche accepts app domain owners.** `agent` in `chantier-status/1` is a lowercase slug (`^[a-z][a-z0-9-]{1,23}$`):
@@ -589,9 +627,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 322.b  
+**Current Version:** 322.f  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-14
+**Released:** 2026-10-15
 
 ### Version Scheme
 

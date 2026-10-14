@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 322.a-lite  
+**Version:** 322.e-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -35,6 +35,10 @@ states `CODED`/`LANDED`/`DEPLOYED`/`PROVEN`, never merged) before the Debrief. `
 newly added intervention or task file without `Journey:` + `Proof:` (318.a). At the Recette, `vera`
 reviews the slice once (opus) and `sage` runs the Proof. Canonical spec:
 **`method-core.md` → "The two-moment contract — Cadrage · Recette"**.
+
+Questions to the operator are **quizzes, never prose**: prepared in advance and asked with
+`AskUserQuestion` (recommended option first), never written as questions in the chat text
+(`method-core.md` → "Questions are quizzes, never prose").
 
 ## Code Conventions
 
@@ -86,7 +90,8 @@ renders small, unstyled and unclickable). Canonical spec: **`method-core.md` →
 - Section emojis are fixed landmarks (📊 🧠 🤝 ⚖️ ➡️ ⚠️); the title emoji is the real status.
 - `Avancement` = the global project, not the turn. Ratio only when actually counted; never invented.
 - Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Then the `▶ Prompt suivant`
-  block, the only fenced thing in a closing.
+  block (none in a chantier: the supervisor's `Suite` names the action it takes itself), the only
+  fenced thing in a closing.
 - Small answer → one landing line instead. Delegated sub-agents never emit a Debrief, nor does a
   chantier sub-session — it updates its fiche (`sprints-method.md` → "The chantier").
 

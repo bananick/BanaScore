@@ -37,6 +37,19 @@
             "type": "command",
             "command": "node",
             "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/wip-sync.mjs"
+            ],
+            "timeout": 30,
+            "statusMessage": "Mirroring uncommitted work to GitHub..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-telemetry.mjs"
             ],
             "timeout": 20,
@@ -117,6 +130,34 @@
             ],
             "timeout": 15,
             "statusMessage": "Preparing Flight Deck..."
+          }
+        ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/flight-deck.mjs",
+              "--mode",
+              "startup-hook"
+            ],
+            "timeout": 15,
+            "statusMessage": "Listing active work..."
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/branch-sweep.mjs",
+              "--apply",
+              "--landed-only",
+              "--auto"
+            ],
+            "timeout": 90,
+            "statusMessage": "Cleaning integrated branches..."
           }
         ]
       }

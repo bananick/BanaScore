@@ -75,6 +75,8 @@ Les réponses sont écrites dans le fichier de tâche / d'intervention (`Journey
 
 **Milieu — autonome.** Inchangé : pas de « je continue ? », pas de question de nommage, pas de check-in de milieu de build. Seule la conflict gate (modèle de données, permissions, périmètre, irréversible) arrête pour un `### Needs decision`.
 
+**Questions = quiz, jamais de la prose.** Toute question posée à Nicolas (Cadrage, `Needs decision`, ambiguïté en cours de route, accepter/rouvrir/différer) est **préparée à l'avance et posée avec `AskUserQuestion`** : ≤ 4 questions, 2–4 options, la recommandée en premier, une ligne de conséquence par option. Jamais une question écrite dans le texte du chat — il n'a pas à taper une réponse qu'un choix aurait suffi à porter. Un sous-agent ne peut pas poser : il rend un `Needs decision`, et cette conversation en fait le quiz. Le « je continue ? » reste interdit : le quiz sert un vrai choix, pas une permission.
+
 **✅ Recette — avant le Debrief.**
 - La **table de recette** : chaque livrable demandé au Cadrage → montré (lien / preuve) ou non. Sans exception ; un compteur de tests ne remplace pas la chose demandée.
 - **Quatre états**, jamais fusionnés : `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`. « Landed » est un push ; il n'est jamais rapporté comme déployé ou prouvé sans sa propre preuve (révision servie · run observé).
@@ -162,6 +164,8 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 ### Prompt suivant
 
 Immediately after the Debrief, when `Suite` is not `terminé`, add exactly **one** fenced code block labeled `**▶ Prompt suivant** (copier-coller) :`. Self-contained — goal, app/repo + key paths, constraints, acceptance — pasteable into a fresh Claude Code window with zero extra context. If the next step is a shell command, fence it as `bash` so the app shows a Run button. One prompt only: the single most useful next action, not a menu.
+
+**Exception — a chantier: no `▶ Prompt suivant`.** In a chantier (a supervision session and its sub-sessions), neither a sub-session nor the supervisor's Debrief carries one. The next step is an action the supervisor takes itself — a suggested-task chip carrying the brief, or a typed `SendMessage` to an existing sub-session — and a `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names that action. No copy-paste block. Outside a chantier the rule above stands.
 
 The Debrief, then the Prompt suivant, is the last thing in the answer unless a tool/system directive must come after it.
 

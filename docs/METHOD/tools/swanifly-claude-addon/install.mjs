@@ -33,7 +33,8 @@
  *   - docs/project/design/PORT-MAP-TEMPLATE.md -> app docs (OVERWRITE — reference template for the /port loop)
  *   - .claude/hooks/no-mock-guard.ps1 -> app/.claude      (OVERWRITE)
  *   - .claude/hooks/session-telemetry.mjs -> app/.claude  (OVERWRITE — appends the ledger; hooks no longer commit it since v318.a)
- *   - .claude/hooks/{ship-push.sh,land.mjs,verify-gate.mjs} -> app/.claude (OVERWRITE — the "land, don't ship" engine, v313.a)
+ *   - .claude/hooks/{ship-push.sh,land.mjs,verify-gate.mjs,gate-lock.mjs} -> app/.claude (OVERWRITE — the "land, don't ship" engine, v313.a;
+ *       gate-lock.mjs is the per-repository landing lock land.mjs and verify-gate.mjs import — optional at runtime, so the two still gate without it)
  *   - .claude/hooks/flight-deck.mjs   -> app/.claude      (OVERWRITE — /brief + the SessionStart resume hook, v316.a)
  *   - .claude/hooks/pilotage-refresh.mjs -> app/.claude  (OVERWRITE — rebuilds docs/pilotage/index.html
  *       at Stop, but ONLY when the turn touched docs/sprints/** or chantiers.mjs; inert and silent
@@ -41,6 +42,9 @@
  *   - .claude/hooks/chantier-status.mjs + .claude/hooks/lib/chantier-status.mjs -> app/.claude  (OVERWRITE — Supervision v2:
  *       the Stop hook that blocks a stop while a chantier sub-session's fiche docs/chantiers/{chantier}/{slice}.json is
  *       invalid or stale; a silent no-op in any session whose branch has no fiche)
+ *   - .claude/hooks/wip-sync.mjs + branch-sweep.mjs + .claude/hooks/lib/branch-hygiene.mjs -> app/.claude  (OVERWRITE — branch lifecycle: the Stop hook that
+ *       mirrors uncommitted work on refs/wip/<branch> (guarded: private origin, content scan, kill switch); branch-sweep.mjs, the SessionStart sweep that
+ *       deletes integrated branches and can never merge a PR; the shared classifier behind both, land.mjs --sweep and the flight-deck report)
  *   - .gitignore                     -> app root         (APPEND `.method/`, the telemetry ledger and the raw-extracts line (RAW_EXTRACTS_IGNORE)
  *                                                          once each, only if a .gitignore exists)
  *   - .claude/settings.json           -> app/.claude      (MERGE the no-mock PostToolUse hook + the Stop/SessionEnd/SessionStart hooks, idempotent PER ENTRY)
@@ -574,9 +578,10 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // port of the machine-local ~/.claude/scripts/flight-deck.ps1, so the pickup card works
   // on every checkout, not just the one PowerShell profile it used to be pinned to.
   // Each of these must travel with the METHOD, not live only on one machine.
+  // gate-lock (322.f) is the landing lock library land.mjs and verify-gate.mjs import; it travels with them.
   // chantier-status (Supervision v2) is the Stop hook that keeps a chantier sub-session's fiche
   // valid and fresh; it imports hooks/lib/chantier-status.mjs, so the two travel together.
-  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs"]) {
+  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs"]) {
     const src = join(payload, "hooks", name);
     if (!existsSync(src)) continue;
     put(src, join(appRoot, ".claude", "hooks", name), `.claude/hooks/${name}`,
@@ -649,7 +654,7 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // entry carries a distinctive script name — use it as the idempotency marker.
   const markerOf = (entry) => {
     const s = JSON.stringify(entry);
-    for (const m of ["session-telemetry", "ship-push", "land.mjs", "no-mock-guard", "flight-deck", "pilotage-refresh", "chantier-status"]) if (s.includes(m)) return m;
+    for (const m of ["wip-sync", "branch-sweep", "startup-hook", "session-telemetry", "ship-push", "land.mjs", "no-mock-guard", "flight-deck", "pilotage-refresh", "chantier-status"]) if (s.includes(m)) return m;
     return s;
   };
   for (const event of ["Stop", "SessionEnd", "SessionStart"]) {

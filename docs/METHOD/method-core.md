@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 322.a  
+**Version:** 322.f  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -219,6 +219,27 @@ lookup, a one-line fix. (Junia may draft the quiz; only the coordinating convers
 **Middle — autonomous.** No "shall I continue?", no naming questions, no mid-build check-ins. Only
 the conflict gate (data model, permissions, scope, irreversible) stops for a `### Needs decision`.
 
+**Questions are quizzes, never prose (322.c).** Every question put to the operator — the Cadrage, a
+conflict-gate `### Needs decision`, an ambiguity met mid-build, the Recette's accept / reopen / defer,
+any "which one?" — is **prepared in advance and asked as a quiz with the `AskUserQuestion` tool**,
+never as a question written into the chat text. The operator must not have to type an answer to
+something the agent could have turned into a choice.
+
+- **Prepare, then ask once.** Gather everything that blocks into one call (≤ 4 questions, 2–4 options
+  each, recommended option **first** and marked, one line of consequence per option, `multiSelect`
+  when the options are not exclusive). "Other" is added by the tool. Never drip questions across turns.
+- **The text is context, the quiz is the question.** The Debrief's `Tu décides` row names the decision
+  in one line; the call that carries it is the last thing of the turn. A trailing "qu'en penses-tu ?"
+  / "want me to…?" in prose is a defect.
+- **A sub-agent cannot ask.** It hands back its open questions as a `### Needs decision` block with
+  options and a recommendation; the coordinating conversation turns it into the quiz.
+- **Free text only when it is the answer** (a name, a URL, a number): the quiz still offers the best
+  guess as an option, "Other" takes the rest.
+- **No `AskUserQuestion` on the surface** (Cursor, Codex, headless, scheduled run): write the same
+  quiz as one block — numbered questions, lettered options, recommended first — never loose
+  questions scattered in the prose.
+- "Shall I continue?" check-ins stay banned: a quiz is for a real choice, not for permission.
+
 **✅ Recette — before the Debrief.** (1) The **recette table**: each deliverable asked at Cadrage →
 shown (link / evidence) or not; a test count never substitutes for the thing asked. (2) **Four
 states, never merged:** `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`. Landed is a push; it is never
@@ -377,6 +398,8 @@ the report carries a `### Needs decision` block with a recommendation. Two legit
 explicit: resolve the reason, or — when the exception fired on something genuinely harmless — land it
 with **`[land-anyway]`** in the commit subject and say so in the report.
 
+Root `firestore.rules` / `storage.rules` have a tooling lane in `verify-gate.mjs` (322.f — a lane, not a pass) but stay held by the **schema** exception; `[land-anyway]` / `--force-land` may still override it, an honour-system call the operator made on 2026-10-15 against Kasper's recommendation.
+
 **Forbidden, always:** `gh pr merge --admin` · force-push · `git rebase` · deleting the marker to
 fake a green · `git add -A` sweeping someone else's in-flight work into your commit.
 
@@ -478,7 +501,8 @@ small, monospace and unstyled: no bold, no colour, no clickable paths, and a fix
 long content to wrap badly or be truncated. Markdown gives real emphasis, real emoji, spacing that
 paginates, wrapping that follows the window, and `file.md:42` paths the operator can click. The
 **only** fenced block in a closing is the `▶ Prompt suivant`, which stays fenced because it exists to
-be copy-pasted (fence it as `bash` for a command, so the app renders a Run button).
+be copy-pasted (fence it as `bash` for a command, so the app renders a Run button). In a chantier
+there is none (see "Cadence").
 
 ### The Debrief — closing card
 
@@ -536,10 +560,12 @@ PROVEN, with its evidence}
 - **`Tu décides` — 0 to 2 items, recommendation first**, same grammar as a `### Needs decision`
   block, which stays the long form in the body when a decision needs its options laid out. Nothing to
   decide → one line: `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` A decision is never buried in
-  the prose above the card.
+  the prose above the card, and it is **asked as a quiz** (`AskUserQuestion`, see "Questions are quizzes,
+  never prose"), not left as a question for the operator to answer by typing.
 - **`Suite` — exactly one action**, the single most useful next move (`terminé` when truly finished),
   followed by the `▶ Prompt suivant` block: one fenced, self-contained prompt — goal, repo and key
-  paths, constraints, acceptance — pasteable into a fresh window with zero extra context.
+  paths, constraints, acceptance — pasteable into a fresh window with zero extra context. Outside a
+  chantier only (see "Cadence").
 - **`Vigilance` only when the risk is real and sharp.**
 - **Link what is clickable.** Paths as markdown links (`[method-core.md](docs/METHOD/method-core.md)`),
   commits, commands and error strings as inline code. That is half the reason the card is not fenced.
@@ -559,9 +585,16 @@ PROVEN, with its evidence}
 
 | Answer | Close with |
 |---|---|
-| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/land`, `/ship`, `/relay`, `/review` | Full Debrief + `▶ Prompt suivant` |
+| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/land`, `/ship`, `/relay`, `/review` | Full Debrief + `▶ Prompt suivant` (none in a chantier — below) |
 | Small — a question answered, a lookup, a one-line fix | One landing line: `✅ {ce qui est fait} · suite → {l'action}` |
 | Nothing done — refusal, clarification, pure conversation | No card at all |
+
+**In a chantier there is no `▶ Prompt suivant` (322.e; operator rule, 2026-10-14).** Neither a
+sub-session (it renders no card) nor the supervisor's Debrief carries a copy-paste block. The next step
+is an action the supervisor takes itself — a suggested-task chip carrying the brief, or a typed
+`SendMessage` to an existing sub-session — and a `Suite` row of the pilot dashboard (the
+control-tower table); the Debrief's `➡️ Suite` names that action. Outside a chantier the block stays.
+`sprints-method.md` → "The chantier".
 
 **Who renders it.** Only the agent speaking to the operator — the orchestrator, or a single agent
 working directly with him. A **delegated sub-agent never emits a Debrief**: its report goes to its

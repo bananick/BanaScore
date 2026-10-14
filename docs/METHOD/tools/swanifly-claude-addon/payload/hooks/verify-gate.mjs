@@ -27,13 +27,28 @@
  * `scripts/land.mjs` refuses to land unless that marker matches HEAD, so a stale
  * green from three commits ago cannot wave work through.
  *
+ * Serialization (2026-09-29, upstreamed from bananaevents). Several sessions land in parallel from git
+ * worktrees, and N heavy gates at once (lint · type-check · test:gate · build) starve the machine — vitest
+ * times out and the gate goes red on a fine diff. So the HEAVY phase (an app root whose scripts will really
+ * execute, or the gate's own self-test) takes ONE lock per repository, shared by all worktrees:
+ * `<main checkout>/.method/gate.lock` (`METHOD_GATE_LOCK_FILE` overrides it). Others wait with a
+ * visible message, up to `--lock-wait` minutes (default 180); past that the verdict is `blocked`
+ * — nothing ran, fail closed, never a pass. Light diffs (docs, tooling, roots with no toolchain)
+ * never queue. `land.mjs` holds the same lock for the whole landing (merge → verify → push) and
+ * its verify child re-enters through `METHOD_GATE_LOCK_TOKEN`. The lock is a scheduling aid, not a check:
+ * if `gate-lock.mjs` is missing or throws, the gate warns and runs unserialized, exactly as before.
+ * See gate-lock.mjs.
+ *
+ * `--plan` prints ONE JSON line (mode, heavy, lane counts, app roots) and exits 0 — no marker,
+ * no script, no lock. `land.mjs` uses it to know, before it merges, whether the gate is heavy.
+ *
  * Usage:
- *   node scripts/verify-gate.mjs [--base origin/main] [--json] [--quiet]
+ *   node scripts/verify-gate.mjs [--base origin/main] [--json] [--quiet] [--plan] [--lock-wait <min>]
  * Exit: 0 green · 1 red (a check failed) · 2 blocked (nothing can verify it)
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 
 const argv = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -50,6 +65,11 @@ const QUIET = has('quiet') || AS_JSON;
 const TIMEOUT = Number(flag('timeout', 1800)) * 1000;
 
 const say = (...a) => { if (!QUIET) console.log(...a); };
+
+// The lock library sits next to this file. Optional by design: a copy without it (or with one
+// that fails to load) still gates — the lock only schedules heavy gates, it never judges a diff.
+const LOCK = await import('./gate-lock.mjs').catch(() => null);
+const LOCK_WAIT_MIN = (() => { const m = Number(flag('lock-wait', 180)); return Number.isFinite(m) && m >= 0 ? m : 180; })();
 
 // ── git helpers ──────────────────────────────────────────────────────────────
 const git = (args, cwd = process.cwd()) =>
@@ -134,12 +154,21 @@ const TOOLING = [
   // syntax. Fell through every lane into "unclassifiable paths (fail closed)" and blocked /land on the
   // first crew diff that touched them (bananaevents crew reshape 6ab923b0, 2026-09-28).
   /(^|\/)\.codex\//,
+  // Firebase security rules AT THE REPO ROOT — deploy config, no node-checkable syntax. Fell through every lane
+  // into "unclassifiable (fail closed)" (bananaevents venues admin-only, 2026-09-24). Classifying them does
+  // NOT wave them through: land.mjs's `schema` exception still holds any rules diff (nested ones too) for an
+  // explicit `[land-anyway]` / `--force-land` backed by an operator decision.
+  // Anchored to the root on purpose (Kasper, 322.f): a nested `espace/firestore.rules` belongs to its app and keeps
+  // that app's gate — classify() reaches it through the app-root lookup, not through this list.
+  /^(firestore|storage)\.rules$/,
 ];
 // Firestore rules + indexes of the telemetry backend (`telemetry-backend/`, project swanifly-ia). Scoped to
-// that folder on purpose: everywhere else these files stay "unclassifiable (fail closed)". Its `functions/`
-// folder is an ordinary app root (own package.json: typecheck + test + build, needs `npm ci`).
+// that folder on purpose: they get a static check (see rulesCheck) that the generic `*.rules` tooling entry above
+// does not give, so `classify()` tests this list BEFORE TOOLING. Everywhere else `firestore.indexes.json` stays
+// "unclassifiable (fail closed)", a root-level `*.rules` is plain deploy config and a nested one goes to its app's
+// gate. Its `functions/` folder is an ordinary app root (own package.json: typecheck + test + build, needs `npm ci`).
 const RULES = [/^telemetry-backend\/firestore\.(rules|indexes\.json)$/];
-const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|css|scss|html)$/i;
+const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|css|scss|html|snap)$/i;
 // Narrower than CODE_EXT on purpose: the set a repo-root app's typecheck/test/build
 // scripts would actually plausibly compile. css/html/vue/svelte at the repo root stay
 // on the CODE_EXT/tooling fallback below even when the root is a verifying app root.
@@ -147,9 +176,57 @@ const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|css|scss|html)$/i;
 // key fails `next build`); without it every i18n diff fell through all lanes into
 // "unclassifiable (fail closed)" (2026-09-14). Root-level `*.json` never gets here:
 // TOOLING's `/^[^/]+\.json$/` catches package.json & co first.
-const ROOT_APP_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|json)$/i;
+// `snap` is a vitest file snapshot (`__tests__/__snapshots__/*.snap`) — a test artifact the
+// app's own `test:gate` consumes: a missing or drifted snapshot fails the gate exactly like a
+// missing i18n key fails the build. Without it the first committed snapshot (bananaevents 195-e,
+// 2026-09-18, upstreamed from 887092749) fell through every lane into "unclassifiable (fail closed)"
+// AFTER lint, type-check, test:gate and build had all passed.
+const ROOT_APP_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|json|snap)$/i;
 
-/** Nearest ancestor directory holding a package.json (an "app root"), repo-relative. */
+/**
+ * npm workspaces roll-up (upstreamed from Respirit `01a866e`). A package.json that is a workspace of a parent
+ * package.json declaring `"workspaces"` is verified through that parent: a change in `app/shared` must run
+ * `app`'s lint/typecheck/test/build over every workspace, not only shared's own scripts. Members are matched
+ * against the parent's `workspaces` (array or `{ packages }`): an exact directory, or a one-level `dir/*` glob;
+ * any other pattern (`**`, negation) is not understood and leaves the root as it was.
+ * `workspacesRoot('app/shared')` → 'app'; any other directory → itself. Memoized per root.
+ *
+ * It only RE-ROUTES which root verifies an app file; it never decides the lane. `classify()` decides the lane from
+ * the file's OWN package.json, and a member that rolls up to `.` is still app code: the repo root then goes through
+ * the same capability check as any app root, so a root with no scripts is `blocked`, never a silent pass (Kasper, 322.f).
+ */
+const _workspacesRoot = new Map();
+function workspacesRoot(root) {
+  if (root === '.') return root;
+  if (_workspacesRoot.has(root)) return _workspacesRoot.get(root);
+  let found = root;
+  const child = resolve(REPO, root);
+  const stop = resolve(REPO);
+  let dir = dirname(child);
+  while (dir.length >= stop.length) {
+    const manifest = join(dir, 'package.json');
+    if (existsSync(manifest)) {
+      let globs = [];
+      try {
+        const ws = JSON.parse(readFileSync(manifest, 'utf8')).workspaces;
+        globs = Array.isArray(ws) ? ws : (ws?.packages ?? []);
+      } catch { globs = []; }
+      const rel = relative(dir, child).replace(/\\/g, '/');
+      const isMember = globs.some((g) => {
+        const glob = String(g).replace(/^\.\//, '').replace(/\/+$/, '');
+        return glob === rel || (glob.endsWith('/*') && dirname(rel) === glob.slice(0, -2));
+      });
+      if (isMember) { found = relative(REPO, dir).replace(/\\/g, '/') || '.'; break; }
+    }
+    const up = dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  _workspacesRoot.set(root, found);
+  return found;
+}
+
+/** Nearest ancestor directory holding a package.json (the file's OWN root), repo-relative — before any workspace roll-up. */
 function appRootOf(file) {
   let dir = dirname(resolve(REPO, file));
   const stop = resolve(REPO);
@@ -188,11 +265,14 @@ function rootHasVerifyingScript() {
 
 function classify(file) {
   if (DOC.some((r) => r.test(file))) return { lane: 'doc' };
-  if (TOOLING.some((r) => r.test(file))) return { lane: 'tooling' };
   if (RULES.some((r) => r.test(file))) return { lane: 'rules' };
-  const root = appRootOf(file);
-  if (root && root !== '.') return { lane: 'app', root };
-  if (root === '.' && ROOT_APP_EXT.test(file) && rootHasVerifyingScript()) return { lane: 'app', root: '.' };
+  if (TOOLING.some((r) => r.test(file))) return { lane: 'tooling' };
+  // The lane comes from the file's OWN nearest package.json; only the root that verifies it is rolled up to the
+  // workspaces parent. Deciding the lane from the rolled-up root would send a member's .vue/.css (or any file under
+  // a script-less repo root) through the repo-root rules below — tooling lane, node --check on nothing, green.
+  const own = appRootOf(file);
+  if (own && own !== '.') return { lane: 'app', root: workspacesRoot(own) };
+  if (own === '.' && ROOT_APP_EXT.test(file) && rootHasVerifyingScript()) return { lane: 'app', root: '.' };
   if (CODE_EXT.test(file)) return { lane: 'tooling' };       // loose hub-level script
   return { lane: 'unknown' };
 }
@@ -310,6 +390,36 @@ for (const f of files) {
   if (c.lane === 'app') appRoots.add(c.root);
 }
 
+// Self-gating: the gate cannot trust itself on prose alone. If this diff touches the gate's own
+// source or its test suite, and the root exposes `test:gate`, actually run it — a passing
+// `node --check` on `verify-gate.mjs` proves only that it parses, not that it still behaves.
+// Stays in the tooling lane on purpose: `.` is never added to `appRoots` for this, it is a
+// gate-specific check, not app verification.
+const selfTest = lanes.tooling.some((f) => /(^|\/)verify-gate\.mjs$|^tests\//.test(f)) && Boolean(readScripts('.')['test:gate']);
+
+// Heavy = a real npm script will actually execute. A root with no toolchain skips its checks in
+// milliseconds (see the app loop) — it must not queue behind a 20-minute gate for nothing.
+// Mirrors the app loop's own test: a check has a script AND (node_modules exists OR the script
+// is plain `node`). Docs / tooling-only diffs are never heavy (`node --check` is cheap).
+const rootRunsSomething = (root) => {
+  const scripts = readScripts(root);
+  const installed = existsSync(join(REPO, root, 'node_modules'));
+  return CHECK_ORDER.some((c) => {
+    const script = c.scripts.find((s) => scripts[s]);
+    return Boolean(script) && (installed || !needsInstall(String(scripts[script] ?? '')));
+  });
+};
+const heavy = selfTest || [...appRoots].some(rootRunsSomething);
+const mode = appRoots.size ? 'app' : lanes.rules.length ? 'rules' : lanes.tooling.length ? 'tooling' : 'docs-only';
+const laneCounts = Object.fromEntries(Object.entries(lanes).map(([k, v]) => [k, v.length]));
+
+// `--plan`: say what this diff would cost, run nothing, write nothing (no marker), take no lock.
+// land.mjs asks before it merges, so it can queue for the lock only when the gate is heavy.
+if (has('plan')) {
+  console.log(JSON.stringify({ plan: 1, sha: HEAD, base: BASE, mode, heavy, files: files.length, lanes: laneCounts, apps: [...appRoots] }));
+  process.exit(0);
+}
+
 const checks = [];
 const reasons = [];
 const skipped = [];
@@ -326,6 +436,40 @@ if (lanes.unknown.length) {
   reasons.push(`unclassifiable paths (fail closed): ${lanes.unknown.slice(0, 5).join(', ')}`);
 }
 
+// One heavy gate at a time per repository (see the header). Taken before anything expensive
+// runs, held until process exit (the lib's exit hook frees it, whatever the verdict).
+let lockInfo = null;   // → marker.lock, only the keys that apply
+let gateDenied = false;
+if (heavy) {
+  if (!LOCK) {
+    console.error('⚠ gate-lock.mjs missing — heavy phase runs unserialized');
+    lockInfo = { unavailable: true };
+  } else {
+    const mins = (ms) => Math.round(ms / 60_000);
+    let got = null;
+    try {
+      got = LOCK.acquireGateLock({
+        path: LOCK.gateLockPath(REPO),
+        info: { label: basename(REPO), worktree: REPO, branch: BRANCH, cmd: 'verify-gate' },
+        maxWaitMs: LOCK_WAIT_MIN * 60_000,
+        onWait: (h, waitedMs, lockFile) => console.error(`⏳ gate lock held by ${LOCK.describeHolder(h, lockFile)} — waiting (${mins(waitedMs)} min so far, up to ${LOCK_WAIT_MIN} min)`),
+        onStale: (h) => console.error(`♻ removed a stale gate lock left by ${LOCK.describeHolder(h)}`),
+      });
+    } catch (e) {
+      console.error(`⚠ gate lock unavailable (${e?.message ?? e}) — heavy phase runs unserialized`);
+      lockInfo = { unavailable: true };
+    }
+    if (got?.ok) lockInfo = { waitedMs: got.waitedMs, ...(got.reentrant ? { reentrant: true } : {}) };
+    else if (got) {
+      // Fail closed: waiting out the budget is not a pass. Nothing heavy runs, the verdict says so.
+      gateDenied = true;
+      lockInfo = { waitedMs: got.waitedMs, denied: true };
+      verdict = 'blocked';
+      reasons.push(`gate lock busy — held by ${LOCK.describeHolder(got.holder, got.path)}; waited ${mins(got.waitedMs)} min, nothing ran (fail closed). Re-run when it frees, or pass --lock-wait <min>.`);
+    }
+  }
+}
+
 if (lanes.tooling.length) {
   const syn = nodeSyntaxCheck(lanes.tooling);
   // node --check only understands .mjs/.cjs/.js; a .ts/.tsx that lands in the tooling
@@ -338,19 +482,13 @@ if (lanes.tooling.length) {
   if (syn.bad.length) { verdict = 'red'; reasons.push(`syntax error in ${syn.bad.length} tooling file(s)`); }
   say(`tooling  ${lanes.tooling.length} file(s) · node --check ${syn.bad.length ? '✗' : '✓'}${uncheckedTs.length ? ` · not checked: ${uncheckedTs.join(', ')}` : ''}`);
 
-  // Self-gating: the gate cannot trust itself on prose alone. If this diff touches the
-  // gate's own source or its test suite, and the root exposes `test:gate`, actually run
-  // it — a passing `node --check` on `verify-gate.mjs` proves only that it parses, not
-  // that it still behaves. Stays in the tooling lane on purpose: `.` is never added to
-  // `appRoots` for this, it is a gate-specific check, not app verification.
-  if (lanes.tooling.some((f) => /(^|\/)verify-gate\.mjs$|^tests\//.test(f))) {
-    const rootScripts = readScripts('.');
-    if (rootScripts['test:gate']) {
-      say('tooling  self-test: npm run test:gate …');
-      const r = runScript('.', 'test:gate');
-      checks.push({ root: '.', check: 'test:gate', ok: r.ok, ms: r.ms, tail: r.tail });
-      if (!r.ok) { verdict = 'red'; reasons.push('gate self-test failed'); }
-    }
+  // Self-gating (`selfTest`, computed above the lock): run the root's `test:gate` when this diff
+  // touches the gate itself. Skipped — never passed — when the lock was denied.
+  if (selfTest && !gateDenied) {
+    say('tooling  self-test: npm run test:gate …');
+    const r = runScript('.', 'test:gate');
+    checks.push({ root: '.', check: 'test:gate', ok: r.ok, ms: r.ms, tail: r.tail });
+    if (!r.ok) { verdict = 'red'; reasons.push('gate self-test failed'); }
   }
 }
 
@@ -361,7 +499,8 @@ if (lanes.rules.length) {
   say(`rules    ${rc.count} file(s) · static check ${rc.bad.length ? '✗' : '✓'}`);
 }
 
-for (const root of [...appRoots].sort()) {
+// A denied lock skips every app root: nothing heavy ran, and the verdict is already `blocked`.
+for (const root of gateDenied ? [] : [...appRoots].sort()) {
   const scripts = readScripts(root);
   const available = CHECK_ORDER.filter((c) => c.scripts.some((s) => scripts[s]));
   const verifying = available.filter((c) => VERIFYING.has(c.id));
@@ -491,7 +630,6 @@ if (noCadrage.length) {
   say(`cadrage  ${noCadrage.length} new file(s) without Journey/Proof ✗`);
 }
 
-const mode = appRoots.size ? 'app' : lanes.rules.length ? 'rules' : lanes.tooling.length ? 'tooling' : 'docs-only';
 const marker = {
   sha: HEAD,
   branch: BRANCH,
@@ -502,10 +640,11 @@ const marker = {
   reasons,
   files: files.length,
   deleted: deletedFiles.size,
-  lanes: Object.fromEntries(Object.entries(lanes).map(([k, v]) => [k, v.length])),
+  lanes: laneCounts,
   apps: [...appRoots],
   skipped,
   checks,
+  ...(lockInfo ? { lock: lockInfo } : {}),
 };
 
 const dir = join(REPO, '.method');
