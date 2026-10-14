@@ -10,7 +10,7 @@
     "v": { "const": 1, "description": "schema version" },
     "chantier": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 60, "description": "the chantier slug (= sidebar group `{app} · {chantier}`)" },
     "slice": { "type": "string", "minLength": 1, "maxLength": 8, "description": "slice code, e.g. T1" },
-    "agent": { "enum": ["junia", "brian", "sage", "watson", "kasper", "vera", "nova", "gordon", "iris", "lucia", "penny", "oscar"], "description": "owner of the slice (picks the avatar)" },
+    "agent": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,23}$", "description": "owner of the slice (picks the avatar): a cohort id (junia … oscar) or a domain owner declared in the app's business pack (docs/project/business/README.md) — a lowercase slug" },
     "title": { "type": "string", "minLength": 1, "maxLength": 40, "description": "the object of the slice, in operator words" },
     "branch": { "type": "string", "minLength": 1, "maxLength": 200, "description": "the slice branch — the Stop hook finds the fiche by it" },
     "journey": { "type": "string", "minLength": 1, "maxLength": 200, "description": "CUJ slug or path" },

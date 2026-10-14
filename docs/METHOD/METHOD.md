@@ -1,4 +1,4 @@
-# METHOD v322.a
+# METHOD v322.b
 
 ## Quick Start
 
@@ -31,6 +31,15 @@
 
 ---
 
+## What's New in v322.b
+1. **The fiche accepts app domain owners.** `agent` in `chantier-status/1` is a lowercase slug (`^[a-z][a-z0-9-]{1,23}$`):
+   a cohort id or a domain owner declared in the app's business pack (riley, sacha, elena…), no longer an enum of
+   the 12 cohort ids. A domain owner's avatar is the one its business pack declares, 🧑 by default.
+2. **The supervisor archives a finished sub-session on its own.** Four machine-checked conditions — fiche `landed` with
+   its `head` on `origin/main`; session idle with a clean worktree; nothing open in the fiche; the archive named in
+   its Debrief — and no operator OK. A missing condition turns the title 🟡 and is named.
+   `sprints-method.md` → "The chantier" → "Archiving".
+
 ## What's New in v322.a
 1. **Supervision v2 — a chantier runs on data and events.** Each sub-session keeps one typed fiche
    (`docs/chantiers/{chantier}/{slice}.json`, schema `chantier-status/1`) and renders no Debrief; a `Stop` hook
@@ -53,8 +62,8 @@
 ## What's New in v321.a
 1. **The chantier — a supervision session + one sub-session per slice.** A workstream of ≥ 2 code-writing
    slices runs as one supervision session (opus, writes no code, lands each slice, one folded Debrief) and
-   one sub-session per slice (sonnet, own branch + worktree), reporting by message in `Done / State / Next`,
-   grouped in the sidebar as `{app} · {chantier}` and archived once landed. Sub-agents stay the default
+   one sub-session per slice (sonnet, own branch + worktree), each reporting through one typed fiche,
+   grouped in the sidebar as `{app} · {chantier}` and archived by the supervisor on its own once finished. Sub-agents stay the default
    inside a slice; the sprint stays the exception. `sprints-method.md` → "Sessions & branches".
 
 ## What's New in v320.d
@@ -580,7 +589,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 322.a  
+**Current Version:** 322.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-14
 

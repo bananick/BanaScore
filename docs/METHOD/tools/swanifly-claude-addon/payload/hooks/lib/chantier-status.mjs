@@ -5,7 +5,10 @@
 // (schema `chantier-status/1`). Change the schema and this file together;
 // tests/chantier-status.lib.test.mjs fails if the enums, required fields or caps drift apart.
 
+/** The 12 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
 export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar'];
+/** `agent` = a cohort id or a domain owner declared in the app's business pack (docs/project/business/README.md): a lowercase slug. */
+export const AGENT_RE = /^[a-z][a-z0-9-]{1,23}$/;
 export const STATES = ['planning', 'working', 'waiting', 'blocked', 'landed', 'parked'];
 export const GATE_KEYS = ['lint', 'typecheck', 'tests', 'build'];
 export const GATE_VALUES = ['pass', 'fail', 'skip', 'unknown'];
@@ -120,7 +123,7 @@ export function validateFiche(f, nowMs = Date.now()) {
     v: (v, p) => { if (v !== 1) errs.push(`${p}: must be 1, got ${fmt(v)}`); },
     chantier: (v, p) => str(errs, p, v, 60, { re: SLUG_RE }),
     slice: (v, p) => str(errs, p, v, CAPS.slice),
-    agent: (v, p) => oneOf(errs, p, v, AGENTS),
+    agent: (v, p) => { if (typeof v !== 'string' || !AGENT_RE.test(v)) errs.push(`${p}: must be a lowercase slug (${AGENT_RE.source}) naming a cohort id or a business-pack domain owner, got ${fmt(v)}`); },
     title: (v, p) => str(errs, p, v, CAPS.title),
     branch: (v, p) => str(errs, p, v, 200),
     journey: (v, p) => str(errs, p, v, 200),

@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 322.a  
+**Version:** 322.b  
 **Last Updated:** 2026-10-14  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 322.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 322.b (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,15 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**322.b** (2026-10-14) — **Patch: the fiche accepts app domain owners; the supervisor archives finished sub-sessions on its own**
+
+- **Problem.** (A) `agent` in `chantier-status/1` was an enum of the 12 cohort ids, which contradicted the rule that domain owners (riley, sacha, elena…) are app-level, declared in the app's business pack (`agents-method.md` → "Domain owners & the business pack"): a chantier supervisor in bananaevents could not give a slice to its own owner. (B) 322.a archived a sub-session "on the operator's OK", so a finished session stayed in the sidebar and hid where attention is needed. Both decided by the operator on 2026-10-14: `docs/interventions/2026-10-14-Lucia-supervision-v2.md` → "Follow-up 2026-10-14".
+- **CHANGED — `agent` is a lowercase slug `^[a-z][a-z0-9-]{1,23}$`** ("a cohort id (junia … oscar) or a domain owner declared in the app's business pack"). `docs/METHOD/templates/chantier-status.schema.json`; `validateFiche` in `.claude/hooks/lib/chantier-status.mjs` checks the pattern (new export `AGENT_RE`; `AGENTS` stays exported as the informational cohort list) — payload copy `hooks/lib/chantier-status.mjs` byte-identical; `tests/chantier-status.lib.test.mjs` (a domain-owner slug passes; `Riley`, `a`, `bad_slug!` fail; the drift guard compares the schema pattern with `AGENT_RE`) and `tests/chantier-status.hook.test.mjs`. Avatars: the cohort table for a cohort id; for a domain owner the one declared in the business pack's `README.md` (`agents-method.md` names the optional column), 🧑 by default.
+- **CHANGED — automatic archiving** (operator standing order, 2026-10-14; replaces "on the operator's OK" in the chantier doctrine). `sprints-method.md` → "The chantier" → "Archiving" (+ loop steps 3, 5, 6 and the titles paragraph): the supervisor archives a sub-session on its own once *finished* — (1) fiche `landed` and its `head` on `origin/main` (`git merge-base --is-ancestor`); (2) session idle (`isRunning: false`) and worktree clean with nothing unlanded (`git status --porcelain` and `git log origin/main..HEAD` empty — archiving deletes the worktree); (3) no `open` item in `decisions[]` / `operatorActions[]` / `review[]`; (4) the archive named in its Debrief under `🤝 Décidé pour toi` (reversible: `unarchive_session`). A missing condition means no archive: the title goes 🟡 and the supervisor says which one blocks. Aligned: `docs/project/journeys/nicolas-supervise-un-chantier.md` (step 7, Z, test script), the v2 intervention, `METHOD.md` (a 321.a line that still said "archived once landed"). `/land`, `/review`, `/relay` and their payload copies carry no archive wording — grepped, unchanged.
+- **Why a letter.** An existing field relaxed and an existing loop step changed: no new agent, ritual, hook or METHOD file (`versioning.md` → "When to Increment"), as 321.c. Not on the landing exception list (a JSON schema for a fiche, not a Firestore schema; no `SOUL.md`, auth, dependency or deploy change).
+- **Sync effect.** Hub-owned surfaces only: `docs/METHOD/**` (the schema template included), the payload hook lib `hooks/lib/chantier-status.mjs` (an app that edited its copy gets a CLOBBER skip, never an overwrite), and the version string in `CLAUDE.md` / `AGENTS.md`. App-owned files are untouched: where an app declares its owners' avatars is its own `docs/project/business/README.md`.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = on bananaevents · W42 cash: a fiche whose `agent` is a domain owner (e.g. `riley`) passes the Stop hook, and a finished sub-session is archived by the supervisor with the four checks run and the archive named in its Debrief — plus one blocked case (title 🟡, the condition named).
 
 **322.a** (2026-10-14) — **Major: Supervision v2 — a chantier runs on data, not reports; on events, not polling**
 

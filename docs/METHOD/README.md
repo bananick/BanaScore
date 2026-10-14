@@ -1,6 +1,6 @@
-# METHOD v322.a
+# METHOD v322.b
 
-**Version:** 322.a  
+**Version:** 322.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-14  
 **Status:** ✅ Production-Ready
@@ -71,6 +71,12 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v322.b
+
+1. **Fiche `agent` = a slug** — a cohort id or an app domain owner declared in its business pack; no longer a 12-id enum.
+2. **Automatic archiving** — the chantier supervisor archives a finished sub-session on its own (landed and on
+   `origin/main`, idle, clean worktree, nothing open, named in its Debrief); a missing condition turns the title 🟡.
 
 ## What's New in v322.a
 
@@ -327,8 +333,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 322.a  
-**Previous:** 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 322.b  
+**Previous:** 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

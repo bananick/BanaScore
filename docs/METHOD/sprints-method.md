@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 322.a  
+**Version:** 322.b  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -555,7 +555,11 @@ committed on the slice branch, so it lands with the slice and `main` keeps the c
 identity (`v` · `chantier` · `slice` · `agent` · `title` · `branch` · `journey`), status (`state` =
 `planning` · `working` · `waiting` (needs the operator) · `blocked` (cannot proceed) · `landed` ·
 `parked`; `updatedAt`; `head`; `gate`) and the operator's inbox (`progress` done / doing / to do ·
-`decisions[]` · `operatorActions[]` · `review[]`). **References, not summaries:** `evidence[]` holds a
+`decisions[]` · `operatorActions[]` · `review[]`). **`agent` is a lowercase slug**
+(`^[a-z][a-z0-9-]{1,23}$`, 322.b): a cohort id (`junia` … `oscar`) **or a domain owner** (`riley`,
+`sacha`, `elena`…) declared in the app's business pack, `docs/project/business/README.md` — domain
+owners are app-level (`agents-method.md` → "Domain owners & the business pack"), so the schema cannot
+enumerate them. **References, not summaries:** `evidence[]` holds a
 sha, a `file:line`, a URL or a screenshot path — never pasted prose. `updatedAt` is stamped from the
 real clock — `node -e "console.log(new Date().toISOString())"` — never guessed; the hook rejects a
 future time. On `landed`, `head` is the landed sha: the sub-session sets it after `/land` and commits
@@ -596,17 +600,42 @@ the fiche, and the docs lane lands that commit.
    `list_sessions`); read the transcript (`list_events`) **only** when the fiche is missing or stale;
    update the title's state icon; fold new decisions, operator actions and reviews into the
    control-tower table. `PushNotification` **only** for `waiting`, `blocked` or a new `review` item.
+   On a `landed` fiche, run the archive check below.
 4. **Route answers** — each operator answer becomes one typed `SendMessage` into that sub-session.
 5. **Close each slice** — `SendMessage` the sub-session `/review`, then `/land` (it runs both and
-   records Vera's verdict in its fiche) → Sage's proof → `archive_session` on the operator's OK; the
-   group goes when the chantier closes.
+   records Vera's verdict in its fiche) → Sage's proof → **`archive_session` on its own, as soon as
+   the slice is finished** (the four checks of "Archiving" below, no operator OK); the group goes
+   when the chantier closes.
 6. **Report** — the supervisor's Debrief is the chantier's only card; its body is the control-tower
-   table, one row per slice, built from the fiches.
+   table, one row per slice, built from the fiches. Every archive done since the last card is named
+   in it under `🤝 Décidé pour toi`.
+
+**Archiving — automatic and machine-checked (322.b; the operator's standing order, 2026-10-14).** A
+finished session left in the sidebar hides where attention is needed, so the supervisor archives a
+sub-session **on its own, without asking**, as soon as it is finished. *Finished* means four checks,
+all run by command, all true:
+
+1. **Landed on the trunk** — the fiche is `landed` and its `head` is on `origin/main`:
+   `git fetch origin`, then `git merge-base --is-ancestor <head> origin/main`.
+2. **Idle and clean** — `list_sessions` shows `isRunning: false`, and its worktree holds nothing
+   that would be lost (archiving deletes the worktree): `git -C <cwd> status --porcelain` is empty
+   and `git -C <cwd> log origin/main..HEAD` is empty.
+3. **Nothing open** — no `decisions[]`, `operatorActions[]` or `review[]` item with `status: open`.
+4. **Declared** — the archive is named in the supervisor's Debrief under `🤝 Décidé pour toi`; it is
+   reversible (`unarchive_session`).
+
+Any check missing → **no archive**: the title goes 🟡 and the supervisor says which check blocks
+(e.g. "T2: 2 uncommitted files in the worktree"). The check runs at the idle notice of a `landed`
+fiche and again after each answer routed into that sub-session; a fiche that is not `landed` is never
+archived. The operator's standing order is the authorization and `unarchive_session` is the undo, so
+no OK is asked; the group `{app} · {chantier}` goes when its last sub-session is archived.
 
 **Titles — applied by the supervisor, not by discipline.** Supervisor: `🧑‍✈️ {app} · {chantier}`,
 pinned. Sub-session: `{avatar} {slice} {title} · {state icon}` — avatars from the cohort table
-(`agents-method.md`), state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 · `blocked` 🔴 ·
-`landed` ✅ · `parked` 💤. Emoji live in titles and file contents, never in branch names (above).
+(`agents-method.md`); a domain owner's avatar is the one declared for it in the app's business pack
+(`docs/project/business/README.md`), 🧑 by default; state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 · `blocked` 🔴 ·
+`landed` ✅ · `parked` 💤. A `landed` slice that cannot be archived yet is retitled 🟡 until it can ("Archiving" above). Emoji
+live in titles and file contents, never in branch names (above).
 
 **Chantier vs sprint.** The sprint stays the exception for work **planned ahead, multi-owner, with a
 review gate** (`/plan-sprint`, Vera's closing review). A chantier needs none of that ceremony: it is

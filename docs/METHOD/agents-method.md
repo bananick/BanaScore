@@ -1,7 +1,7 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 322.a  
+**Version:** 322.b  
 **Last Updated:** 2026-10-14  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
@@ -883,7 +883,8 @@ When a pack names an **ads owner**, paid ads leave Gordon for that owner.
 
 **The business pack — `docs/project/business/`** keeps the app's business knowledge versioned, not
 in per-session memory. Every fact carries its source and, if perishable, a date; unknown stays `inconnu`.
-- `README.md` — the domain → owner table (agent · human · file to load) and the **human-GO rule**:
+- `README.md` — the domain → owner table (agent · human · file to load · optionally an **avatar**, one emoji, default 🧑,
+  that a chantier session title shows) and the **human-GO rule**:
   any action that spends money or writes to an external system in prod (ad mutation, CRM / quote /
   webhook write, bulk catch-up, outbound client e-mail, DNS change, public price or claim) needs,
   in order, a **dry-run listed first**, an **explicit GO from the operator in the current chat**
