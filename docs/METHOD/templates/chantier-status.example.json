@@ -18,10 +18,22 @@
   "decisions": [
     {
       "id": "d1",
-      "question": "Example question that shapes the end result?",
+      "question": "Example reversible question that shapes the end result?",
       "options": ["A — example option", "B — other example option"],
       "reco": "A — example reason",
-      "ifNoAnswer": "Proceed with A",
+      "ifNoAnswer": "At the deadline the reco A is applied",
+      "reversible": true,
+      "deadline": "2026-01-01T11:00:00Z",
+      "status": "open",
+      "answer": null
+    },
+    {
+      "id": "d2",
+      "question": "Example non-reversible question (conflict gate: data model, permissions or money, irreversible, production write)?",
+      "options": ["A — example option", "B — other example option"],
+      "reco": "A — example reason",
+      "ifNoAnswer": "The slice stays waiting on this",
+      "reversible": false,
       "status": "open",
       "answer": null
     }
@@ -38,12 +50,13 @@
     {
       "id": "r1",
       "kind": "result",
-      "what": "Example result to evaluate",
+      "what": "Example result clients see or that touches money",
       "evidence": ["0123abc", "path/to/example-file.ext:42"],
       "script": "1. Open the example screen. 2. Do the example action. 3. Check the example outcome.",
       "questions": [
         { "q": "Does the example outcome look right?", "options": ["accept", "reopen", "defer"], "reco": "accept" }
       ],
+      "needsOperator": true,
       "status": "open",
       "feedback": null
     }

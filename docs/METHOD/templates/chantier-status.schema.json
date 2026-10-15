@@ -41,18 +41,20 @@
     },
     "decisions": {
       "type": "array",
-      "description": "questions that shape the end result; a question for Nicolas lives here (state `waiting`), never only in chat",
+      "description": "questions that shape the end result; a question for Nicolas lives here, never only in chat. 322.g: a REVERSIBLE decision never stops the slice (state stays `working`; at `deadline` with no answer the supervisor routes the reco and the slice marks it `defaulted`); only a non-reversible one (the conflict gate: data model, permissions/money, irreversible, external production writes) puts the slice in `waiting`",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "question", "options", "reco", "ifNoAnswer", "status"],
+        "required": ["id", "question", "options", "reco", "ifNoAnswer", "reversible", "status"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 16 },
           "question": { "type": "string", "minLength": 1, "maxLength": 300 },
           "options": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 120 } },
           "reco": { "type": "string", "minLength": 1, "maxLength": 300 },
-          "ifNoAnswer": { "type": "string", "minLength": 1, "maxLength": 200 },
-          "status": { "enum": ["open", "answered", "consumed"] },
+          "ifNoAnswer": { "type": "string", "minLength": 1, "maxLength": 200, "description": "reversible: restates the reco applied at the deadline; non-reversible: what stays blocked" },
+          "reversible": { "type": "boolean", "description": "true = a wrong call can be undone cheaply, so the slice keeps working and the reco is applied at the deadline; false = the conflict gate, the slice waits. In doubt: false" },
+          "deadline": { "type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$", "description": "ISO-8601 with timezone = the time the decision was raised + 2 h, stamped from the real clock. Required (a string) when reversible is true; absent or null when false" },
+          "status": { "enum": ["open", "answered", "consumed", "defaulted"], "description": "defaulted = the deadline passed with no answer and the reco was applied (reversible decisions only; `answer` holds the reco)" },
           "answer": { "type": ["string", "null"], "maxLength": 500 }
         }
       }
@@ -78,7 +80,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "kind", "what", "evidence", "script", "questions", "status"],
+        "required": ["id", "kind", "what", "evidence", "script", "questions", "needsOperator", "status"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 16 },
           "kind": { "enum": ["plan", "result"] },
@@ -100,6 +102,7 @@
               }
             }
           },
+          "needsOperator": { "type": "boolean", "description": "true only for a result clients see or that touches money: it reaches the operator in ONE batch at the slice Recette. false: accepted by Vera's review + Sage's proof (`accepted`, reopenable), never asked" },
           "status": { "enum": ["open", "accepted", "reopened", "deferred"] },
           "feedback": { "type": ["string", "null"], "maxLength": 500 }
         }

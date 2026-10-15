@@ -1,4 +1,4 @@
-# METHOD v322.f
+# METHOD v322.g
 
 ## Quick Start
 
@@ -30,6 +30,17 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v322.g
+1. **Operator input is an inbox, not a form.** The chantier dashboard stays read-only. The supervisor asks in small
+   `AskUserQuestion` batches (≤ 4 closed questions, recommendation first), ordered by blocking cost — conflict-gate decisions
+   first, then slices blocked × deadline — and pushes to the phone only when a slice is actually blocked.
+2. **Agents do not wait on reversible decisions.** A fiche decision carries `reversible` + a `deadline` (raised + 2 h); the reco
+   applies at the deadline (`status: defaulted`, listed in the Debrief under `🤝 Décidé pour toi`), and only the conflict gate
+   puts a slice in `waiting`. The supervisor keeps the timer.
+3. **The operator evaluates only what deserves it.** `review[].needsOperator` is true only for results clients see or that
+   touch money — one batch per slice at its Recette; the rest is accepted by Vera + Sage and stays reopenable.
+4. **A fiche written before 322.g adds the new fields on its next write** (`chantier-status/1` keeps its id; the Stop hook names them).
 
 ## What's New in v322.f
 1. **One landing at a time, per repository.** `gate-lock.mjs` (upstreamed from bananaevents) serializes the heavy gate across
@@ -627,7 +638,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 322.f  
+**Current Version:** 322.g  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-15
 

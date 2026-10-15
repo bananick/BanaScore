@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 322.f  
+**Version:** 322.g  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -239,13 +239,14 @@ something the agent could have turned into a choice.
   quiz as one block — numbered questions, lettered options, recommended first — never loose
   questions scattered in the prose.
 - "Shall I continue?" check-ins stay banned: a quiz is for a real choice, not for permission.
+- **In a chantier the operator's input is an inbox (322.g):** the supervisor asks at most 4 closed questions per batch, recommendation first, ordered by blocking cost (conflict-gate decisions first, then slices blocked × deadline), pushes to the phone only when a slice is actually blocked, and a reversible decision defaults to its reco after 2 h instead of waiting — `sprints-method.md` → "The chantier".
 
 **✅ Recette — before the Debrief.** (1) The **recette table**: each deliverable asked at Cadrage →
 shown (link / evidence) or not; a test count never substitutes for the thing asked. (2) **Four
 states, never merged:** `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`. Landed is a push; it is never
 reported as deployed or proven without its own evidence (served revision · observed run). (3) When
 a journey is claimed `PROVEN`, one `AskUserQuestion`: **accept / reopen / defer**, with a ≤ 3-minute
-test script the operator can run. (4) `Avancement` in the Debrief counts journeys proven, not tasks
+test script the operator can run. In a chantier only the results that clients see or that touch money (`needsOperator`) reach the operator, in one batch per slice at its Recette; the rest are accepted by `vera` + `sage` and listed as reopenable (`sprints-method.md` → "The chantier"). (4) `Avancement` in the Debrief counts journeys proven, not tasks
 closed. **Who does what at the Recette:** `vera` reviews the slice once (opus) before it lands;
 `sage` runs the `Proof:` on the environment it names, with real data, and records it — so `PROVEN`
 is an observation, never the coordinator's say-so.
@@ -851,5 +852,5 @@ GEMINI_API_KEY=...                    # ⛔ Server-only — never NEXT_PUBLIC_ o
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-06-01
+**Last Updated:** 2026-10-15
 

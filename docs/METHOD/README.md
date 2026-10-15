@@ -1,6 +1,6 @@
-# METHOD v322.f
+# METHOD v322.g
 
-**Version:** 322.f  
+**Version:** 322.g  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-15  
 **Status:** ✅ Production-Ready
@@ -71,6 +71,12 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v322.g
+
+1. **Operator input is an inbox** — the chantier dashboard is read-only; the supervisor asks in batches of ≤ 4 closed questions ordered by blocking cost, and pushes only when a slice is actually blocked.
+2. **Reversible decisions default after 2 h** — fiche `decisions[]` gains `reversible` + `deadline` and the status `defaulted`; only the conflict gate blocks a slice.
+3. **The operator reviews only client/money results** — `review[].needsOperator`; the rest is accepted by Vera + Sage and stays reopenable. A v1 fiche adds the new fields on its next write.
 
 ## What's New in v322.f
 
@@ -355,8 +361,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 322.f  
-**Previous:** 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 322.g  
+**Previous:** 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

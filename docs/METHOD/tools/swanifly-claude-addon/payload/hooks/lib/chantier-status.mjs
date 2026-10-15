@@ -2,7 +2,9 @@
 // Node built-ins only (a dependency = a lockfile change = a landing exception). No I/O here.
 //
 // validateFiche() is the HAND-ROLLED MIRROR of docs/METHOD/templates/chantier-status.schema.json
-// (schema `chantier-status/1`). Change the schema and this file together;
+// (schema `chantier-status/1`; 322.g added `decisions[].reversible` / `deadline` / status `defaulted` and
+// `review[].needsOperator`, all required — a fiche written before 322.g adds them on its next write).
+// Change the schema and this file together;
 // tests/chantier-status.lib.test.mjs fails if the enums, required fields or caps drift apart.
 
 /** The 12 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
@@ -18,9 +20,13 @@ export const CAPS = { slice: 8, title: 40, progressItem: 100 };
 /** An `updatedAt` later than now + this many seconds is a guessed clock, not a write time. */
 export const FUTURE_SLACK_SECONDS = 120;
 
+/** 322.g: `defaulted` = the deadline passed with no answer and the reco was applied (reversible decisions only). */
+export const DECISION_STATUSES = ['open', 'answered', 'consumed', 'defaulted'];
+/** ISO-8601 with an explicit timezone: `updatedAt` and a reversible decision's `deadline`. */
+export const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const SHA_RE = /^[0-9a-f]{7,40}$/;
-const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 
 const isObj = (x) => typeof x === 'object' && x !== null && !Array.isArray(x);
 const fmt = (v) => {
@@ -64,17 +70,36 @@ function fields(o, path, checkers) {
 
 const strList = (errs, max) => (v, path) => arr(errs, path, v, (s, p) => str(errs, p, s, max));
 
+function bool(errs, path, v) {
+  if (typeof v !== 'boolean') errs.push(`${path}: expected a boolean, got ${fmt(v)}`);
+}
+
+/** A string that is an ISO-8601 instant with a timezone (or null when `nullable`). */
+function isoInstant(errs, path, v, { nullable = false } = {}) {
+  str(errs, path, v, 40, { re: ISO_RE, nullable });
+  if (typeof v === 'string' && ISO_RE.test(v) && Number.isNaN(Date.parse(v))) errs.push(`${path}: not a real date, got ${fmt(v)}`);
+}
+
 function checkDecision(errs, d, path) {
-  if (!obj(errs, path, d, { id: true, question: true, options: true, reco: true, ifNoAnswer: true, status: true, answer: false })) return;
+  if (!obj(errs, path, d, { id: true, question: true, options: true, reco: true, ifNoAnswer: true, reversible: true, deadline: false, status: true, answer: false })) return;
   fields(d, path, {
     id: (v, p) => str(errs, p, v, 16),
     question: (v, p) => str(errs, p, v, 300),
     options: (v, p) => arr(errs, p, v, (s, q) => str(errs, q, s, 120), { min: 1 }),
     reco: (v, p) => str(errs, p, v, 300),
     ifNoAnswer: (v, p) => str(errs, p, v, 200),
-    status: (v, p) => oneOf(errs, p, v, ['open', 'answered', 'consumed']),
+    reversible: (v, p) => bool(errs, p, v),
+    deadline: (v, p) => isoInstant(errs, p, v, { nullable: true }),
+    status: (v, p) => oneOf(errs, p, v, DECISION_STATUSES),
     answer: (v, p) => str(errs, p, v, 500, { nullable: true, min: 0 }),
   });
+  // 322.g cross-field rules: only a reversible decision carries a deadline and may default.
+  if (d.reversible === true && typeof d.deadline !== 'string') errs.push(`${at(path, 'deadline')}: required (ISO-8601 with timezone, raised time + 2 h) when reversible is true`);
+  if (d.reversible === false && d.deadline !== undefined && d.deadline !== null) errs.push(`${at(path, 'deadline')}: must be absent or null when reversible is false`);
+  if (d.status === 'defaulted') {
+    if (d.reversible !== true) errs.push(`${at(path, 'status')}: defaulted needs reversible true — a non-reversible decision never defaults`);
+    if (typeof d.answer !== 'string' || d.answer.length === 0) errs.push(`${at(path, 'answer')}: a defaulted decision records the applied reco in answer`);
+  }
 }
 
 function checkAction(errs, a, path) {
@@ -97,8 +122,9 @@ function checkQuestion(errs, q, path) {
 }
 
 function checkReview(errs, r, path) {
-  if (!obj(errs, path, r, { id: true, kind: true, what: true, evidence: true, script: true, questions: true, status: true, feedback: false })) return;
+  if (!obj(errs, path, r, { id: true, kind: true, what: true, evidence: true, script: true, questions: true, needsOperator: true, status: true, feedback: false })) return;
   fields(r, path, {
+    needsOperator: (v, p) => bool(errs, p, v),
     id: (v, p) => str(errs, p, v, 16),
     kind: (v, p) => oneOf(errs, p, v, ['plan', 'result']),
     what: (v, p) => str(errs, p, v, 200),

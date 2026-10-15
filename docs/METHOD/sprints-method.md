@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 322.f  
+**Version:** 322.g  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -539,7 +539,7 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
-#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e)
+#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g)
 
 A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
 multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
@@ -549,6 +549,9 @@ Interventions: `docs/interventions/2026-10-11-Lucia-supervision-sessions.md` (32
 `docs/interventions/2026-10-14-Lucia-supervision-v2.md` (v2). **322.e** folds in the first live run
 (bananaevents · W42 cash): the fiche is found by branch, a sub-session is addressed by its `ListAgents`
 name, announces itself first and announces a land in flight, and a chantier has no `▶ Prompt suivant`.
+**322.g** (`docs/interventions/2026-10-15-Lucia-operator-inbox.md`) makes the operator's input an inbox, not a form:
+a read-only dashboard, batches of four, reversible decisions that default after 2 h, and an operator who reviews only
+what clients see or what touches money ("The operator's input is an inbox" below).
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
   slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
@@ -583,6 +586,38 @@ real clock — `node -e "console.log(new Date().toISOString())"` — never guess
 future time. On `landed`, `head` is the landed sha: the sub-session sets it after `/land` and commits
 the fiche, and the docs lane lands that commit.
 
+**The operator's input is an inbox, not a form (322.g; the operator's rulings, 2026-10-15).** The dashboard is good as an
+overview and bad as an input system: clearing every decision and review in one sitting takes long focus, so sub-sessions
+waited and development stalled. Four rules.
+
+1. **The dashboard is read-only.** The pilot dashboard and the Cockpit "Chantiers" view show the state — done / doing / to do,
+   blockers, results — and take no input: no form, no answer field. Answers go through the supervisor chat only.
+2. **Small batches in the supervisor chat.** The supervisor asks with `AskUserQuestion`: at most **4 closed questions per
+   batch**, recommendation first (`method-core.md` → "Questions are quizzes"), ordered by **blocking cost** — conflict-gate
+   decisions first, then by (number of slices blocked × closeness of the earliest deadline). Never a long form, never every
+   open item at once. `PushNotification` (it reaches the phone through Remote Control) **only when a slice is actually
+   blocked**, worded `1 question bloque {slice} — {n} s` (`n` = the seconds the batch takes to answer).
+3. **Agents do not wait on reversible decisions.** A `decisions[]` item carries `reversible` (boolean, required) and
+   `deadline` (ISO-8601 with timezone, required when `reversible` is true = the time the decision was raised + **2 h**,
+   stamped from the real clock; absent or null otherwise); `status` gains `defaulted`. A reversible decision never stops a
+   slice: the sub-session keeps working on everything else (state stays `working`), and at the deadline with no answer the
+   **reco** is applied — `status: defaulted`, `answer` = the reco — and the slice moves on. Only a **non-reversible** decision
+   (the conflict gate: data model, permissions or money, anything irreversible, external production writes) puts the slice in
+   `waiting` and truly blocks; in doubt, it is non-reversible. An idle sub-session cannot wake itself, so **the supervisor
+   keeps a timer on the earliest open deadline** (a one-shot `CronCreate`, or a check on every wake while a reversible
+   decision is open) and, on expiry, routes `DECISION dX = default ({reco})` by `SendMessage`; the sub-session records
+   `defaulted`. Every defaulted decision is listed in the supervisor's Debrief under `🤝 Décidé pour toi — par défaut,
+   conteste si besoin`; contesting one reopens it (`open`, a fresh `deadline`) and the answer is routed like any other.
+4. **The operator evaluates only what deserves it.** A `review[]` item carries `needsOperator` (boolean, required): `true`
+   only for a result **clients see** or that **touches money**. Those reach the operator in **one batch per slice, at its
+   Recette** — accept / reopen / defer, the 4-question cap still applying. Every other result is accepted by Vera's review +
+   Sage's proof (`accepted`) and listed in the Debrief as "accepté par la recette — rouvrable" (`REVIEW rX = reopen`
+   reopens it), never asked. A `plan` item follows the same test: `false` → the supervisor accepts it and building starts;
+   `true` → the slice waits for the operator's batch.
+
+`chantier-status/1` keeps its id (no `v: 2`): a fiche written before 322.g adds `decisions[].reversible` (and `deadline` when
+true) and `review[].needsOperator` on its next write — the Stop hook blocks the stop with a message naming the missing fields.
+
 **The sub-session contract.**
 
 - **The fiche, the task or intervention file and the commits are the whole hand-back.** No Debrief,
@@ -593,15 +628,17 @@ the fiche, and the docs lane lands that commit.
   `SendMessage` to the supervisor, addressed by the supervisor's `ListAgents` name (its brief carries it):
   `adopt {slice}`. The brief also forbids `EnterWorktree` when the app already created a worktree for the
   session: a second worktree hides the fiche from the supervisor.
-- **A question for the operator goes into `decisions[]`** (with `options[]`, `reco`, `ifNoAnswer`)
-  and the state becomes `waiting` — never only into chat. A blocker only he can lift goes into
-  `operatorActions[]`. A result to evaluate goes into `review[]` with its evidence, a ≤ 3-minute
-  script and 1–3 closed questions, recommendation first.
+- **A question for the operator goes into `decisions[]`** (with `options[]`, `reco`, `ifNoAnswer`, `reversible`, and a
+  `deadline` = now + 2 h when reversible) — never only into chat. **Reversible: keep working** on everything else (state
+  `working`); the reco applies at the deadline. **Non-reversible** (the conflict gate): state `waiting`. A blocker only he can
+  lift goes into `operatorActions[]` (state `waiting`). A result goes into `review[]` with its evidence, a ≤ 3-minute script,
+  1–3 closed questions (recommendation first) and `needsOperator`; when that is `false` the sub-session sets the item
+  `accepted` once Vera and Sage have passed it, and does not wait on it.
 - **Plan first** when the map says `plan-first: yes`: the first turn writes one `review` item of kind
   `plan` (≤ 6 lines) and stops in `waiting`; building starts once it is accepted.
 - **A routed answer is applied, then recorded** in the fiche (`consumed`, the review's verdict, or
   `done`) — it arrives as one typed message: `DECISION d2 = B — note` · `REVIEW r1 = reopen —
-  feedback` · `ACTION a1 = done`.
+  feedback` · `ACTION a1 = done` · `DECISION d2 = default (A)` (the deadline passed: record `defaulted`, `answer` = the reco).
 - **Review and land are the sub-session's to run.** The supervisor asks for them by `SendMessage` —
   `/review`, then `/land` — and the sub-session runs them: Vera's verdict goes into `review[]` (a
   `result` item, with its evidence), the verify-gate outcome into `gate`; after `/land` it sets `state`
@@ -641,17 +678,22 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
 3. **On each idle notice** — read the fiche **by branch** ("Finding the fiche" above), never from the
    session's `cwd`; read the transcript (`list_events`) **only** when the fiche is missing or stale;
    update the title's state icon; fold new decisions, operator actions and reviews into the
-   control-tower table. `PushNotification` **only** for `waiting`, `blocked` or a new `review` item.
+   control-tower table, and re-arm the deadline timer on the earliest open reversible decision (rule 3 of the inbox).
+   `PushNotification` **only** when a slice is actually blocked — `1 question bloque {slice} — {n} s` — never for a new
+   `review` item or a reversible decision.
    On a `landed` fiche, run the archive check below.
-4. **Route answers** — each operator answer becomes one typed `SendMessage` into that sub-session,
-   addressed by its `ListAgents` name.
+4. **Ask in batches, route answers** — ask the open items as small `AskUserQuestion` batches (≤ 4 closed questions, ordered
+   by blocking cost: rule 2 of the inbox), never a long form; each operator answer, and each expired deadline, becomes one
+   typed `SendMessage` into that sub-session, addressed by its `ListAgents` name.
 5. **Close each slice** — `SendMessage` the sub-session `/review`, then `/land` (it runs both and
-   records Vera's verdict in its fiche) → Sage's proof → **`archive_session` on its own, as soon as
+   records Vera's verdict in its fiche) → Sage's proof → the slice's `needsOperator` results, in one batch (rule 4 of the inbox)
+   → **`archive_session` on its own, as soon as
    the slice is finished** (the four checks of "Archiving" below, no operator OK); the group goes
    when the chantier closes.
 6. **Report** — the supervisor's Debrief is the chantier's only card; its body is the control-tower
    table, one row per slice, built from the fiches. Every archive done since the last card is named
-   in it under `🤝 Décidé pour toi`. **No `▶ Prompt suivant`** (operator rule, 2026-10-14): the next step is
+   in it under `🤝 Décidé pour toi` — so is every defaulted decision (`par défaut, conteste si besoin`) and every result
+   accepted by the recette (`accepté par la recette — rouvrable`). **No `▶ Prompt suivant`** (operator rule, 2026-10-14): the next step is
    an action the supervisor takes itself — a task chip carrying the brief, or a typed `SendMessage` to an
    existing sub-session — recorded as the `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names
    that action, with no copy-paste block.
@@ -899,5 +941,5 @@ Readiness work compounds. If the current loop is dishonest or fragile, adding an
 ---
 
 **Owner:** Junia  
-**Last Updated:** 2026-07-10
+**Last Updated:** 2026-10-15
 

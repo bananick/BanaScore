@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 322.f  
+**Version:** 322.g  
 **Last Updated:** 2026-10-15  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 322.f (Epoch 3: Modular & Multi-Entry)
+**Current:** 322.g (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,20 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**322.g** (2026-10-15) — **Operator input is an inbox, not a form: batches of four, reversible decisions default after 2 h, the operator reviews only what clients see or what touches money**
+
+- **Problem.** (operator, 2026-10-15) The per-chantier dashboard is good as an overview and bad as an *input* system: clearing every decision and review in one sitting takes long focus, so sub-sessions wait and development stalls. Four rulings from the operator's quiz of the same day, written and not re-litigated (`docs/interventions/2026-10-15-Lucia-operator-inbox.md`).
+- **NEW (1) — the dashboard is read-only.** Overview only (done / doing / to do, blockers, results); no form, no input. This re-scopes slice 2 of supervision v2: the Swanifly Cockpit "Chantiers" view shows the fiches and operator answers never go through it. Noted in `docs/interventions/2026-10-14-Lucia-supervision-v2.md` (Out of scope) and `docs/project/journeys/nicolas-supervise-un-chantier.md` (Hors-champ).
+- **NEW (2) — small batches in the supervisor chat.** The supervisor asks with `AskUserQuestion`: at most 4 closed questions per batch, recommendation first (322.c, "questions are quizzes"), ordered by blocking cost — conflict-gate decisions first, then number of slices blocked × closeness of the deadline. `PushNotification` (the phone, through Remote Control) only when a slice is actually blocked, worded `1 question bloque {slice} — {n} s`. Never a long form, never every open item at once. (Before: a push for `waiting`, `blocked` or any new `review` item.)
+- **NEW (3) — agents do not wait on reversible decisions.** Fiche `decisions[]` gains `reversible` (boolean, required) and `deadline` (ISO-8601 with timezone; required when `reversible` is true = raised + 2 h; absent or null otherwise); `status` gains `defaulted` (reversible only, `answer` = the reco). A reversible decision never stops a slice; at the deadline with no answer the reco is applied and the slice moves on. Only the conflict gate (data model, permissions or money, irreversible, external production writes) puts a slice in `waiting`; in doubt, non-reversible. An idle sub-session cannot wake itself, so the supervisor keeps a timer on the earliest open deadline (a one-shot `CronCreate`, or a check on every wake while one is open) and routes `DECISION dX = default ({reco})`. Every defaulted decision is listed in the supervisor's Debrief under `🤝 Décidé pour toi — par défaut, conteste si besoin`; contesting reopens it.
+- **NEW (4) — the operator evaluates only what deserves it.** Fiche `review[]` gains `needsOperator` (boolean, required): `true` only for a result clients see or that touches money — those reach the operator in one batch per slice, at its Recette (accept / reopen / defer). Everything else is accepted by Vera's review + Sage's proof and listed as "accepté par la recette — rouvrable", never asked. A `plan` item follows the same test.
+- **CHANGED — `chantier-status.schema.json`, `.claude/hooks/lib/chantier-status.mjs` + payload copy (byte-identical), example, tests.** The validator enforces `reversible` a boolean; `deadline` an ISO instant with timezone — a string when reversible is true, absent or null when false; `defaulted` only on a reversible decision with a non-empty `answer`; `needsOperator` a boolean. `tests/chantier-status.lib.test.mjs` covers the new fields, a reversible decision with no deadline failing, `defaulted` accepted, a v1 fiche refused with the fields named, and the drift guard (enum, required fields, ISO pattern); `tests/chantier-status.hook.test.mjs` covers the Stop hook blocking a v1 fiche (`decisions[0].reversible`, `review[0].needsOperator`).
+- **CHANGED — doctrine.** `sprints-method.md` → "The chantier" ("The operator's input is an inbox", the sub-session contract, loop steps 3–6); `method-core.md` → "The two-moment contract" (one sentence in "Questions are quizzes", one in the Recette); the version string in `CLAUDE.md` / `AGENTS.md` and their payload copies.
+- **Schema id kept: `chantier-status/1`, `v: 1`.** Nothing in this file's "When to Increment" requires a schema-id bump (322.b changed the same schema, the `agent` pattern, without one) and no reader branches on `v`. The cost is real and accepted: the new fields are required, so **a fiche written before 322.g is invalid until it adds them** — `decisions[].reversible` (and `deadline` when true) and `review[].needsOperator` — on its next write; the Stop hook blocks the stop with a one-line message naming the missing fields (the first three, then "+n more"). A `v: 2` would add a reader nobody has yet; revisit it if the Cockpit slice ingests fiches across versions.
+- **Why a letter.** Read against "When to Increment": no Major trigger fires — no new METHOD file, agent, ritual or hook wired in `.claude/settings.json`, no DoD change, and the installer's copy list is unchanged (the payload copy of an existing library is refreshed). The borderline clause "significant process change" was weighed and not retained: the release extends the chantier doctrine that 322.a–322.e already moved by letters, on fiche fields and supervisor duties, with no new surface. The number is the one the operator asked for.
+- **Sync effect.** Hub-owned surfaces only: payload `hooks/lib/chantier-status.mjs` (the validator every app's Stop hook loads), `docs/METHOD/**` (schema, example, `sprints-method.md`, `method-core.md`), the version string in `CLAUDE.md` / `AGENTS.md`. **Behaviour change in every app that runs a chantier:** a fiche without the new fields is refused at the Stop; reversible decisions stop blocking slices; the supervisor's push rule narrows. Apps with no `docs/chantiers/` see no change. Gate before any sync (Sync Protocol rule 4): `npm run doctor` green, `npm run doctor:fleet` with no blocking finding, then `sync-method:all:dry` and its clobber report to the operator. Not landed, not synced.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = on a live chantier (bananaevents · W42 cash): a sub-session raises a reversible decision (deadline = raised + 2 h) and keeps working; at expiry the supervisor routes `DECISION dX = default (…)`, the fiche shows `defaulted`, and the Debrief lists it under `🤝 Décidé pour toi`; a result that neither clients see nor touches money is "accepté par la recette — rouvrable" and was never asked; a non-reversible decision reaches the operator in a batch of at most 4 with one push worded `1 question bloque {slice} — {n} s`. Not run yet.
 
 **322.f** (2026-10-15) — **Upstream app fixes: a per-repository landing lock, a fail-closed npm-workspaces gate, a root rules lane, a `proto/` no-mock exemption; six names leave `SKIP_REPOS`**
 
