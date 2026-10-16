@@ -1,6 +1,6 @@
-# METHOD v322.h
+# METHOD v323.a
 
-**Version:** 322.h  
+**Version:** 323.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-16  
 **Status:** ✅ Production-Ready
@@ -71,6 +71,10 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v323.a
+
+1. **The sidebar contract reaches hand-made sessions at birth** — a `SessionStart` (`startup`) hook, `session-sidebar.mjs`, makes a session title itself `{repo icon} {objet}` and file itself under `🎯 Missions libres` on its first reply; the janitor stays the safety net.
 
 ## What's New in v322.h
 
@@ -366,8 +370,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 322.h  
-**Previous:** 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 323.a  
+**Previous:** 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

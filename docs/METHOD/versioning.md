@@ -1,7 +1,7 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 322.h  
+**Version:** 323.a  
 **Last Updated:** 2026-10-16  
 **Purpose:** Version scheme, sync protocol, migration policy
 
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 322.h (Epoch 3: Modular & Multi-Entry)
+**Current:** 323.a (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,16 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**323.a** (2026-10-16) — **A `SessionStart` hook applies the sidebar contract at birth: a hand-made session titles itself `{repo icon} {objet}` and files itself under « 🎯 Missions libres » on its first reply**
+
+- **Problem.** (operator, 2026-10-16) 322.h wrote the sidebar contract for supervisors and sub-sessions and left every other session to the janitor `rangement-barre-laterale`, a scheduled task that runs every 2 h: a hand-made session sat untitled and unfiled for up to two hours after it began. Ruling from the operator's quiz of the same day, written and not re-litigated: « hook au démarrage + gardien en filet » (`docs/interventions/2026-10-16-Lucia-sidebar-contract.md` → "Follow-up 2026-10-16").
+- **NEW — `.claude/hooks/session-sidebar.mjs` (`SessionStart`, `startup` only; commit `8c857503`).** A hook cannot rename or move a session (those are Claude tools), so it injects one short instruction (≤ 900 chars, French): on its first reply, before any other work, once and without mentioning it, a session that is not a supervisor, a chantier sub-session or a scheduled routine loads `set_session_title` / `list_sections` / `move_sessions`, titles itself `{repo icon} {object in 3–6 words}` and files itself under `🎯 Missions libres` (never creating the section). The icon comes from `docs/METHOD/repo-icons.json` — a worktree under `<repo>/.claude/worktrees/` takes its parent repo's icon, a `scratch-workspaces` cwd takes `_scratch` 💬, an unknown repo `_default` 📁. Fail-open: silent on `resume` / `clear` / `compact`, outside a repo, on malformed input or on any error. The janitor stays the safety net for whatever it misses.
+- **Wiring.** `.claude/settings.json` and the addon `payload/settings.snippet.json`, each as its own `startup` entry (`install.mjs` merges per entry); `payload/hooks/session-sidebar.mjs` byte-identical to the hub hook; `install.mjs` copy loop and `markerOf`; addon `README.md` rows; `sprints-method.md` → hook table row and "Sidebar contract" rule 7. Tests: `tests/session-sidebar.test.mjs`.
+- **Why Major.** Read against "When to Increment", two clauses fire. (1) "New enforcement hook wired in `.claude/settings.json`": the hook is wired in `settings.json` and in the addon snippet. It enforces nothing — it advises and fails open — and "enforcement" was weighed as a way out and not retained: 322.d counted `branch-sweep.mjs`, a non-blocking `SessionStart` cleanup, as an enforcement hook, and the rule keys on the wiring. (2) "Installer or sync behaviour that changes what lands in an app": `install.mjs` now copies a new hook into every app and merges a new `SessionStart` entry, so every new session in every app receives an added instruction. Contrast 322.f's `gate-lock.mjs`, a library with no wiring, weighed and not retained. A Major increments the number: `322.h → 323.a`. No number was fixed by the operator for this release (he did for 322.d); he may still override. 322.h's own entry ("No new agent, ritual or hook") stays true of `0de04f69`; this release is the hook on top of it, same branch, neither landed. Not on the landing exception list (no schema, rules, auth, dependency or deploy change; `SOUL.md` untouched).
+- **Sync effect.** Hub-owned surfaces only: the payload `hooks/session-sidebar.mjs` (a **new file in every app**), the `SessionStart` entry the installer merges into each app's `.claude/settings.json` (existing entries kept), `docs/METHOD/**` (`sprints-method.md`, the stamps), the version string in `CLAUDE.md` / `AGENTS.md` and their payload copies. No app-owned file is overwritten. **Behaviour change in every app:** each new `startup` session gets one ≤ 900-char instruction and titles and files itself on its first reply. Gate before any sync (Sync Protocol rule 4): `npm run doctor` green, `npm run doctor:fleet` with no blocking finding, then `sync-method:all:dry` and its clobber report to the operator — never `--force`. Not landed, not synced.
+- **Follow-up (open, coordinator review).** A nested app (e.g. `bananaevents\Events`) resolves to its own folder name, not to its parent repo, and so gets `_default` 📁 instead of 🍌. Not fixed here. Revisit when the case is observed on the live sidebar.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = on the live sidebar: a fresh hand-made session in a repo with no chantier titles itself `{repo icon} {objet}` and sits under « 🎯 Missions libres » on its first reply, before any janitor pass; resuming it injects nothing; a supervisor and a chantier sub-session are not retitled by it. Not run yet.
 
 **322.h** (2026-10-16) — **The sidebar contract: supervisors pinned, one alpha-sorted group per chantier, slice-first titles, a "Missions libres" section, one icon per repo, a janitor**
 

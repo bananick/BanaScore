@@ -160,6 +160,20 @@
             "statusMessage": "Cleaning integrated branches..."
           }
         ]
+      },
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-sidebar.mjs"
+            ],
+            "timeout": 5,
+            "statusMessage": "Applying the sidebar contract..."
+          }
+        ]
       }
     ]
   }

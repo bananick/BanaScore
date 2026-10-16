@@ -1,4 +1,4 @@
-# METHOD v322.h
+# METHOD v323.a
 
 ## Quick Start
 
@@ -30,6 +30,16 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v323.a
+1. **A hand-made session files itself at birth.** A new `SessionStart` (`startup`) hook, `.claude/hooks/session-sidebar.mjs`, injects one
+   short instruction: on its first reply, a session that is not a supervisor, a chantier sub-session or a routine titles itself
+   `{repo icon} {objet}` and files itself under `🎯 Missions libres`. The janitor `rangement-barre-laterale` stays the safety net
+   (operator ruling 2026-10-16: « hook au démarrage + gardien en filet »).
+2. **Carried to every app by the installer** — `payload/hooks/session-sidebar.mjs` plus a `startup` entry in `settings.snippet.json`.
+   Fail-open: silent on `resume` / `clear` / `compact` and outside a repo.
+3. **Known limit.** A nested app (e.g. `bananaevents\Events`) resolves to its own folder name and gets `_default` 📁 — recorded as a
+   follow-up in `versioning.md`.
 
 ## What's New in v322.h
 1. **The sidebar contract.** Only supervisors are pinned, each filed in its chantier group `{app} · {chantier}` and titled
@@ -651,7 +661,7 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 322.h  
+**Current Version:** 323.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
 **Released:** 2026-10-16
 

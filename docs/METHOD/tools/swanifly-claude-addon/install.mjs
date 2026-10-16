@@ -42,6 +42,8 @@
  *   - .claude/hooks/chantier-status.mjs + .claude/hooks/lib/chantier-status.mjs -> app/.claude  (OVERWRITE — Supervision v2:
  *       the Stop hook that blocks a stop while a chantier sub-session's fiche docs/chantiers/{chantier}/{slice}.json is
  *       invalid or stale; a silent no-op in any session whose branch has no fiche)
+ *   - .claude/hooks/session-sidebar.mjs -> app/.claude  (OVERWRITE — 322.h: the SessionStart(startup) hook that injects the sidebar contract
+ *       (title `{repo icon} {object}` + file under "Missions libres") into hand-made sessions; fail-open, silent outside a repo)
  *   - .claude/hooks/wip-sync.mjs + branch-sweep.mjs + .claude/hooks/lib/branch-hygiene.mjs -> app/.claude  (OVERWRITE — branch lifecycle: the Stop hook that
  *       mirrors uncommitted work on refs/wip/<branch> (guarded: private origin, content scan, kill switch); branch-sweep.mjs, the SessionStart sweep that
  *       deletes integrated branches and can never merge a PR; the shared classifier behind both, land.mjs --sweep and the flight-deck report)
@@ -581,7 +583,7 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // gate-lock (322.f) is the landing lock library land.mjs and verify-gate.mjs import; it travels with them.
   // chantier-status (Supervision v2) is the Stop hook that keeps a chantier sub-session's fiche
   // valid and fresh; it imports hooks/lib/chantier-status.mjs, so the two travel together.
-  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs"]) {
+  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs", "session-sidebar.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs"]) {
     const src = join(payload, "hooks", name);
     if (!existsSync(src)) continue;
     put(src, join(appRoot, ".claude", "hooks", name), `.claude/hooks/${name}`,
@@ -654,7 +656,7 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // entry carries a distinctive script name — use it as the idempotency marker.
   const markerOf = (entry) => {
     const s = JSON.stringify(entry);
-    for (const m of ["wip-sync", "branch-sweep", "startup-hook", "session-telemetry", "ship-push", "land.mjs", "no-mock-guard", "flight-deck", "pilotage-refresh", "chantier-status"]) if (s.includes(m)) return m;
+    for (const m of ["session-sidebar", "wip-sync", "branch-sweep", "startup-hook", "session-telemetry", "ship-push", "land.mjs", "no-mock-guard", "flight-deck", "pilotage-refresh", "chantier-status"]) if (s.includes(m)) return m;
     return s;
   };
   for (const event of ["Stop", "SessionEnd", "SessionStart"]) {

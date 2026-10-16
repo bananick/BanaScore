@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 322.h  
+**Version:** 323.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -462,6 +462,7 @@ These hooks run at a session's edges (hub `.claude/settings.json` = addon `setti
 | `SessionStart` (`resume`) | `.claude/hooks/flight-deck.mjs --mode resume-hook` | Injects the Flight Deck pickup context, now with the branch-lifecycle report (active work, alarms, residues); read-only. |
 | `SessionStart` (`startup`) | `.claude/hooks/flight-deck.mjs --mode startup-hook` | Injects only the branch-lifecycle report (silent when empty); read-only. |
 | `SessionStart` (`startup`) | `.claude/hooks/branch-sweep.mjs --apply --landed-only --auto` | Deletes the worktree + local branch (and `origin/<branch>`, WIP ref) of branches **`land.mjs` landed** (its ledger `<git-common-dir>/landed-branches`) once they are `merged`/`gone`, clean, not the cwd nor the main checkout, carry no commit that is on neither the trunk nor a remote ref, and show **no activity for 2 h** (newest of: the branch's last reflog entry, the mtime of the worktree's `HEAD`/`index`/`logs/HEAD` admin files, the tip commit date). A separate script that can never merge a PR. Anything older is never auto-deleted: a manual, validated `branch-sweep.mjs --apply` (`npm run branch:sweep:apply`). |
+| `SessionStart` (`startup`) | `.claude/hooks/session-sidebar.mjs` | Injects one short instruction (≤ 900 chars) so a hand-made session titles itself `{repo icon} {object}` and files itself under "🎯 Missions libres" on its first reply; says nothing on `resume`/`clear`/`compact`, outside a repo, or on any error ("Sidebar contract", rule 7). |
 | *(library)* | `.claude/hooks/gate-lock.mjs` | Not an event hook: imported by `land.mjs` and `verify-gate.mjs` (322.f, from bananaevents `3e73289d`). **One landing / heavy gate at a time per repository:** the lock `<main checkout>/.method/gate.lock` (`.method/` is gitignored) is shared by every worktree, so parallel sessions stop starving the machine (vitest timeouts = false reds). Liveness is a heartbeat (a worker thread touching the lock's mtime; pids are display only); a stale lock heals itself (takeover under a mutex); the owner's child re-enters with `METHOD_GATE_LOCK_TOKEN`. `land.mjs` takes it **before** merging the trunk and gives it back right after the trunk push; `--lock-wait <min>` (default 180) is the manual queue, a hook (`--auto`) never queues and refuses a heavy gate. A scheduling aid, never a check: a missing or broken lock means "runs unserialized, as before". |
 | *(called by `land.mjs`)* | `.claude/hooks/verify-gate.mjs` | The lane gate (lint · typecheck · tests · build, per lane). 322.f: `--plan` (the weight of the diff) and the heavy phase under the lock; a repo-root `firestore.rules` / `storage.rules` is **tooling lane** (deploy config, anchored at the root — a nested rules file keeps its app's gate) but still held by `land.mjs`'s `schema` exception; an npm-workspaces member verifies through its parent root, the lane stays the file's own and a script-less root is `blocked`; `.snap` is code. |
 
@@ -539,7 +540,7 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
-#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g · sidebar contract 322.h)
+#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g · sidebar contract 322.h · startup hook 323.a)
 
 A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
 multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
@@ -758,7 +759,7 @@ operator's one always-open surface, so what stands in it is fixed by rule, not b
 6. **The janitor.** A scheduled task, `rangement-barre-laterale` (🧹), every 2 h from 08:07 to 20:07, re-applies rules
    1–5: it pins and files supervisors, retitles them, files every session outside a chantier into `🎯 Missions libres`,
    adds a missing repo icon (it never rewrites the object) and corrects both kinds of section view. It archives finished
-   routine runs (e.g. Mailair's hourly sort: not running, older than 15 min) and, at the 20:07 pass only, finished free
+   routine runs (e.g. Mailair's hourly sort — any title *containing* « Tri du courrier », since a run may carry the 📬 icon: not running, older than 15 min) and, at the 20:07 pass only, finished free
    missions — inactive > 72 h, not running, no open PR, a `cwd` no other session shares, no child session (under
    `.claude/worktrees/` only when its PR is merged; otherwise it is reported "to verify"). It never deletes, never
    archives a supervisor, a running, pinned or PR-open session or a parent, and leaves a chantier's sub-sessions to their
@@ -766,6 +767,14 @@ operator's one always-open surface, so what stands in it is fixed by rule, not b
    reported "to detach by the operator". Routine runs archive themselves when they have nothing for the operator. The task
    lives in the operator's user-level `~/.claude/scheduled-tasks/` — outside the sync, its prompt is the file — and its
    prompt carries an inline copy of the repo-icon table: change the table here, then the prompt.
+
+7. **The startup hook applies rule 3–4 at birth (operator ruling 2026-10-16: "hook au démarrage + gardien en filet").**
+   `.claude/hooks/session-sidebar.mjs` (`SessionStart`, `startup` only) cannot rename or move a session — those are Claude
+   tools — so it injects one short instruction (≤ 900 chars): on its first reply, and unless it is a supervisor, a
+   chantier sub-session or a scheduled routine, the session loads `set_session_title` / `list_sections` /
+   `move_sessions`, titles itself `{repo icon} {object in 3–6 words}` and files itself under `🎯 Missions libres` (never
+   creating the section). It is fail-open and silent outside a repo; the janitor above stays the safety net for whatever
+   it misses. Tests: `tests/session-sidebar.test.mjs`.
 
 **Repo icons.** One per repo; the repo is the folder directly under `D:\Apps\` (matched case-insensitively), a `cwd`
 under `scratch-workspaces` is the scratch workspace.
