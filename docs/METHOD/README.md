@@ -1,8 +1,8 @@
-# METHOD v322.g
+# METHOD v322.h
 
-**Version:** 322.g  
+**Version:** 322.h  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-15  
+**Released:** 2026-10-16  
 **Status:** ✅ Production-Ready
 
 ---
@@ -71,6 +71,11 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v322.h
+
+1. **The sidebar contract** — only supervisors are pinned, one alpha-sorted group per chantier, sub-session titles slice-code first (`D1 👩‍💼 Offre Santa · 🟡`), `🎯 Missions libres` for sessions outside a chantier.
+2. **One icon per repo** — `docs/METHOD/repo-icons.json`, the same map for every supervisor; a supervisor never nests under another session; a janitor re-applies the contract every 2 h.
 
 ## What's New in v322.g
 
@@ -361,8 +366,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 322.g  
-**Previous:** 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 322.h  
+**Previous:** 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

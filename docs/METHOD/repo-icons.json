@@ -1,0 +1,18 @@
+{
+  "_about": "Repo icons for the sidebar contract (METHOD 322.h; canonical table: sprints-method.md, 'Sidebar contract'). Key = the folder directly under D:\\Apps\\, matched case-insensitively; _scratch = a cwd under scratch-workspaces; _default = any other repo. Keys starting with an underscore are not repos.",
+  "bananaevents": "🍌",
+  "Respirit": "🌬️",
+  "BanaLog": "🚚",
+  "BanaLazer": "🎯",
+  "Bana-Share": "🦢",
+  "Swanifly": "🦢",
+  "Mailair": "📬",
+  "Finasup": "💶",
+  "Talkation": "🗣️",
+  "versation": "🗂️",
+  "gites-groupes": "🏡",
+  "LeMansFC": "⚽",
+  "Scapience": "🔬",
+  "_scratch": "💬",
+  "_default": "📁"
+}

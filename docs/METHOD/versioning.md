@@ -1,8 +1,8 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 322.g  
-**Last Updated:** 2026-10-15  
+**Version:** 322.h  
+**Last Updated:** 2026-10-16  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 322.g (Epoch 3: Modular & Multi-Entry)
+**Current:** 322.h (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,17 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**322.h** (2026-10-16) — **The sidebar contract: supervisors pinned, one alpha-sorted group per chantier, slice-first titles, a "Missions libres" section, one icon per repo, a janitor**
+
+- **Problem.** (operator, 2026-10-16) The sidebar had no rule: pins were whatever got clicked, sub-sessions sorted by avatar instead of slice, free missions piled up beside the chantier groups, four supervisors born from another session's task chip nested inside "Today's handoff" and moved with it, and finished routine runs stayed. Six rulings from the operator's quiz of the same day, written and not re-litigated (`docs/interventions/2026-10-16-Lucia-sidebar-contract.md`).
+- **NEW — "Sidebar contract"** (`sprints-method.md` → "The chantier"). (1) Pinned = supervisors only, each filed in `{app} · {chantier}` and titled `🧑‍✈️ {repo icon} {chantier}`; (2) one group per chantier, view `group_by: "none"` + `sort_by: "alpha"` — **this replaces** the 2026-10-16 morning line `group_by: "state"` in the Open step (`0e056d3f`): a session waiting on the operator is now read from the 🟡 / 🔴 in its title, not from the sort; (3) `🎯 Missions libres` for every session outside a chantier, view `group_by: "state"` + `sort_by: "recency"`, title `{repo icon} {object}`; (4) one icon per repo; (5) never nest a supervisor (a chip-born session nests and moves with its parent — started top-level, or detached once by the operator; Claude cannot detach it); (6) the janitor.
+- **CHANGED — the sub-session title is slice-code first**: `{slice} {avatar} {object} · {state icon}` (was `{avatar} {slice} {title} · {state icon}`), so the alpha sort follows the slices; the state icons are unchanged. `docs/project/journeys/nicolas-supervise-un-chantier.md` (step 2) aligned.
+- **NEW — `docs/METHOD/repo-icons.json`**: bananaevents 🍌 · Respirit 🌬️ · BanaLog 🚚 · BanaLazer 🎯 · Bana-Share / Swanifly 🦢 · Mailair 📬 · Finasup 💶 · Talkation 🗣️ · versation 🗂️ · gites-groupes 🏡 · LeMansFC ⚽ · Scapience 🔬 · `_scratch` 💬 · `_default` 📁 — the machine-readable copy of the table next to the avatars, so supervisors in every app read the same map. New `tests/repo-icons.test.mjs` fails when the JSON and the doc table drift.
+- **The janitor** — `rangement-barre-laterale` (🧹), a scheduled task on the operator's machine (user-level `~/.claude/scheduled-tasks/`, **outside the sync**; its prompt is the file, not copied here): every 2 h from 08:07 to 20:07 it re-applies rules 1–5, archives finished routine runs and, at the 20:07 pass only, finished free missions (inactive > 72 h, not running, no open PR, no shared `cwd`, no child session). It never deletes, never archives a supervisor, and leaves a chantier's sub-sessions to their supervisor (322.b). Routine runs (e.g. Mailair's hourly sort) archive themselves when they have nothing for the operator. Its prompt holds an inline copy of the icon table — the one place the hub cannot keep in step.
+- **Why a letter.** Read against "When to Increment": "New METHOD file added" was weighed and not retained — `repo-icons.json` is a data map read by supervisors, like the `templates/*.json` the chantier already ships, not a doctrine file and not in any entry-file chain; `sprints-method.md` stays the doctrine. No new agent, ritual or hook; the installer's and the sync's behaviour are unchanged (`docs/METHOD/**` was already carried whole). Not on the landing exception list (no schema, rules, auth, dependency or deploy change). The number is the operator's call: 322.h.
+- **Sync effect.** Hub-owned surfaces only: `docs/METHOD/**` (the doctrine, and `repo-icons.json` as one more file — `syncMethodTree` copies every file under `docs/METHOD` except `app-settings.json`, and `docs/METHOD` is in `SCOPED_PATHS`), the version string in `CLAUDE.md` / `AGENTS.md` and their payload copies. No app-owned file is touched. **Behaviour change in every app that runs a chantier:** its supervisor retitles its sub-sessions slice-first and applies the group view on its next wake.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = on the live sidebar (the intervention's Proof): one janitor pass corrects and the next says `🧹 rien à ranger`; only supervisors are pinned, each in its own group; a new chantier's supervisor starts top-level and its sub-sessions sort by slice; `🎯 Missions libres` holds the free missions; the 20:07 pass archives a finished mission and leaves one that fails a condition.
 
 **322.g** (2026-10-15) — **Operator input is an inbox, not a form: batches of four, reversible decisions default after 2 h, the operator reviews only what clients see or what touches money**
 

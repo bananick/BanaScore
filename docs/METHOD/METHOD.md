@@ -1,4 +1,4 @@
-# METHOD v322.g
+# METHOD v322.h
 
 ## Quick Start
 
@@ -30,6 +30,19 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v322.h
+1. **The sidebar contract.** Only supervisors are pinned, each filed in its chantier group `{app} · {chantier}` and titled
+   `🧑‍✈️ {repo icon} {chantier}`; the group view is `group_by: "none"`, `sort_by: "alpha"` (it replaces the `group_by: "state"`
+   line of 2026-10-16 morning) and a sub-session title is slice-code first — `{slice} {avatar} {object} · {state icon}` — so
+   the sort follows the slices.
+2. **`🎯 Missions libres`.** One section for every session outside a chantier (`group_by: "state"`, `sort_by: "recency"`,
+   title `{repo icon} {object}`).
+3. **One icon per repo** — the table in `sprints-method.md`, machine-readable in `docs/METHOD/repo-icons.json`, carried to
+   every app by the sync (`docs/METHOD/**`).
+4. **Never nest a supervisor; a janitor keeps the sidebar.** A chip-born session nests under its parent, so a supervisor
+   starts top-level (or the operator detaches it once). `rangement-barre-laterale` (the operator's machine, outside the sync)
+   re-applies the contract every 2 h, archives finished routine runs and, at 20:07, finished free missions.
 
 ## What's New in v322.g
 1. **Operator input is an inbox, not a form.** The chantier dashboard stays read-only. The supervisor asks in small
@@ -638,9 +651,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 322.g  
+**Current Version:** 322.h  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-15
+**Released:** 2026-10-16
 
 ### Version Scheme
 

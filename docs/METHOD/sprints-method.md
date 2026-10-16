@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 322.g  
+**Version:** 322.h  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -539,7 +539,7 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
-#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g)
+#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g · sidebar contract 322.h)
 
 A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
 multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
@@ -552,6 +552,9 @@ name, announces itself first and announces a land in flight, and a chantier has 
 **322.g** (`docs/interventions/2026-10-15-Lucia-operator-inbox.md`) makes the operator's input an inbox, not a form:
 a read-only dashboard, batches of four, reversible decisions that default after 2 h, and an operator who reviews only
 what clients see or what touches money ("The operator's input is an inbox" below).
+**322.h** (`docs/interventions/2026-10-16-Lucia-sidebar-contract.md`) files the sidebar by contract: only supervisors are
+pinned, one alpha-sorted group per chantier, slice-code-first titles, a `🎯 Missions libres` section, one icon per repo and
+a janitor ("Sidebar contract" below).
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
   slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
@@ -666,8 +669,12 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
 
 **The supervisor's loop — event-driven, never polling.** Between two notices it does nothing.
 
-1. **Open** — write the partition map; create the sidebar group `{app} · {chantier}`, title itself
-   and pin it (`set_pinned`); offer **one suggested-task chip per slice** carrying that sub-session's
+1. **Open** — write the partition map; create the sidebar group `{app} · {chantier}` and set its section view to `group_by: "none"`, `sort_by: "alpha"`
+   (`set_view(section_id, …)` — the sub-sessions' titles start with the slice code, so alpha order is slice order;
+   "Sidebar contract" below), title itself `🧑‍✈️ {repo icon} {chantier}` and pin it (`set_pinned`) — a supervisor is
+   started from a fresh top-level session, never from another session's task chip, and one that finds itself nested
+   says so in its first message (only the operator can detach it: "Sidebar contract", rule 5); offer
+   **one suggested-task chip per slice** carrying that sub-session's
    brief (its first action is the `adopt {slice}` message; it carries the supervisor's `ListAgents` name) —
    no start tool is exposed, so starting a sub-session is one operator click.
 2. **Adopt** each new sub-session — on its `adopt {slice}` message, and on **every wake** any session of
@@ -719,13 +726,66 @@ fiche and again after each answer routed into that sub-session; a fiche that is 
 archived. The operator's standing order is the authorization and `unarchive_session` is the undo, so
 no OK is asked; the group `{app} · {chantier}` goes when its last sub-session is archived.
 
-**Titles — applied by the supervisor, not by discipline.** Supervisor: `🧑‍✈️ {app} · {chantier}`,
-pinned. Sub-session: `{avatar} {slice} {title} · {state icon}` — avatars from the cohort table
-(`agents-method.md`); a domain owner's avatar is the one declared for it in the app's business pack
-(`docs/project/business/README.md`), 🧑 by default; state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 · `blocked` 🔴 ·
-`landed` ✅ · `parked` 💤. A `landed` slice that cannot be archived yet is retitled 🟡 until it can ("Archiving" above). Emoji
-live in titles and file contents, never in branch names (above). The `ListAgents` name follows the
-title: re-read it after each `set_session_title`.
+**Titles — applied by the supervisor, not by discipline.** Supervisor: `🧑‍✈️ {repo icon} {chantier}` (e.g.
+`🧑‍✈️ 🍌 W42 cash`), pinned. Sub-session: `{slice} {avatar} {object} · {state icon}` (e.g. `D1 👩‍💼 Offre Santa · 🟡`) —
+**the slice code comes first** (322.h; before it the avatar did), so the group's alphabetical sort follows the slices.
+Avatars from the cohort table (`agents-method.md`); a domain owner's avatar is the one declared for it in the app's
+business pack (`docs/project/business/README.md`), 🧑 by default; state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 ·
+`blocked` 🔴 · `landed` ✅ · `parked` 💤. A `landed` slice that cannot be archived yet is retitled 🟡 until it can
+("Archiving" above). Emoji live in titles and file contents, never in branch names (above). The `ListAgents` name follows
+the title: re-read it after each `set_session_title`.
+
+**Sidebar contract (322.h; the operator's rulings, 2026-10-16 — decided, not re-litigated).** The sidebar is the
+operator's one always-open surface, so what stands in it is fixed by rule, not by whoever started a session.
+
+1. **Pinned = supervisors only.** Every supervisor session is pinned and filed in its chantier group
+   `{app} · {chantier}`; nothing else is ever pinned. A move un-pins a session — pin it again after any `move_sessions`.
+2. **One group per chantier**, section view `group_by: "none"`, `sort_by: "alpha"`. Sub-sessions are task chips the
+   supervisor offers, so they nest under it and follow its group on their own; their slice-first titles make the alpha
+   sort follow the slices. This replaces the 2026-10-16 morning line `group_by: "state"` in the Open step: a session
+   waiting on the operator is read from the 🟡 / 🔴 in its title, not from the sort.
+3. **`🎯 Missions libres`** — one section for every session outside a chantier (a parallel one-off mission, not
+   project mode), view `group_by: "state"`, `sort_by: "recency"`; title `{repo icon} {object}`.
+4. **One icon per repo**, at the start of a free mission's title and right after 🧑‍✈️ in a supervisor's. The folder
+   directly under `D:\Apps\` names the repo (table below). The machine-readable copy is
+   `docs/METHOD/repo-icons.json` — `{ "bananaevents": "🍌", … , "_scratch": "💬", "_default": "📁" }` — which the sync
+   carries with the rest of `docs/METHOD/**`, so supervisors in every app read the same map; `tests/repo-icons.test.mjs`
+   fails when the two drift.
+5. **Never nest a supervisor.** A session born from another session's task chip nests under it and moves with it — that
+   is how four supervisors ended up inside "Today's handoff" and its group. A supervisor is started from a fresh
+   top-level session, or the operator detaches it once (row menu → "Detach to top level"); Claude cannot detach a
+   chip-born session.
+6. **The janitor.** A scheduled task, `rangement-barre-laterale` (🧹), every 2 h from 08:07 to 20:07, re-applies rules
+   1–5: it pins and files supervisors, retitles them, files every session outside a chantier into `🎯 Missions libres`,
+   adds a missing repo icon (it never rewrites the object) and corrects both kinds of section view. It archives finished
+   routine runs (e.g. Mailair's hourly sort: not running, older than 15 min) and, at the 20:07 pass only, finished free
+   missions — inactive > 72 h, not running, no open PR, a `cwd` no other session shares, no child session (under
+   `.claude/worktrees/` only when its PR is merged; otherwise it is reported "to verify"). It never deletes, never
+   archives a supervisor, a running, pinned or PR-open session or a parent, and leaves a chantier's sub-sessions to their
+   supervisor, which keeps archiving its own finished ones (322.b). A supervisor it cannot move because it is nested is
+   reported "to detach by the operator". Routine runs archive themselves when they have nothing for the operator. The task
+   lives in the operator's user-level `~/.claude/scheduled-tasks/` — outside the sync, its prompt is the file — and its
+   prompt carries an inline copy of the repo-icon table: change the table here, then the prompt.
+
+**Repo icons.** One per repo; the repo is the folder directly under `D:\Apps\` (matched case-insensitively), a `cwd`
+under `scratch-workspaces` is the scratch workspace.
+
+| Repo (folder under `D:\Apps\`) | Icon |
+|:--|:--|
+| bananaevents | 🍌 |
+| Respirit | 🌬️ |
+| BanaLog | 🚚 |
+| BanaLazer | 🎯 |
+| Bana-Share · Swanifly | 🦢 |
+| Mailair | 📬 |
+| Finasup | 💶 |
+| Talkation | 🗣️ |
+| versation | 🗂️ |
+| gites-groupes | 🏡 |
+| LeMansFC | ⚽ |
+| Scapience | 🔬 |
+| scratch workspace (`_scratch`) | 💬 |
+| any other repo (`_default`) | 📁 |
 
 **Chantier vs sprint.** The sprint stays the exception for work **planned ahead, multi-owner, with a
 review gate** (`/plan-sprint`, Vera's closing review). A chantier needs none of that ceremony: it is
