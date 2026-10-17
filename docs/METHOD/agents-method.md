@@ -1,8 +1,8 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 322.b  
-**Last Updated:** 2026-10-14  
+**Version:** 324.a  
+**Last Updated:** 2026-10-17  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
 ---
@@ -40,7 +40,8 @@ chain.
 4. The operator: **accept / reopen / defer** (`method-core.md` → "The two-moment contract").
 
 **Fan-out, outside the chain:** `nova` design · `gordon` commercial & growth · `iris` study &
-deliverables · `lucia` METHOD release · `penny` token economy. **At the Recette, when the slice ran a
+deliverables · `lucia` METHOD release · `penny` token economy · `regine` régie — the scheduled sidebar &
+worktree pass (idle clocks, rescue before archive), and on demand. **At the Recette, when the slice ran a
 Workflow or more than 10 sub-agents,** the coordinator asks `penny` for a one-paragraph cost note
 (sub-agents and their models, the opus share, anything that inherited its model) and folds it into
 the Debrief — a note, not a gate: it never holds a landing. **`oscar` coaches** — weekly through
@@ -70,13 +71,14 @@ high, execute cheap; `Tier:` on every planned item; an explicit `model` on every
 
 ---
 
-## Agent Roster (12 active mandates + 3 dormant)
+## Agent Roster (13 active mandates + 3 dormant)
 
-**An agent earns a name when its mandate is one you would otherwise have to retype.** Twelve
+**An agent earns a name when its mandate is one you would otherwise have to retype.** Thirteen
 mandates clear that bar (318.a, measured on 120 days of practice — see
 `docs/interventions/2026-10-06-Lucia-v318a-practice-audit.md`; 319.a adds Penny, after a 14-day
 cost study — `docs/interventions/2026-10-10-Lucia-token-economy.md`; 320.a adds Oscar, the coach the
-operator asked for — `docs/interventions/2026-10-10-Lucia-oscar-coach.md`). Three are parked under
+operator asked for — `docs/interventions/2026-10-10-Lucia-oscar-coach.md`; 324.a adds Régine, the régie, after a
+session and worktree audit — `docs/interventions/2026-10-17-Junia-hygiene-sessions.md`). Three are parked under
 `.claude/_dormant/`, outside Claude Code's scanned agent directories — **not loaded, not delegable**.
 
 ### Human Executive (Agent 0)
@@ -102,7 +104,7 @@ The **Avatar** is the agent's face in a chantier session title (`sprints-method.
 
 ---
 
-### On-Demand Specialists (6 agents)
+### On-Demand Specialists (7 agents)
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
@@ -114,6 +116,7 @@ Called when their domain is touched — all are **executable sub-agents** (`.cla
 | **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | A METHOD change, a release, a sync, an app proposal | opus |
 | **Penny** | 🤵 | Token economy — measure, report, coach; propose METHOD changes to Lucia | A periodic report, a J+7 measurement, a cost note at the Recette, a costly session to explain | sonnet |
 | **Oscar** | 🧑‍🏫 | Coach — effectiveness, focus, objectivity, lucidity; relevance of objectives and whether they are reached | The weekly `/retro`; on demand after a slice that closes a journey | opus |
+| **Régine** | 🧑‍🔧 | Régie — session, worktree & work-in-progress hygiene; archives, never deletes | The scheduled sidebar pass (every 2 h); on demand to sweep sessions, worktrees, branches, stashes | sonnet |
 
 ---
 
@@ -740,6 +743,43 @@ the work and the system, never a person's worth.
 
 ---
 
+## 13. Régine — Régie
+
+### Role
+Session, worktree and work-in-progress hygiene. One outcome: **when the operator opens the Code tab,
+what he sees is the work really in progress** — running, waiting on him, or under a pinned
+supervisor — never a pile of paused or finished sessions, never a worktree hiding unsaved work.
+Canonical definition: `.claude/agents/regine.md`. Added in 324.a after the 2026-10-17 audit (66
+open sessions, 11 duplicate routine passes, 164 worktrees, 35.4 GB held) — `docs/interventions/2026-10-17-Junia-hygiene-sessions.md`.
+She replaces the anonymous janitor `rangement-barre-laterale`: the scheduled task now runs as her.
+
+### Responsibilities
+- **Routines close their previous runs** — for every scheduled task, `list_task_runs` (never the title); archive every non-running run but the newest, her own passes included
+- **The sidebar contract** (`sprints-method.md` → "The chantier", rules 1–7): pinned supervisors, one group per chantier, `🎯 Missions libres`, repo icons
+- **The clocks** (outside a chantier): PR merged + idle + clean → archive · `✅` idle > 2 h → rescue, archive · idle > 24 h → `· 💤` · idle > 72 h → rescue, archive · open PR / pinned / running / parent → never
+- **Rescue before archive** — uncommitted or unpushed work is committed `wip(rescue): … [wip]` on its own branch and pushed (never forced) first; a refused push means no archive
+- **WIP limits** flagged, never forced: > 25 open sessions · > 8 in one repo · > 5 side sessions under one parent · two sessions on one `cwd` · an empty chantier group
+- **Weekly (Monday)** — storage, stale worktrees, unmerged `claude/*` branches > 14 days, stashes: one table, a recommended action each; the operator decides deletions
+
+### Information Surfaces
+
+| What        | Path                      | Action |
+|-------------|---------------------------|--------|
+| **Reads**   | sessions, task runs, sidebar sections/groups, `get_storage_usage`, each repo's `git worktree list` / branches / stashes, `docs/METHOD/repo-icons.json` | The live state of the work in progress |
+| **Writes**  | session titles and sidebar placement; `wip(rescue)` commits on a session's own branch | Never `main`/`master`, never a main checkout's working tree, never product code |
+| **Ignores** | chantier sub-sessions (their supervisor archives them), running sessions | Archive, never delete |
+
+### Model Preference
+- **Sonnet** (T2 — rule-driven ops, verifiable by the sidebar and `git log`)
+- **Sub-agent / Skill:** `regine` (tools: Read, Glob, Grep, Bash, Write, Edit)
+
+### Routing
+- **Entry:** `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention
+- **Ritual:** the scheduled task `rangement-barre-laterale` (every 2 h, 08:07–20:07; the operator's `~/.claude/scheduled-tasks/`, outside the sync) runs as Régine — no shell there, so it lists rescue-needing sessions « à sauver » instead of archiving them
+- **Task type:** Session / worktree / branch / stash hygiene; fan-out outside the chain
+
+---
+
 ## STRUCTURE.md (Application Structure Surface)
 
 **Path:** `project/STRUCTURE.md` (app-specific; not synced as METHOD)  
@@ -851,6 +891,9 @@ Am I measuring or explaining token spend, or writing a telemetry report or a cos
 
 Am I looking back at the week — objectives, focus, lucidity, what to change?
   → Oscar (via /retro) → Load: method-core.md, project/STATE.md + FOCUS.md, the week's evidence
+
+Am I tidying sessions, the sidebar, worktrees, branches or stashes?
+  → Régine → Load: sprints-method.md (The chantier), repo-icons.json, the last hygiene intervention
 
 Am I on mobile or AI wiring?
   → Brian (Teddy and Aiko are parked). Vision and copy → Junia's Cadrage + Gordon (April is parked).

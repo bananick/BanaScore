@@ -11,7 +11,7 @@
  * It classifies the diff against the trunk into three lanes, and only spends
  * build time on the lane that can actually break production:
  *
- *   doc      docs/, *.md, proto/, qa/, prompts/, *.jsonl → nothing to run (green)
+ *   doc      docs/, *.md, proto/, qa/, prompts/, *.jsonl, study data (*.csv/tsv/geojson, unowned *.json) → nothing to run (green)
  *   tooling  scripts/, .claude/, tools/, registries      → `node --check` on JS
  *   rules    telemetry-backend/firestore.{rules,indexes.json} → parsed and sanity-checked (below)
  *   app      real app code under an app root             → that app's npm checks
@@ -142,6 +142,11 @@ const DOC = [
   /(^|\/)docs\//, /\.mdx?$/i, /(^|\/)proto\//, /(^|\/)qa\//, /(^|\/)prompts\//, /(^|\/)_agents\//,
   /\.jsonl$/, /(^|\/)TEMPLATES\//, /(^|\/)projects\//, /(^|\/)README/i, /\.(png|jpe?g|svg|webp|gif|pdf)$/i,
   /(^|\/)(SOUL|CLAUDE|AGENTS|GEMINI)\.md$/,
+  // Study data — tables and maps a study folder commits next to its report: no runtime, nothing a gate can run.
+  // Fell through every lane into "unclassifiable paths (fail closed)" and held a whole study dossier at /land
+  // (versation Cabasse-GFV 5ffa7e8, PR #21, 2026-10-17). Depth-agnostic like the rest of this list. A study's
+  // `.json` is the same kind of file but cannot be matched here — see STUDY_JSON below.
+  /\.(csv|tsv|geojson)$/i,
 ];
 const TOOLING = [
   /(^|\/)scripts\//, /(^|\/)\.claude\//, /(^|\/)tools\//, /(^|\/)\.github\//,
@@ -182,6 +187,15 @@ const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|css|scss|html|snap)$/i;
 // 2026-09-18, upstreamed from 887092749) fell through every lane into "unclassifiable (fail closed)"
 // AFTER lint, type-check, test:gate and build had all passed.
 const ROOT_APP_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|json|snap)$/i;
+// Study data, the `.json` half (2026-10-17, versation Cabasse-GFV 5ffa7e8 — scraped series, registry extracts, a
+// report's data file). A `.json` is study data only when no one else owns it, so classify() tests this AFTER
+// TOOLING (root-level `*.json`, `scripts/`, `.claude/`, `firebase.json` keep their lane) and AFTER the app-root
+// lookup (a `.json` under an app's package.json — the i18n catalogues `src/messages/*.json` first — keeps that
+// app's lane and its checks). What is left: a nested `.json` under no package.json, or under a repo root that
+// verifies nothing. Two stay "unclassifiable (fail closed)" on purpose: `firestore.indexes.json` (deploy config,
+// see RULES) and anything under a `src/` folder (app data with no app able to verify it).
+const STUDY_JSON = /\.json$/i;
+const STUDY_JSON_EXCLUDED = [/(^|\/)firestore\.indexes\.json$/i, /(^|\/)src\//];
 
 /**
  * npm workspaces roll-up (upstreamed from Respirit `01a866e`). A package.json that is a workspace of a parent
@@ -273,6 +287,7 @@ function classify(file) {
   const own = appRootOf(file);
   if (own && own !== '.') return { lane: 'app', root: workspacesRoot(own) };
   if (own === '.' && ROOT_APP_EXT.test(file) && rootHasVerifyingScript()) return { lane: 'app', root: '.' };
+  if (STUDY_JSON.test(file) && !STUDY_JSON_EXCLUDED.some((r) => r.test(file))) return { lane: 'doc' };   // unowned study data
   if (CODE_EXT.test(file)) return { lane: 'tooling' };       // loose hub-level script
   return { lane: 'unknown' };
 }

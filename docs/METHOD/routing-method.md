@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 321.c  
-**Last Updated:** 2026-10-12  
+**Version:** 324.a  
+**Last Updated:** 2026-10-17  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -12,7 +12,7 @@
 
 ### By Agent
 
-> Cohort = **12 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
+> Cohort = **13 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
 > **3 dormant** agent files listed below the table — not loaded, not delegable. An agent earns a
 > name when its mandate is one you would otherwise have to retype.
 > **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row. An app
@@ -33,6 +33,7 @@
 | Lucia   | METHOD release | `lucia`             | opus          | `versioning.md` → `METHOD.md` → the files the change touches      |
 | Penny   | token economy | `penny` (read-only on code) | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 | Oscar   | coach         | `oscar` (read-only on code) | opus | `method-core.md` → `project/STATE.md` + `FOCUS.md` → the week's evidence |
+| Régine  | régie       | `regine`               | sonnet        | `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention |
 
 #### Dormant (not loaded, not delegable)
 
@@ -124,7 +125,7 @@ Nothing else justifies a second window — not size, not an estimate, not "it lo
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
 - **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`, `oscar`
-- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`
+- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`, `regine`
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
 - **Opus by override (318.a):** `nova` for a deep UX-architecture study · `gordon` for a pricing or
   positioning recommendation · `iris` for a ranked recommendation the operator will act on

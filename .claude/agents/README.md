@@ -4,9 +4,10 @@ The METHOD cohort as Claude Code **sub-agents** — delegatable, each with its o
 window and a scoped tool allow-list. This is the native execution layer of the METHOD; it
 complements (doesn't replace) the Skills in `.claude/skills/`.
 
-**12 active mandates** live in this directory — `junia` (plan) · `brian` (build) · `sage` (prove) ·
+**13 active mandates** live in this directory — `junia` (plan) · `brian` (build) · `sage` (prove) ·
 `watson` (repair) · `kasper` (guard) · `vera` (judge) · `nova` (draw) · `gordon` (commercial &
-growth) · `iris` (study & deliverables) · `lucia` (METHOD release) · `penny` (token economy) · `oscar` (coach). **3 parked** agent files
+growth) · `iris` (study & deliverables) · `lucia` (METHOD release) · `penny` (token economy) · `oscar` (coach) ·
+`regine` (régie — sessions, worktrees, work in progress). **3 parked** agent files
 (`teddy`, `aiko`, `april`) live under `.claude/_dormant/agents/`, outside the scanned agent root:
 **not loaded, not delegable**. Bringing one back is a `git mv`, the operator's call. An agent earns
 a name when its mandate is one you would otherwise have to retype.
@@ -41,6 +42,7 @@ file, never the stub.
 | **lucia** | opus | Read, Write, Edit, Bash, Glob, Grep | METHOD release: versioning, doctor, sync dry-run |
 | **penny** | sonnet | Read, Glob, Grep, Bash, Write, Edit | token economy: telemetry reports + coaching — **read-only on code** (prompt-enforced) |
 | **oscar** | opus | Read, Glob, Grep, Bash, Write, Edit | coach: the weekly retro only — **read-only on code** (prompt-enforced); weekly, never per Debrief |
+| **regine** | sonnet | Read, Glob, Grep, Bash, Write, Edit | régie: sidebar pass, idle clocks, rescue before archive — **archives, never deletes**; never edits or lands product code (prompt-enforced) |
 
 Parked files (`teddy`, `aiko`, `april`) keep their frontmatter as it was; it applies only if the
 operator moves one back.
@@ -63,7 +65,7 @@ The 9 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the 
 
 ## Model routing (default: orchestrate high, execute cheap)
 The `model` column above is each sub-agent's **default tier** — T1 judge/plan/review/security/METHOD
-release on opus, T2 build/tests/ops/design/copy/study/token economy on sonnet. The orchestrator runs on the
+release on opus, T2 build/tests/ops/design/copy/study/token economy/régie on sonnet. The orchestrator runs on the
 strongest model and delegates each task on the **cheapest model that meets its quality bar**,
 overriding the default per delegation when tiers differ (e.g. `brian` + `model: haiku` for pure
 scaffolding = T3 mechanical; `iris` + `model: opus` for a ranked recommendation). One retry max at a

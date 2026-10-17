@@ -1,4 +1,4 @@
-# METHOD v323.a
+# METHOD v324.a
 
 ## Quick Start
 
@@ -24,12 +24,30 @@
 | **Evolve METHOD** | `versioning.md` → the files the change touches | Lucia |
 | **Measure token spend / coach on it** | `routing-method.md` → `project/telemetry/` → the ledgers | Penny |
 | **Look back at the week (retro)** | `/retro` → `project/STATE.md` + `FOCUS.md` → the week's evidence | Oscar |
+| **Tidy sessions, the sidebar, worktrees** | `sprints-method.md` ("The chantier") → `repo-icons.json` | Régine |
 
-> Agents named here are the **12 active** mandates. `teddy` `aiko` `april` are dormant
+> Agents named here are the **13 active** mandates. `teddy` `aiko` `april` are dormant
 > (`.claude/_dormant/`) — not loaded, so not delegable. Their mandates are covered above (Brian,
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v324.a
+1. **Régine 🧑‍🔧 joins the cohort — 13 active mandates + 3 dormant.** Régie: session, worktree and work-in-progress
+   hygiene (sonnet, `.claude/agents/regine.md`). One outcome — the Code tab shows only the work really in progress.
+   Born of the 2026-10-17 audit (66 open sessions, 11 duplicate routine passes, 164 worktrees, 35.4 GB): `docs/interventions/2026-10-17-Junia-hygiene-sessions.md`.
+2. **She owns the sidebar pass** and replaces the anonymous janitor: `rangement-barre-laterale` now runs as Régine
+   (`sprints-method.md` → "The chantier", rule 6). **Routines close their previous runs** through `list_task_runs`, never
+   the title.
+3. **The clocks** (outside a chantier): PR merged → archive · `✅` idle > 2 h → rescue, archive · idle > 24 h → `· 💤` ·
+   idle > 72 h → rescue, archive. **Rescue before archive** — a `wip(rescue) … [wip]` commit pushed on the session's own
+   branch; a refused push means no archive. Archive, never delete.
+
+## What's New in v323.b
+1. **Study data lands as doc.** `verify-gate.mjs` (hub + addon payload) files `*.csv`, `*.tsv`, `*.geojson` and a nested
+   `.json` that neither tooling nor an app root owns in the **doc** lane, so a study dossier no longer fails `/land` closed
+   as "unclassifiable". App json (`src/messages/*.json`), root json, `scripts/` and `.claude/` keep their lane;
+   `firestore.indexes.json` and json under an orphan `src/` still fail closed.
 
 ## What's New in v323.a
 1. **A hand-made session files itself at birth.** A new `SessionStart` (`startup`) hook, `.claude/hooks/session-sidebar.mjs`, injects one
@@ -344,7 +362,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 ## METHOD Files (17 docs + native layer)
 
 > 17 synced METHOD docs (9 Core + 8 Support), **plus** the repo-root native layer:
-> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (12 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (9 rituals).
+> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (13 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (9 rituals).
 
 ### Core (9) — Always synced
 
@@ -352,7 +370,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 |---|---|---|---|
 | `METHOD.md` | Lucia | This file. Entry point + routing. | ~16 KB |
 | `method-core.md` | Lucia | Principles, tech stack, DoD | ~13 KB |
-| `agents-method.md` | Lucia | 12 active + 3 dormant agents, roles, rituals | ~52 KB |
+| `agents-method.md` | Lucia | 13 active + 3 dormant agents, roles, rituals | ~52 KB |
 | `sprints-method.md` | Junia | Sprint system, gates, rituals | ~16 KB |
 | `design-method.md` | Nova | M3 design constraints, nav patterns | ~25 KB |
 | `ai-infra-method.md` | Brian | Multi-provider AI architecture | ~41 KB |
@@ -377,7 +395,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 | `agent-launch-prompts.md` | Pre-built launch prompts per METHOD agent |
 
 > Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (agent personas as Skills),
-> **`.claude/agents/` (12 active delegatable sub-agents + README), and `.claude/commands/` (9 rituals:
+> **`.claude/agents/` (13 active delegatable sub-agents + README), and `.claude/commands/` (9 rituals:
 > `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, and the optional `/port`,
 > `/relay`)**. See `agents-engineering-method.md`.
 
@@ -512,7 +530,7 @@ npm run sync-method:all:dry    # preview without writing
 
 ---
 
-## Agent Cohort (12 active mandates + 3 dormant)
+## Agent Cohort (13 active mandates + 3 dormant)
 
 Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable by name in Claude Desktop) and as a delegatable **native sub-agent** in `.claude/agents/` (Claude Code — web + Cowork's local Code tab). `.claude/agents/{agent}.md` is the canonical persona text. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from it.) An agent earns a name when its mandate is one you would otherwise have to retype; twelve mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
 
@@ -530,6 +548,7 @@ Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable 
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | `versioning.md` → `METHOD.md` |
 | **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia | `routing-method.md` → `project/telemetry/` |
 | **Oscar** | Coach — weekly retro: effectiveness, focus, objectivity, lucidity, objectives | `method-core.md` → `project/STATE.md` + `FOCUS.md` |
+| **Régine** | Régie — session, worktree & work-in-progress hygiene; archives, never deletes | `sprints-method.md` ("The chantier") → `repo-icons.json` |
 
 ### Dormant (not loaded, not delegable)
 
@@ -638,7 +657,7 @@ docs/sprints/007 ⬜ venue-proto/
 | 1 | Modular Architecture — 15 focused files | `METHOD.md` |
 | 2 | Multi-Entry Routing — load 2-3 files, not 15 | `routing-method.md` |
 | 3 | Two Namespaces — `method/` (synced) + `project/` (local) | `versioning.md` |
-| 4 | Global Agent Cohort — 12 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
+| 4 | Global Agent Cohort — 13 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
 | 5 | **Definition Pipeline** — DISCOVER → SPECIFY → PROTOTYPE | `definition-method.md` |
 | 6 | **Focus System** — Single-objective taquet per app | `project/FOCUS.md` |
 | 7 | **Cross-App Governance** — BanaPilot drift detection | `versioning.md` |
@@ -661,9 +680,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 323.a  
+**Current Version:** 324.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-16
+**Released:** 2026-10-17
 
 ### Version Scheme
 
@@ -686,4 +705,4 @@ docs/sprints/007 ⬜ venue-proto/
 ---
 
 **Owner:** Junia  
-**Last Updated:** 2026-06-16
+**Last Updated:** 2026-10-17

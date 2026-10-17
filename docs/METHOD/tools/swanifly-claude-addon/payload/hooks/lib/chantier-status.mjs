@@ -8,7 +8,7 @@
 // tests/chantier-status.lib.test.mjs fails if the enums, required fields or caps drift apart.
 
 /** The 12 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
-export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar'];
+export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar', 'regine'];
 /** `agent` = a cohort id or a domain owner declared in the app's business pack (docs/project/business/README.md): a lowercase slug. */
 export const AGENT_RE = /^[a-z][a-z0-9-]{1,23}$/;
 export const STATES = ['planning', 'working', 'waiting', 'blocked', 'landed', 'parked'];

@@ -1,4 +1,4 @@
-## Agent Cohort (12 active mandates + 3 dormant — Skills + sub-agents)
+## Agent Cohort (13 active mandates + 3 dormant — Skills + sub-agents)
 
 > Synced from the METHOD hub into every app's `CLAUDE.md` — change it in the hub, never in an app.
 > Canonical: `docs/METHOD/agents-method.md`.
@@ -7,7 +7,7 @@
 non-negotiables. `.claude/skills/{agent}/SKILL.md` is a Desktop **stub that loads it**. Edit the
 agent file, never a stub.
 
-An agent earns a name when its mandate is one you would otherwise have to retype. Twelve mandates
+An agent earns a name when its mandate is one you would otherwise have to retype. Thirteen mandates
 hold that bar; three are dormant — parked under `.claude/_dormant/`, outside the directories Claude Code
 scans for agents, so **not loaded and not delegable**. Bringing one back is a `git mv` into
 `.claude/agents/` plus a METHOD release — the operator's call, never an agent's mid-session.
@@ -26,6 +26,7 @@ scans for agents, so **not loaded and not delegable**. Bringing one back is a `g
 | **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
 | **Penny** | 🤵 | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 | **Oscar** | 🧑‍🏫 | Coach — weekly retro (`/retro`): effectiveness, focus, objectivity, lucidity, relevance of objectives and whether they are reached; one habit to change; METHOD proposals to Lucia; read-only on code | opus | `method-core.md` → `docs/project/STATE.md` + `FOCUS.md` → the week's evidence |
+| **Régine** | 🧑‍🔧 | Régie — session, worktree & work-in-progress hygiene: the sidebar pass, the idle clocks (24 h 💤 · 72 h rescue + archive · merged/✅ archive), rescue before archive; archives, never deletes; never lands product code | sonnet | `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention |
 
 **Dormant (not loaded, not delegable):** **April** (vision & copy → Junia's Cadrage + Gordon) ·
 **Aiko** (AI integration → Brian) · **Teddy** (mobile → Brian). Why: `.claude/_dormant/README.md`.
@@ -38,7 +39,8 @@ rules / auth / API routes are touched); once per slice, at the Recette, `vera` (
 design · `gordon` commercial · `iris` study · `lucia` METHOD · `penny` token economy — when a slice
 ran a Workflow or > 10 sub-agents, her one-paragraph cost note joins the Debrief (a note, not a gate) ·
 `oscar` coach — weekly through `/retro`, and on demand at the Recette of a slice that closes a journey;
-never once per Debrief.
+never once per Debrief · `regine` régie — the scheduled sidebar & worktree pass (idle clocks, rescue
+before archive), and on demand.
 
 Rituals (9, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
 `/intervention` · `/plan-sprint` · `/review` · `/brief` · `/retro` (weekly) · `/port` (optional) ·

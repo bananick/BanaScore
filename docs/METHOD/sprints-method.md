@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 323.a  
+**Version:** 324.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -556,6 +556,8 @@ what clients see or what touches money ("The operator's input is an inbox" below
 **322.h** (`docs/interventions/2026-10-16-Lucia-sidebar-contract.md`) files the sidebar by contract: only supervisors are
 pinned, one alpha-sorted group per chantier, slice-code-first titles, a `🎯 Missions libres` section, one icon per repo and
 a janitor ("Sidebar contract" below).
+**324.a** (`docs/interventions/2026-10-17-Junia-hygiene-sessions.md`) hands that pass to a named agent, Régine 🧑‍🔧,
+with idle clocks and a rescue before every archive (rule 6 below).
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
   slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
@@ -756,24 +758,37 @@ operator's one always-open surface, so what stands in it is fixed by rule, not b
    is how four supervisors ended up inside "Today's handoff" and its group. A supervisor is started from a fresh
    top-level session, or the operator detaches it once (row menu → "Detach to top level"); Claude cannot detach a
    chip-born session.
-6. **The janitor.** A scheduled task, `rangement-barre-laterale` (🧹), every 2 h from 08:07 to 20:07, re-applies rules
-   1–5: it pins and files supervisors, retitles them, files every session outside a chantier into `🎯 Missions libres`,
-   adds a missing repo icon (it never rewrites the object) and corrects both kinds of section view. It archives finished
-   routine runs (e.g. Mailair's hourly sort — any title *containing* « Tri du courrier », since a run may carry the 📬 icon: not running, older than 15 min) and, at the 20:07 pass only, finished free
-   missions — inactive > 72 h, not running, no open PR, a `cwd` no other session shares, no child session (under
-   `.claude/worktrees/` only when its PR is merged; otherwise it is reported "to verify"). It never deletes, never
-   archives a supervisor, a running, pinned or PR-open session or a parent, and leaves a chantier's sub-sessions to their
-   supervisor, which keeps archiving its own finished ones (322.b). A supervisor it cannot move because it is nested is
-   reported "to detach by the operator". Routine runs archive themselves when they have nothing for the operator. The task
-   lives in the operator's user-level `~/.claude/scheduled-tasks/` — outside the sync, its prompt is the file — and its
-   prompt carries an inline copy of the repo-icon table: change the table here, then the prompt.
+6. **Régine owns the sidebar pass (324.a — she replaces the anonymous janitor).** `regine` (`.claude/agents/regine.md`,
+   sonnet) runs it on demand and as the scheduled task `rangement-barre-laterale` (🧹), every 2 h from 08:07 to 20:07.
+   Each pass: **(a) routines close their previous runs** — for every scheduled task, `list_task_runs` (never the title)
+   and archive every non-running run but the newest, her own previous passes included; **(b)** re-apply rules 1–5: pin and
+   file supervisors, retitle them, file every session outside a chantier into `🎯 Missions libres`, add a missing repo
+   icon (never rewriting the object) and correct both section views; **(c) the clocks**, on sessions outside a chantier:
+
+   | Condition | Action |
+   |:--|:--|
+   | PR merged, idle, worktree clean, no open child | archive |
+   | title carries `✅`, idle > 2 h | rescue, then archive |
+   | idle > 24 h | append `· 💤` to the title, list it |
+   | idle > 72 h | rescue, then archive; named in the report |
+   | open PR, pinned, running, or parent of a live session | never archived — reported when idle > 7 days |
+
+   **Rescue before archive** (archiving removes a clean worktree): uncommitted or unpushed work in the session's
+   worktree is committed `wip(rescue): sauvegarde avant archivage [wip]` on its own branch and pushed, never forced; a
+   refused push means no archive. The scheduled pass has **no shell**: it works from PR state, title and idle time only,
+   and lists a session that needs a rescue as « à sauver » instead of archiving it — the rescue runs in an on-demand
+   pass. She never deletes, never touches a running session, and leaves a chantier's sub-sessions to their supervisor,
+   which keeps archiving its own finished ones (322.b). A supervisor she cannot move because it is nested is reported
+   « à détacher » to the operator **once a day** (the 08:07 pass only), so a pass with nothing for him archives itself.
+   The task lives in the operator's user-level `~/.claude/scheduled-tasks/` — outside the sync, its prompt is the file —
+   and its prompt carries an inline copy of the repo-icon table: change the table here, then the prompt.
 
 7. **The startup hook applies rule 3–4 at birth (operator ruling 2026-10-16: "hook au démarrage + gardien en filet").**
    `.claude/hooks/session-sidebar.mjs` (`SessionStart`, `startup` only) cannot rename or move a session — those are Claude
    tools — so it injects one short instruction (≤ 900 chars): on its first reply, and unless it is a supervisor, a
    chantier sub-session or a scheduled routine, the session loads `set_session_title` / `list_sections` /
    `move_sessions`, titles itself `{repo icon} {object in 3–6 words}` and files itself under `🎯 Missions libres` (never
-   creating the section). It is fail-open and silent outside a repo; the janitor above stays the safety net for whatever
+   creating the section). It is fail-open and silent outside a repo; Régine's pass above stays the safety net for whatever
    it misses. Tests: `tests/session-sidebar.test.mjs`.
 
 **Repo icons.** One per repo; the repo is the folder directly under `D:\Apps\` (matched case-insensitively), a `cwd`
@@ -793,6 +808,8 @@ under `scratch-workspaces` is the scratch workspace.
 | gites-groupes | 🏡 |
 | LeMansFC | ⚽ |
 | Scapience | 🔬 |
+| FunFlasher | ⚡ |
+| Postarget | 📮 |
 | scratch workspace (`_scratch`) | 💬 |
 | any other repo (`_default`) | 📁 |
 
@@ -1010,5 +1027,5 @@ Readiness work compounds. If the current loop is dishonest or fragile, adding an
 ---
 
 **Owner:** Junia  
-**Last Updated:** 2026-10-15
+**Last Updated:** 2026-10-17
 

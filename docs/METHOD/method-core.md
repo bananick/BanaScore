@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 322.g  
+**Version:** 323.b  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -369,7 +369,10 @@ container — the gate runs *that*, not the full `test` (emulator + network, > 1
 gets **30 min** (`build` replays `prebuild`); the spawn buffer is **64 MB**, because under
 `CI=true` vitest's reporter emits > 1 MB of JSON and the 1 MB default turned 2 695 green tests into
 "`test:gate` failed" with an empty tail (`ENOBUFS`); and `src/**/*.json` (i18n catalogues) is
-**app** lane, not "unclassifiable". A red gate with an empty tail is a gate bug, not a test — read
+**app** lane, not "unclassifiable". Study data is **doc** lane (323.b): `*.csv`, `*.tsv`,
+`*.geojson` anywhere, and a nested `.json` that neither tooling nor an app root owns —
+`firestore.indexes.json` and json under an orphan `src/` still fail closed. A red gate with an
+empty tail is a gate bug, not a test — read
 `.method/verify-ok.json` before touching the code.
 
 **Worktrees run the main checkout's hooks.** `.claude/` is gitignored, so every git worktree

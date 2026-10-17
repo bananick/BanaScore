@@ -1,8 +1,8 @@
 # METHOD Versioning & Sync Protocol
 
 **Owner:** Lucia  
-**Version:** 323.a  
-**Last Updated:** 2026-10-16  
+**Version:** 324.a  
+**Last Updated:** 2026-10-17  
 **Purpose:** Version scheme, sync protocol, migration policy
 
 ---
@@ -14,7 +14,7 @@
 - **MAJOR**: Epoch or significant release (300, 301, 400...)
 - **LETTER**: Minor revision (a, b, c...)
 
-**Current:** 323.a (Epoch 3: Modular & Multi-Entry)
+**Current:** 324.a (Epoch 3: Modular & Multi-Entry)
 
 ### Per-file version stamps
 
@@ -149,6 +149,26 @@ npm run sync-method:dry-run      # preview
 ---
 
 ## Version History
+
+**324.a** (2026-10-17) — **Régine 🧑‍🔧 — Régie joins the cohort (13 active mandates + 3 dormant): session, worktree and work-in-progress hygiene; she owns the sidebar pass**
+
+- **Problem.** The 2026-10-17 audit (`docs/interventions/2026-10-17-Junia-hygiene-sessions.md`, inputs in commit `b5e9d23d`) counted 66 non-archived Code sessions, 11 duplicate passes of the janitor `rangement-barre-laterale` left open (it found its own runs by title), 11 free sessions idle > 72 h (8 titled `⚠️ non commité/poussé/atterri`), 164 worktrees across 24 repos (80 dirty, 24 unlanded) and 35.4 GB held by app-made worktrees. 322.h gave the sidebar to an anonymous scheduled task with no mandate, no clocks and no rule for unsaved work; nobody owned the pile.
+- **NEW — agent `regine`** (`.claude/agents/regine.md`, sonnet; Desktop stub `.claude/skills/regine/SKILL.md`). One outcome: the Code tab shows only the work really in progress. Mandate: routines close their previous runs via `list_task_runs` (never the title); the sidebar contract; the clocks — PR merged → archive · `✅` idle > 2 h → rescue, archive · idle > 24 h → `· 💤` · idle > 72 h → rescue, archive · open PR / pinned / running / parent → never; **rescue before archive** (`wip(rescue) … [wip]` pushed on the session's own branch, never forced; a refused push means no archive); WIP limits flagged, never forced; a weekly storage / branch / stash table. Archive, never delete; never `main`, never product code.
+- **CHANGED — doctrine.** `sprints-method.md` → "The chantier", rule 6: Régine owns the sidebar pass and replaces the anonymous janitor; the scheduled task runs as her, has no shell, so it lists rescue-needing sessions « à sauver » instead of archiving them, and reports « à détacher » once a day (08:07). Rule 7 names her pass as the safety net. Cohort enumerations: `CLAUDE.md` (Agent Cohort table, count, fan-out line, Model Routing defaults) and its payload copy + `snippets/agent-cohort.md` + `snippets/model-routing.md`; `AGENTS.md` + payload copy; `agents-method.md` (roster, fan-out, section 13, routing tree); `routing-method.md` (cohort table, T2 list); `METHOD.md` + `README.md` (entry table, cohort tables, counts, What's New); `.claude/agents/README.md`; `.claude/skills/README.md`; addon `README.md`; `chantier-status.mjs` `AGENTS` (hub + payload, byte-identical) so a fiche may name `regine` as owner.
+- **Why Major.** "New agent in cohort" and "New native sub-agent added to `.claude/agents/`" (`versioning.md` → "When to Increment"): `323.b → 324.a`. Not on the landing exception list (no schema, rules, auth, dependency or deploy change; `SOUL.md` untouched). Ratified by the operator in chat on 2026-10-17 (« publication complète oui »), relayed by the coordinator.
+- **Sync effect.** Hub-owned surfaces only: a **new agent file** `.claude/agents/regine.md` and a **new skill stub** in every app, `docs/METHOD/**`, the payload `hooks/lib/chantier-status.mjs`, the merged `CLAUDE.md` sections (Agent Cohort, Model Routing) and `AGENTS.md`. No app-owned file is overwritten. The scheduled task prompt lives in the operator's `~/.claude/scheduled-tasks/`, outside the sync, and is updated by hand in the same release. Gate before any sync (Sync Protocol rule 4): `npm run doctor` green, `npm run doctor:fleet` with no blocking finding, then `sync-method:all:dry` and its clobber report — never `--force`.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = the intervention's Proof: after one Régine pass, `list_sessions` (non-archived) ≤ 25, 0 duplicate routine passes, 0 session idle > 72 h without a named reason, 0 worktree held by a session inactive > 30 days. Not run yet.
+
+**323.b** (2026-10-17) — **Minor: the verify gate files study data (`*.csv`, `*.tsv`, `*.geojson`, an unowned nested `.json`) in the doc lane**
+
+- **Problem.** versation's `Cabasse-GFV/` study dossier (commit `5ffa7e8`, PR bananick/versation#21, 2026-10-17) was held by `land.mjs`: `verify-gate.mjs` matched none of its 14 data files — 10 `.csv`, 1 `.geojson`, 4 nested `.json` under no app root — and filed them under "unclassifiable paths (fail closed)". A study with no code could not land, and a local patch in the app would not last: `install.mjs` writes `.claude/hooks/` in overwrite mode, so the next sync would revert it. The fix had to come upstream.
+- **FIXED — `verify-gate.mjs` (hub hook + addon payload copy, byte-identical, `npm run doctor` E5; commit `06f1cb29`).** (1) `DOC` gains `/.(csv|tsv|geojson)$/i`, depth-agnostic like the rest of the list. (2) A new `STUDY_JSON` check in `classify()` files a `.json` as doc only **after** `TOOLING` and **after** the app-root lookup, so root-level json, `scripts/`, `.claude/`, `firebase.json` and every app's json — the `src/messages/*.json` i18n catalogues first — keep their lane and their checks. Two cases stay "unclassifiable (fail closed)" on purpose: `firestore.indexes.json` (deploy config, see `RULES`) and any `.json` under a `src/` folder no app owns.
+- **CHANGED — doctrine.** `method-core.md` → "What the gate actually runs": one sentence naming the study-data rule. The version string in `CLAUDE.md` / `AGENTS.md` and their payload copies.
+- **Tests.** `tests/verify-gate.lanes.test.mjs` gains **j1** (the Cabasse-GFV layout — a repo-root `package.json` that verifies nothing, a study folder of csv / tsv / geojson / nested json — is `docs-only`, 5 doc, 0 unknown, green; red on the old gate) and **j2** (narrowness guard: an app's json keeps the app lane and the app's failing test stays the verdict; json under an orphan `src/` and an unknown type such as `.kmz` stay unclassifiable, verdict `blocked`).
+- **Why a letter.** A bug fix in an existing hook, like 317.c (`.codex/` into tooling) and 320.d (deleted paths): no new METHOD file, agent, ritual or hook wired in `.claude/settings.json`, no DoD change, and the installer's copy list is unchanged — the payload copy of an existing hook is refreshed (`versioning.md` → "When to Increment"). Not on the landing exception list (no schema, rules, auth, dependency or deploy change; `SOUL.md` untouched). `323.a → 323.b`.
+- **Sync effect.** Hub-owned surfaces only: payload `hooks/verify-gate.mjs` (refreshed in every app), `docs/METHOD/**` (`method-core.md`, the stamps), the version string in `CLAUDE.md` / `AGENTS.md` and their payload copies. No app-owned file is touched. **Behaviour change in every app:** a diff of study data lands through the doc lane instead of being held at `/land`. Gate before any sync (Sync Protocol rule 4): `npm run doctor` green, `npm run doctor:fleet` with no blocking finding, then `sync-method:all:dry` and its clobber report to the operator — never `--force`.
+- **Where it was authored.** In the hub, on `claude/gate-study-data-lane` (cut from `c0d1c14f`); the trigger repo, versation, receives it through the sync. Not landed, not synced.
+- **Proof.** LANDED = `npm run doctor` green + `npm run test:gate` green + `/land`. PROVEN = after the sync to versation, `/land` on PR #21's branch (`5ffa7e8`) files the 14 data files in the doc lane and lands the dossier. Not run yet.
 
 **323.a** (2026-10-16) — **A `SessionStart` hook applies the sidebar contract at birth: a hand-made session titles itself `{repo icon} {objet}` and files itself under « 🎯 Missions libres » on its first reply**
 

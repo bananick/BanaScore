@@ -1,8 +1,8 @@
-# METHOD v323.a
+# METHOD v324.a
 
-**Version:** 323.a  
+**Version:** 324.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-16  
+**Released:** 2026-10-17  
 **Status:** ✅ Production-Ready
 
 ---
@@ -34,7 +34,7 @@
 ```
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
-.claude/agents/                                 ← 12 active sub-agents + README (3 dormant in .claude/_dormant/)
+.claude/agents/                                 ← 13 active sub-agents + README (3 dormant in .claude/_dormant/)
 .claude/commands/                               ← 9 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /retro, /port (optional), /relay (optional)
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 .claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
@@ -48,7 +48,7 @@ scripts/method-doctor.mjs                       ← `npm run doctor`: METHOD con
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
-  agents-method.md           # 12 active + 3 dormant agents, roles, rituals, models
+  agents-method.md           # 13 active + 3 dormant agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
   routing-method.md          # Entry points, agent routing, model routing (tiers), session telemetry
   ai-infra-method.md         # Multi-provider architecture
@@ -71,6 +71,14 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v324.a
+
+1. **Régine 🧑‍🔧 — Régie** joins the cohort (13 active + 3 dormant, sonnet): session, worktree and work-in-progress hygiene. She owns the sidebar pass (`rangement-barre-laterale` now runs as her), routines close their previous runs via `list_task_runs`, and the clocks — 24 h `💤`, 72 h rescue + archive, merged/`✅` archive — always rescue (`wip(rescue)` pushed) before archiving. Archive, never delete. Why: `docs/interventions/2026-10-17-Junia-hygiene-sessions.md`.
+
+## What's New in v323.b
+
+1. **The landing gate files study data as doc** — `*.csv`, `*.tsv`, `*.geojson` and a nested `.json` no app root owns no longer fail `/land` closed as "unclassifiable"; app json, root json and `firestore.indexes.json` keep their lane (`verify-gate.mjs`, hub + addon payload).
 
 ## What's New in v323.a
 
@@ -307,7 +315,7 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## Agent Cohort (12 active mandates + 3 dormant)
+## Agent Cohort (13 active mandates + 3 dormant)
 
 Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; twelve mandates hold that bar. **The coordinating conversation orchestrates them.**
 
@@ -325,6 +333,7 @@ Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegat
 | **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` |
 | **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia |
 | **Oscar** | Coach — weekly retro: effectiveness, focus, objectivity, lucidity, objectives |
+| **Régine** | Régie — session, worktree & work-in-progress hygiene; archives, never deletes |
 
 #### Dormant (not loaded, not delegable)
 
@@ -370,8 +379,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 323.a  
-**Previous:** 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 324.a  
+**Previous:** 323.b → 323.a → 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.
@@ -381,5 +390,5 @@ ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schem
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-09-01  
+**Last Updated:** 2026-10-17  
 **Status:** ✅ Production-Ready
