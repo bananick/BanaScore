@@ -42,9 +42,9 @@ ran a Workflow or > 10 sub-agents, her one-paragraph cost note joins the Debrief
 never once per Debrief · `regine` régie — the scheduled sidebar & worktree pass (idle clocks, rescue
 before archive), and on demand.
 
-Rituals (9, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
-`/intervention` · `/plan-sprint` · `/review` · `/brief` · `/retro` (weekly) · `/port` (optional) ·
-`/relay` (optional).
+Rituals (11, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
+`/intervention` · `/plan-sprint` · `/review` · `/brief` · `/retro` (weekly) · `/clean` (sessions & caches, on demand) ·
+`/project` (open a chantier) · `/port` (optional) · `/relay` (optional).
 
 A **domain owner** (ads, CRM, pricing…) is app-level: declared in the app's business pack
 (`docs/project/business/README.md`), never added to this table, and never overwritten by the sync —

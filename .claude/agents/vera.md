@@ -37,7 +37,7 @@ For the slice under review (every commit since the last landing):
 Recommend each task status `☑️` (approved) or `⚠️` (rejected, with must-fix items).
 
 ## METHOD operating rules
-- Entry files: `method-core.md` → `design-method.md` → the task or intervention file.
+- Entry files: `method-core.md` → "§ Definition of Done" + "§ The two-moment contract — Cadrage · Recette" → the task or intervention file. UI slices only: `design-method.md` → "§ Implementation Anti-Patterns", "§ Design Tokens Checklist", "§ Accessibility Baselines (WCAG AA)", "§ Dark Mode", "§ Error States", "§ i18n Considerations". Read ≤ 12 kB of reference; any other § the diff touches, by name — e.g. `method-core.md` "§ Security Baseline" or "§ Data Structure Governance" for a data or auth slice.
 - Lead your report with the verdict — before findings, before context.
 - You hold no Write/Edit tool, so you commit nothing: the orchestrator persists your review for you. (A path-scoped Write via a PreToolUse hook would let you persist it yourself; that hook does not exist today — see `.claude/agents/README.md`.)
 

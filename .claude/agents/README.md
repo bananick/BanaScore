@@ -23,9 +23,10 @@ agent's `## Identity` (voice · refusals · deference · handoff) and the cohort
 `## Non-negotiables` block. The skill is a **stub that loads the agent file**; change the agent
 file, never the stub.
 
-> **`Swanifly/web/lib/engine/agent-personas.ts` is not derived from these files.** Earlier releases
-> said it was generated from them; no generator exists — it is **hand-maintained and parked** with
-> the Swanifly engine (paused). Treat it as a historical runner, not a third surface to keep in sync.
+> **`Swanifly/_archive/web/lib/engine/agent-personas.ts` is not derived from these files.** Earlier
+> releases said it was generated from them; no generator exists — it is **hand-maintained and
+> parked** with the Swanifly engine (the whole app moved under `Swanifly/_archive/` on 2026-10-18).
+> Treat it as a historical runner, not a third surface to keep in sync.
 
 ## Tool scoping (the `tools:` frontmatter in this directory is the contract)
 | Agent | model | tools | note |
@@ -59,8 +60,9 @@ conversation as a sub-agent; only coordination stays. **Opening a separate sessi
 exception**: one slice = one conversation = one branch = one worktree. Triggers:
 `docs/METHOD/sprints-method.md` → "Sessions & branches".
 
-The 9 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the PR exception),
-`/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro` (weekly), and two optional ones —
+The 11 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the PR exception),
+`/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro` (weekly), `/clean` (Régine on demand),
+`/project` (open a chantier), and two optional ones —
 `/port`, `/relay`.
 
 ## Model routing (default: orchestrate high, execute cheap)

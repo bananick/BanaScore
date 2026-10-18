@@ -14,7 +14,7 @@
 
 ## How Claude works in this repo
 
-You operate inside the **METHOD** (v324.a, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
+You operate inside the **METHOD** (v325.a, `docs/METHOD/`). Honour `SOUL.md` non-negotiables — above all **never use mock data**; wire everything to the app's live source of truth or render an explicit empty/error state. **Detect this app's actual stack before building** — the METHOD's declared stack is a target baseline, not a description of this repo.
 
 ## Agent Cohort (13 active mandates + 3 dormant — Skills + sub-agents)
 
@@ -60,9 +60,9 @@ ran a Workflow or > 10 sub-agents, her one-paragraph cost note joins the Debrief
 never once per Debrief · `regine` régie — the scheduled sidebar & worktree pass (idle clocks, rescue
 before archive), and on demand.
 
-Rituals (9, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
-`/intervention` · `/plan-sprint` · `/review` · `/brief` · `/retro` (weekly) · `/port` (optional) ·
-`/relay` (optional).
+Rituals (11, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
+`/intervention` · `/plan-sprint` · `/review` · `/brief` · `/retro` (weekly) · `/clean` (sessions & caches, on demand) ·
+`/project` (open a chantier) · `/port` (optional) · `/relay` (optional).
 
 A **domain owner** (ads, CRM, pricing…) is app-level: declared in the app's business pack
 (`docs/project/business/README.md`), never added to this table, and never overwritten by the sync —
@@ -122,6 +122,7 @@ One canonical list, 9 items: **`docs/METHOD/method-core.md` → "Definition of D
 | `/hubspot-sync` | Pull live HubSpot → Firestore |
 | `/port` · `/relay` | *(optional)* port one screen from `proto/` per land · hand off a slice that spans windows |
 | `/media` | Search / create / resize / export visual assets (Nova-owned) |
+| `/clean` · `/project` | Run Régine on demand (sub-agent) · open a chantier by the contract (Cadrage, partition map, sidebar group, task chips) |
 
 > Keep responses lean: reference METHOD files, don't paste them.
 

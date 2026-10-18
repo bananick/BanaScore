@@ -1,8 +1,8 @@
-# METHOD v324.a
+# METHOD v325.a
 
-**Version:** 324.a  
+**Version:** 325.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-17  
+**Released:** 2026-10-18  
 **Status:** ✅ Production-Ready
 
 ---
@@ -35,7 +35,7 @@
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
 .claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
 .claude/agents/                                 ← 13 active sub-agents + README (3 dormant in .claude/_dormant/)
-.claude/commands/                               ← 9 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /retro, /port (optional), /relay (optional)
+.claude/commands/                               ← 11 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /retro, /clean, /project, /port (optional), /relay (optional)
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 .claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
 .claude/hooks/verify-gate.mjs                   ← The local gate: lane-aware checks + HEAD-pinned marker
@@ -71,6 +71,20 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v325.a
+
+1. **A session that waits on the operator is pinned while it waits** — pinned = supervisors + any session whose title ends with ` · 🟡` (it appends the 🟡 and pins itself right before an `AskUserQuestion`, removes both right after the answer; Régine is the safety net; a 🟡 session is never 💤 nor archived by a clock).
+2. **`/clean` and `/project`** — Régine on demand as a sub-agent, and the chantier opening by the contract; 11 rituals.
+
+## What's New in v324.c
+
+1. **Context diet, slice 1** — `versioning.md` 180.7 → 29.5 kB (older releases in `docs/archive/METHOD/versioning-history.md`); 10 agents' `Entry files:` name sections, not whole files, under a `read ≤ 12 kB of reference` cap; median sub-agent launch 102.7 → 61.5 kB. `npm run doctor` E16 warns when `CLAUDE.md` is over 8,192 B.
+
+## What's New in v324.b
+
+1. **The landing gate verifies a no-deps repo with Node alone** — an app root without `node_modules` whose diff is plain Node JS gets `node --test` on every changed `node:test` file (found by content, not name) instead of `blocked`, plus `node --check` as an extra check that never verifies alone; skipped npm scripts are named `no-deps`, the report says `⚠ NO-DEPS`; a JS diff with no `node:test` file, non-Node files and other test runners still fail closed (`verify-gate.mjs`, `tests/verify-gate.no-deps.test.mjs`).
+2. **BanaLog receives the sync again** — off `SKIP_REPOS` (`scripts/lib/fleet-skip.mjs`); BanaLazer stays.
 
 ## What's New in v324.a
 
@@ -379,13 +393,13 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 324.a  
-**Previous:** 323.b → 323.a → 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 325.a  
+**Previous:** 324.c → 324.b → 324.a → 323.b → 323.a → 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.
 
-**See:** `versioning.md` for full changelog.
+**See:** `versioning.md` for the newest 5 releases; older releases are in `docs/archive/METHOD/versioning-history.md` (hub only).
 
 ---
 

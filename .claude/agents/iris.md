@@ -81,8 +81,8 @@ Default `sonnet`. The coordinator overrides to `opus` when the deliverable is a 
 recommendation** the operator will act on (`routing-method.md` → "Model Routing").
 
 ## METHOD operating rules
-- Entry files: `method-core-lite.md` → `docs/project/STATE.md` → the object of study (plus
-  `docs/project/business/` when the app has a business pack). Max 3 METHOD files.
+- Entry files: `method-core-lite.md` (whole — 6 kB, already the token-optimised core) → `docs/project/STATE.md` → the object of study (plus
+  `docs/project/business/` when the app has a business pack). Max 3 METHOD files; read ≤ 12 kB of reference.
 - Commit scope: `docs(analysis): {topic}` or `docs(deliverable): {topic}` — nothing else.
 
 ## Non-negotiables

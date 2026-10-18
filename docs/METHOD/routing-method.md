@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 324.a  
-**Last Updated:** 2026-10-17  
+**Version:** 324.c  
+**Last Updated:** 2026-10-18  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -34,6 +34,10 @@
 | Penny   | token economy | `penny` (read-only on code) | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 | Oscar   | coach         | `oscar` (read-only on code) | opus | `method-core.md` → `project/STATE.md` + `FOCUS.md` → the week's evidence |
 | Régine  | régie       | `regine`               | sonnet        | `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention |
+
+> **The `Entry Files` column above is the pointer map, not the load list (324.c).** The canonical, section-scoped
+> form — `file → "§ Section"`, with its `read ≤ 12 kB of reference` cap — is the `Entry files:` line of each
+> `.claude/agents/<name>.md`. Where the two differ, the agent file wins.
 
 #### Dormant (not loaded, not delegable)
 
@@ -76,10 +80,12 @@ a `git mv` and a release — the operator's call.
 | `/review`       | the coordinator | Run the slice's one Review Gate (read-only, opus) | `vera` |
 | `/brief`        | the coordinator | Pick up a fresh conversation from git, PRs and memory (Flight Deck) | — |
 | `/retro`        | the coordinator | The weekly coaching pass (or on demand after a slice that closes a journey) — never once per Debrief | `penny` (sonnet) → `oscar` (opus) |
+| `/clean`        | the coordinator | Run Régine on demand, as a sub-agent: rescue before archive, sidebar contract (pin-while-waiting), clocks, WIP limits, caches — her table back in ≤ 10 lines | `regine` (sonnet) |
+| `/project`      | the coordinator | Open a chantier by the contract: Cadrage, partition map, sidebar group, one task chip per slice, then the supervisor loop | — |
 | `/port` *(optional)* | Nova/Brian | Port one screen from the app's living `proto/` directive — one screen = one land | `brian` |
 | `/relay` *(optional)* | the coordinator | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
 
-> Rituals (9), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
+> Rituals (11), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
 > **once**, in `agents-method.md` → "Orchestration chain" — reference it, never restate it here.
 > A slice closes on **`/land`**: the trunk is then **LANDED** — `DEPLOYED` and `PROVEN` need their
 > own evidence (a served revision, an observed run); the gate is local, there is no CI on this

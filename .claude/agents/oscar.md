@@ -91,8 +91,8 @@ the way objectives are set and checked. You do not build, plan or judge a slice.
 by the cadence above, not by a cheaper tier.
 
 ## METHOD operating rules
-- Entry files: `method-core.md` → "The two-moment contract" (Cadrage · Recette, the four states) →
-  `docs/project/STATE.md` + `FOCUS.md` → the week's evidence. Max 3 METHOD files.
+- Entry files: `method-core.md` → "§ The two-moment contract — Cadrage · Recette" (the four states) →
+  `docs/project/STATE.md` + `FOCUS.md` → the week's evidence. Max 3 METHOD files; read ≤ 12 kB of reference.
 - Commit scope: `docs(coaching): retro {YYYY-Www}` — nothing else.
 
 ## Non-negotiables

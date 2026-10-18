@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 324.a  
+**Version:** 325.a  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -462,7 +462,7 @@ These hooks run at a session's edges (hub `.claude/settings.json` = addon `setti
 | `SessionStart` (`resume`) | `.claude/hooks/flight-deck.mjs --mode resume-hook` | Injects the Flight Deck pickup context, now with the branch-lifecycle report (active work, alarms, residues); read-only. |
 | `SessionStart` (`startup`) | `.claude/hooks/flight-deck.mjs --mode startup-hook` | Injects only the branch-lifecycle report (silent when empty); read-only. |
 | `SessionStart` (`startup`) | `.claude/hooks/branch-sweep.mjs --apply --landed-only --auto` | Deletes the worktree + local branch (and `origin/<branch>`, WIP ref) of branches **`land.mjs` landed** (its ledger `<git-common-dir>/landed-branches`) once they are `merged`/`gone`, clean, not the cwd nor the main checkout, carry no commit that is on neither the trunk nor a remote ref, and show **no activity for 2 h** (newest of: the branch's last reflog entry, the mtime of the worktree's `HEAD`/`index`/`logs/HEAD` admin files, the tip commit date). A separate script that can never merge a PR. Anything older is never auto-deleted: a manual, validated `branch-sweep.mjs --apply` (`npm run branch:sweep:apply`). |
-| `SessionStart` (`startup`) | `.claude/hooks/session-sidebar.mjs` | Injects one short instruction (≤ 900 chars) so a hand-made session titles itself `{repo icon} {object}` and files itself under "🎯 Missions libres" on its first reply; says nothing on `resume`/`clear`/`compact`, outside a repo, or on any error ("Sidebar contract", rule 7). |
+| `SessionStart` (`startup`) | `.claude/hooks/session-sidebar.mjs` | Injects one short instruction (≤ 900 chars) so a hand-made session titles itself `{repo icon} {object}` and files itself under "🎯 Missions libres" on its first reply; carries the pin-while-waiting sentence for every session (325.a); says nothing on `resume`/`clear`/`compact`, outside a repo, or on any error ("Sidebar contract", rule 7). |
 | *(library)* | `.claude/hooks/gate-lock.mjs` | Not an event hook: imported by `land.mjs` and `verify-gate.mjs` (322.f, from bananaevents `3e73289d`). **One landing / heavy gate at a time per repository:** the lock `<main checkout>/.method/gate.lock` (`.method/` is gitignored) is shared by every worktree, so parallel sessions stop starving the machine (vitest timeouts = false reds). Liveness is a heartbeat (a worker thread touching the lock's mtime; pids are display only); a stale lock heals itself (takeover under a mutex); the owner's child re-enters with `METHOD_GATE_LOCK_TOKEN`. `land.mjs` takes it **before** merging the trunk and gives it back right after the trunk push; `--lock-wait <min>` (default 180) is the manual queue, a hook (`--auto`) never queues and refuses a heavy gate. A scheduling aid, never a check: a missing or broken lock means "runs unserialized, as before". |
 | *(called by `land.mjs`)* | `.claude/hooks/verify-gate.mjs` | The lane gate (lint · typecheck · tests · build, per lane). 322.f: `--plan` (the weight of the diff) and the heavy phase under the lock; a repo-root `firestore.rules` / `storage.rules` is **tooling lane** (deploy config, anchored at the root — a nested rules file keeps its app's gate) but still held by `land.mjs`'s `schema` exception; an npm-workspaces member verifies through its parent root, the lane stays the file's own and a script-less root is `blocked`; `.snap` is code. |
 
@@ -558,6 +558,8 @@ pinned, one alpha-sorted group per chantier, slice-code-first titles, a `🎯 Mi
 a janitor ("Sidebar contract" below).
 **324.a** (`docs/interventions/2026-10-17-Junia-hygiene-sessions.md`) hands that pass to a named agent, Régine 🧑‍🔧,
 with idle clocks and a rescue before every archive (rule 6 below).
+**325.a** (`docs/interventions/2026-10-18-Lucia-clean-project-commands.md`) pins a session while it waits on the operator
+(rule 1) and adds `/clean` (Régine on demand, as a sub-agent) and `/project` (opens a chantier by this contract).
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
   slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
@@ -672,7 +674,7 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
 
 **The supervisor's loop — event-driven, never polling.** Between two notices it does nothing.
 
-1. **Open** — write the partition map; create the sidebar group `{app} · {chantier}` and set its section view to `group_by: "none"`, `sort_by: "alpha"`
+1. **Open** (`/project` runs it, 325.a) — write the partition map; create the sidebar group `{app} · {chantier}` and set its section view to `group_by: "none"`, `sort_by: "alpha"`
    (`set_view(section_id, …)` — the sub-sessions' titles start with the slice code, so alpha order is slice order;
    "Sidebar contract" below), title itself `🧑‍✈️ {repo icon} {chantier}` and pin it (`set_pinned`) — a supervisor is
    started from a fresh top-level session, never from another session's task chip, and one that finds itself nested
@@ -713,8 +715,11 @@ finished session left in the sidebar hides where attention is needed, so the sup
 sub-session **on its own, without asking**, as soon as it is finished. *Finished* means four checks,
 all run by command, all true:
 
-1. **Landed on the trunk** — the fiche is `landed` and its `head` is on `origin/main`:
-   `git fetch origin`, then `git merge-base --is-ancestor <head> origin/main`.
+1. **Landed on the trunk — the whole branch, not the fiche's `head`** — the fiche is `landed` AND,
+   after `git fetch origin`, `git log origin/main..<branch> -- . ':(exclude)docs/chantiers'` is empty
+   (only fiche commits may be ahead). The fiche's `head` alone is not proof: a fiche can go stale while
+   the branch gets more commits — that is how D2 (Devis 2.0, 2026-10-17) was archived with a P0 fix
+   that had never landed.
 2. **Idle and clean** — `list_sessions` shows `isRunning: false`, and its worktree holds nothing
    that would be lost (archiving deletes the worktree): `git -C <worktree> status --porcelain` is empty
    and `git -C <worktree> log origin/main..HEAD` is empty (`<worktree>` = the one holding the branch,
@@ -741,8 +746,14 @@ the title: re-read it after each `set_session_title`.
 **Sidebar contract (322.h; the operator's rulings, 2026-10-16 — decided, not re-litigated).** The sidebar is the
 operator's one always-open surface, so what stands in it is fixed by rule, not by whoever started a session.
 
-1. **Pinned = supervisors only.** Every supervisor session is pinned and filed in its chantier group
-   `{app} · {chantier}`; nothing else is ever pinned. A move un-pins a session — pin it again after any `move_sessions`.
+1. **Pinned = supervisors + the sessions that wait on the operator (325.a).** Every supervisor session is pinned, always,
+   and filed in its chantier group `{app} · {chantier}`. Any other session is pinned **only while it waits for the
+   operator's answer**, with ` · 🟡` at the end of its title. Mechanism, for every session (chantier or not): right before
+   it asks a question it will block on (`AskUserQuestion`) it appends ` · 🟡` to its own title (`set_session_title` self;
+   a chantier member re-reads `ListAgents` afterwards) and pins itself (`set_pinned` self true); right after the answer it
+   removes the 🟡 and unpins itself — never a supervisor. (A chantier sub-session asks through its fiche, not
+   `AskUserQuestion`: its 🟡 is the supervisor's state icon, "Titles" above, and Régine pins it by that title.) Régine is
+   the safety net (rule 6). A move un-pins a session — pin it again after any `move_sessions`.
 2. **One group per chantier**, section view `group_by: "none"`, `sort_by: "alpha"`. Sub-sessions are task chips the
    supervisor offers, so they nest under it and follow its group on their own; their slice-first titles make the alpha
    sort follow the slices. This replaces the 2026-10-16 morning line `group_by: "state"` in the Open step: a session
@@ -761,12 +772,13 @@ operator's one always-open surface, so what stands in it is fixed by rule, not b
 6. **Régine owns the sidebar pass (324.a — she replaces the anonymous janitor).** `regine` (`.claude/agents/regine.md`,
    sonnet) runs it on demand and as the scheduled task `rangement-barre-laterale` (🧹), every 2 h from 08:07 to 20:07.
    Each pass: **(a) routines close their previous runs** — for every scheduled task, `list_task_runs` (never the title)
-   and archive every non-running run but the newest, her own previous passes included; **(b)** re-apply rules 1–5: pin and
+   and archive every non-running run but the newest, her own previous passes included; **(b)** re-apply rules 1–5 (rule 1 includes pinning every non-supervisor session whose title ends with `· 🟡` and unpinning those whose title no longer has it, never a supervisor): pin and
    file supervisors, retitle them, file every session outside a chantier into `🎯 Missions libres`, add a missing repo
    icon (never rewriting the object) and correct both section views; **(c) the clocks**, on sessions outside a chantier:
 
    | Condition | Action |
    |:--|:--|
+   | title ends with `· 🟡` | never 💤, never archived — wins over every row below; reported when waiting > 48 h |
    | PR merged, idle, worktree clean, no open child | archive |
    | title carries `✅`, idle > 2 h | rescue, then archive |
    | idle > 24 h | append `· 💤` to the title, list it |
@@ -789,7 +801,7 @@ operator's one always-open surface, so what stands in it is fixed by rule, not b
    chantier sub-session or a scheduled routine, the session loads `set_session_title` / `list_sections` /
    `move_sessions`, titles itself `{repo icon} {object in 3–6 words}` and files itself under `🎯 Missions libres` (never
    creating the section). It is fail-open and silent outside a repo; Régine's pass above stays the safety net for whatever
-   it misses. Tests: `tests/session-sidebar.test.mjs`.
+   it misses. Since 325.a the same instruction carries rule 1's pin-while-waiting sentence for every session, supervisors and sub-sessions included (the "ignore" clause covers only the title-and-file step). Tests: `tests/session-sidebar.test.mjs`.
 
 **Repo icons.** One per repo; the repo is the folder directly under `D:\Apps\` (matched case-insensitively), a `cwd`
 under `scratch-workspaces` is the scratch workspace.
@@ -810,6 +822,7 @@ under `scratch-workspaces` is the scratch workspace.
 | Scapience | 🔬 |
 | FunFlasher | ⚡ |
 | Postarget | 📮 |
+| CabasseClub | 🍇 |
 | scratch workspace (`_scratch`) | 💬 |
 | any other repo (`_default`) | 📁 |
 

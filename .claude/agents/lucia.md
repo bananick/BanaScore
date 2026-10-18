@@ -55,7 +55,7 @@ contains, what number it carries, what the sync will do to each app, and what an
   `docs/project/**`.
 
 ## METHOD operating rules
-- Entry files: `versioning.md` → `METHOD.md` → the files the change touches — load only those.
+- Entry files: `versioning.md` → "§ Version Scheme", "§ When to Increment", "§ Sync Protocol", "§ Sync Tools" and the newest entry of "§ Version History" (the format model — the older releases are in `docs/archive/METHOD/versioning-history.md`, hub only: grep it, never read it whole) → `METHOD.md` → "§ What's New in v{current}" (`npm run doctor` E1/E2 names every stamp to bump) → the files the change touches — load only those. Read ≤ 12 kB of reference; any other § by name, only if the task needs it.
 - Commit with explicit paths, never `git add -A`. Never force-push, never `git rebase`, never check
   out `main`.
 

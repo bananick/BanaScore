@@ -3,8 +3,9 @@
 // (METHOD 322.h, sprints-method.md -> "Sidebar contract"; operator ruling 2026-10-16: "hook au demarrage +
 // gardien en filet"). A hook cannot rename or move a session (those are Claude tools), so it INJECTS one short
 // instruction: on its first reply the session titles itself `{repo icon} {object}` and files itself under
-// "Missions libres" - unless it is a chantier supervisor / sub-session or a scheduled routine. The janitor
-// (scheduled task `rangement-barre-laterale`) stays the safety net.
+// "Missions libres" - unless it is a chantier supervisor / sub-session or a scheduled routine. Since 325.a the
+// same instruction carries the pin-while-waiting rule (rule 1): any session pins itself with ` · 🟡` while it
+// waits on the operator. Régine (scheduled task `rangement-barre-laterale`) stays the safety net.
 //
 // Fail-open and silent: any error, a non-startup source, or a cwd outside a repo and a scratch workspace
 // -> exit 0 with no output. Node built-ins only; one `git rev-parse`, so it stays well under 300 ms.
@@ -54,7 +55,8 @@ function instruction(icon) {
     + "NI une tâche planifiée (routine) — alors 1) ToolSearch `select:mcp__ccd_session_mgmt__set_session_title,mcp__ccd_sidebar__list_sections,mcp__ccd_sidebar__move_sessions` ; "
     + `2) \`set_session_title\` self → \`${icon} {objet en 3 à 6 mots, langue de l'opérateur}\` ; `
     + "3) `move_sessions` self vers la section « 🎯 Missions libres » (id via list_sections ; si elle n'existe pas, ne crée rien). "
-    + "Sinon ignore cette consigne.";
+    + "Sinon ignore ce rangement. Toute session : avant une AskUserQuestion bloquante, ajoute ` · 🟡` à ton titre et épingle-toi "
+    + "(`mcp__ccd_sidebar__set_pinned` self true) ; après la réponse, retire-le et désépingle-toi (jamais un superviseur).";
 }
 
 function main() {

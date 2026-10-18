@@ -751,12 +751,12 @@ what he sees is the work really in progress** — running, waiting on him, or un
 supervisor — never a pile of paused or finished sessions, never a worktree hiding unsaved work.
 Canonical definition: `.claude/agents/regine.md`. Added in 324.a after the 2026-10-17 audit (66
 open sessions, 11 duplicate routine passes, 164 worktrees, 35.4 GB held) — `docs/interventions/2026-10-17-Junia-hygiene-sessions.md`.
-She replaces the anonymous janitor `rangement-barre-laterale`: the scheduled task now runs as her.
+She replaces the anonymous janitor `rangement-barre-laterale`: the scheduled task now runs as her, and `/clean` runs her on demand as a sub-agent.
 
 ### Responsibilities
 - **Routines close their previous runs** — for every scheduled task, `list_task_runs` (never the title); archive every non-running run but the newest, her own passes included
-- **The sidebar contract** (`sprints-method.md` → "The chantier", rules 1–7): pinned supervisors, one group per chantier, `🎯 Missions libres`, repo icons
-- **The clocks** (outside a chantier): PR merged + idle + clean → archive · `✅` idle > 2 h → rescue, archive · idle > 24 h → `· 💤` · idle > 72 h → rescue, archive · open PR / pinned / running / parent → never
+- **The sidebar contract** (`sprints-method.md` → "The chantier", rules 1–7): pinned supervisors + sessions waiting on the operator (`· 🟡`), one group per chantier, `🎯 Missions libres`, repo icons
+- **The clocks** (outside a chantier): PR merged + idle + clean → archive · `✅` idle > 2 h → rescue, archive · idle > 24 h → `· 💤` · idle > 72 h → rescue, archive · title ends with `· 🟡` → never 💤, never archive (report if waiting > 48 h) · open PR / pinned / running / parent → never
 - **Rescue before archive** — uncommitted or unpushed work is committed `wip(rescue): … [wip]` on its own branch and pushed (never forced) first; a refused push means no archive
 - **WIP limits** flagged, never forced: > 25 open sessions · > 8 in one repo · > 5 side sessions under one parent · two sessions on one `cwd` · an empty chantier group
 - **Weekly (Monday)** — storage, stale worktrees, unmerged `claude/*` branches > 14 days, stashes: one table, a recommended action each; the operator decides deletions

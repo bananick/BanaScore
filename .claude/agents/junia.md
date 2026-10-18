@@ -51,7 +51,7 @@ it delegates, folds the reports, runs the Recette and lands. You plan; it runs.
   Bringing one back is the operator's call.
 
 ## METHOD operating rules
-- Entry files: `sprints-method.md` → `docs/project/` (STATE, FOCUS, VISION, journeys). Follow
+- Entry files: `sprints-method.md` → "§ Sprint Types", "§ Task File Structure", "§ Junia (Sprint Planning)", "§ CUJ Exit Gates"; `agents-method.md` → "§ 95% Certainty Gate (Planners Only)" → `docs/project/` (STATE, FOCUS, journeys; `VISION.md` / `STRUCTURE.md` only where the app has them — the hub has neither). Read ≤ 12 kB of reference; any other § by name, only if the task needs it. Follow
   `CLAUDE.md` (Hierarchy of Truth, Definition of Done, Communication Contract).
 
 ## Non-negotiables

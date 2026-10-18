@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 323.b  
+**Version:** 324.b  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -371,8 +371,15 @@ gets **30 min** (`build` replays `prebuild`); the spawn buffer is **64 MB**, bec
 "`test:gate` failed" with an empty tail (`ENOBUFS`); and `src/**/*.json` (i18n catalogues) is
 **app** lane, not "unclassifiable". Study data is **doc** lane (323.b): `*.csv`, `*.tsv`,
 `*.geojson` anywhere, and a nested `.json` that neither tooling nor an app root owns —
-`firestore.indexes.json` and json under an orphan `src/` still fail closed. A red gate with an
-empty tail is a gate bug, not a test — read
+`firestore.indexes.json` and json under an orphan `src/` still fail closed. A root with **no
+`node_modules`** whose diff is plain Node JS (`*.mjs`/`*.cjs`/`*.js`) can be verified with Node alone (324.b):
+a changed file that imports `node:test` (found by content, not name) is run by `node --test` — the only
+check that verifies; `node --check` runs on every changed JS as an extra check (red on a syntax error) but
+never makes the lane green, so a JS diff with no `node:test` file stays `blocked`. Unrun npm scripts are
+`skipped: 'no-deps'`, never a pass; a ts/tsx/jsx/vue file, a vitest/jest/mocha/ava/tap import, or a
+test-looking file (`test/`, `tests/`, `__tests__/`, `*.test.*`, `*.spec.*`, `*_test.*`) without
+`node:test` keeps the `blocked` floor.
+A red gate with an empty tail is a gate bug, not a test — read
 `.method/verify-ok.json` before touching the code.
 
 **Worktrees run the main checkout's hooks.** `.claude/` is gitignored, so every git worktree

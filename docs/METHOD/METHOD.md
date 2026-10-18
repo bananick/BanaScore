@@ -1,4 +1,4 @@
-# METHOD v324.a
+# METHOD v325.a
 
 ## Quick Start
 
@@ -31,6 +31,30 @@
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v325.a
+1. **A session that waits on the operator is pinned while it waits.** Pinned = supervisors + any session whose title ends with
+   ` · 🟡`: right before an `AskUserQuestion` it will block on, a session appends ` · 🟡` to its title and pins itself; right after
+   the answer it removes the 🟡 and unpins itself (never a supervisor). Régine pins and unpins by the title as the safety net, and a
+   `· 🟡` session is never 💤 and never archived by a clock (reported when waiting > 48 h). The `SessionStart` hook carries the rule
+   in one sentence (`sprints-method.md` → "Sidebar contract", rule 1).
+2. **Two new rituals — 11.** `/clean` runs Régine on demand, as a sub-agent (sonnet), and relays her table in ≤ 10 lines;
+   `/project` opens a chantier by the contract (refuses when nested; Cadrage, partition map, sidebar group, one task chip per slice,
+   then the supervisor loop).
+
+## What's New in v324.c
+1. **Context diet, slice 1 — agents start lighter.** `versioning.md` (180.7 kB, 96 % changelog) keeps its operative rules and the newest 5 releases (29.5 kB); the older 57 moved verbatim to `docs/archive/METHOD/versioning-history.md`. 10 agents' `Entry files:` now name `file → "§ Section"` with a cap (`read ≤ 12 kB of reference`) — median sub-agent launch 102.7 → 61.5 kB, Lucia 285.2 → 54.0 kB.
+2. **`npm run doctor` E16** warns when `CLAUDE.md` exceeds 8,192 B (an error once slice 2 has cut it).
+
+## What's New in v324.b
+1. **A docs + tests repo lands without an install.** When an app root has no `node_modules` and its diff is plain Node JS
+   (`*.mjs`/`*.cjs`/`*.js`), `verify-gate.mjs` (hub + addon payload) runs `node --test` on every changed file that
+   imports `node:test` (found by content, not name) instead of going `blocked`, plus `node --check` on the changed JS as an
+   extra check; every npm script it could not run is named `skipped: 'no-deps'` and the report prints `⚠ NO-DEPS`.
+   `node --check` alone never verifies: a JS diff with no `node:test` file, a ts/tsx/jsx/vue file, or a test on another
+   runner (vitest, jest, mocha, ava, tap — or a test-looking file without `node:test`) still fails closed.
+2. **BanaLog leaves `SKIP_REPOS`** (`scripts/lib/fleet-skip.mjs`): it runs METHOD 323.a and receives the hub syncs again.
+   BanaLazer stays skipped.
 
 ## What's New in v324.a
 1. **Régine 🧑‍🔧 joins the cohort — 13 active mandates + 3 dormant.** Régie: session, worktree and work-in-progress
@@ -362,7 +386,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 ## METHOD Files (17 docs + native layer)
 
 > 17 synced METHOD docs (9 Core + 8 Support), **plus** the repo-root native layer:
-> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (13 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (9 rituals).
+> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (13 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (11 rituals).
 
 ### Core (9) — Always synced
 
@@ -395,8 +419,8 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 | `agent-launch-prompts.md` | Pre-built launch prompts per METHOD agent |
 
 > Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (agent personas as Skills),
-> **`.claude/agents/` (13 active delegatable sub-agents + README), and `.claude/commands/` (9 rituals:
-> `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, and the optional `/port`,
+> **`.claude/agents/` (13 active delegatable sub-agents + README), and `.claude/commands/` (11 rituals:
+> `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, `/clean`, `/project`, and the optional `/port`,
 > `/relay`)**. See `agents-engineering-method.md`.
 
 ### Tools (synced to all apps)
@@ -680,9 +704,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 324.a  
+**Current Version:** 325.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-17
+**Released:** 2026-10-18
 
 ### Version Scheme
 
@@ -690,7 +714,7 @@ docs/sprints/007 ⬜ venue-proto/
 - **Major (308→309):** New file, significant change, new sub-agent / command / hook, cohort or installer change
 - **Epoch (399→400):** Foundational overhaul
 
-**See:** `versioning.md` for full history and sync protocol.
+**See:** `versioning.md` for the newest 5 releases and the sync protocol; older releases are in `docs/archive/METHOD/versioning-history.md` (hub only).
 
 ---
 

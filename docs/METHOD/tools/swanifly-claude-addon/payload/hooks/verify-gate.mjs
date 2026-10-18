@@ -23,6 +23,20 @@
  * executed (else `blocked`), and names every skipped check in the report and the marker.
  * It never reports a skipped check as a pass.
  *
+ * No-deps lane (324.b, from BanaLog PR #108, 2026-10-17): a root with no `node_modules` whose diff
+ * is plain Node JS only (`*.mjs`/`*.cjs`/`*.js`, no ts/tsx/jsx/vue…) — a docs + tests repo — can
+ * still be verified with zero install. Each changed JS file is classified by its CONTENT, not its name:
+ * one that imports/requires `node:test` is a Node test and is run by `node --test`; one that imports
+ * another runner (vitest, @jest/globals, jest, mocha, ava, tap), or looks like a test (under `test/`,
+ * `tests/`, `__tests__/`, or named `*.test.*` / `*.spec.*` / `*_test.*`) without `node:test`, needs
+ * its runner installed → the floor, `blocked`, naming the file. `node --check` runs on every changed
+ * JS file as an extra check (red on a syntax error) but NEVER verifies on its own: the lane is green
+ * only if at least one `node:test` file ran and passed — a JS diff with no Node test stays `blocked`
+ * (a change to `lib/a.mjs` can break an unchanged test). Checks are recorded as
+ * `node-check (no-deps)` / `node-test (no-deps)` with their real `ok`; every npm script that could
+ * not run (build included) is `skipped: 'no-deps'`; the marker lists the root under `noDeps` and the
+ * report prints a `⚠ NO-DEPS` line. Any non-Node file keeps the floor too: fail closed.
+ *
  * On green it stamps `.method/verify-ok.json` pinned to the current HEAD sha.
  * `scripts/land.mjs` refuses to land unless that marker matches HEAD, so a stale
  * green from three commits ago cannot wave work through.
@@ -395,14 +409,61 @@ function nodeSyntaxCheck(files) {
   return { count: targets.length, bad };
 }
 
+/**
+ * No-deps lane (see the header): can this toolchain-less root be verified with zero install?
+ * Every changed app file of the root must be plain Node JS. Each one is then classified by its content:
+ * a real `node:test` import/require → a Node test (run); another runner's import, or a test-looking
+ * path/name without `node:test` → blocked (its runner is not installed). Comments are stripped first,
+ * so a `// import 'node:test'` line does not make a file a test.
+ * @returns {{ok:true, js:string[], tests:string[]} | {ok:false, why:string}}
+ */
+const OTHER_RUNNER = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"](?:vitest|@jest\/globals|jest|mocha|ava|tap)(?:\/[^'"]*)?['"]/;
+const NODE_TEST = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"]node:test['"]/;
+const TEST_LIKE = /(^|\/)(test|tests|__tests__)\/|\.(test|spec)\.[cm]?js$|_test\.[cm]?js$/i;
+const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
+function noDepsPlan(rootFiles) {
+  const present = rootFiles.filter((f) => existsSync(join(REPO, f)));
+  if (!present.length) return { ok: false, why: 'no changed file left on disk' };
+  const foreign = present.filter((f) => !/\.(mjs|cjs|js)$/i.test(f));
+  if (foreign.length) return { ok: false, why: `not plain Node JS: ${foreign.slice(0, 5).join(', ')}` };
+  const tests = [];
+  const otherRunner = [];
+  for (const f of present) {
+    const code = stripComments(readFileSync(join(REPO, f), 'utf8'));
+    if (NODE_TEST.test(code)) tests.push(f);
+    else if (OTHER_RUNNER.test(code) || TEST_LIKE.test(f)) otherRunner.push(f);
+  }
+  if (otherRunner.length) return { ok: false, why: `test file(s) not on node:test (their runner must be installed): ${otherRunner.slice(0, 5).join(', ')}` };
+  return { ok: true, js: present, tests };
+}
+
+/** `node --test` on the given repo-relative files, from the root's directory. No npm, no install. */
+function runNodeTest(root, tests) {
+  const started = Date.now();
+  // A gate launched from inside a `node --test` run inherits NODE_TEST_CONTEXT, which turns the
+  // nested runner into a reporting child of a parent that is not listening — drop it.
+  const env = { ...process.env, CI: 'true', FORCE_COLOR: '0' };
+  delete env.NODE_TEST_CONTEXT;
+  const res = spawnSync(process.execPath, ['--test', ...tests.map((f) => join(REPO, f))], {
+    cwd: join(REPO, root), encoding: 'utf8', timeout: TIMEOUT, maxBuffer: 64 * 1024 * 1024, env,
+  });
+  const ok = res.status === 0 && !res.error;
+  const log = `${res.stdout ?? ''}\n${res.stderr ?? ''}`.trim();
+  return { ok, ms: Date.now() - started, tail: ok ? '' : log.split('\n').slice(-25).join('\n') };
+}
+
 // ── run ─────────────────────────────────────────────────────────────────────
 const files = changedFiles();
 const lanes = { doc: [], tooling: [], rules: [], app: [], unknown: [] };
 const appRoots = new Set();
+const appFilesByRoot = new Map(); // root → its changed app-lane files (the no-deps lane judges these)
 for (const f of files) {
   const c = classify(f);
   lanes[c.lane].push(f);
-  if (c.lane === 'app') appRoots.add(c.root);
+  if (c.lane === 'app') {
+    appRoots.add(c.root);
+    appFilesByRoot.set(c.root, [...(appFilesByRoot.get(c.root) ?? []), f]);
+  }
 }
 
 // Self-gating: the gate cannot trust itself on prose alone. If this diff touches the gate's own
@@ -415,7 +476,8 @@ const selfTest = lanes.tooling.some((f) => /(^|\/)verify-gate\.mjs$|^tests\//.te
 // Heavy = a real npm script will actually execute. A root with no toolchain skips its checks in
 // milliseconds (see the app loop) — it must not queue behind a 20-minute gate for nothing.
 // Mirrors the app loop's own test: a check has a script AND (node_modules exists OR the script
-// is plain `node`). Docs / tooling-only diffs are never heavy (`node --check` is cheap).
+// is plain `node`). Docs / tooling-only diffs are never heavy (`node --check` is cheap), and neither
+// is a no-deps root (324.b): its `node --check` / `node --test` on the diff's own files is light.
 const rootRunsSomething = (root) => {
   const scripts = readScripts(root);
   const installed = existsSync(join(REPO, root, 'node_modules'));
@@ -438,6 +500,7 @@ if (has('plan')) {
 const checks = [];
 const reasons = [];
 const skipped = [];
+const noDepsRoots = []; // { root, tests, js, skippedScripts } — roots verified through the no-deps lane
 let verdict = 'green';
 
 if (!files.length) {
@@ -532,6 +595,7 @@ for (const root of gateDenied ? [] : [...appRoots].sort()) {
   // fixed). A script that only shells out to `node` needs no install; everything else does.
   // Never silent: skipped checks are named in the report and stored in the marker.
   const installed = existsSync(join(REPO, root, 'node_modules'));
+  const noDeps = installed ? null : noDepsPlan(appFilesByRoot.get(root) ?? []);
   let ranVerifying = 0;
   let red = false;
   for (const c of available) {
@@ -555,10 +619,34 @@ for (const root of gateDenied ? [] : [...appRoots].sort()) {
       break; // first red stops that app — fix it before spending on the rest
     }
   }
+  // No-deps lane (324.b): nothing npm could run, but the diff is plain Node JS — verify it with Node alone.
+  // `node --check` is an extra check (red on a syntax error), never a verifying one: only a `node:test`
+  // file that ran counts, so a JS diff with no Node test still meets the floor below.
+  let noDepsWhy = noDeps && !noDeps.ok ? noDeps.why : null;
+  if (!red && ranVerifying === 0 && noDeps?.ok) {
+    const syn = nodeSyntaxCheck(noDeps.js);
+    checks.push({ root, check: 'node-check (no-deps)', ok: syn.bad.length === 0, files: syn.count, tail: syn.bad.join('\n') });
+    say(`app      ${root} · node --check (no-deps) on ${syn.count} file(s) ${syn.bad.length ? '✗' : '✓'}`);
+    if (syn.bad.length) {
+      verdict = 'red'; red = true;
+      reasons.push(`${root}: syntax error in ${syn.bad.length} file(s) (no-deps lane, node --check)`);
+    } else if (!noDeps.tests.length) {
+      noDepsWhy = `no-deps: ${syn.count} JS file(s) changed but no node:test file in the diff — install deps or add a zero-install test`;
+    } else {
+      const skippedScripts = checks.filter((c) => c.root === root && c.skipped === 'toolchain-absent').map((c) => c.check);
+      for (const c of checks) if (c.root === root && c.skipped === 'toolchain-absent') c.skipped = 'no-deps';
+      say(`app      ${root} · node --test (no-deps) on ${noDeps.tests.length} file(s) …`);
+      const r = runNodeTest(root, noDeps.tests);
+      checks.push({ root, check: 'node-test (no-deps)', ok: r.ok, ms: r.ms, files: noDeps.tests.length, tail: r.tail });
+      ranVerifying++;
+      if (!r.ok) { verdict = 'red'; red = true; reasons.push(`${root}: \`node --test\` failed (no-deps lane)`); }
+      noDepsRoots.push({ root, tests: noDeps.tests.length, js: syn.count, skippedScripts });
+    }
+  }
   // The floor: skipping is allowed, verifying nothing is not.
   if (!red && ranVerifying === 0) {
     verdict = 'blocked';
-    reasons.push(`${root}: no verifying check could actually run — every one needs a toolchain that is not installed. Install its deps, or give it a zero-install test script (\`node --test\`).`);
+    reasons.push(`${root}: no verifying check could actually run — every one needs a toolchain that is not installed. Install its deps, or give it a zero-install test script (\`node --test\`). The no-deps lane (node --check / node --test, no install) covers a diff of plain Node JS with at least one node:test file${noDepsWhy ? ` — not this one: ${noDepsWhy}` : ''}.`);
     checks.push({ root, check: 'capability', ok: false, tail: 'all verifying checks skipped (toolchain absent)' });
   }
 }
@@ -659,6 +747,7 @@ const marker = {
   apps: [...appRoots],
   skipped,
   checks,
+  ...(noDepsRoots.length ? { noDeps: noDepsRoots.map((n) => n.root) } : {}),
   ...(lockInfo ? { lock: lockInfo } : {}),
 };
 
@@ -673,6 +762,9 @@ else {
   console.log(`${icon} verify ${verdict} · mode=${mode} · ${files.length} file(s) · ${HEAD.slice(0, 7)}`);
   if (skipped.length) {
     console.log(`  ⚠ NOT CHECKED (no node_modules): ${skipped.join(', ')} — this is not a pass, it is an unrun check`);
+  }
+  for (const n of noDepsRoots) {
+    console.log(`  ⚠ NO-DEPS ${n.root}: ran node --test on ${n.tests} file(s), node --check on ${n.js} file(s); skipped npm scripts: ${n.skippedScripts.join(', ') || 'none'}`);
   }
   for (const r of reasons) console.log(`  – ${r}`);
   for (const c of checks.filter((c) => !c.ok && c.tail)) console.log(`\n[${c.root} ${c.check}]\n${c.tail}`);

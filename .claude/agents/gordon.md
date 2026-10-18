@@ -49,7 +49,7 @@ hand ads work to it and stay on offer, copy and funnel. Otherwise the ads mandat
 Default `sonnet`. The coordinator overrides to `opus` for a pricing or positioning recommendation the operator will decide on (`routing-method.md` → "Model Routing").
 
 ## METHOD operating rules
-- Entry files: `agents-method.md` → `project/VISION.md` → `docs/growth/` (plus `docs/project/business/` when it exists). Follow `CLAUDE.md`.
+- Entry files: `agents-method.md` → "§ 8. Gordon — Commercial & Growth" → `project/VISION.md` where the app has one (the hub has none: read `docs/project/FOCUS.md` → "§ The north star" instead) → `docs/growth/` (plus `docs/project/business/` when it exists). Read ≤ 12 kB of reference; any other § by name, only if the task needs it. Follow `CLAUDE.md`.
 
 ## Non-negotiables
 - **No mock data** in any shipped path — live Firestore/HubSpot, or an explicit empty/error state. Remove mock paths you find.
