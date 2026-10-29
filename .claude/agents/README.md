@@ -1,27 +1,36 @@
 # Cohort Sub-Agents (`.claude/agents/`)
 
 The METHOD cohort as Claude Code **sub-agents** — delegatable, each with its own context
-window and a scoped tool allow-list. This is the native execution layer of the METHOD; it
-complements (doesn't replace) the Skills in `.claude/skills/`.
+window and a scoped tool allow-list. **This directory is the whole cohort**: since 327.a there is no
+second surface. `.claude/skills/` holds *capabilities* only.
 
-**13 active mandates** live in this directory — `junia` (plan) · `brian` (build) · `sage` (prove) ·
-`watson` (repair) · `kasper` (guard) · `vera` (judge) · `nova` (draw) · `gordon` (commercial &
-growth) · `iris` (study & deliverables) · `lucia` (METHOD release) · `penny` (token economy) · `oscar` (coach) ·
-`regine` (régie — sessions, worktrees, work in progress). **3 parked** agent files
-(`teddy`, `aiko`, `april`) live under `.claude/_dormant/agents/`, outside the scanned agent root:
-**not loaded, not delegable**. Bringing one back is a `git mv`, the operator's call. An agent earns
-a name when its mandate is one you would otherwise have to retype.
+**18 active mandates** live in this directory — `junia` (plan) · `brian` (build) · `sage` (prove) ·
+`watson` (repair) · `kasper` (guard) · `vera` (judge) · `maya` (UX research & IA) · `nova` (design
+system) · `alba` (brand & visual assets) · `gordon` (commercial & growth) · `iris` (study &
+deliverables) · `hugo` (METHOD tooling) · `lucia` (METHOD release) · `penny` (token economy) ·
+`oscar` (coach) · `regine` (régie — sessions, worktrees, work in progress) · `lise` (tone & voice) · `stella` (organic visibility — SEO, GEO/AEO, social,
+directories; added in 333.a).
+**3 parked** agent files (`teddy`, `aiko`, `april`) live under `.claude/_dormant/agents/`, outside the
+scanned agent root: **not loaded, not delegable**. Bringing one back is a `git mv`, the operator's
+call. An agent earns a name when its mandate is one you would otherwise have to retype.
 
-## One definition, two surfaces (one is canonical, the other loads it)
-| Surface | Where | Purpose |
-|---|---|---|
-| **Sub-agent** | `.claude/agents/{agent}.md` | **delegate** a task to an isolated agent (this layer) — **canonical** |
-| **Skill** | `.claude/skills/{agent}/SKILL.md` | invoke a persona *in the current context* (Desktop + Code) — a stub that loads the agent file |
+**327.a — one owner per job.** The 2026-10-18 cohort audit found Nova carrying **25 assignments**,
+**ten pairs** of mandates colliding and **ten categories** of real work with no owner. Three mandates
+were cut out of the overload and the gaps (`maya`, `alba`, `hugo`), the ten collisions were each given
+a single owner, and the **14 persona skill stubs were deleted** — which freed 4,984 characters against
+the recruits' 870, so the always-loaded description surface fell **14,033 → 10,171 characters
+(−27.5 %)** while the cohort grew from 14 mandates to 17. Evidence and every resolution:
+`docs/interventions/2026-10-19-Lucia-cohort-restructure.md`.
 
-**`.claude/agents/*.md` is the single source of truth for persona text.** Each file carries the
-agent's `## Identity` (voice · refusals · deference · handoff) and the cohort-wide
-`## Non-negotiables` block. The skill is a **stub that loads the agent file**; change the agent
-file, never the stub.
+## One definition, one surface (327.a)
+`.claude/agents/{agent}.md` **is** the agent: its `## Identity` (voice · refusals · deference ·
+handoff), its mandate, its `Entry files:` line and the cohort-wide `## Non-negotiables` block.
+Delegate to it by name; the `Agent` tool reads this directory. Since **336.b** the `## Identity`
+also carries **Character · I teach · My wink** — rule: `agents-method.md` → "How agents run".
+
+**The persona stubs under `.claude/skills/{agent}/` are gone.** They loaded the same description a
+second time in every session (14 agents × 2) and **2 of ~140 delegations** ever used that path. A new
+agent gets **no stub** — there is nothing to keep in sync (`.claude/skills/README.md`).
 
 > **`Swanifly/_archive/web/lib/engine/agent-personas.ts` is not derived from these files.** Earlier
 > releases said it was generated from them; no generator exists — it is **hand-maintained and
@@ -37,13 +46,18 @@ file, never the stub.
 | watson | sonnet | Read, Write, Edit, Bash, Glob, Grep | ops/debug |
 | **kasper** | opus | Read, Glob, Grep, Bash, Write, Edit | security review + harden (rules/security docs) |
 | **vera** | opus | **Read, Glob, Grep, Bash** | **read-only — cannot write code**; once per slice |
-| nova | sonnet | Read, Write, Edit, Bash, Glob, Grep | design code (opus by override) |
-| **gordon** | sonnet | Read, Write, Edit, Glob, Grep, WebFetch, WebSearch | commercial & growth (opus by override) |
+| **maya** | opus | Read, Write, Edit, Glob, Grep | UX research & IA: discovery, taxonomy, shell, layout patterns, port order — **specs only, no component code**; holds no Bash, so she never commits |
+| nova | sonnet | Read, Write, Edit, Bash, Glob, Grep | design system: tokens, theme, motion, a11y, `proto/` — **not component code** since 327.a (opus by override) |
+| **alba** | sonnet | Read, Write, Edit, Bash, Glob, Grep | brand & visual assets: logo usage, icon system, `/media`, exports — the identity itself is the operator's |
+| **gordon** | sonnet | Read, Write, Edit, Glob, Grep, WebFetch, WebSearch | commercial & growth: offer, funnel, copy, paid ads (opus by override) |
+| **stella** | sonnet | Read, Write, Edit, Glob, Grep, WebFetch, WebSearch | organic visibility: SEO, GEO/AEO, social search, forums, directories, blog — **writes only under `docs/growth/`; drafts only, nothing published or submitted without the operator's GO per batch** (opus by override) |
 | **iris** | sonnet | Read, Glob, Grep, Bash, WebFetch, WebSearch, Write, Edit | **read-only on product code** (prompt-enforced); opus by override |
-| **lucia** | opus | Read, Write, Edit, Bash, Glob, Grep | METHOD release: versioning, doctor, sync dry-run |
+| **hugo** | sonnet | Read, Write, Edit, Bash, Glob, Grep | METHOD tooling: hooks, `verify-gate`, `land`, sync engine, installer, doctor, telemetry scripts — **opus for gate semantics** |
+| **lucia** | opus | Read, Write, Edit, Bash, Glob, Grep | METHOD release: versioning, doctor, sync dry-run, **and the operating model itself** |
 | **penny** | sonnet | Read, Glob, Grep, Bash, Write, Edit | token economy: telemetry reports + coaching — **read-only on code** (prompt-enforced) |
 | **oscar** | opus | Read, Glob, Grep, Bash, Write, Edit | coach: the weekly retro only — **read-only on code** (prompt-enforced); weekly, never per Debrief |
-| **regine** | sonnet | Read, Glob, Grep, Bash, Write, Edit | régie: sidebar pass, idle clocks, rescue before archive — **archives, never deletes**; never edits or lands product code (prompt-enforced) |
+| **regine** | sonnet | Read, Glob, Grep, Bash, Write, Edit | régie: sidebar pass, idle clocks, rescue before archive — **archives, never deletes work** (integrated branches: branch-sweep only); never edits or lands product code (prompt-enforced) |
+| **lise** | opus | Read, Glob, Grep, Write, Edit | tone & voice: reviews public-facing text against the repo's voice files, runs the tone loop — **writes only under `docs/project/brand/tone/`** (prompt-enforced); never edits the text she reviews |
 
 Parked files (`teddy`, `aiko`, `april`) keep their frontmatter as it was; it applies only if the
 operator moves one back.
@@ -55,10 +69,12 @@ in `docs/METHOD/agents-method.md` → "Orchestration chain" (its one-line summar
 `CLAUDE.md` → "Agent Cohort", the file the coordinator always has loaded). `junia` plans; she no
 longer delegates or lands.
 
-**Delegation is the default, not an option** — every executable, delegable piece of work leaves the
-conversation as a sub-agent; only coordination stays. **Opening a separate session is the
-exception**: one slice = one conversation = one branch = one worktree. Triggers:
-`docs/METHOD/sprints-method.md` → "Sessions & branches".
+**Delegate on the four-condition test** (325.c) — send work out when it is
+**verbose-and-discardable**, **self-contained**, **summarisable**, or **needs a tool restriction**;
+stay inline for back-and-forth, shared multi-phase context and small targeted edits (a spawn costs
+60–75 k tokens before it reads anything). **Opening a separate session is the exception**: one slice =
+one conversation = one branch = one worktree. Triggers: `docs/METHOD/sprints-method.md` →
+"Sessions & branches".
 
 The 11 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the PR exception),
 `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro` (weekly), `/clean` (Régine on demand),
@@ -67,7 +83,8 @@ The 11 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the
 
 ## Model routing (default: orchestrate high, execute cheap)
 The `model` column above is each sub-agent's **default tier** — T1 judge/plan/review/security/METHOD
-release on opus, T2 build/tests/ops/design/copy/study/token economy/régie on sonnet. The orchestrator runs on the
+release/UX architecture on opus, T2 build/tests/ops/design/brand/tooling/copy/study/token
+economy/régie on sonnet. The orchestrator runs on the
 strongest model and delegates each task on the **cheapest model that meets its quality bar**,
 overriding the default per delegation when tiers differ (e.g. `brian` + `model: haiku` for pure
 scaffolding = T3 mechanical; `iris` + `model: opus` for a ranked recommendation). One retry max at a
@@ -75,13 +92,11 @@ tier, then escalate one tier; `vera`/`kasper` never below T1; Workflow workers a
 `model`; a review→fix loop stops after 2 rounds (319.a, "Token economy"). Canonical policy + the cross-tool (Cursor/Codex) mapping: `docs/METHOD/routing-method.md` →
 "Model Routing".
 
-## Surfaces (one config, three surfaces)
-The cohort runs from the same `.claude/` set on every Claude surface:
-- **Claude Code (web / cloud)** — sub-agents + `/commands`; the default executor.
-- **Cowork (desktop)** — the **local Code tab** runs the same sub-agents + commands on your local checkout, with "Ask before acting" supervision.
-- **Claude Desktop** — invoked as **Skills** (`.claude/skills/`) for plan / design / commercial / study / review.
-
-Rule of thumb: build / prove / ops / security / METHOD release → Code (web or Cowork-local); plan / design / commercial / review → lean Desktop. Same persona + tool scope everywhere.
+## Surfaces (one config, every surface)
+The cohort runs from the same `.claude/` set everywhere — Claude Code (web / cloud), the desktop
+app's local Code tab, Claude Desktop. **Same agent file, same tool scope, no per-surface copy**: the
+Desktop-only Skill stubs were deleted in 327.a. The capability skills in `.claude/skills/` are
+callable on every surface too.
 
 ## Known deltas (design these, don't assume them)
 - **Routing is deterministic only if you make it so.** Native delegation can auto-pick by

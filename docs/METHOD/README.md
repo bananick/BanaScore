@@ -1,8 +1,8 @@
-# METHOD v325.a
+# METHOD v336.b
 
-**Version:** 325.a  
+**Version:** 336.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-18  
+**Released:** 2026-10-29  
 **Status:** ✅ Production-Ready
 
 ---
@@ -29,12 +29,12 @@
 
 ---
 
-## File Structure (17 docs + native layer)
+## File Structure (18 docs + native layer)
 
 ```
 CLAUDE.md                                       ← Repo root: canonical context (Claude Code auto-loads)
-.claude/skills/                                 ← Agent personas as Claude Skills (Desktop)
-.claude/agents/                                 ← 13 active sub-agents + README (3 dormant in .claude/_dormant/)
+.claude/skills/                                 ← 13 capability skills (no persona stubs since 327.a)
+.claude/agents/                                 ← 18 active sub-agents + README (3 dormant in .claude/_dormant/)
 .claude/commands/                               ← 11 rituals: /land, /ship, /intervention, /plan-sprint, /review, /brief, /retro, /clean, /project, /port (optional), /relay (optional)
 .claude/settings.json                           ← Enforcement hooks (gates-as-hooks)
 .claude/hooks/land.mjs                          ← Stop + SessionEnd: lands the slice on main (v313.a)
@@ -48,7 +48,7 @@ scripts/method-doctor.mjs                       ← `npm run doctor`: METHOD con
 docs/METHOD/                                    ← Synced across all apps
   METHOD.md                  # Index, routing tables, innovations
   method-core.md             # Principles, tech stack, DoD
-  agents-method.md           # 13 active + 3 dormant agents, roles, rituals, models
+  agents-method.md           # 18 active + 3 dormant agents, roles, rituals, models
   agents-engineering-method.md  # Claude suite: Desktop + Code + Artifacts
   routing-method.md          # Entry points, agent routing, model routing (tiers), session telemetry
   ai-infra-method.md         # Multi-provider architecture
@@ -62,6 +62,8 @@ docs/METHOD/                                    ← Synced across all apps
   code-rules.md              # TypeScript strict, no any, Zod
   versioning.md              # Version scheme, sync protocol
   agent-launch-prompts.md    # Pre-built launch prompts per agent
+  tone-method.md             # Voice frame, tone review, the evolution loop (Lise)
+  chief-contract.md          # What Chief reads, and the rule for changing it (D24)
 
 docs/project/                                   ← App-specific (local)
   VISION.md, DESIGN.md, SCHEMA.md, FOCUS.md, STATE.md, ROADMAP.web.md, AI-INFRA.md
@@ -71,6 +73,85 @@ docs/project/                                   ← App-specific (local)
 ```
 
 ---
+
+## What's New in v336.b
+**Every agent has a character, a lesson and a wink.** Three new `## Identity` lines per agent — who it is like, what it teaches, how it makes you smile — used at the occasion, in the conversation's language. See `METHOD.md` → "What's New in v336.b".
+
+## What's New in v336.a
+**Finished work closes itself.** A LANDED sub-session deletes its branch, reports up and archives itself (`npm run session:close`); an exception PR merges after `kasper` approves it, unless it is irreversible in production — then one quiz. See `METHOD.md` → "What's New in v336.a".
+
+## What's New in v335.b
+**The operator lever.** Every answer serves the operator's decision speed, five delegates hand back closing-ready reports, and the coach tip moves to Oscar's retro. See `METHOD.md` → "What's New in v335.b".
+
+## What's New in v335.a
+**Answers end with Fait / Suite: the session's fate first.** Suite's bullet 1 is one of six fates (🗄️ 💬 🧪 🔑 ⏳ 🔁), each with its ready-made kit. The title carries a state word, and the mission card has four parts. See `METHOD.md` → "What's New in v335.a".
+
+## What's New in v334.e
+**Jest and vitest lanes run serially with a 30 s timeout** — the gate appends `--runInBand` (jest) or `--no-file-parallelism` (`vitest run`) plus `--testTimeout=30000` to a plain test script, so load on the machine stops producing false reds. See `METHOD.md` → "What's New in v334.e".
+
+## What's New in v334.d
+**Lint is red only on new problems** — per (file, rule), HEAD vs the merge base, on the changed files; a file already in debt no longer holds a branch that does not add to it; an eslint crash is red. See `METHOD.md` → "What's New in v334.d".
+
+## What's New in v334.c
+**Lint judges the diff, not the lane** — `verify-gate.mjs` lints a root's changed files only when its `lint` is a plain `eslint …` command; pre-existing lint debt no longer holds an unrelated landing, an error in a changed file is still red. Trigger: BanaLog `backend/` (PR #128). See `METHOD.md` → "What's New in v334.c".
+
+## What's New in v334.b
+**A sub-session is archived only once traced; a held slice is driven to an exit** — `sprints-method.md` → « Archiving » gains check 5 « Traced » and the « held slice is driven to an exit, never left 🟡 » clause (no `gh pr merge --admin`, no hand-run branch delete). Operator ruling 2026-10-27; IMP-025.
+
+## What's New in v334.a
+**At most two heavy gates at once on the machine** — `verify-gate.mjs` takes one of two machine-wide heavy slots (`heavy-slot.mjs`, new hook, `~/.claude/heavy-slot/`) after the repository lock; a third gate waits and starts when one frees, gives up after 40 min ("heavy-slot busy", nothing ran). Low RAM: one at a time. Heavy commands run by hand stay outside: `node .claude/hooks/heavy-slot.mjs run -- <cmd>` — but never wrap `/land` or `npm run verify` (they take their own slot). See `METHOD.md` → "What's New in v334.a".
+
+## What's New in v333.c
+**Vera and Oscar read the notes left for them in the Cockpit** (`/review`, `/retro`, hub only — operator data, answered by note id and recorded on the page), and **`/retro` works from the trunk** (a fresh worktree at `origin/main` when the hub checkout is stale or dirty). See `METHOD.md` → "What's New in v333.c".
+
+## What's New in v333.b
+**Régine's `wip(rescue)` push may skip the app's pre-push gate** (`SKIP_QUALITY_GATES=1`, that commit only, never `--no-verify`, never forced): bananaevents' pre-push outlasted every pass and left rescue commits local. The proto leak guard and the `/land` gate still run. See `METHOD.md` → "What's New in v333.b".
+
+## What's New in v333.a
+**Stella 🔭 joins the cohort — 18 active mandates.** Organic visibility gets one owner: classic SEO, GEO/AEO (visibility in AI answers), social search, forums, directories & entity, blog and digital PR. She takes `seo-audit` and `search-growth` from Gordon, who keeps offer, funnel, copy and paid ads; she drafts, and nothing is published or submitted without the operator's GO per batch. See `METHOD.md` → "What's New in v333.a".
+
+## What's New in v332.a
+**`/land` stops holding branches for a benign reason.** A dependency/lockfile change or a big diff lands by itself after the verify gate; only schema/rules, auth/secrets, `SOUL.md`, migrations, deploy wiring and the explicit holds still wait for the operator. See `METHOD.md` → "What's New in v332.a".
+
+## What's New in v331.a
+**Régine deletes integrated branches, through `branch-sweep.mjs --apply` only** — `is-ancestor` of the trunk, or a squash whose `merge-tree --write-tree` equals the trunk's tree; `backup/*`, a dirty or active worktree, an open PR and a running session block; every deletion is logged to `<git-common-dir>/branch-deletions.log` first. See `METHOD.md` → "What's New in v331.a".
+
+## What's New in v330.b
+**Proof asks are findable.** Every request to prove or accept a journey carries a 🔎 Preuve à jouer block — real URL(s), numbered steps → expected, evidence links, what is not proven — and the chantier fiche requires `review[].urls` on a result. See `METHOD.md` → "What's New in v330.b".
+
+
+## What's New in v330.a
+**Session closings by type.** An autonomous mission closes with a ≤ 8-line mission card, a chantier supervisor with a
+control tower, the full Debrief stays for handoffs; every closing puts the one-click proof first, ends with a « go »
+quiz, and prepares the path whenever the operator must act. See `METHOD.md` → "What's New in v330.a".
+
+## What's New in v329.a
+**The sidebar in three zones.** Pinned holds only what waits on the operator (`· 🟡` / `· 🔴`), supervisors included —
+reopening 322.h's « supervisors always pinned »; each supervisor lives in its chantier group (a nested one keeps its pin
+until detached); `🎯 Missions libres` keeps what is alive and recent, because the 20:07 pass now rescues, then archives,
+every `· 💤` session idle > 24 h, with a shell for the rescue only. See `METHOD.md` → "What's New in v329.a".
+
+## What's New in v328.a
+**The Chief contract.** Chief 🥷 (`bananick/chief`) reads the fleet under a formal read contract — new
+`chief-contract.md`: every artefact it reads, per app and in the hub, the fields relied upon, a stability mark,
+and the rule that a release altering one says so (`**Chief contract impact.**`). Chief is read-only and acts only
+through METHOD rituals; the Cockpit stays the source of fleet data and scoring (D24). See `METHOD.md` → "What's New in v328.a".
+
+## What's New in v327.a
+**Maya 🧭, Alba 🖌️ and Hugo ⚙️ join the cohort (17 active + 3 dormant); Nova drops from 25 assignments to 9; the ten colliding mandates each get one owner; the 14 persona Skill stubs are deleted.** UX research & IA (Maya, opus), the brand in use (Alba, sonnet), and the METHOD's own machinery (Hugo, sonnet — 78 commits that had no owner). Riley, a name with no file, is gone: integration is Brian's. The always-loaded description surface shrinks **27.5 %** (14,033 → 10,171 chars) — the deleted stubs pay for the recruits 5.7× over. See `METHOD.md` → "What's New in v327.a" and `docs/interventions/2026-10-19-Lucia-cohort-restructure.md`.
+
+## What's New in v326.a
+**Lise 🗣️ joins the cohort (14 active + 3 dormant, opus): tone and voice.** New `tone-method.md` and two templates — one voice file per brand persona,
+hosted in each repo at `docs/project/brand/tone/`, reviewed by Lise and evolved by a ledger-driven loop the operator ratifies. A rule in
+`CLAUDE.md` → Agent Cohort summons her. See `METHOD.md` → "What's New in v326.a".
+
+## What's New in v325.c
+
+1. **Context diet, slice 2** — the root `CLAUDE.md` 32,683 → 12,480 B (−61.8 %) and the five `payload/snippets/*.md` 21,073 → 6,936 B (−67.1 %); reference material now sits in the METHOD file that owns it, behind a one-line pointer. Startup reads `STATE.md` → "§ Resume here" + `FOCUS.md` → "§ The north star" instead of both files whole (55,470 → 3,689 B). All 13 `Entry files:` lines are section-scoped. **The delegation default becomes a four-condition test** (verbose-and-discardable · self-contained · summarisable · needs a tool restriction); tiers, Workflow rules and the 2-round review cap unchanged. `npm run doctor` E16 is now an **error** at 13,312 B.
+
+## What's New in v325.b
+
+1. **The verify gate classifies nested YAML data of a verifying root** — a `*.ya?ml` below a verifying repo root runs that root's checks instead of failing closed; root-level YAML and YAML under a non-verifying root stay fail-closed (Chief `memory/facts.yaml`).
 
 ## What's New in v325.a
 
@@ -329,9 +410,9 @@ docs/project/                                   ← App-specific (local)
 
 ---
 
-## Agent Cohort (13 active mandates + 3 dormant)
+## Agent Cohort (18 active mandates + 3 dormant)
 
-Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegatable native **sub-agent** (`.claude/agents/`, Claude Code — web + Cowork). An agent earns a name when its mandate is one you would otherwise have to retype; twelve mandates hold that bar. **The coordinating conversation orchestrates them.**
+Each agent runs **one way**: a delegatable native **sub-agent** in `.claude/agents/{agent}.md`, on every Claude surface (the Desktop Skill stubs were deleted in 327.a). An agent earns a name when its mandate is one you would otherwise have to retype; eighteen mandates hold that bar. **The coordinating conversation orchestrates them.**
 
 | Agent | Mandate |
 |---|---|
@@ -341,13 +422,17 @@ Each agent runs as a Claude **Skill** (`.claude/skills/`, Desktop) AND a delegat
 | **Watson** | Repair — reliability & ops |
 | **Kasper** | Guard — security |
 | **Vera** | Judge — one review per slice, at the Recette (no commits) |
-| **Nova** | Draw — design system + tokens |
+| **Maya** | UX research & IA — discovery, navigation taxonomy, shell, layout patterns, port order |
+| **Nova** | Draw — design system, tokens, motion, a11y, dark mode, `proto/`, visual validation |
+| **Alba** | Brand & visual assets — logo usage, icon system, imagery, `/media` |
 | **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, ads |
 | **Iris** | Study & deliverables — client-grade studies; owns anonymisation/GDPR |
-| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` |
+| **Hugo** | METHOD tooling — hooks, `verify-gate`, `land`, sync engine, installer, doctor, telemetry |
+| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md`, and the operating model |
 | **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia |
 | **Oscar** | Coach — weekly retro: effectiveness, focus, objectivity, lucidity, objectives |
 | **Régine** | Régie — session, worktree & work-in-progress hygiene; archives, never deletes |
+| **Lise** | Tone & voice — reviews public-facing text against the repo's voice files; runs the tone loop |
 
 #### Dormant (not loaded, not delegable)
 
@@ -393,8 +478,8 @@ The METHOD is **runner-agnostic** — the same cohort + task docs execute on any
 
 ## Version Information
 
-**Current:** 325.a  
-**Previous:** 324.c → 324.b → 324.a → 323.b → 323.a → 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
+**Current:** 336.b  
+**Previous:** 336.a → 335.b → 335.a → 334.e → 334.d → 334.c → 334.b → 334.a → 333.c → 333.b → 333.a → 332.a → 331.a → 330.b → 330.a → 329.a → 328.a → 327.a → 326.a → 325.c → 325.a → 324.c → 324.b → 324.a → 323.b → 323.a → 322.h → 322.g → 322.f → 322.e → 322.d → 322.c → 322.b → 322.a → 321.c → 321.b → 321.a → 320.d → 320.c → 320.b → 320.a → 319.b → 319.a → 318.a → 317.c → 317.b → 317.a → 316.a → 315.c → 315.b → 315.a → 314.b → 314.a → 313.b → 313.a → 312.b → 312.a → 311.a → 310.a → 309.a → 308.a → 307.a → 305.a → 304.a → 303.a → 302.a
 
 **Token economy — measured rules, a default sub-agent model, Penny (11 + 3) and a fleet-wide
 ledger** ship as **319.a**; **the per-agent ledger (`byAgent` / `byType`, `schemaVersion` 2)** ships as **319.b**; **Oscar, the coach, and `/retro` (12 + 3, 9 rituals)** ship as **320.a**; **the hub renamed Swanifly** ships as **320.b** — see `versioning.md` for the full changelog.

@@ -16,6 +16,7 @@
  *                                                                # SessionStart: only branches land.mjs landed (its ledger),
  *                                                                # quiet, always exits 0. Older residue = a manual --apply
  *                                                                # after the list has been validated.
+ *   --only a,b,c  restrict --apply to the listed branches (with --landed-only: the intersection)
  *   --dry-run (no fetch, no deletion) · --json · --trunk <name>
  */
 import { spawnSync } from 'node:child_process';
@@ -29,6 +30,7 @@ const APPLY = has('apply');
 const DRY = has('dry-run');
 const LANDED_ONLY = has('landed-only');
 const AS_JSON = has('json');
+const ONLY = has('only') ? new Set(String(flag('only', '')).split(',').map((b) => b.trim()).filter((b) => b && !b.startsWith('--'))) : null;
 
 function main() {
   const top = (spawnSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).stdout ?? '').trim();
@@ -43,7 +45,7 @@ function main() {
     if (report.fetchError) console.log(`  ⚠ fetch failed (classification may be stale): ${report.fetchError}`);
   }
   if (APPLY) {
-    result.actions = applyCleanup(report, { cwd: top, dryRun: DRY, only: LANDED_ONLY ? readLanded(top) : null });
+    result.actions = applyCleanup(report, { cwd: top, dryRun: DRY, only: LANDED_ONLY && ONLY ? new Set([...readLanded(top)].filter((b) => ONLY.has(b))) : (LANDED_ONLY ? readLanded(top) : ONLY) });
     if (!AUTO && !AS_JSON) for (const a of result.actions) console.log(`${a.ok ? (a.dryRun ? '· would remove' : '🧹 removed') : '⏭ kept'} ${a.branch}${a.skipped ? ` (${a.skipped})` : ''}`);
     const removed = result.actions.filter((a) => a.ok && !a.dryRun).map((a) => a.branch);
     if (AUTO && removed.length) console.log(JSON.stringify({ systemMessage: `🧹 cleaned ${removed.length} integrated branch(es): ${removed.join(', ')}` }));

@@ -28,13 +28,14 @@ isn't committed yet, finish the slice (or run `/ship`) first, then relay.
    - **Prochaine** — the exact next action.
    - **Pièges** — dead ends already tried, what NOT to re-touch.
 2. **Persist to STATE.md** — write/replace the `## Resume here` section near the top of
-   `docs/project/STATE.md` with the same six rows, so `/brief` finds it for free (`STATE.md` is
-   already auto-loaded). One `## Resume here` block per app; overwrite the previous one.
+   `docs/project/STATE.md` with the same six rows, so `/brief` finds it for free (since 325.c
+   `## Resume here` is the one section read at every startup — keep it short, it is paid on every
+   launch). One `## Resume here` block per app; overwrite the previous one.
 3. **Emit the block** — print the Relay as a fenced, copy-paste-ready block for the next window.
 
 Then close with the **Debrief** card (`docs/METHOD/method-core.md` → "Operator Reporting") — `Avancement` grounded in the sprint/plan count, `TU DÉCIDES` carrying anything left for the operator — followed by the `▶ Prompt suivant` block.
 
-**In a chantier sub-session: do not relay — update the fiche instead** (`docs/METHOD/sprints-method.md` → "The chantier"); the supervisor holds the `## Resume here` slot and the only Debrief.
+**In a chantier sub-session: do not relay — update the fiche instead** (`docs/METHOD/sprints-method.md` → "The chantier"); the supervisor holds the `## Resume here` slot and the only card (the control tower).
 
 > **Relay ≠ memory.** Memory holds durable cross-session facts about the user/project; a Relay is
 > volatile per-workstream resume state, owned by `STATE.md`. Don't write workstream state into

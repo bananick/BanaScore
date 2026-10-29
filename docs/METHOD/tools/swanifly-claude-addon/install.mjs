@@ -33,8 +33,9 @@
  *   - docs/project/design/PORT-MAP-TEMPLATE.md -> app docs (OVERWRITE — reference template for the /port loop)
  *   - .claude/hooks/no-mock-guard.ps1 -> app/.claude      (OVERWRITE)
  *   - .claude/hooks/session-telemetry.mjs -> app/.claude  (OVERWRITE — appends the ledger; hooks no longer commit it since v318.a)
- *   - .claude/hooks/{ship-push.sh,land.mjs,verify-gate.mjs,gate-lock.mjs} -> app/.claude (OVERWRITE — the "land, don't ship" engine, v313.a;
- *       gate-lock.mjs is the per-repository landing lock land.mjs and verify-gate.mjs import — optional at runtime, so the two still gate without it)
+ *   - .claude/hooks/{ship-push.sh,land.mjs,verify-gate.mjs,gate-lock.mjs,heavy-slot.mjs} -> app/.claude (OVERWRITE — the "land, don't ship" engine, v313.a;
+ *       gate-lock.mjs is the per-repository landing lock land.mjs and verify-gate.mjs import — optional at runtime, so the two still gate without it;
+ *       heavy-slot.mjs (334.a) is the machine-wide two-slot heavy-job semaphore verify-gate.mjs imports — optional the same way)
  *   - .claude/hooks/flight-deck.mjs   -> app/.claude      (OVERWRITE — /brief + the SessionStart resume hook, v316.a)
  *   - .claude/hooks/pilotage-refresh.mjs -> app/.claude  (OVERWRITE — rebuilds docs/pilotage/index.html
  *       at Stop, but ONLY when the turn touched docs/sprints/** or chantiers.mjs; inert and silent
@@ -581,9 +582,10 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // on every checkout, not just the one PowerShell profile it used to be pinned to.
   // Each of these must travel with the METHOD, not live only on one machine.
   // gate-lock (322.f) is the landing lock library land.mjs and verify-gate.mjs import; it travels with them.
+  // heavy-slot (334.a) is the machine-wide heavy-job semaphore verify-gate.mjs imports; it travels with it.
   // chantier-status (Supervision v2) is the Stop hook that keeps a chantier sub-session's fiche
   // valid and fresh; it imports hooks/lib/chantier-status.mjs, so the two travel together.
-  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs", "session-sidebar.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs"]) {
+  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "heavy-slot.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs", "session-sidebar.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs"]) {
     const src = join(payload, "hooks", name);
     if (!existsSync(src)) continue;
     put(src, join(appRoot, ".claude", "hooks", name), `.claude/hooks/${name}`,

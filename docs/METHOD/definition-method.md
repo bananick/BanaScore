@@ -1,8 +1,8 @@
 ﻿# Definition Pipeline Method
 
-**Owner:** Nova (vision: the operator, through the Cadrage)  
-**Version:** 318.a  
-**Last Updated:** 2026-10-06  
+**Owner:** Maya — the definition pipeline is structure work (routes, views, navigation, personas-to-screens); **Nova** owns its design-system chapter, **Alba** its brand chapter, **Gordon** its copy, **Brian** its AI chapters; vision stays the operator's, through the Cadrage (327.a — this file still said "Owner: Nova" after the cohort split)  
+**Version:** 327.a  
+**Last Updated:** 2026-10-19  
 **Purpose:** Structured pre-BUILD pipeline to define, specify, and prototype apps
 
 ---
@@ -68,7 +68,7 @@ DISCOVER ──→ SPECIFY ──→ PROTOTYPE ──→ BUILD
 
 ## Phase 2: SPECIFY
 
-**Agent:** Junia (content) + Gordon (copy) + Nova (design chapters) + Brian (AI chapters)  
+**Agent:** Junia (content) + Gordon (copy) + **Maya** (`06-navigation.md`) + **Nova** (`07-design-system.md`) + Brian (AI chapters)  
 **Output folder:** `docs/definition/specs/`  
 **Duration:** 1-2 weeks  
 **Gate:** Human validates spec book
@@ -84,8 +84,8 @@ Write chapters as individual markdown files. Not all chapters are required — u
 | 03 | `03-data-models.md` | ✅ | Collections, schemas, relationships, Zod types |
 | 04 | `04-personas.md` | ✅ | 2-4 user archetypes with goals and pain points |
 | 05 | `05-features.md` | ✅ | Module inventory with priority (P0/P1/P2) |
-| 06 | `06-navigation.md` | ✅ | Routes, views, navigation patterns |
-| 07 | `07-design-system.md` | ✅ | M3 tokens, color palette, typography, components |
+| 06 | `06-navigation.md` | ✅ | Routes, views, navigation patterns — **Maya** |
+| 07 | `07-design-system.md` | ✅ | M3 tokens, color palette, typography, components — **Nova** |
 | 08 | `08-ai-strategy.md` | If AI | Models, capabilities, costs, prompt templates |
 | 09 | `09-cuj.md` | ✅ | Critical User Journeys (A→Z flows) |
 | 10 | `10-business.md` | Optional | Pricing, monetization, market strategy |

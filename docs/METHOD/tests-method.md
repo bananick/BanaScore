@@ -202,7 +202,7 @@ test('create and view invoice', async ({ page }) => {
 **Spec naming:** `tests/e2e/{NN}-{cuj-name}.spec.ts` (e.g., `01-auth-flow.spec.ts`, `02-quote-creation.spec.ts`)
 
 **Nominal path — local run:** there is no CI on this account (`SOUL.md` → "Boundaries"); run `npx playwright test` on the branch as part of the local Merge Gate (`method-core.md` → "Merge Gate") before merging — merging to `main` is LANDED, not deployed: the E2E suite proves the build, while
-PROVEN still needs Sage's observed run of the journey on the environment its Proof names. `templates/CI-TEMPLATE.yml` is kept inert for a possible future account; see `templates/PLAYWRIGHT-SETUP.md` for the local setup.
+PROVEN still needs Sage's observed run of the journey on the environment its Proof names. Sage's report that concludes PROVEN hands the coordinator the **🔎 Preuve à jouer** block (real URL(s) · numbered steps → expected · evidence links · not proven; `method-core.md` → "The two-moment contract"). `templates/CI-TEMPLATE.yml` is kept inert for a possible future account; see `templates/PLAYWRIGHT-SETUP.md` for the local setup.
 
 **Setup guide:** See `templates/PLAYWRIGHT-SETUP.md` for initial Playwright configuration.
 

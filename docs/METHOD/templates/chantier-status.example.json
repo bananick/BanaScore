@@ -52,7 +52,9 @@
       "kind": "result",
       "what": "Example result clients see or that touches money",
       "evidence": ["0123abc", "path/to/example-file.ext:42"],
-      "script": "1. Open the example screen. 2. Do the example action. 3. Check the example outcome.",
+      "urls": ["https://example.com/en/example-screen"],
+      "script": "1. Open the example screen → you see the example list. 2. Do the example action → you see the confirmation. 3. Check the example outcome → the record shows the new value.",
+      "notProven": "Rien",
       "questions": [
         { "q": "Does the example outcome look right?", "options": ["accept", "reopen", "defer"], "reco": "accept" }
       ],

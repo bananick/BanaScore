@@ -81,12 +81,16 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["id", "kind", "what", "evidence", "script", "questions", "needsOperator", "status"],
+        "if": { "properties": { "kind": { "const": "result" } }, "required": ["kind"] },
+        "then": { "required": ["urls"] },
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 16 },
           "kind": { "enum": ["plan", "result"] },
           "what": { "type": "string", "minLength": 1, "maxLength": 200 },
           "evidence": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 200 }, "description": "links: commit sha, file:line, URL, screenshot path" },
-          "script": { "type": "string", "maxLength": 600, "description": "the <= 3-minute script Nicolas can play himself" },
+          "script": { "type": "string", "maxLength": 600, "description": "the <= 3-minute script Nicolas can play himself: numbered steps, each with its expected result (→ you see …)" },
+          "urls": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 300 }, "description": "330.b: the exact clickable URL(s) to open, real slug/locale/params, never a placeholder — required when kind is result" },
+          "notProven": { "type": "string", "maxLength": 300, "description": "330.b: what this ask does not cover (failure/recovery case, persona, environment); \"Rien\" when nothing" },
           "questions": {
             "type": "array",
             "minItems": 1,

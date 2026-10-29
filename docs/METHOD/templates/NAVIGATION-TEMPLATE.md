@@ -1,6 +1,6 @@
 # [App Name] — Navigation Spec (Rail + Panels)
 # Status: Draft | Approved
-# Owner: Nova
+# Owner: Maya (UX research & IA — 327.a; Nova owns the visual system this spec is dressed in)
 # Last Updated: YYYY-MM-DD
 #
 # Purpose:

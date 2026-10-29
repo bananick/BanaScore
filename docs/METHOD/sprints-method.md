@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 325.a  
+**Version:** 334.b  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -11,7 +11,7 @@
 > landing on `main` (LANDED — deploying is its own step, with its own evidence). A single fix, a single screen, a single analysis is never a sprint — wrapping
 > one in sprint ceremony produces folders nobody closes. Everything below remains the reference for
 > the sprint mode, and applies in full once a sprint is actually open. See `CLAUDE.md` →
-> "Work Modes" for the nominal path. Several code-writing slices without that ceremony make a
+> "How Agents Operate (the loop)" for the nominal path. Several code-writing slices without that ceremony make a
 > **chantier**, not a sprint: "Sessions & branches" → "The chantier".
 
 ---
@@ -89,6 +89,11 @@ docs/sprints/010/
 - `{status}`: `⬜` (todo), `✅` (executor done; ready for review), `⚠️` (problem), `☑️` (validated by Review Gate)
 - `{Agent}`: Executor (Brian, Aiko, Watson, Gordon, etc.)
 - `{title}`: Concise task description
+
+**Commit after every task** (325.c — this rule used to live only in the root `CLAUDE.md`): one commit
+per task, with **explicit paths**, never `git add .` —
+`git add <paths> && git commit -m "feat({scope}): {desc}"`. The type/scope grammar is
+`method-core.md` → "§ Commits"; `feat` is the sprint-task default, not the only verb.
 
 **See:** `docs/METHOD/templates/TASK-TEMPLATE.md` for full template
 
@@ -299,7 +304,7 @@ None. FCM setup complete.
 **Checklist:**
 
 - [ ] **Junia:** `project/STRUCTURE.md` current? Routes/features/status accurate? `VISION.md` personas/JTBD still true (the operator decides)?
-- [ ] **Nova:** `project/DESIGN.md` current? New tokens/components documented?
+- [ ] **Maya / Nova:** `project/DESIGN.md` current — its structural sections (Maya) and its visual ones (Nova)? New tokens documented?
 - [ ] **Brian:** `project/AI-INFRA.md` current, if the sprint touches AI wiring?
 - [ ] **Kasper:** any security surface (rules, auth, API routes) in scope?
 - [ ] **Lucia:** METHOD current? (`npm run doctor` green in the hub; app on the latest release)
@@ -319,7 +324,7 @@ None. FCM setup complete.
 **Process:**
 1. Batch concise questions (2-5)
 2. Return the questions to the coordinator, who asks the operator (vision, scope) or delegates the
-   lane owner (design → Nova, security → Kasper, a study → Iris)
+   lane owner (structure → Maya, design system → Nova, brand → Alba, security → Kasper, a study → Iris)
 3. Update docs FIRST (VISION, ROADMAP, DESIGN, AI-INFRA)
 4. THEN plan sprint
 
@@ -555,7 +560,7 @@ a read-only dashboard, batches of four, reversible decisions that default after 
 what clients see or what touches money ("The operator's input is an inbox" below).
 **322.h** (`docs/interventions/2026-10-16-Lucia-sidebar-contract.md`) files the sidebar by contract: only supervisors are
 pinned, one alpha-sorted group per chantier, slice-code-first titles, a `🎯 Missions libres` section, one icon per repo and
-a janitor ("Sidebar contract" below).
+a janitor ("Sidebar contract" below). Its « only supervisors are pinned » is reopened by **329.a** (three zones, rule 1).
 **324.a** (`docs/interventions/2026-10-17-Junia-hygiene-sessions.md`) hands that pass to a named agent, Régine 🧑‍🔧,
 with idle clocks and a rescue before every archive (rule 6 below).
 **325.a** (`docs/interventions/2026-10-18-Lucia-clean-project-commands.md`) pins a session while it waits on the operator
@@ -614,17 +619,21 @@ waited and development stalled. Four rules.
    `waiting` and truly blocks; in doubt, it is non-reversible. An idle sub-session cannot wake itself, so **the supervisor
    keeps a timer on the earliest open deadline** (a one-shot `CronCreate`, or a check on every wake while a reversible
    decision is open) and, on expiry, routes `DECISION dX = default ({reco})` by `SendMessage`; the sub-session records
-   `defaulted`. Every defaulted decision is listed in the supervisor's Debrief under `🤝 Décidé pour toi — par défaut,
+   `defaulted`. Every defaulted decision is listed in the supervisor's control tower under `🤝 Décidé pour toi — par défaut,
    conteste si besoin`; contesting one reopens it (`open`, a fresh `deadline`) and the answer is routed like any other.
 4. **The operator evaluates only what deserves it.** A `review[]` item carries `needsOperator` (boolean, required): `true`
    only for a result **clients see** or that **touches money**. Those reach the operator in **one batch per slice, at its
    Recette** — accept / reopen / defer, the 4-question cap still applying. Every other result is accepted by Vera's review +
    Sage's proof (`accepted`) and listed in the Debrief as "accepté par la recette — rouvrable" (`REVIEW rX = reopen`
    reopens it), never asked. A `plan` item follows the same test: `false` → the supervisor accepts it and building starts;
-   `true` → the slice waits for the operator's batch.
+   `true` → the slice waits for the operator's batch. A `result` item with `needsOperator: true` carries the four
+   parts of the **🔎 Preuve à jouer** block (330.b; `method-core.md` → "The two-moment contract"): `urls` (≥ 1 real
+   clickable URL), `script` (numbered steps, each → expected result), `evidence` (links), `notProven` (`Rien` when
+   nothing). The supervisor sends an incomplete item back to its sub-session instead of relaying it.
 
 `chantier-status/1` keeps its id (no `v: 2`): a fiche written before 322.g adds `decisions[].reversible` (and `deadline` when
 true) and `review[].needsOperator` on its next write — the Stop hook blocks the stop with a message naming the missing fields.
+A fiche written before 330.b adds `review[].urls` to each `result` item on its next write, same mechanic.
 
 **The sub-session contract.**
 
@@ -676,7 +685,7 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
 
 1. **Open** (`/project` runs it, 325.a) — write the partition map; create the sidebar group `{app} · {chantier}` and set its section view to `group_by: "none"`, `sort_by: "alpha"`
    (`set_view(section_id, …)` — the sub-sessions' titles start with the slice code, so alpha order is slice order;
-   "Sidebar contract" below), title itself `🧑‍✈️ {repo icon} {chantier}` and pin it (`set_pinned`) — a supervisor is
+   "Sidebar contract" below), title itself `🧑‍✈️ {repo icon} {chantier}` (it pins itself only while it waits on the operator or while it is nested, rule 1) — a supervisor is
    started from a fresh top-level session, never from another session's task chip, and one that finds itself nested
    says so in its first message (only the operator can detach it: "Sidebar contract", rule 5); offer
    **one suggested-task chip per slice** carrying that sub-session's
@@ -702,17 +711,17 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
    → **`archive_session` on its own, as soon as
    the slice is finished** (the four checks of "Archiving" below, no operator OK); the group goes
    when the chantier closes.
-6. **Report** — the supervisor's Debrief is the chantier's only card; its body is the control-tower
+6. **Report** — the supervisor's control tower is the chantier's only card; its body is the control-tower
    table, one row per slice, built from the fiches. Every archive done since the last card is named
    in it under `🤝 Décidé pour toi` — so is every defaulted decision (`par défaut, conteste si besoin`) and every result
    accepted by the recette (`accepté par la recette — rouvrable`). **No `▶ Prompt suivant`** (operator rule, 2026-10-14): the next step is
    an action the supervisor takes itself — a task chip carrying the brief, or a typed `SendMessage` to an
-   existing sub-session — recorded as the `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names
+   existing sub-session — recorded as the `Suite` row of the pilot dashboard; its next-path quiz names
    that action, with no copy-paste block.
 
 **Archiving — automatic and machine-checked (322.b; the operator's standing order, 2026-10-14).** A
 finished session left in the sidebar hides where attention is needed, so the supervisor archives a
-sub-session **on its own, without asking**, as soon as it is finished. *Finished* means four checks,
+sub-session **on its own, without asking**, as soon as it is finished. *Finished* means five checks,
 all run by command, all true:
 
 1. **Landed on the trunk — the whole branch, not the fiche's `head`** — the fiche is `landed` AND,
@@ -725,8 +734,18 @@ all run by command, all true:
    and `git -C <worktree> log origin/main..HEAD` is empty (`<worktree>` = the one holding the branch,
    "Finding the fiche").
 3. **Nothing open** — no `decisions[]`, `operatorActions[]` or `review[]` item with `status: open`.
-4. **Declared** — the archive is named in the supervisor's Debrief under `🤝 Décidé pour toi`; it is
+4. **Declared** — the archive is named in the supervisor's control tower under `🤝 Décidé pour toi`; it is
    reversible (`unarchive_session`).
+5. **Traced** (334.b) — the slice's intervention or task file, with its report section, is on `origin/main`
+   (`git cat-file -e origin/main:<path>`), and `docs/project/STATE.md` carries the slice's line when the slice
+   moved a journey's state. Code that landed without its trace is not finished.
+
+**A held slice is driven to an exit, never left 🟡 (334.b).** On every wake, a slice held by the landing
+exception list is pushed toward one of the three exits ("Invariants", rule 2): the operator's decision routed
+in → the sub-session records Kasper's or Vera's verdict in `review[]`, then resolves the reason or commits
+`[land-anyway]` and runs `/land`; or the operator abandons it and `branch-sweep.mjs` deletes it. Never
+`gh pr merge --admin`, never a hand-run `git branch -D` / `git push --delete`: deletion stays in
+`branch-sweep.mjs` (its local-branch guards stay in charge).
 
 Any check missing → **no archive**: the title goes 🟡 and the supervisor says which check blocks
 (e.g. "T2: 2 uncommitted files in the worktree"). The check runs at the idle notice of a `landed`
@@ -735,7 +754,7 @@ archived. The operator's standing order is the authorization and `unarchive_sess
 no OK is asked; the group `{app} · {chantier}` goes when its last sub-session is archived.
 
 **Titles — applied by the supervisor, not by discipline.** Supervisor: `🧑‍✈️ {repo icon} {chantier}` (e.g.
-`🧑‍✈️ 🍌 W42 cash`), pinned. Sub-session: `{slice} {avatar} {object} · {state icon}` (e.g. `D1 👩‍💼 Offre Santa · 🟡`) —
+`🧑‍✈️ 🍌 W42 cash`), pinned only while it waits or is nested (rule 1). Sub-session: `{slice} {avatar} {object} · {state icon}` (e.g. `D1 👩‍💼 Offre Santa · 🟡`) —
 **the slice code comes first** (322.h; before it the avatar did), so the group's alphabetical sort follows the slices.
 Avatars from the cohort table (`agents-method.md`); a domain owner's avatar is the one declared for it in the app's
 business pack (`docs/project/business/README.md`), 🧑 by default; state icons `planning` 📝 · `working` ⏳ · `waiting` 🟡 ·
@@ -743,53 +762,81 @@ business pack (`docs/project/business/README.md`), 🧑 by default; state icons 
 ("Archiving" above). Emoji live in titles and file contents, never in branch names (above). The `ListAgents` name follows
 the title: re-read it after each `set_session_title`.
 
-**Sidebar contract (322.h; the operator's rulings, 2026-10-16 — decided, not re-litigated).** The sidebar is the
+**Sidebar contract (322.h; the operator's rulings, 2026-10-16 — decided, not re-litigated; rule 1 reopened and rewritten by 329.a, 2026-10-20).** The sidebar is the
 operator's one always-open surface, so what stands in it is fixed by rule, not by whoever started a session.
 
-1. **Pinned = supervisors + the sessions that wait on the operator (325.a).** Every supervisor session is pinned, always,
-   and filed in its chantier group `{app} · {chantier}`. Any other session is pinned **only while it waits for the
-   operator's answer**, with ` · 🟡` at the end of its title. Mechanism, for every session (chantier or not): right before
+1. **Pinned = what waits on the operator, nothing else (three zones, 2026-10-20 — reopens the 2026-10-16 « supervisors
+   always pinned »).** Reading the sidebar is three questions in order: *what wants me* (Pinned), *what is each chantier
+   doing* (one group each, rule 2), *what else is alive* (`🎯 Missions libres`, rule 3). A session is pinned **only while it
+   waits for the operator's answer**, with ` · 🟡` (or ` · 🔴` blocked) at the end of its title — a supervisor included. A
+   supervisor lives in its chantier group `{app} · {chantier}` and is pinned for good only in one case: **while it is
+   nested** (rule 5) — a nested supervisor cannot be filed, so its pin is the only way it surfaces; Régine unpins it on the
+   first pass after it is top-level and filed. Mechanism, for every session (chantier or not): right before
    it asks a question it will block on (`AskUserQuestion`) it appends ` · 🟡` to its own title (`set_session_title` self;
    a chantier member re-reads `ListAgents` afterwards) and pins itself (`set_pinned` self true); right after the answer it
-   removes the 🟡 and unpins itself — never a supervisor. (A chantier sub-session asks through its fiche, not
+   removes the 🟡 and unpins itself — a nested supervisor keeps its pin. (A chantier sub-session asks through its fiche, not
    `AskUserQuestion`: its 🟡 is the supervisor's state icon, "Titles" above, and Régine pins it by that title.) Régine is
-   the safety net (rule 6). A move un-pins a session — pin it again after any `move_sessions`.
+   the safety net (rule 6). A move un-pins a session — pin it again only if it still waits or is nested.
 2. **One group per chantier**, section view `group_by: "none"`, `sort_by: "alpha"`. Sub-sessions are task chips the
    supervisor offers, so they nest under it and follow its group on their own; their slice-first titles make the alpha
    sort follow the slices. This replaces the 2026-10-16 morning line `group_by: "state"` in the Open step: a session
-   waiting on the operator is read from the 🟡 / 🔴 in its title, not from the sort.
+   waiting on the operator is read from the 🟡 / 🔴 in its title, not from the sort. A group with no live session is
+   reported « groupe vide » (morning pass), never deleted by the keeper; the supervisor that opens a chantier creates its
+   group, and the group goes when its last session is archived.
 3. **`🎯 Missions libres`** — one section for every session outside a chantier (a parallel one-off mission, not
-   project mode), view `group_by: "state"`, `sort_by: "recency"`; title `{repo icon} {object}`.
+   project mode), view `group_by: "state"`, `sort_by: "recency"`; title `{repo icon} {object}`. It holds only what runs,
+   waits, or was touched in the last 24 h: a `· 💤` session leaves at the 20:07 pass (rule 6), so the section stays short.
 4. **One icon per repo**, at the start of a free mission's title and right after 🧑‍✈️ in a supervisor's. The folder
    directly under `D:\Apps\` names the repo (table below). The machine-readable copy is
    `docs/METHOD/repo-icons.json` — `{ "bananaevents": "🍌", … , "_scratch": "💬", "_default": "📁" }` — which the sync
    carries with the rest of `docs/METHOD/**`, so supervisors in every app read the same map; `tests/repo-icons.test.mjs`
    fails when the two drift.
 5. **Never nest a supervisor.** A session born from another session's task chip nests under it and moves with it — that
-   is how four supervisors ended up inside "Today's handoff" and its group. A supervisor is started from a fresh
-   top-level session, or the operator detaches it once (row menu → "Detach to top level"); Claude cannot detach a
-   chip-born session.
+   is how four supervisors ended up inside "Today's handoff" and its group — and, on 2026-10-20, eight of the nine: six under
+   « Today's handoff · 💤 », one each under two idle free missions — which no tool could move, so none could reach its
+   group and all stayed pinned. A supervisor is started from a fresh top-level session, or the operator detaches it once
+   (row menu → "Detach to top level"); Claude cannot detach a chip-born session. A nested supervisor is listed « à
+   détacher » **with its parent's title** (the parent is 💤 and stays open until its children are detached — rule 6 never
+   archives a parent of a live session), once a day on the morning pass, with a single phone push that day, since
+   a line in a report nobody opens is how the nesting lasted a week. Two observed facts (2026-10-20): `list_sessions`
+   shows `startedBy` only for sessions Claude launched, so a nested supervisor looks top-level there — the only tell is a
+   refused `move_sessions` (« nested under X »); and **archiving an idle parent re-roots its children** (« Today's
+   handoff · 💤 » was archived, six supervisors became movable at once). When the parent is an idle, clean `· 💤`
+   session — not itself a supervisor, no open PR — archiving it after the rescue, on demand and never by the scheduled
+   pass (the rule 6 table still protects a parent of a live session), is the click-free way to un-nest; a family whose
+   root is a supervisor or a live mission is moved whole into its chantier group instead.
 6. **Régine owns the sidebar pass (324.a — she replaces the anonymous janitor).** `regine` (`.claude/agents/regine.md`,
    sonnet) runs it on demand and as the scheduled task `rangement-barre-laterale` (🧹), every 2 h from 08:07 to 20:07.
    Each pass: **(a) routines close their previous runs** — for every scheduled task, `list_task_runs` (never the title)
-   and archive every non-running run but the newest, her own previous passes included; **(b)** re-apply rules 1–5 (rule 1 includes pinning every non-supervisor session whose title ends with `· 🟡` and unpinning those whose title no longer has it, never a supervisor): pin and
-   file supervisors, retitle them, file every session outside a chantier into `🎯 Missions libres`, add a missing repo
-   icon (never rewriting the object) and correct both section views; **(c) the clocks**, on sessions outside a chantier:
+   and archive every non-running run but the newest, her own previous passes included; **(b)** re-apply rules 1–5 (rule 1:
+   pin every session whose title ends with `· 🟡` or `· 🔴`, unpin those whose title no longer has it and every supervisor
+   that is top-level and filed — a nested one keeps its pin): file supervisors in their groups, retitle them, file every
+   session outside a chantier into `🎯 Missions libres`, add a missing repo icon (never rewriting the object) and correct
+   both section views; **(c) the clocks**, on sessions outside a chantier:
 
    | Condition | Action |
    |:--|:--|
-   | title ends with `· 🟡` | never 💤, never archived — wins over every row below; reported when waiting > 48 h |
+   | title ends with `· 🟡` or `· 🔴` | never 💤, never archived — wins over every row below; reported when waiting > 48 h |
    | PR merged, idle, worktree clean, no open child | archive |
-   | title carries `✅`, idle > 2 h | rescue, then archive |
-   | idle > 24 h | append `· 💤` to the title, list it |
-   | idle > 72 h | rescue, then archive; named in the report |
-   | open PR, pinned, running, or parent of a live session | never archived — reported when idle > 7 days |
+   | title carries `✅`, idle > 2 h | rescue, then archive (on demand; a scheduled pass lists it « à sauver » unless it is also `· 💤` at 20:07) |
+   | idle > 24 h | append `· 💤` to the title (once), list it |
+   | `· 💤` and idle > 24 h, **at the 20:07 pass** | rescue, then archive; named in the report (replaces the 72 h row, 2026-10-20) |
+   | open PR, pinned, or running | never archived — reported when idle > 7 days |
+   | parent of a live session | never archived by a scheduled pass; an on-demand pass may archive an idle, clean `· 💤` parent that is not a supervisor (rule 5) |
 
    **Rescue before archive** (archiving removes a clean worktree): uncommitted or unpushed work in the session's
-   worktree is committed `wip(rescue): sauvegarde avant archivage [wip]` on its own branch and pushed, never forced; a
-   refused push means no archive. The scheduled pass has **no shell**: it works from PR state, title and idle time only,
-   and lists a session that needs a rescue as « à sauver » instead of archiving it — the rescue runs in an on-demand
-   pass. She never deletes, never touches a running session, and leaves a chantier's sub-sessions to their supervisor,
+   worktree is committed `wip(rescue): sauvegarde avant archivage [wip]` on its own branch and pushed with
+   `SKIP_QUALITY_GATES=1` on that push only (an app's `pre-push` gate outlasts any pass; the proto leak guard still runs
+   and `/land` still runs the full gate), never `--no-verify`, never forced (333.b); a refused push means no archive. The passes of 08:07–18:07 have **no shell** beyond `date` (every pass reads the local clock with it — a scheduled
+   session is given no local time, 2026-10-20): they work from PR state, title and idle time only, and list a session that needs a rescue as « à sauver » instead of archiving it. **The 20:07 pass is the
+   closing pass and may use a shell for the rescue and nothing else** — exactly `rev-parse`, `symbolic-ref`, `status --porcelain --untracked-files=all`,
+   `rev-list --count`, `add -A`, `commit` and `SKIP_QUALITY_GATES=1 git push -u origin HEAD`, on a session already `· 💤` in the pass's first
+   `list_sessions`, after the checks of `regine.md` rule 4; any other git command, any file edit, any force is out, and
+   without a shell, or when `date` does not tell it is the 20 h one (19:30–21:00 local), it behaves like the others. The scheduled pass never
+   archives a title that starts with a slice code (`D9`, `S1`… — its supervisor owns it) nor a session it cannot prove
+   nobody depends on (`startedBy` across a list capped at ~90 rows), and makes at most 15 rescue attempts and 15
+   archives per pass. Why: until 2026-10-20 the rescue ran only on demand, so every free mission
+   in a worktree stayed 💤 for good (counts in `docs/interventions/2026-10-20-Lucia-sidebar-three-zones.md`). She never deletes work (integrated branches only through `branch-sweep.mjs`), never touches a running session, and leaves a chantier's sub-sessions to their supervisor,
    which keeps archiving its own finished ones (322.b). A supervisor she cannot move because it is nested is reported
    « à détacher » to the operator **once a day** (the 08:07 pass only), so a pass with nothing for him archives itself.
    The task lives in the operator's user-level `~/.claude/scheduled-tasks/` — outside the sync, its prompt is the file —
@@ -823,6 +870,7 @@ under `scratch-workspaces` is the scratch workspace.
 | FunFlasher | ⚡ |
 | Postarget | 📮 |
 | CabasseClub | 🍇 |
+| Chief | 🥷 |
 | scratch workspace (`_scratch`) | 💬 |
 | any other repo (`_default`) | 📁 |
 

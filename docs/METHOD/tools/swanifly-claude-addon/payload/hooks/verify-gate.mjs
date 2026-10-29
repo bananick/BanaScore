@@ -14,7 +14,8 @@
  *   doc      docs/, *.md, proto/, qa/, prompts/, *.jsonl, study data (*.csv/tsv/geojson, unowned *.json) → nothing to run (green)
  *   tooling  scripts/, .claude/, tools/, registries      → `node --check` on JS
  *   rules    telemetry-backend/firestore.{rules,indexes.json} → parsed and sanity-checked (below)
- *   app      real app code under an app root             → that app's npm checks
+ *   app      real app code under an app root             → that app's npm checks (334.c: a plain `eslint` lint
+ *                                                          runs on the root's changed files only, red on NEW problems (334.d) — see "lint judges the diff")
  *
  * Toolchain policy (operator's call, 2026-08-10): most roots in this fleet have no
  * `node_modules`, so `eslint`/`tsc`/`next` are absent — a missing toolchain, not broken
@@ -53,14 +54,22 @@
  * if `gate-lock.mjs` is missing or throws, the gate warns and runs unserialized, exactly as before.
  * See gate-lock.mjs.
  *
+ * Machine-wide heavy slots (334.a, 2026-10-27). The repository lock above cannot see other repositories, and on
+ * 2026-10-26 Windows ran out of virtual memory with gates of several repos running at once. So the heavy phase
+ * also takes one of the MACHINE's two heavy slots (`~/.claude/heavy-slot/slot{1,2}.lock`, see heavy-slot.mjs) —
+ * after the repository lock, never before, so the two can never deadlock. A wait that runs out (`--slot-wait`,
+ * default 40 min) is `blocked`, "heavy-slot busy", nothing ran; a semaphore that cannot work (no lock directory)
+ * only warns and the gate runs as before. The slot is given back as soon as the heavy phase ends, and on exit.
+ *
  * `--plan` prints ONE JSON line (mode, heavy, lane counts, app roots) and exits 0 — no marker,
  * no script, no lock. `land.mjs` uses it to know, before it merges, whether the gate is heavy.
  *
  * Usage:
- *   node scripts/verify-gate.mjs [--base origin/main] [--json] [--quiet] [--plan] [--lock-wait <min>]
+ *   node scripts/verify-gate.mjs [--base origin/main] [--json] [--quiet] [--plan] [--lock-wait <min>] [--slot-wait <min>]
  * Exit: 0 green · 1 red (a check failed) · 2 blocked (nothing can verify it)
  */
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
@@ -84,6 +93,10 @@ const say = (...a) => { if (!QUIET) console.log(...a); };
 // that fails to load) still gates — the lock only schedules heavy gates, it never judges a diff.
 const LOCK = await import('./gate-lock.mjs').catch(() => null);
 const LOCK_WAIT_MIN = (() => { const m = Number(flag('lock-wait', 180)); return Number.isFinite(m) && m >= 0 ? m : 180; })();
+// The machine-wide heavy slots (see the header). Optional the same way: without the library the gate runs unchanged.
+const HEAVY = await import('./heavy-slot.mjs').catch(() => null);
+const SLOT_WAIT_MIN = (() => { const m = Number(flag('slot-wait', 40)); return Number.isFinite(m) && m >= 0 ? m : 40; })();
+const mins = (ms) => Math.round(ms / 60_000);
 
 // ── git helpers ──────────────────────────────────────────────────────────────
 const git = (args, cwd = process.cwd()) =>
@@ -201,6 +214,15 @@ const CODE_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|css|scss|html|snap)$/i;
 // 2026-09-18, upstreamed from 887092749) fell through every lane into "unclassifiable (fail closed)"
 // AFTER lint, type-check, test:gate and build had all passed.
 const ROOT_APP_EXT = /\.(ts|tsx|js|jsx|mjs|cjs|json|snap)$/i;
+// YAML data, the nested half only (325.b, 2026-10-18, Chief `s1-memory-core`): `memory/facts.yaml` and the
+// `tests/fixtures/**/memory/**/*.yaml` that Chief's root `test:gate` validates with Zod (`scripts/memory-check.mjs`)
+// fell through every lane into "unclassifiable (fail closed)" — and so would every memory-capture commit. A NESTED
+// `*.ya?ml` under a verifying repo root now takes that root's app lane: fail-safe, it runs the root's checks, it
+// never waves the file through. Two stay out on purpose: a ROOT-level `*.ya?ml` (`app.yaml`, `cloudbuild.yaml`,
+// `docker-compose.yml` — deploy wiring no app check reads; the `/` in the pattern keeps it "unclassifiable (fail
+// closed)"), and any YAML under a root that verifies nothing (this hub). `apphosting`/`scheduler.ya?ml` and
+// `.github/` keep the tooling lane: TOOLING is tested first.
+const ROOT_APP_DATA = /\/[^/]+\.ya?ml$/i;
 // Study data, the `.json` half (2026-10-17, versation Cabasse-GFV 5ffa7e8 — scraped series, registry extracts, a
 // report's data file). A `.json` is study data only when no one else owns it, so classify() tests this AFTER
 // TOOLING (root-level `*.json`, `scripts/`, `.claude/`, `firebase.json` keep their lane) and AFTER the app-root
@@ -300,7 +322,7 @@ function classify(file) {
   // a script-less repo root) through the repo-root rules below — tooling lane, node --check on nothing, green.
   const own = appRootOf(file);
   if (own && own !== '.') return { lane: 'app', root: workspacesRoot(own) };
-  if (own === '.' && ROOT_APP_EXT.test(file) && rootHasVerifyingScript()) return { lane: 'app', root: '.' };
+  if (own === '.' && (ROOT_APP_EXT.test(file) || ROOT_APP_DATA.test(file)) && rootHasVerifyingScript()) return { lane: 'app', root: '.' };
   if (STUDY_JSON.test(file) && !STUDY_JSON_EXCLUDED.some((r) => r.test(file))) return { lane: 'doc' };   // unowned study data
   if (CODE_EXT.test(file)) return { lane: 'tooling' };       // loose hub-level script
   return { lane: 'unknown' };
@@ -330,9 +352,58 @@ function readScripts(root) {
   } catch { return {}; }
 }
 
-function runScript(root, script, timeoutMs = TIMEOUT) {
+// ── jest and vitest run serially, with a roomy per-test timeout (334.e, 2026-10-28) ─────────────────────────────
+// BanaLog: up to 6 Claude sessions run gates on one machine. `backend/` HTTP authz specs (jest, 5 s default per test)
+// timed out under load — a different suite each pass, each green 12/12 alone — and held PR #128 for 4 passes; the
+// frontend's vitest died on "[vitest-pool-runner] Timeout waiting for worker to respond" (two files in a row). When a
+// lane's test script is a plain `jest …` / `vitest run …` command the gate appends, each only if the script does not
+// already set it (npm: `npm run <script> -- …`):
+//   jest   → `--runInBand` (set already by `--runInBand`/`-i`/`--maxWorkers`/`-w`) · `--testTimeout=30000`
+//   vitest → `--no-file-parallelism` (set already by `--no-file-parallelism`/`--fileParallelism`/`--pool`/`--poolOptions`/
+//            `--maxWorkers`/`--no-threads`/`--singleThread`) · `--testTimeout=30000`
+// vitest only when the root's installed vitest is ≥ 1 (`--no-file-parallelism` does not exist before; unresolvable
+// version = left alone, an unknown flag must never be a false red), and only for `vitest` / `vitest run` (not watch,
+// bench, related…). A composite command (`&&`, pipes, `;`) or another runner gets nothing: npm would hand the extra
+// arguments to the wrong command. Fail-closed is untouched: a failing test is still red, the timeout is longer.
+const JEST_SERIAL = ['--runInBand', '-i', '--maxWorkers', '-w'];
+const VITEST_SERIAL = ['--no-file-parallelism', '--fileParallelism', '--pool', '--poolOptions', '--maxWorkers', '--max-workers', '--no-threads', '--singleThread'];
+const TEST_TIMEOUT = '--testTimeout';
+
+/** Installed vitest major for a root (its own node_modules, then the repo's hoisted one); null = unknown. */
+function vitestMajor(root) {
+  for (const base of [join(REPO, root), REPO]) {
+    try {
+      const v = JSON.parse(readFileSync(join(base, 'node_modules', 'vitest', 'package.json'), 'utf8')).version;
+      const m = /^(\d+)\./.exec(String(v));
+      if (m) return Number(m[1]);
+    } catch { /* try the next */ }
+  }
+  return null;
+}
+
+/** Extra arguments to append to a plain `jest …` / `vitest run …` script command; `[]` = leave the script alone. */
+function testExtraArgs(root, command) {
+  const cmd = String(command ?? '').trim();
+  if (!cmd || /&&|\|\||[;|<>`]|\$\(/.test(cmd)) return [];
+  const tokens = splitArgs(cmd);
+  if (tokens[0] === 'npx') tokens.shift();
+  const has = (names) => tokens.some((t) => names.some((n) => t === n || t.startsWith(`${n}=`)));
+  const extra = [];
+  if (tokens[0] === 'jest') {
+    if (!has(JEST_SERIAL)) extra.push('--runInBand');
+  } else if (tokens[0] === 'vitest') {
+    if (tokens[1] && !tokens[1].startsWith('-') && tokens[1] !== 'run') return [];
+    const major = vitestMajor(root);
+    if (major === null || major < 1) return [];
+    if (!has(VITEST_SERIAL)) extra.push('--no-file-parallelism');
+  } else return [];
+  if (!has([TEST_TIMEOUT])) extra.push(`${TEST_TIMEOUT}=30000`);
+  return extra;
+}
+
+function runScript(root, script, timeoutMs = TIMEOUT, extraArgs = []) {
   const started = Date.now();
-  const res = spawnSync(`npm run --silent ${script}`, {
+  const res = spawnSync(`npm run --silent ${script}${extraArgs.length ? ` -- ${extraArgs.join(' ')}` : ''}`, {
     cwd: join(REPO, root),
     encoding: 'utf8',
     shell: true,
@@ -349,6 +420,184 @@ function runScript(root, script, timeoutMs = TIMEOUT) {
   const ok = res.status === 0 && !res.error;
   const log = `${res.stdout ?? ''}\n${res.stderr ?? ''}`.trim();
   return { ok, ms, tail: ok ? '' : log.split('\n').slice(-25).join('\n') };
+}
+
+// ── lint judges the diff, not the lane (334.c, 2026-10-28) ──────────────────
+// BanaLog: ~6 500 pre-existing problems in `backend/` (e.g. `backend/test/builder*`) turned every land that
+// touched the backend red on lint, whatever the branch changed — `land.mjs` has no baseline and `[land-anyway]`
+// does not bypass the verify step (PR #128 held). So when the root's `lint` script is a plain `eslint …`
+// command, the gate runs that same eslint — same config, same flags, minus `--fix` / output / cache — on the
+// root's CHANGED files only (added/modified vs `--base`, plus the tree), narrowed to the script's own path or
+// glob arguments and to lintable extensions. No changed lintable file → lint passes (`files: 0`). Still fail
+// closed on a real error in a changed file. Anything the gate cannot read with certainty — a composite command
+// (`&&`, pipes), another linter (`next lint`, biome), an unknown flag, eslint not resolvable from the root —
+// keeps the whole-lane run, unchanged. Typecheck, tests and build are untouched: they still judge the whole lane.
+//
+// New problems only (334.d, same day): the file is too coarse a unit — PR #128 touched `events.service.ts`, which
+// carries 147 errors on the trunk, so 334.c still held it. Eslint errors are now counted per (file, rule) at HEAD and,
+// for a file that existed at the merge base, on the merge-base text (`git show <mb>:<file>` fed through `--stdin`,
+// same config, same project). Red when a (file, rule) count grows, or when a file new since the merge base has an
+// error. Warnings are not counted (eslint does not fail on them either). Fail closed: an eslint run that crashes
+// (exit ≥ 2, unreadable JSON) at HEAD or on the baseline is red, never a pass.
+// The baseline text goes through the checkout filters (`git cat-file --filters`, i.e. core.autocrlf): eslint-plugin-prettier
+// counts one more error on a CRLF working copy of BanaLog's `events.service.ts` than on its LF blob, which read as a new one.
+const LINTABLE = /\.(?:[cm]?[jt]sx?|vue|svelte|astro)$/i;
+const ESLINT_DROP = new Set(['--fix', '--fix-dry-run', '--cache']);
+const ESLINT_DROP_VALUE = new Set(['--fix-type', '-o', '--output-file', '--cache-location', '--cache-strategy', '-f', '--format']);
+const ESLINT_VALUE = new Set(['-c', '--config', '--max-warnings', '--ext', '--parser', '--parser-options', '--plugin', '--rule',
+  '--rulesdir', '--resolve-plugins-relative-to', '--ignore-path', '--ignore-pattern', '--env', '--global',
+  '--report-unused-disable-directives-severity', '--flag']);
+const ESLINT_BOOL = new Set(['--quiet', '--no-eslintrc', '--no-config-lookup', '--no-inline-config', '--no-ignore',
+  '--report-unused-disable-directives', '--no-warn-ignored', '--no-error-on-unmatched-pattern', '--pass-on-no-patterns',
+  '--color', '--no-color', '--stats']);
+
+/** Split a script command on whitespace, honouring "…" and '…' (what `npm run` hands the shell). */
+function splitArgs(cmd) {
+  const out = [];
+  const re = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  let m;
+  while ((m = re.exec(cmd))) out.push(m[1] ?? m[2] ?? m[3]);
+  return out;
+}
+
+/** An eslint path argument → a matcher on root-relative paths: `*`, `**`, `?`, `{a,b}`; a plain path = itself or a folder. */
+function patternMatcher(pattern) {
+  const p = pattern.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
+  if (p === '' || p === '.') return () => true;
+  if (!/[*?{]/.test(p)) return (f) => f === p || f.startsWith(`${p}/`);
+  let re = '';
+  let depth = 0;
+  for (let i = 0; i < p.length; i++) {
+    const ch = p[i];
+    if (ch === '*' && p[i + 1] === '*') {
+      i++;
+      if (p[i + 1] === '/') { i++; re += '(?:.*/)?'; } else re += '.*';
+    } else if (ch === '*') re += '[^/]*';
+    else if (ch === '?') re += '[^/]';
+    else if (ch === '{') { re += '(?:'; depth++; }
+    else if (ch === '}' && depth) { re += ')'; depth--; }
+    else if (ch === ',' && depth) re += '|';
+    else re += ch.replace(/[.+^$()|[\]\\]/g, '\\$&');
+  }
+  const rx = new RegExp(`^${re}$`);
+  return (f) => rx.test(f);
+}
+
+/**
+ * The changed-files lint plan for one root, or `null` = run the whole `lint` script as before.
+ * `rootFiles` are the repo-relative changed app files of that root. Returns `{ flags, files }`, `files` root-relative.
+ */
+function lintPlan(root, command, rootFiles) {
+  const cmd = String(command ?? '').trim();
+  if (/&&|\|\||[;|<>`]|\$\(/.test(cmd)) return null;
+  const tokens = splitArgs(cmd);
+  if (tokens[0] !== 'eslint') return null;
+  const flags = [];
+  const patterns = [];
+  for (let i = 1; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (!t.startsWith('-')) { patterns.push(t); continue; }
+    const name = t.split('=')[0];
+    const inline = t.includes('=');
+    if (ESLINT_DROP.has(name)) continue;
+    if (ESLINT_DROP_VALUE.has(name)) { if (!inline) i++; continue; }
+    if (ESLINT_VALUE.has(name)) {
+      flags.push(t);
+      if (!inline) { if (i + 1 >= tokens.length) return null; flags.push(tokens[++i]); }
+      continue;
+    }
+    if (ESLINT_BOOL.has(name)) { flags.push(t); continue; }
+    return null; // an option this gate does not know could take a value it would read as a path — keep the whole lane
+  }
+  const matchers = patterns.map(patternMatcher);
+  const files = [];
+  for (const f of rootFiles) {
+    if (!existsSync(join(REPO, f))) continue;
+    const rel = root === '.' ? f : relative(root, f).replace(/\\/g, '/');
+    if (rel.startsWith('..') || !LINTABLE.test(rel)) continue;
+    if (matchers.length && !matchers.some((m) => m(rel))) continue;
+    files.push(rel);
+  }
+  return { flags, files };
+}
+
+/** eslint's own bin, resolved from the root the way `npm run` finds it (hoisted workspaces included); null = unknown. */
+function eslintBin(root) {
+  try {
+    const req = createRequire(join(REPO, root, 'package.json'));
+    const pkgPath = req.resolve('eslint/package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.eslint;
+    return bin ? join(dirname(pkgPath), bin) : null;
+  } catch { return null; }
+}
+
+/** eslint `-f json` → { ok, counts: Map<root-relative file, Map<rule, errors>>, tail }. ok=false = eslint crashed (fail closed). */
+function eslintCounts(root, bin, flags, args, input) {
+  const res = spawnSync(process.execPath, [bin, ...flags, '-f', 'json', ...args], {
+    cwd: join(REPO, root),
+    encoding: 'utf8',
+    timeout: TIMEOUT,
+    maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
+    ...(input !== undefined ? { input } : {}),
+  });
+  const crash = (why) => ({ ok: false, counts: new Map(), tail: `${why}\n${`${res.stdout ?? ''}\n${res.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n')}`.trim() });
+  if (res.error) return crash(`eslint did not run: ${res.error.message}`);
+  if (res.status !== 0 && res.status !== 1) return crash(`eslint crashed (exit ${res.status})`);
+  let out;
+  try { out = JSON.parse(res.stdout); } catch { return crash('eslint output is not JSON'); }
+  if (!Array.isArray(out)) return crash('eslint output is not a result array');
+  const counts = new Map();
+  for (const r of out) {
+    const rel = relative(join(REPO, root), String(r.filePath ?? '')).replace(/\\/g, '/');
+    const m = counts.get(rel) ?? new Map();
+    for (const msg of r.messages ?? []) {
+      if (msg.severity !== 2) continue;
+      const rule = msg.ruleId ?? (msg.fatal ? 'fatal' : 'unknown');
+      m.set(rule, (m.get(rule) ?? 0) + 1);
+    }
+    counts.set(rel, m);
+  }
+  return { ok: true, counts, tail: '' };
+}
+
+/**
+ * Lint `files` (root-relative) at HEAD, then on the merge-base text of every file that has errors — red only on
+ * a (file, rule) count that grew, or an error in a file new since the merge base. 40 files per call, no shell.
+ */
+function runLintOnFiles(root, bin, flags, files) {
+  const started = Date.now();
+  const head = new Map();
+  for (let i = 0; i < files.length; i += 40) {
+    const r = eslintCounts(root, bin, flags, files.slice(i, i + 40));
+    if (!r.ok) return { ok: false, ms: Date.now() - started, tail: r.tail, crashed: true };
+    for (const [f, m] of r.counts) head.set(f, m);
+  }
+  const mergeBase = gitOut(['merge-base', 'HEAD', BASE], REPO);
+  const grown = [];
+  let baselined = 0;
+  for (const [f, m] of head) {
+    if (![...m.values()].some((n) => n > 0)) continue;
+    const repoPath = root === '.' ? f : `${root}/${f}`;
+    const shown = mergeBase
+      ? spawnSync('git', ['cat-file', '--filters', `${mergeBase}:${repoPath}`], { cwd: REPO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 60_000 })
+      : null;
+    let base = new Map();
+    if (shown && shown.status === 0 && !shown.error) {
+      const r = eslintCounts(root, bin, flags, ['--stdin', '--stdin-filename', f], shown.stdout);
+      if (!r.ok) return { ok: false, ms: Date.now() - started, tail: `baseline ${f}: ${r.tail}`, crashed: true };
+      base = r.counts.get(f) ?? new Map();
+      baselined++;
+    }
+    const isNew = !(shown && shown.status === 0);
+    for (const [rule, n] of m) {
+      const was = base.get(rule) ?? 0;
+      if (n > was) grown.push(`${f}: ${rule} ${was} → ${n}${isNew ? ' (new file)' : ''}`);
+    }
+  }
+  const total = [...head.values()].reduce((a, m) => a + [...m.values()].reduce((x, y) => x + y, 0), 0);
+  return { ok: grown.length === 0, ms: Date.now() - started, tail: grown.slice(0, 25).join('\n'), newProblems: grown.length, errorsAtHead: total, baselined };
 }
 
 /**
@@ -470,8 +719,9 @@ for (const f of files) {
 // source or its test suite, and the root exposes `test:gate`, actually run it — a passing
 // `node --check` on `verify-gate.mjs` proves only that it parses, not that it still behaves.
 // Stays in the tooling lane on purpose: `.` is never added to `appRoots` for this, it is a
-// gate-specific check, not app verification.
-const selfTest = lanes.tooling.some((f) => /(^|\/)verify-gate\.mjs$|^tests\//.test(f)) && Boolean(readScripts('.')['test:gate']);
+// gate-specific check, not app verification. The gate's own libraries count as its source (334.a: a diff touching
+// only `heavy-slot.mjs` or `gate-lock.mjs` landed without the suite that tests them).
+const selfTest = lanes.tooling.some((f) => /(^|\/)(verify-gate|gate-lock|heavy-slot)\.mjs$|^tests\//.test(f)) && Boolean(readScripts('.')['test:gate']);
 
 // Heavy = a real npm script will actually execute. A root with no toolchain skips its checks in
 // milliseconds (see the app loop) — it must not queue behind a 20-minute gate for nothing.
@@ -523,7 +773,6 @@ if (heavy) {
     console.error('⚠ gate-lock.mjs missing — heavy phase runs unserialized');
     lockInfo = { unavailable: true };
   } else {
-    const mins = (ms) => Math.round(ms / 60_000);
     let got = null;
     try {
       got = LOCK.acquireGateLock({
@@ -548,6 +797,41 @@ if (heavy) {
   }
 }
 
+// One of the machine's two heavy slots, AFTER the repository lock (see the header). Owner = the branch.
+let slotInfo = null;   // → marker.heavySlot
+let slot = null;
+let slotDenied = false;
+if (heavy && !gateDenied) {
+  const unserialized = (why) => { console.error(`⚠ heavy-slot ${why} — heavy phase runs without the machine-wide semaphore`); };
+  if (!HEAVY) { unserialized('library missing'); slotInfo = { unavailable: true }; }
+  else if (HEAVY.heavySlotOff()) { unserialized('off (METHOD_HEAVY_SLOT=off)'); slotInfo = { off: true }; }
+  else {
+    try {
+      slot = await HEAVY.acquireHeavySlot({
+        owner: BRANCH,
+        maxWaitMs: SLOT_WAIT_MIN * 60_000,
+        onWait: (why, waitedMs) => console.error(`⏳ heavy-slot: ${why} — waiting (${mins(waitedMs)} min so far, up to ${SLOT_WAIT_MIN} min)`),
+        onStale: (s) => console.error(`♻ heavy-slot: removed a stale ${s.name} left by ${s.owner ?? 'an unreadable file'}`),
+      });
+    } catch (e) {
+      unserialized(`unavailable (${e?.message ?? e})`);
+      slotInfo = { unavailable: true };
+    }
+    if (slot?.ok) {
+      slotInfo = { slot: slot.name, waitedMs: slot.waitedMs, ...(slot.reentrant ? { reentrant: true } : {}), ...(slot.inherited ? { inherited: true } : {}), ...(slot.heartbeat === false ? { heartbeat: false } : {}) };
+      if (!slot.reentrant) console.error(`🎟 heavy-slot: ${slot.name} taken by ${BRANCH}${slot.waitedMs ? ` after ${mins(slot.waitedMs)} min` : ''}`);
+      if (slot.heartbeat === false) console.error('⚠ heavy-slot: heartbeat thread did not start — the slot is kept and ages by the 45-min rule');
+    } else if (slot) {
+      // Fail closed, like a busy repository lock: waiting out the budget is not a pass.
+      slotDenied = true;
+      slotInfo = { waitedMs: slot.waitedMs, denied: true };
+      verdict = 'blocked';
+      reasons.push(`heavy-slot busy — ${slot.why}; waited ${mins(slot.waitedMs)} min, nothing ran (fail closed). Re-run when a slot frees, or pass --slot-wait <min>.`);
+    }
+  }
+}
+const heavyDenied = gateDenied || slotDenied;
+
 if (lanes.tooling.length) {
   const syn = nodeSyntaxCheck(lanes.tooling);
   // node --check only understands .mjs/.cjs/.js; a .ts/.tsx that lands in the tooling
@@ -561,8 +845,8 @@ if (lanes.tooling.length) {
   say(`tooling  ${lanes.tooling.length} file(s) · node --check ${syn.bad.length ? '✗' : '✓'}${uncheckedTs.length ? ` · not checked: ${uncheckedTs.join(', ')}` : ''}`);
 
   // Self-gating (`selfTest`, computed above the lock): run the root's `test:gate` when this diff
-  // touches the gate itself. Skipped — never passed — when the lock was denied.
-  if (selfTest && !gateDenied) {
+  // touches the gate itself. Skipped — never passed — when the lock or the heavy slot was denied.
+  if (selfTest && !heavyDenied) {
     say('tooling  self-test: npm run test:gate …');
     const r = runScript('.', 'test:gate');
     checks.push({ root: '.', check: 'test:gate', ok: r.ok, ms: r.ms, tail: r.tail });
@@ -577,8 +861,8 @@ if (lanes.rules.length) {
   say(`rules    ${rc.count} file(s) · static check ${rc.bad.length ? '✗' : '✓'}`);
 }
 
-// A denied lock skips every app root: nothing heavy ran, and the verdict is already `blocked`.
-for (const root of gateDenied ? [] : [...appRoots].sort()) {
+// A denied lock or slot skips every app root: nothing heavy ran, and the verdict is already `blocked`.
+for (const root of heavyDenied ? [] : [...appRoots].sort()) {
   const scripts = readScripts(root);
   const available = CHECK_ORDER.filter((c) => c.scripts.some((s) => scripts[s]));
   const verifying = available.filter((c) => VERIFYING.has(c.id));
@@ -608,9 +892,33 @@ for (const root of gateDenied ? [] : [...appRoots].sort()) {
       say(`app      ${root} · ${script} — SKIPPED, no node_modules`);
       continue;
     }
-    say(`app      ${root} · ${script} …`);
-    const r = runScript(root, script, c.timeoutSec ? c.timeoutSec * 1000 : TIMEOUT);
-    checks.push({ root, check: script, ok: r.ok, ms: r.ms, tail: r.tail });
+    // Lint judges the diff (334.c): this root's changed files only, when its `lint` is a plain eslint command;
+    // red only on NEW problems vs the merge base, per (file, rule) (334.d).
+    const plan = c.id === 'lint' ? lintPlan(root, scripts[script], appFilesByRoot.get(root) ?? []) : null;
+    const bin = plan ? eslintBin(root) : null;
+    if (plan && bin) {
+      if (!plan.files.length) {
+        checks.push({ root, check: script, scope: 'changed', files: 0, ok: true, ms: 0, tail: '' });
+        say(`app      ${root} · ${script} — no changed lintable file in this root ✓`);
+        continue;
+      }
+      say(`app      ${root} · ${script} on ${plan.files.length} changed file(s) …`);
+      const r = runLintOnFiles(root, bin, plan.flags, plan.files);
+      checks.push({ root, check: script, scope: 'changed', files: plan.files.length, ok: r.ok, ms: r.ms, tail: r.tail,
+        ...(r.crashed ? { crashed: true } : { newProblems: r.newProblems, errorsAtHead: r.errorsAtHead, baselined: r.baselined }) });
+      if (r.ok && r.errorsAtHead) say(`app      ${root} · ${script} — ${r.errorsAtHead} pre-existing error(s) in changed files, none new ✓`);
+      if (!r.ok) {
+        verdict = 'red';
+        reasons.push(r.crashed ? `${root}: eslint crashed on the changed files (fail closed)` : `${root}: ${r.newProblems} new eslint problem(s) in ${plan.files.length} changed file(s) — ${r.tail.split('\n')[0]}`);
+        red = true;
+        break;
+      }
+      continue;
+    }
+    const runnerArgs = c.id === 'test' ? testExtraArgs(root, scripts[script]) : [];
+    say(`app      ${root} · ${script}${runnerArgs.length ? ` (${runnerArgs.join(' ')})` : ''} …`);
+    const r = runScript(root, script, c.timeoutSec ? c.timeoutSec * 1000 : TIMEOUT, runnerArgs);
+    checks.push({ root, check: script, ...(c.id === 'lint' ? { scope: 'lane' } : {}), ...(runnerArgs.length ? { runnerArgs } : {}), ok: r.ok, ms: r.ms, tail: r.tail });
     if (VERIFYING.has(c.id)) ranVerifying++;
     if (!r.ok) {
       verdict = 'red';
@@ -650,6 +958,9 @@ for (const root of gateDenied ? [] : [...appRoots].sort()) {
     checks.push({ root, check: 'capability', ok: false, tail: 'all verifying checks skipped (toolchain absent)' });
   }
 }
+
+// The heavy phase is over (green or red): give the slot back now — what follows is light. The exit hook covers a throw.
+if (slot?.ok && !slot.reentrant && slot.release()) console.error(`heavy-slot: ${slot.name} released`);
 
 // ── Cadrage (v318.a): a NEW intervention / task file must carry Journey + Proof ──────────────
 // The two-moment contract was honour-system outside the hub: only `npm run doctor` (E9) checked
@@ -749,6 +1060,7 @@ const marker = {
   checks,
   ...(noDepsRoots.length ? { noDeps: noDepsRoots.map((n) => n.root) } : {}),
   ...(lockInfo ? { lock: lockInfo } : {}),
+  ...(slotInfo ? { heavySlot: slotInfo } : {}),
 };
 
 const dir = join(REPO, '.method');

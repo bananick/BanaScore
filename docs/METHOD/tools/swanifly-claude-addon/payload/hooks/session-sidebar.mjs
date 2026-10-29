@@ -56,7 +56,7 @@ function instruction(icon) {
     + `2) \`set_session_title\` self → \`${icon} {objet en 3 à 6 mots, langue de l'opérateur}\` ; `
     + "3) `move_sessions` self vers la section « 🎯 Missions libres » (id via list_sections ; si elle n'existe pas, ne crée rien). "
     + "Sinon ignore ce rangement. Toute session : avant une AskUserQuestion bloquante, ajoute ` · 🟡` à ton titre et épingle-toi "
-    + "(`mcp__ccd_sidebar__set_pinned` self true) ; après la réponse, retire-le et désépingle-toi (jamais un superviseur).";
+    + "(`mcp__ccd_sidebar__set_pinned` self true) ; après la réponse, retire-le et désépingle-toi (sauf superviseur imbriqué).";
 }
 
 function main() {

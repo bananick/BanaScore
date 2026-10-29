@@ -1,26 +1,11 @@
 ## Design port directive
 
-> How a design crosses into this live app. Standing order — never restate it; run `/port` (an optional ritual: only apps with a living `proto/` use it).
-> Full operating guide: `docs/porting/PORTING-PLAYBOOK.md`. Method spec: `docs/METHOD/design-method.md` → "Design Port Loop".
+> Guide: `docs/porting/PORTING-PLAYBOOK.md`. Spec: `design-method.md` → "§ Design Port Loop", run
+> with `/port` (optional).
 
-- **Directive = the living proto, committed.** The current UI directive for this app is the HTML
-  prototype in **`proto/` at the app root** — seeded from a Claude Design export (source HTML +
-  tokens, never a screenshot), then evolved **in place** to work out design and features before
-  they are developed. Follow it for UX, layout, IA and features. Design change? Evolve `proto/`
-  first, commit, then re-port the screen. *(Apps not yet migrated: fall back to
-  `docs/project/design/artifacts/{app}/`.)*
-- **`proto/` never ships.** It is a design workspace, not an app path: fake data is allowed there
-  and ONLY there; nothing under `app/`, `src/` or `components/` may import, link or copy from it;
-  keep it out of build/lint/deploy scope. Ports **re-implement** against live Firestore/HubSpot.
-- **`docs/project/design/PORT-MAP.md`** is the proto-screen → component → Firestore map + checklist
-  (start from `PORT-MAP-TEMPLATE.md`; per-screen state: ⬜ designing · 🔄 porting · ✅ ported · ⚠️ diverged).
-- **One token vocabulary.** The proto and PORT-MAP speak the METHOD **token contract**
-  (`--pri`, `--pri2`, `--grad`, `--bg`, `--s1..s4`, `--text`/`--text2`/`--text3`, `--border`,
-  `--r`/`--r-btn`/`--r-card`/`--r-input`/`--r-tag`, `--error`/`--success`/`--warning`/`--info`, `--ease`).
-  Each app's `/port foundation` maps the contract to its idiom **once** (MUI → mirror values as hex in
-  the theme; Tailwind v4 → alias the contract over `@theme`; Tailwind v3 → config). Never feed
-  `var(--…)` into a MUI palette — it throws.
-- **Conflict gate — reconcile, never overwrite.** If the proto implies a schema / permission /
-  feature change, STOP: it is on the landing exception list, so surface it in a `### Needs decision`
-  block (PR) — never change the data model yourself.
-- **Order:** tokens (foundation) → nav / shell → one page per land. Each `/port <screen>` = one land.
+**`proto/` at the app root is the living UI directive, and it never ships.** Fake data is allowed there
+and ONLY there; nothing under `app/`, `src/` or `components/` may import, link to or copy from it, and
+it stays out of build, lint and deploy scope. A port **re-implements** against live Firestore/HubSpot,
+one screen per land, tracked in `PORT-MAP.md`. If the proto implies a schema,
+permission or feature change, **stop**: conflict gate, `### Needs decision` + PR, never a data-model
+change you make yourself.

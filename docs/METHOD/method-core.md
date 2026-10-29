@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 324.b  
+**Version:** 336.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -246,10 +246,29 @@ shown (link / evidence) or not; a test count never substitutes for the thing ask
 states, never merged:** `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`. Landed is a push; it is never
 reported as deployed or proven without its own evidence (served revision · observed run). (3) When
 a journey is claimed `PROVEN`, one `AskUserQuestion`: **accept / reopen / defer**, with a ≤ 3-minute
-test script the operator can run. In a chantier only the results that clients see or that touch money (`needsOperator`) reach the operator, in one batch per slice at its Recette; the rest are accepted by `vera` + `sage` and listed as reopenable (`sprints-method.md` → "The chantier"). (4) `Avancement` in the Debrief counts journeys proven, not tasks
+test script the operator can run, written as the **🔎 Preuve à jouer** block (below). In a chantier only the results that clients see or that touch money (`needsOperator`) reach the operator, in one batch per slice at its Recette; the rest are accepted by `vera` + `sage` and listed as reopenable (`sprints-method.md` → "The chantier"). (4) `Avancement` in the Debrief counts journeys proven, not tasks
 closed. **Who does what at the Recette:** `vera` reviews the slice once (opus) before it lands;
 `sage` runs the `Proof:` on the environment it names, with real data, and records it — so `PROVEN`
 is an observation, never the coordinator's say-so.
+
+**🔎 Preuve à jouer — every proof ask carries it, first (330.b).** Whenever an agent asks the operator to prove
+or accept a journey — the Recette's accept / reopen / defer quiz, a chantier fiche `review[]` item of
+`kind: result` with `needsOperator: true`, a Debrief or mission card whose `Suite` is a proof — it puts, in one
+dedicated block titled **🔎 Preuve à jouer**:
+
+1. **Where** — the exact clickable URL(s) to open (prod or preview), with the real slug, locale and params;
+   never a placeholder (`{slug}`, `localhost` when the proof is on prod, "the page").
+2. **Steps** — numbered, ≤ 3 minutes in total, each with its **expected result** ("→ you see …").
+3. **Evidence already gathered** — as clickable links: screenshots (committed path, or a file sent to the
+   operator with `SendUserFile`), the served revision / build id, the PR or landed sha, the test run.
+4. **Not proven yet** — what this ask does not cover (a failure / recovery case not played, a persona, an
+   environment). `Rien` when nothing.
+
+In the Debrief the block sits **right above `➡️ Suite`**; on the mission card it replaces the `📸` line; in a
+chantier fiche it is the `review[]` fields `urls` · `script` · `evidence` · `notProven`; in the
+`AskUserQuestion` it is the text right before the quiz. **A proof ask without it is incomplete** — the
+coordinator sends it back rather than relaying it. Why: an operator asked to accept a journey had to hunt for
+the URL, the screenshots and the steps (operator request, 2026-10-22; `docs/interventions/2026-10-22-Lucia-preuve-cuj-reperable.md`).
 
 **The CUJ is the unit.** Every conversation, sprint and task names the journey(s) it closes. A
 journey has one shape, `docs/METHOD/templates/CUJ-TEMPLATE.md`, and lives in
@@ -379,6 +398,20 @@ never makes the lane green, so a JS diff with no `node:test` file stays `blocked
 `skipped: 'no-deps'`, never a pass; a ts/tsx/jsx/vue file, a vitest/jest/mocha/ava/tap import, or a
 test-looking file (`test/`, `tests/`, `__tests__/`, `*.test.*`, `*.spec.*`, `*_test.*`) without
 `node:test` keeps the `blocked` floor.
+**Lint judges the diff, not the lane (334.c):** when a root's `lint` script is a plain `eslint …`
+command, the gate runs that eslint (same config and flags, minus `--fix` / output / cache) on the root's
+**changed** files only — added or modified vs `--base`, narrowed to the script's own globs and to lintable
+extensions; none changed → lint passes (`files: 0`). **Only new problems are red (334.d):** eslint errors are
+counted per (file, rule) at HEAD and on the merge-base text (`git cat-file --filters`, fed through `--stdin`); a
+count that grows, or an error in a file new since the merge base, is red; an eslint crash is red. A composite
+command, another linter, an unknown flag or an unresolvable eslint keeps the whole-lane run. Typecheck, tests
+and build still judge the whole lane — pre-existing lint debt no longer holds an unrelated landing.
+**Jest and vitest run serially, with a roomy timeout (334.e):** when a lane's `test:gate` / `test` script is a plain
+`jest …` or `vitest run …` command, the gate appends (`npm run <script> -- …`) `--runInBand` (jest) or
+`--no-file-parallelism` (vitest, only if the installed vitest is ≥ 1) plus `--testTimeout=30000`, each only if the script
+does not already set it (jest: `--runInBand`/`-i`/`--maxWorkers`/`-w`; vitest: `--no-file-parallelism`/`--fileParallelism`/
+`--pool`/`--poolOptions`/`--maxWorkers`/`--no-threads`/`--singleThread`; both: `--testTimeout`). A composite command, vitest
+watch/bench, or another runner is left as written. A failing test is still red — the timeout is longer, not removed.
 A red gate with an empty tail is a gate bug, not a test — read
 `.method/verify-ok.json` before touching the code.
 
@@ -390,29 +423,63 @@ checkout (`git rev-parse --git-common-dir`) and runs **its** `verify-gate.mjs`; 
 `land.mjs`: recopy once — `cp <main>/.claude/hooks/*.mjs .claude/hooks/` — before the first
 `/land`, and never patch a hook inside a worktree (the fix belongs in the addon payload).
 
-**The exception list — fail-closed, and the only reasons a PR is correct:**
+**The exception list — fail-closed, and the only reasons a PR is correct** (332.a: `deps` and `scale` are struck — `land.mjs` logs « auto-landing past … benign exception(s) » and runs the verify gate; `land:sweep:apply` treats them as clean):
 
-| Exception | Why a human looks |
-|---|---|
-| **schema** — `SCHEMA.md`, `schemas/`, `*.zod.ts`, `firestore`/`storage.rules`, `*.indexes.json` | data-model changes are the conflict gate; never decide one yourself |
-| **security** — `auth/`, `middleware/`, `.env*`, `serviceAccount*`, `security/` | our most common production failure |
-| **soul** — `SOUL.md` | the non-negotiables are the operator's, not an agent's |
-| **deps** — a real `dependencies`/`devDependencies` edit, any lockfile | supply chain (a `scripts`-only `package.json` touch does **not** block) |
-| **migration** — `migrations/`, `*migrate*.mjs\|ts` | irreversible against live data |
-| **infra** — `.github/workflows/`, `apphosting.yaml` | changes what deploy means |
-| **scale** — > 60 files or > 2000 deleted lines | too big to land unreviewed; split the slice |
-| **hold** — `[no-auto-merge]`, `[wip]`, `[hold]`, `Needs decision` in a commit **subject**, or `wip` in the branch name | the operator's one-token brake (subjects only — a body that *documents* these markers must not trip them) |
-| **red / absent / stale verify · trunk conflict** | fix it, don't route around it |
+| Exception | Why a human looks | Cleared by (336.a) |
+|---|---|---|
+| **schema** — `SCHEMA.md`, `schemas/`, `*.zod.ts`, `firestore`/`storage.rules`, `*.indexes.json` | data-model changes are the conflict gate; never decide one yourself | `kasper` → merge, **except** `firestore`/`storage.rules` and `*.indexes.json` → the quiz |
+| **security** — `auth/`, `middleware/`, `.env*`, `serviceAccount*`, `security/` | our most common production failure | `kasper` → merge, **except** secrets (`.env*`, `serviceAccount*`) → the quiz |
+| **soul** — `SOUL.md` | the non-negotiables are the operator's, not an agent's | always the quiz |
+| ~~**deps**~~ — a real `dependencies`/`devDependencies` edit, any lockfile | **no longer held (332.a)**: it lands after the verify gate. Supply-chain risk accepted by the operator, 2026-10-24 | — |
+| **migration** — `migrations/`, `*migrate*.mjs\|ts` | irreversible against live data | always the quiz |
+| **infra** — `.github/workflows/`, `apphosting.yaml` | changes what deploy means | `kasper` → merge |
+| ~~**scale**~~ — > 60 files or > 2000 deleted lines | **no longer held (332.a)**: it lands after the verify gate; splitting the slice is still advised | — |
+| **hold** — `[no-auto-merge]`, `[wip]`, `[hold]`, `Needs decision` in a commit **subject**, or `wip` in the branch name | the operator's one-token brake (subjects only — a body that *documents* these markers must not trip them) | always the quiz |
+| **red / absent / stale verify · trunk conflict** | fix it, don't route around it | nobody — fix it |
 
 Held back → the gate pushes the branch, opens or comments on a PR **once** with the exact reason, and
 the report carries a `### Needs decision` block with a recommendation. Two legitimate outs, both
 explicit: resolve the reason, or — when the exception fired on something genuinely harmless — land it
-with **`[land-anyway]`** in the commit subject and say so in the report.
+with **`[land-anyway]`** in the commit subject and say so in the report. Since 336.a the last column
+decides who clears a held PR: `kasper` first where he can, the operator's quiz otherwise ("Exception PRs", below).
 
 Root `firestore.rules` / `storage.rules` have a tooling lane in `verify-gate.mjs` (322.f — a lane, not a pass) but stay held by the **schema** exception; `[land-anyway]` / `--force-land` may still override it, an honour-system call the operator made on 2026-10-15 against Kasper's recommendation.
 
 **Forbidden, always:** `gh pr merge --admin` · force-push · `git rebase` · deleting the marker to
 fake a green · `git add -A` sweeping someone else's in-flight work into your commit.
+
+#### Closing a finished sub-session (336.a)
+
+A sub-session whose work is LANDED closes itself — the operator never archives it by hand.
+
+| Step | What runs |
+|---|---|
+| **1. Done test** | `npm run session:close` (`--check`, the default): LANDED on the trunk · nothing uncommitted · nothing unpushed · no open PR. Any "no" → it prints why; the session stays open. |
+| **2. Git side** | `npm run session:close -- --apply`: detaches HEAD, deletes the branch **only** through `branch-sweep.mjs --apply --landed-only --only <branch>` (331.a) — never a hand-typed `git branch -D`. |
+| **3. Report up** | The session's **Fait / Suite** (335.a) goes to the parent control tower by `SendMessage` — the script prints the step, the agent runs it. |
+| **4. Archive, last** | `archive_session self` — reversible, and the session's final action. |
+
+Hooks cannot call the app's session tools, so `.claude/hooks/session-close.mjs` (`hugo`) does the git side and
+prints steps 3–4; `land.mjs` names `session:close` as the next step after a landing. A session that misses its
+close is caught by `regine`'s weekly pass — the fallback, not the path.
+
+#### Exception PRs (336.a)
+
+A PR held by **schema / security / migration / infra** is reviewed by `kasper`, run automatically on **opus**
+(never below). He writes `.method/kasper/pr-<n>.json` → `{ "reviewer": "kasper", "verdict": "approve" | "reject", "summary", "sha" }`
+(`block` = `reject`) and never merges himself. The file is an **honour-system** brake, like the verify marker:
+only the sha binding is machine-checked, so writing it for kasper is forbidden. Then `npm run session:close -- --pr <n>` does exactly one of:
+
+| The PR | `--pr <n>` does |
+|---|---|
+| kasper `approve` at the PR head sha · verify gate green at that head · nothing irreversible | `gh pr ready` + `gh pr merge --squash --match-head-commit`, then the branch through `branch-sweep` |
+| **Irreversible in production** — any `*.rules`, `firebase.json` / `.firebaserc`, indexes, migrations / backfills, secrets and keys — or METHOD tooling (`.claude/hooks/`, `.claude/settings.json`: a PR never judges its own merge), a base other than the trunk, a fork, or **`soul`** / **`hold`** (the operator's brakes) | merges nothing; prints **one** quiz for the parent control tower: kasper's summary + **merge / close / defer** |
+| kasper `reject`, a sha that is not the PR head, or a red gate | merges nothing; the reason goes back to the session to fix |
+
+`--pr` runs from the trunk's copy of the hook (it refuses a lib older than its own checks); a PR that touches
+`.claude/hooks/` is merged by the operator, never by `--pr`. Never `--admin`, never `--delete-branch`, never a force-push. Deploying rules or running a migration stays
+`/deploy` and the operator. PRs open > 3 days: `npm run session:close -- --stale --days 3 --fleet`, in
+`regine`'s weekly pass, one merge / close / defer quiz per PR.
 
 ### Slice discipline (why this saves tokens)
 
@@ -445,8 +512,10 @@ accumulates behind the operator's attention.
 
 ## Project State & Handoff (STATE.md)
 
-`project/STATE.md` is the durable single source of truth for **where the app is right now** — it is
-auto-loaded on every conversation (see Context Loading). Standard sections: a header (Last Updated,
+`project/STATE.md` is the durable single source of truth for **where the app is right now**. Since
+METHOD 325.c only its `## Resume here` section is read at startup (`CLAUDE.md` → "Context Loading
+Rules" rule 2) — the rest is read by `§`, on demand, and an agent whose `Entry files:` line names the
+file without a `§` reads it whole, deliberately. Standard sections: a header (Last Updated,
 Current Sprint, Status, METHOD Version), then **Active Work**, **Blockers**, **Recent Decisions**,
 **Next Up**. In a chantier only the supervisor edits it; a sub-session updates its fiche instead
 (`sprints-method.md` → "The chantier").
@@ -456,8 +525,9 @@ Current Sprint, Status, METHOD Version), then **Active Work**, **Blockers**, **R
 The dropoff ritual `/relay` (alias `/handoff`) writes a `## Resume here` section near the top of
 `STATE.md` so the next conversation resumes without re-pasting context. It is the **inverse of
 `/brief`**: `/brief` picks up (rehydrates from git + `STATE.md` + memory), `/relay` drops off
-(flushes the live working-state before the window ends). Because `STATE.md` is already auto-loaded,
-`/brief` reads the block for free. One `## Resume here` block per app; each `/relay` overwrites the
+(flushes the live working-state before the window ends). `## Resume here` is the one section every
+session and every sub-agent reads at startup (325.c), so `/brief` reads the block for free — and so
+does every launch, which is why it stays short. One `## Resume here` block per app; each `/relay` overwrites the
 previous. Schema — **pointers, never payloads**:
 
 | Row | Carries |
@@ -515,7 +585,224 @@ paginates, wrapping that follows the window, and `file.md:42` paths the operator
 be copy-pasted (fence it as `bash` for a command, so the app renders a Run button). In a chantier
 there is none (see "Cadence").
 
+### The operator lever (335.b)
+
+Every answer serves **the operator's decision speed**. Four rules hold before any card is drawn:
+
+- **Proof first.** He opens what was done in one click, before any prose.
+- **Choices come prepared**, as a quiz (`AskUserQuestion`, ≤ 4 options, the recommendation first). A
+  choice is never left for him to type.
+- **A reversible step inside scope is done, not offered**: commit, land, relaunch, re-run.
+- **His replies are a measured signal.** « donne moi le lien », « show me », a re-asked state
+  (« merged ? », « fini ? ») and a typed confirmation each count as a **miss** of the answer before it.
+  IMP-029 counts them at J+7, and Oscar's weekly retro turns them into one habit to change.
+
+Delegates feed it: `vera`, `sage`, `iris`, `regine` and `watson` hand back **closing-ready** reports
+(one proof link per point, a suggested fate, a ready quiz when a choice exists).
+
+### Closing by session type (330.a · 335.a)
+
+The 2026-10-23 study (40 sessions, 107 Debriefs) measured the average closing at **43 lines / 3,375
+characters** against a ~12-line spec, **61 %** of the operator's replies as one word (« go »), only
+**16 %** of closings ending with a quiz, and **44 %** buried by a notification that came after them. He
+hunts for the proof and loses which session holds what. So the closing is now chosen by **what the
+session is**, and the shortest one is the default (`docs/interventions/2026-10-23-Lucia-session-closings.md`,
+operator rulings of 2026-10-23, trial until the J+7 measurement, `ACTIONS.md` → IMP-022):
+
+| Session type | Closing | Size |
+|---|---|---|
+| **Autonomous mission** — a free mission or a single slice that worked on its own | **Mission card** (below) | **≤ 9 rendered lines** |
+| **Chantier supervisor** | **Control tower** (below) | one row per sub-session |
+| **Handoff, `/brief`, `/relay`, `/review`, an answer carrying ≥ 3 decisions** | the full **Debrief** ("The Debrief", below) | ~12 lines |
+| Chantier sub-session · delegated sub-agent | no card (unchanged, "Who renders it") | — |
+
+**Shared by every closing:**
+
+- **Fait / Suite: every answer that did something ends with them (335.a,
+  `docs/interventions/2026-10-29-Lucia-answer-ending.md`).**
+  - **Fait** has 1–3 bullets on what the answer achieved, with the object named, in operator language.
+    **Each Fait line carries one clickable proof**: a PR or commit URL for code, the served URL or
+    revision for a deploy, a capture for UI, a file link for a study, one output line for ops.
+  - **Suite** has 1–3 bullets on what to do next, simple and actionable. **Bullet 1 is the session's
+    fate.**
+  - Each bullet carries an emoji chosen **for its meaning** (🐛 corrigé · 🧪 tests · 🚀 déployé · 🔍
+    trouvé · 📝 doc), never one ✅ per line. **The bullets carry the emojis, so the headings carry none:**
+    they are plain bold **Fait** and **Suite**.
+  - Pure conversation or nothing done: no Fait / Suite. A delegated sub-agent keeps Done / State / Next.
+- **The state word, in every closing title**: `CODÉ · ATTERRI · DÉPLOYÉ · PROUVÉ · en cours · bloqué`
+  (CODED · LANDED · DEPLOYED · PROVEN). It answers the re-question « merged ? », « fini ? » (6/57 in
+  Iris's 2026-10-29 study). A card title carries no state emoji, because the sidebar title's suffix
+  carries the state.
+- **🚨 incident flag.** When the agent broke or found something live (prod error, data or a secret at
+  risk), the title starts with 🚨 and the incident and its one repair command come first. It is a
+  flag, not a fate.
+- **The fate: bullet 1 of Suite, one fixed emoji + one fixed verb, `{emoji} {Verbe} : {l'objet}`.** It
+  tells the operator in 2 s what to do with *this* session among the many he runs. Each fate comes
+  with its **Prêt pour toi** kit:
+
+  | Fate | When | Prêt pour toi | Title suffix |
+  |---|---|---|---|
+  | 🗄️ **Archive** | LANDED, nothing uncommitted or unpushed, nothing pending | archive offered in the quiz, or done if he already said so | ✅ |
+  | 💬 **Réponds** | a choice only he can make | the quiz, ≤ 4 options, « go = … » first; captures first when the choice is visual | 🟡 |
+  | 🧪 **Teste** | a screen or behaviour he can reach changed | the URL + a script ≤ 3 min + captures by `SendUserFile`; quiz « accepter / rouvrir / différer » | 🟡 |
+  | 🔑 **Agis** | progress needs his hands outside the chat (also when blocked) | one kit per channel, below | 🟡 · 🔴 |
+  | ⏳ **Attends** | something launched is still running, nothing else for him | what runs (its id), what wakes the agent, what he can do meanwhile | 👀 |
+  | 🔁 **Continue ici** | another slice remains here **and it costs something** (time, quota, scope) | the « go » button | 🟡 |
+
+  - **🔑 Agis, one kit per channel:** **merge** (PR link + the merge command) · **terminal** (one
+    command block per step) · **console / Chrome** (exact URL + numbered steps + « Guide-moi dans
+    Chrome ») · **install**. Every kit closes with the quiz « C'est fait » / « Ça bloque » / « Fais-le
+    avec moi »: **the operator never types a confirmation**, and the agent never types his credentials.
+  - **A reversible step inside scope** (commit, land, relaunch, re-run) **is done, not offered**: it is
+    never a 🔁.
+  - The fate matches the sidebar title's suffix. The `wrap_up` recap's first sentence (the sidebar
+    status) opens with the same emoji and verb. Any other Suite bullet names the work.
+- **A choice goes in the quiz, never in prose.** When a Suite bullet holds a choice or a validation,
+  the closing `AskUserQuestion` carries it, first option « go = {bullet 1} ». No choice → bullets
+  only, no quiz. No « dis-moi », no trailing « ? ».
+- **Commands are fenced as `bash`**, so the app shows a Run button.
+- **Readable layout**, for every closing and every substantial answer:
+  - Use real markdown, never a fenced block for prose. Headings are bold, without emoji.
+  - Leave a blank line between blocks. A `---` rule frames a card.
+  - One idea per bullet, with the **key noun** in bold. Prefer a short table to a list of parallel
+    facts.
+  - Write paths as clickable links. No paragraph runs longer than 3 lines.
+- **Inline card, only when it earns its cost.** The closing may render an inline visual card
+  (`show_widget` HTML: tiles with the proofs, a state badge, `sendPrompt` buttons) **only when there are
+  visual proofs or several actions**. Otherwise it is plain markdown plus the `wrap_up` box. The card
+  costs about 6 k tokens and carries no emoji, only Tabler icons.
+- **The journey ladder** (the Debrief's `📊` and the control tower; not the mission card since 335.a) — one line: `Cadré → Codé → Livré → Déployé → Prouvé → Utilisé → Retours`, the
+  rung reached in **bold**, then « cette session : X → Y ». It extends the four states (`Livré` =
+  LANDED, `Déployé` = DEPLOYED, `Prouvé` = PROVEN) toward real users (`Utilisé`) and their feedback
+  (`Retours`). Every rung is grounded in its own evidence; an unknown rung is written `inconnu`.
+- **Proof first.** The first thing after the ladder is what the operator can open in one click — a
+  link, a screenshot, the ≤ 3-minute steps (when the ask is a proof: the **🔎 Preuve à jouer** block, "The two-moment contract") — before any prose. A closing whose proof he must ask for
+  (« donne moi le lien ») failed.
+- **The « go » quiz.** The closing ends with an `AskUserQuestion` whose **first option is
+  « go = {the recommended action} »**, so one click answers it; it never needs a typed reply. No real
+  choice → the card ends without a quiz.
+- **Operator-action rule — « systématiquement ».** Whenever the conclusion is that the operator must
+  do or validate something, the agent **prepares the path**, or at least offers to: the exact steps,
+  the exact URL or page (« connecte-toi à la page API X »), the commands as `bash` fences, what to
+  click. The quiz then carries « Prépare-moi le chemin (Chrome) » / « (terminal) » / « Je le fais
+  seul » — a guided walk-through in **Claude in Chrome** or in the **terminal**. Inside the safety
+  rules: the agent never types credentials or payment details for him and never accepts terms on his
+  behalf. It guides; he acts.
+- **📸 Automatic visual proof.** When a screen changed, before/after screenshots are taken in the
+  built-in browser and sent with `SendUserFile` — so they reach his phone too — with a ≤ 3-minute test
+  script.
+- **💡 Coach tip** (the control tower only since 335.a) — one line in Oscar's spirit, drawn from what actually happened in this session: a
+  habit or shortcut for the operator that gets a user-facing result sooner. Grounded, never generic;
+  nothing grounded to say → no tip.
+- **🏷️ Title = status.** At closing the session rewrites its sidebar title's **text** to
+  `{repo icon} {Projet} · {objet, in result terms} · {state}` (e.g. `⚡ FunFlasher · choix inscription · 🟡`,
+  `🗣️ Talkation · lecteur prouvé · ✅`). The state stays the **suffix** that the pin-while-waiting rule
+  reads (`sprints-method.md` → "Sidebar contract", rule 1); a sub-session keeps its slice code first, a
+  supervisor its `🧑‍✈️`. Sorting, sections and pins are the sidebar contract's, not this rule's.
+- **The app's `wrap_up` « next step » box**: its recap is the closing's first line, and its buttons
+  never repeat the quiz's options — the quiz is the decision, the box is navigation.
+
+#### Choosing the fate — the decision algorithm (335.a, Iris)
+
+Copied verbatim from `docs/interventions/2026-10-29-Iris-ending-scenarios.md` → § 4. Where it differs
+from the rules above, the rules win: commands are fenced as `bash`, and the mission card's cap is
+≤ 9 rendered lines.
+
+**Decision algorithm (≤ 10 s, run top to bottom, stop at the first « yes »)**
+
+1. **Am I a sub-agent or a chantier sub-session?** → No card. Write a Done/State/Next report or update the fiche, then stop.
+2. **Is the next step mine, reversible and in scope** (commit, land, relaunch, re-run)? → **Do it now; don't end.** If a gate, the classifier or a permission refuses, continue at step 4.
+3. **Did I break or find something live** (prod error, data or secret at risk)? → Title starts with 🚨. Continue to pick the fate.
+4. **Does progress need his hands outside this chat** (credential, console, merge, install, permission, payment)? → **🔑 Agis.**
+   - Kit: exact URL + numbered steps, and **PowerShell** blocks, one per step.
+   - Quiz: « Guide-moi (Chrome) » / « Terminal » / « C'est fait ».
+   - Never his credentials.
+5. **Is there a choice only he can make** (scope, data model, price, design verdict, irreversible)? → **💬 Réponds.**
+   - Quiz of ≤ 4 options, recommendation first as « go = … ».
+   - If the choice is visual, send the screenshots before the quiz.
+   - Never put a question in prose.
+6. **Did a user-visible screen or behaviour change, and can he reach it** (served URL or a running local server)? → **🧪 Teste.**
+   - Captures sent with `SendUserFile`.
+   - The URL plus a script of 3 minutes or less.
+   - Quiz: accept / reopen / defer.
+7. **Is something I launched still running, with nothing else for him?** → **⏳ Attends.** Say what is running (its id), what wakes me, and what he can do meanwhile.
+8. **Is it LANDED, with nothing local and nothing pending?** → **🗄️ Archive** (offer it in the quiz; do it if he already said so).
+9. **Otherwise** (another slice remains here, and it costs something) → **🔁 Continue ici** with the « go » button.
+10. **Proof and lint.** Check these before sending:
+    - The title carries the state word.
+    - Each Fait line has **one** clickable proof: PR or commit URL for code; served URL or revision for a deploy; capture for UI; file link for a study; one output line for ops.
+    - ≤ 8 lines.
+    - No « dis-moi » and no trailing « ? ».
+    - Commands are written for his shell.
+
+#### The mission card — autonomous mission, ≤ 9 rendered lines
+
+---
+
+**{🚨 }{Projet} · {objet} · {ÉTAT}**
+📸 {la preuve en un clic : lien · captures avant/après · test ≤ 3 min}
+
+**Fait**
+- {emoji} {ce qui a bougé, l'objet nommé} · {sa preuve cliquable}
+
+**Suite**
+- {🗄️ Archive | 💬 Réponds | 🧪 Teste | 🔑 Agis | ⏳ Attends | 🔁 Continue ici} : {l'objet}
+
+---
+
+**Four parts only** (335.a): title line, proof line, Fait, Suite — blank lines and rules not counted.
+The journey ladder, the 💡 coach tip and the standing 🧠 / 🤝 bullets left the card; a **🤝 Décidé pour
+toi** enters Fait only when a reversible call was really made. Then the fate's quiz, if it has one. No
+`📊 Avancement` bar, no `⚖️` block (the quiz is the decision), no `▶ Prompt suivant` unless the next
+step belongs in a **fresh** window — then the quiz's « go » option says so and the block follows.
+
+**The small answer** — a question answered, a lookup, a one-line fix — is two lines, no headings:
+
+{emoji} {ce qui est fait}
+{fate emoji} **{Verbe}**
+
+#### The control tower — chantier supervisor
+
+---
+
+### {🚨 }Tour de contrôle · {repo icon} {chantier} · {ÉTAT}
+
+🌐 **[Ouvrir le site publié → {url}]({url})** *(only when the result is a published site — first, as a button)*
+
+| Slice | État | Il te faut | Preuve |
+|---|---|---|---|
+| {code} {avatar} {objet} | 🔴/🟡/✅ | {what it needs from him, or « rien »} | {one-click link} |
+
+📸 {visual report of what was done — screenshots or an artifact}
+🤝 Décidé pour toi — {archives · par défaut, conteste si besoin · accepté par la recette — rouvrable}
+💡 {coach tip}
+
+**Fait**
+- {emoji} {ce qui a bougé dans le chantier} · {sa preuve cliquable}
+
+**Suite**
+- {fate} : {l'objet}
+
+---
+
+Then **one** quiz that **escalates every decision pending in the sub-sessions** (≤ 4 questions, by
+blocking cost — "The operator's input is an inbox" in `sprints-method.md`) and ends with **which path opens
+next**, after a one-line reflection on the next step. The sub-sessions still render no card, and the
+chantier still carries no `▶ Prompt suivant` ("Cadence", below): the answer becomes the supervisor's own
+action (a chip or a `SendMessage`).
+
+#### The 🗂️ portfolio page — specified, not built
+
+One page, one row per project: its rung on the ladder, its last session, its pending decision, updated
+at each closing. It answers « état des lieux… pour savoir où on en est » without a session. Next slice
+(`ACTIONS.md` → IMP-021).
+
 ### The Debrief — closing card
+
+**Since 330.a it closes a handoff, `/brief`, `/relay`, `/review` or a multi-decision answer**; an
+autonomous mission closes with the mission card and a supervisor with the control tower (above). The
+journey ladder replaces its `📊 Avancement` state words when a journey is named, and its `⚖️ Tu décides`
+is asked as the « go » quiz.
 
 The mental model is a chief of staff walking in for thirty seconds: *voilà ce qui vient d'être fait,
 voilà où ça met le projet, voilà ce que tu dois garder en tête, voilà ce que tu dois trancher.* It is
@@ -525,22 +812,27 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 
 ---
 
-### ✅ Debrief · {lane ou workstream}
+### {🚨 }Debrief · {lane ou workstream} · {ÉTAT}
 
 {Une ligne : ce qui vient d'être fait, en langage opérateur.}
 
 **📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N journeys proven} · {state reached: CODED · LANDED · DEPLOYED ·
 PROVEN, with its evidence}
 
-**🧠 À retenir**
-- {fait clé}
-- {fait clé}
-- 🤝 **Décidé pour toi** — {choix réversible pris sans demander}
+**Fait**
+- {emoji} {fait clé} · {sa preuve cliquable}
+- 🤝 **Décidé pour toi** — {choix réversible pris sans demander} *(only if one was made)*
 
 **⚖️ Tu décides**
 - {la question, courte} → **reco :** {l'option recommandée} · sinon {l'alternative}
 
-**➡️ Suite** — {la prochaine action utile}
+**🔎 Preuve à jouer** *(only when this card asks for a proof or an acceptance)*
+1. {URL cliquable réelle — slug, locale, params}
+2. {étape} → {tu vois …}
+- Preuves : {liens : capture · révision · PR/sha · run} · Pas encore prouvé : {… ou « Rien »}
+
+**Suite**
+- {fate} : {la prochaine action utile}
 
 **⚠️ Vigilance** — {un seul risque réel}
 
@@ -552,9 +844,10 @@ PROVEN, with its evidence}
   prose blob is exactly what stopped being read. Markdown wraps gracefully, so there is no character
   count to respect; but a bullet that needs three lines is two bullets, or belongs in the body above.
 - **Six blocks maximum**, in the order above, and an empty block is **deleted**, never filled with
-  "none". A full card renders in about twelve lines.
-- **The status emoji in the title carries the real state:** `✅` fait · `🟡` besoin de toi · `🔴`
-  bloqué · `👀` en observation. The section emojis (📊 🧠 🤝 ⚖️ ➡️ ⚠️) are **fixed** — they are
+  "none". A full card renders in about twelve lines. The optional **🔎 Preuve à jouer** block replaces the
+  prose of a proof ask and is not counted in the six.
+- **The title carries the state word** (`CODÉ · ATTERRI · DÉPLOYÉ · PROUVÉ · en cours · bloqué`, 335.a),
+  not a status emoji; 🚨 leads it on an incident. The section emojis (📊 ⚖️ 🔎 ⚠️) are **fixed** — they are
   landmarks the eye learns, not decoration, so they never vary from one card to the next.
 - **`Avancement` positions the work in the global project, not in the turn.** The unit is **journeys
   proven** (see "The two-moment contract — Cadrage · Recette"), not tasks closed — a 5-block bar
@@ -564,16 +857,16 @@ PROVEN, with its evidence}
   Nothing countable → name the lane and its position in words. **Never invent a ratio.**
 - **The recette table (asked → shown/not) precedes the Debrief whenever a Cadrage happened.** A test
   count never substitutes for the deliverable that was actually asked at Cadrage.
-- **`À retenir` is the brief itself — 2 to 4 bullets.** What the operator must hold in his head
+- **`Fait` (`À retenir` until 335.a) is the brief itself — 1 to 3 bullets, each with one clickable proof.** What the operator must hold in his head
   tomorrow: what now works, what changed shape, what got ruled out, what surprised us. Include one
   **🤝 `Décidé pour toi`** bullet whenever a reversible call was made without asking, so it can be
   objected to cheaply. No bullet that merely restates a file edit.
-- **`Tu décides` — 0 to 2 items, recommendation first**, same grammar as a `### Needs decision`
+- **`Tu décides` — 0 to 2 items in the card; more → one line naming them, and the « go » quiz carries them (≤ 4)** — recommendation first, same grammar as a `### Needs decision`
   block, which stays the long form in the body when a decision needs its options laid out. Nothing to
   decide → one line: `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` A decision is never buried in
   the prose above the card, and it is **asked as a quiz** (`AskUserQuestion`, see "Questions are quizzes,
   never prose"), not left as a question for the operator to answer by typing.
-- **`Suite` — exactly one action**, the single most useful next move (`terminé` when truly finished),
+- **`Suite` — 1 to 3 bullets, bullet 1 the fate** ("Shared by every closing"), the most useful next move,
   followed by the `▶ Prompt suivant` block: one fenced, self-contained prompt — goal, repo and key
   paths, constraints, acceptance — pasteable into a fresh window with zero extra context. Outside a
   chantier only (see "Cadence").
@@ -596,15 +889,15 @@ PROVEN, with its evidence}
 
 | Answer | Close with |
 |---|---|
-| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/land`, `/ship`, `/relay`, `/review` | Full Debrief + `▶ Prompt suivant` (none in a chantier — below) |
-| Small — a question answered, a lookup, a one-line fix | One landing line: `✅ {ce qui est fait} · suite → {l'action}` |
+| Substantial — code or docs changed, a slice closed, a decision taken, a handoff, `/brief`, `/land`, `/ship`, `/relay`, `/review` | The closing of its **session type** ("Closing by session type", above): mission card · control tower · full Debrief + `▶ Prompt suivant` (none in a chantier — below) |
+| Small — a question answered, a lookup, a one-line fix | Two lines, no headings: `{emoji} {ce qui est fait}` / `{fate emoji} **{Verbe}**` (335.a) |
 | Nothing done — refusal, clarification, pure conversation | No card at all |
 
 **In a chantier there is no `▶ Prompt suivant` (322.e; operator rule, 2026-10-14).** Neither a
-sub-session (it renders no card) nor the supervisor's Debrief carries a copy-paste block. The next step
+sub-session (it renders no card) nor the supervisor's control tower carries a copy-paste block. The next step
 is an action the supervisor takes itself — a suggested-task chip carrying the brief, or a typed
 `SendMessage` to an existing sub-session — and a `Suite` row of the pilot dashboard (the
-control-tower table); the Debrief's `➡️ Suite` names that action. Outside a chantier the block stays.
+control-tower table); its next-path quiz names that action. Outside a chantier the block stays.
 `sprints-method.md` → "The chantier".
 
 **Who renders it.** Only the agent speaking to the operator — the orchestrator, or a single agent
@@ -613,10 +906,21 @@ orchestrator as a handoff (3-line header + task report, uncompressed per Output 
 the orchestrator folds those reports into one card. Otherwise a `brian → watson → vera → sage` chain
 lands four cards in one answer and the format dies of noise. **A chantier sub-session renders no
 card either** — not at `/land`, `/relay` or `/review`: it updates its fiche instead, and the
-supervisor's Debrief is the chantier's only card (`sprints-method.md` → "The chantier").
+supervisor's control tower is the chantier's only card (`sprints-method.md` → "The chantier").
+
+**Progress, and how much of it.** Two rules that used to live only in the root `CLAUDE.md`, which no
+longer carries them (325.c):
+
+- **Show progress** on multi-step work as a checklist (⬜ 🔄 ✅) **refreshed in place** — not a fresh
+  wall of text each turn.
+- **Match depth to stakes.** Routine → the 3-line header suffices. Architectural or irreversible → add
+  a short **Why / Trade-offs / Risks**. Default to less.
 
 **Relation to the 3-line header.** `Done / State / Next` remains the opening header of **written
-artifacts** — PR bodies, task reports, sub-agent reports. In chat with the operator the Debrief does
+artifacts** — PR bodies, task reports, sub-agent reports. Its three values, in full (325.c — they used
+to live only in the root `CLAUDE.md`, which no longer carries them): **Done** = what changed ·
+**State** = `🟢` on track / `🟡` needs your input / `🔴` blocked · **Next** = the immediate step, or
+`awaiting your call ↓` when the answer is the operator's. In chat with the operator the Debrief does
 that job at the close, where the eye lands after a long turn; rendering both is the redundancy that
 made the summary wallpaper. Chat replies instead **lead with the answer**: first line = what changed,
 no preamble.

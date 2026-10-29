@@ -9,6 +9,8 @@ description: >-
 
 # implement-plan
 
+**Owner — `brian`** (named in 327.a; this skill had no owner) — he executes the plan; `junia` wrote it and never edits it mid-run.
+
 Encodes the user's standing, verbatim implementation contract so they never have to retype it.
 
 ## The contract (always apply)

@@ -9,6 +9,8 @@ description: >-
 
 # hubspot-sync
 
+**Owner — `brian`** (named in 327.a; this skill had no owner) — wiring a live data source is building; `iris` reads what it produces, `kasper` rules on the token.
+
 Keeps the sales / RevOps / CRM surfaces on **live HubSpot data**, persisted to Firestore. This skill exists to kill mock data in the commercial views (`SOUL.md` non-negotiable #1).
 
 ## Source: HubSpot MCP

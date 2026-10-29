@@ -1,7 +1,7 @@
 # Agents Engineering & AI Agent Team Architecture
 
 **Owner:** Lucia (method-level) + Developers
-**Version:** 318.a
+**Version:** 333.a
 **Purpose:** Define the agent team architecture on the **Claude suite** — the native sub-agent layer, runners & orchestration, parallel + fleet execution, hard gates via hooks, agent-to-Skill mapping, the Desktop/Code division of labour, Artifacts-based design, and context management protocols.
 
 ---
@@ -83,22 +83,32 @@ The METHOD runs on three Claude surfaces. Each has a distinct sweet spot:
 
 ## 4. Agent → Skill Mapping
 
-Every METHOD agent is a **Claude Skill** — a folder with a `SKILL.md` that Claude auto-invokes by name. Skills are **version-controlled in the repo** (`.claude/skills/{agent}/`), so they travel with the project and work identically in Claude Desktop and Claude Code.
+Every METHOD agent is a **native sub-agent** — a single file, `.claude/agents/{agent}.md`, version-controlled in the repo, so it travels with the project and works identically on every Claude surface. **Until 327.a each one also had a `.claude/skills/{agent}/SKILL.md` stub; the fourteen stubs were deleted** (they re-loaded every description a second time in each session and carried 2 of ~140 delegations). `.claude/skills/` now holds **capabilities** only.
 
-> **Source of truth:** `.claude/agents/{agent}.md` is the canonical persona text (Identity, mandate, cohort-wide Non-negotiables); Skill `SKILL.md` files are **stubs that load the agent file**. Edit the agent file — never a Skill stub. (`Swanifly/web/lib/engine/agent-personas.ts` is **not** generated from it: no generator exists; the file is hand-maintained and parked with the Swanifly engine.)
+> **Source of truth:** `.claude/agents/{agent}.md` **is** the agent (Identity, mandate, `Entry files:`, cohort-wide Non-negotiables). There is no second copy to keep in sync: the persona stubs were deleted in 327.a and doctor **E17** fails if one reappears. (`Swanifly/_archive/web/lib/engine/agent-personas.ts` is **not** generated from it: no generator exists; the file is hand-maintained and parked with the Swanifly engine.)
 
-| Agent | Skill | Primary surface | Model default | Commits? |
-|:--|:--|:--|:--|:--|
-| **Junia** | `junia` | Desktop or Code (planning) | Opus | yes (plans) |
-| **Brian** | `brian` | Claude Code (build) | Sonnet → Opus for hard logic | yes |
-| **Sage** | `sage` | Claude Code (proof: browser/e2e) | Sonnet | yes (tests + proof records) |
-| **Watson** | `watson` | Claude Code (ops/debug) | Sonnet | yes |
-| **Kasper** | `kasper` | Claude Code (security) | Opus | yes (hardening) |
-| **Vera** | `vera` | Code or Desktop (one review per slice) | Opus | **no** (review only) |
-| **Nova** | `nova` | Desktop (design + Artifacts) + Code | Sonnet → Opus by override | yes (CSS/JSX) |
-| **Gordon** | `gordon` | Desktop + Code (commercial & growth) | Sonnet → Opus by override | yes (docs, copy) |
-| **Iris** | `iris` | Code + Desktop (study & deliverables) | Sonnet → Opus for ranked recommendations | yes (analysis/deliverables only) |
-| **Lucia** | `lucia` | Claude Code (METHOD release) | Opus | yes (METHOD docs) |
+| Agent | Primary surface | Model default | Commits? |
+|:--|:--|:--|:--|
+| **Junia** | Desktop or Code (planning) | Opus | yes (plans) |
+| **Brian** | Claude Code (build) | Sonnet → Opus for hard logic | yes (**every component**, routes, mobile, integrations) |
+| **Sage** | Claude Code (proof: browser/e2e) | Sonnet | yes (tests + proof records) |
+| **Watson** | Claude Code (ops/debug) | Sonnet | yes |
+| **Kasper** | Claude Code (security) | Opus | yes (hardening; the only writer of `firestore.rules`) |
+| **Vera** | Code or Desktop (one review per slice) | Opus | **no** (review only) |
+| **Maya** | Code or Desktop (UX research & IA) | Opus | yes (specs; holds no Bash, so the coordinator commits) |
+| **Nova** | Desktop (design + Artifacts) + Code | Sonnet → Opus by override | yes (**tokens, theme, motion, `proto/` — not components**, since 327.a) |
+| **Alba** | Code or Desktop (brand & visual assets) | Sonnet → Haiku for a resize batch | yes (assets, `brand/{area}/USAGE.md`) |
+| **Gordon** | Desktop + Code (commercial & growth) | Sonnet → Opus by override | yes (docs, copy) |
+| **Iris** | Code + Desktop (study & deliverables) | Sonnet → Opus for ranked recommendations | yes (analysis/deliverables only) |
+| **Hugo** | Claude Code (METHOD tooling) | Sonnet → Opus for gate semantics | yes (hooks, gate, scripts, `tests/`) |
+| **Lucia** | Claude Code (METHOD release) | Opus | yes (METHOD docs) |
+| **Penny** | Code or Desktop (token economy) | Sonnet | yes (telemetry reports only) |
+| **Oscar** | Code or Desktop (coach) | Opus | yes (retro files only) |
+| **Régine** | Code (régie) | Sonnet | yes (`wip(rescue)` only) |
+| **Lise** | Code or Desktop (tone & voice) | Opus | **no** (the coordinator commits her ledger row) |
+
+> The `Skill` column this table used to carry is gone with the stubs (327.a): an agent is invoked by
+> name as a sub-agent, on every surface.
 
 #### Dormant (not loaded, not delegable)
 
@@ -193,9 +203,9 @@ The METHOD assumes a specific Desktop configuration. Set this up once per machin
 - **Project custom instructions** = paste the app's root `CLAUDE.md` (tech stack, code rules, design language, data rules). This is the per-Project equivalent of Claude Code's auto-loaded `CLAUDE.md`.
 - **Project knowledge** = add the small, stable docs the agents always need: `project/STATE.md`, `project/DESIGN.md` (if it exists), `project/SCHEMA.md` (if it exists). Do **not** dump the whole repo — keep it surgical (see Context Hygiene).
 
-### 7.2 Skills (the agent cohort)
-- Install the agent Skills from `.claude/skills/` so Claude can invoke **Junia, Brian, Sage, Watson, Kasper, Vera, Nova, Gordon, Iris, Lucia** by name.
-- Enable the relevant Skills per Project. A consulting project mostly needs Iris; a METHOD-release project mostly needs Lucia.
+### 7.2 The cohort (nothing to install since 327.a)
+- **There are no agent Skills to install.** The 18 mandates live in `.claude/agents/` and are invoked by name as sub-agents on every surface; the persona stubs were deleted in 327.a and doctor **E17** fails if one comes back.
+- `.claude/skills/` holds **capability** skills only (`deploy`, `/media`, `ux-review`, `ads-ops`, …), each naming its owner. Enable the relevant ones per Project: a consulting project mostly needs `app-economics`, a growth project `ads-ops` and `landing-page`.
 
 ### 7.3 Connectors (MCP)
 - **GitHub connector** — for reading PRs/issues and pushing changes from Desktop.
@@ -267,7 +277,8 @@ Long threads lose context ("context rot"). Maintain strict hygiene:
 |:--|:--|:--|
 | `CLAUDE.md` (repo root) | Canonical project context (stack, rules, design, data) | Claude Code (auto) · Desktop Project (as custom instructions) |
 | `AGENTS.md` (repo root) | Cross-tool mirror of `CLAUDE.md` for non-Claude agents | Other agents/tools |
-| `.claude/skills/{agent}/SKILL.md` | Agent personas (Brian, Vera, …) | Claude Desktop + Claude Code |
+| `.claude/agents/{agent}.md` | Agent mandates (Brian, Vera, …) — the only surface since 327.a | every Claude surface |
+| `.claude/skills/{name}/SKILL.md` | Capabilities (`deploy`, `/media`, `ux-review`, …), each naming its owner | Claude Desktop + Claude Code |
 | `.claude/commands/*.md` | Sprint rituals as slash commands | Claude Code |
 | `.claude/settings.json` | Hooks, permissions, env for Claude Code | Claude Code |
 | Task files (`docs/sprints/`) | Per-task context + acceptance criteria | Agent (loaded in prompt) |
@@ -292,5 +303,5 @@ Long threads lose context ("context rot"). Maintain strict hygiene:
 7. **For autonomous sprints, use Swanifly** — it already runs Claude Code per persona and opens a PR.
 
 ---
-**Last Updated:** 2026-07-10
+**Last Updated:** 2026-10-24
 **Status:** ✅ Production-Ready (Claude Desktop + Claude Code + Artifacts)

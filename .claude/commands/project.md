@@ -24,8 +24,10 @@ supervisor loop) and "Sidebar contract" — **follow it, do not restate it here.
 3. **Sidebar group and own title** (load the tools in one `ToolSearch`: `create_section`, `set_view`,
    `move_sessions`, `set_pinned`, `set_session_title`, `spawn_task`). `create_section` `{app} · {chantier}`;
    `set_view` `group_by: "none"`, `sort_by: "alpha"`; `move_sessions` self into it; `set_session_title`
-   self `🧑‍✈️ {repo icon} {chantier}` (icon from `docs/METHOD/repo-icons.json`); **then** `set_pinned` self
-   true — a move un-pins, so the pin comes last.
+   self `🧑‍✈️ {repo icon} {chantier}` (icon from `docs/METHOD/repo-icons.json`). A supervisor is pinned only
+   while it waits on the operator (329.a). **If `move_sessions` is refused** (this session is nested under
+   another), `set_pinned` self true — the pin is then its only way to surface — and tell the operator once:
+   row menu → « Detach to top level »; Régine files and unpins it on her next pass.
 4. **One task chip per slice** (`mcp__ccd_session__spawn_task`). Its prompt is the **v2 sub-session
    brief**, self-contained: (a) the first action, before any read or edit, is `SendMessage` `adopt
    {slice}` to this supervisor's `ListAgents` name (put the name in the brief); (b) its fiche
@@ -37,8 +39,8 @@ supervisor loop) and "Sidebar contract" — **follow it, do not restate it here.
    plan-first first turn. Starting a sub-session is one operator click — say so.
 5. **Then run the supervisor loop** ("The chantier" → "The supervisor's loop": adopt, idle notices,
    batches, close each slice, report). Event-driven, never polling; between two notices it does
-   nothing. **While it waits on an operator answer it is already pinned**; it appends ` · 🟡` to its
-   title right before an `AskUserQuestion` and removes it right after the answer ("Sidebar contract",
-   rule 1). Its Debrief is the chantier's only card, without a `▶ Prompt suivant`.
+   nothing. **While it waits on an operator answer it pins itself**: right before an `AskUserQuestion` it
+   appends ` · 🟡` to its title and `set_pinned` self true, right after the answer it removes both — unless it
+   is nested, which keeps its pin ("Sidebar contract", rule 1). Its Debrief is the chantier's only card, without a `▶ Prompt suivant`.
 
 Do not write product code in this session. Do not start a second chantier from it.

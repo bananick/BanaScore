@@ -10,6 +10,8 @@ description: >-
 
 # deploy
 
+**Owner — `watson`** (named in 327.a; this skill had no owner) — the served revision is his evidence (`agents-method.md` → "§ 4. Watson"); the deploy itself is a step with its own proof, never a landing.
+
 Deploys the **current app** to Firebase and confirms it actually went live. Built around the user's most frequent manual task and their most common production failures (auth, API keys, Firestore rules).
 
 ## Procedure

@@ -6,7 +6,7 @@ argument-hint: [brief, or path to a CUJ/feature doc]
 Plan a sprint from this brief: $ARGUMENTS
 
 A sprint is the **exception** — only for genuinely multi-task, pre-planned work (`CLAUDE.md` →
-"Work Modes"). A single fix, screen or analysis is an `/intervention`.
+"How Agents Operate (the loop)"). A single fix, screen or analysis is an `/intervention`.
 
 1. **🎯 Cadrage — you run it, not Junia** (a sub-agent cannot ask me): one `AskUserQuestion`
    (≤ 4 questions, recommended answer first) fixing the **Journey** (existing `journeys/{cuj}.md`, or

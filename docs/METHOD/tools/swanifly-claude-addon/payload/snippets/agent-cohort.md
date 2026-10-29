@@ -1,52 +1,36 @@
-## Agent Cohort (13 active mandates + 3 dormant — Skills + sub-agents)
+## Agent Cohort
 
-> Synced from the METHOD hub into every app's `CLAUDE.md` — change it in the hub, never in an app.
-> Canonical: `docs/METHOD/agents-method.md`.
+`.claude/agents/{agent}.md` is each agent's **canonical definition** — mandate, default model, its
+`Entry files:` line (what to read, by `§`, under a byte cap). Edit it; it has no copy.
 
-**`.claude/agents/{agent}.md` is the canonical definition** of every agent — identity, mandate,
-non-negotiables. `.claude/skills/{agent}/SKILL.md` is a Desktop **stub that loads it**. Edit the
-agent file, never a stub.
+| Agent | Mandate |
+|:--|:--|
+| `junia` | Plan |
+| `brian` | Build |
+| `sage` | Prove |
+| `watson` | Repair |
+| `kasper` | Guard |
+| `vera` | Judge |
+| `maya` | UX research & information architecture |
+| `nova` | Draw — design system, tokens, motion, a11y |
+| `alba` | Brand & visual assets (logo, icons, `/media`) |
+| `gordon` | Commercial & growth |
+| `iris` | Study & deliverables |
+| `hugo` | METHOD tooling (hooks, gate, `land`, sync, doctor) |
+| `lucia` | METHOD release + the operating model |
+| `penny` | Token economy |
+| `oscar` | Coach (`/retro`) |
+| `regine` | Régie — sessions & worktrees |
+| `lise` | Tone & voice (`docs/METHOD/tone-method.md`) |
+| `stella` | Organic visibility (SEO · GEO) |
 
-An agent earns a name when its mandate is one you would otherwise have to retype. Thirteen mandates
-hold that bar; three are dormant — parked under `.claude/_dormant/`, outside the directories Claude Code
-scans for agents, so **not loaded and not delegable**. Bringing one back is a `git mv` into
-`.claude/agents/` plus a METHOD release — the operator's call, never an agent's mid-session.
+**One owner per job** (327.a): a collision or a gap goes to `agents-method.md` → "§ Agent Roster", never to a second claimant. **Dormant, not loaded, not delegable:** April, Aiko, Teddy. **The coordinating
+conversation orchestrates; it is not an agent.** Per task `brian` → `watson` (only if the gate goes
+red) → `kasper` (only when rules / auth / API routes are touched); once per slice, at the Recette,
+`vera` → `/land` → `sage`. Chain, roster, domain owners: `docs/METHOD/agents-method.md` →
+"§ Orchestration chain", "§ Domain owners".
 
-| Agent | Avatar | Mandate | Default model | Entry files |
-|:--|:--|:--|:--|:--|
-| **Junia** | 🧙 | Plan — request → plan/to-do (or a sprint, by exception) + its Cadrage | opus | `sprints-method.md` → `docs/project/` |
-| **Brian** | 🧑‍💻 | Build — web development (incl. mobile and AI wiring) | sonnet | `method-core.md` → `docs/project/DESIGN.md` → task |
-| **Sage** | 🧑‍🔬 | Prove — the observed proof of a journey (LANDED/DEPLOYED → PROVEN), then its regression test | sonnet | `tests-method.md` → task → `docs/project/journeys/` |
-| **Watson** | 🧑‍🚒 | Repair — reliability & ops | sonnet | `method-core.md` → `tests-method.md` |
-| **Kasper** | 💂 | Guard — security | opus | `method-core.md` (Security Baseline) → `docs/project/SCHEMA.md` |
-| **Vera** | 🧑‍⚖️ | Judge — one review per slice, at the Recette (no commits) | opus | `method-core.md` → `design-method.md` → task |
-| **Nova** | 🧑‍🎨 | Draw — design system + tokens | sonnet | `design-method.md` → `docs/project/DESIGN.md` |
-| **Gordon** | 🧑‍💼 | Commercial & growth — offers, funnels, EN/FR copy, campaigns, positioning; ads unless the business pack names an owner | sonnet | `agents-method.md` → `docs/project/VISION.md` → `docs/growth/` |
-| **Iris** | 🕵️ | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | sonnet | `method-core-lite.md` → `docs/project/STATE.md` → the object of study |
-| **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `docs/improvement/ACTIONS.md` | opus | `versioning.md` → `METHOD.md` → the files the change touches |
-| **Penny** | 🤵 | Token economy — measure, report and coach on token use; propose METHOD changes to Lucia; read-only on code | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
-| **Oscar** | 🧑‍🏫 | Coach — weekly retro (`/retro`): effectiveness, focus, objectivity, lucidity, relevance of objectives and whether they are reached; one habit to change; METHOD proposals to Lucia; read-only on code | opus | `method-core.md` → `docs/project/STATE.md` + `FOCUS.md` → the week's evidence |
-| **Régine** | 🧑‍🔧 | Régie — session, worktree & work-in-progress hygiene: the sidebar pass, the idle clocks (24 h 💤 · 72 h rescue + archive · merged/✅ archive), rescue before archive; archives, never deletes; never lands product code | sonnet | `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention |
+**Tone → `lise`.** Any question of voice, *tu* / *vous* or *ton* goes to her; where
+`docs/project/brand/tone/` exists, so does every text a customer, prospect or the public will read
+(copy, UI strings, mail, post, deck, flyer) before it lands — `gordon` writes, `lise` reads.
 
-**Dormant (not loaded, not delegable):** **April** (vision & copy → Junia's Cadrage + Gordon) ·
-**Aiko** (AI integration → Brian) · **Teddy** (mobile → Brian). Why: `.claude/_dormant/README.md`.
-
-**The coordinating conversation orchestrates — not an agent.** It delegates, folds every report into
-one Debrief, runs the Recette and lands. The chain (canonical: `docs/METHOD/agents-method.md` →
-"Orchestration chain"): per task `brian` → `watson` (only if the gate goes red) → `kasper` (only when
-rules / auth / API routes are touched); once per slice, at the Recette, `vera` (one review, opus) →
-`/land` → `sage` (runs the Proof where it says → PROVEN) → the operator accepts. Fan-out: `nova`
-design · `gordon` commercial · `iris` study · `lucia` METHOD · `penny` token economy — when a slice
-ran a Workflow or > 10 sub-agents, her one-paragraph cost note joins the Debrief (a note, not a gate) ·
-`oscar` coach — weekly through `/retro`, and on demand at the Recette of a slice that closes a journey;
-never once per Debrief · `regine` régie — the scheduled sidebar & worktree pass (idle clocks, rescue
-before archive), and on demand.
-
-Rituals (11, `.claude/commands/`): `/land` (the default close) · `/ship` (the PR exception) ·
-`/intervention` · `/plan-sprint` · `/review` · `/brief` · `/retro` (weekly) · `/clean` (sessions & caches, on demand) ·
-`/project` (open a chantier) · `/port` (optional) · `/relay` (optional).
-
-A **domain owner** (ads, CRM, pricing…) is app-level: declared in the app's business pack
-(`docs/project/business/README.md`), never added to this table, and never overwritten by the sync —
-`agents-method.md` → "Domain owners & the business pack (app-level)". An app MAY re-use a demoted
-name (e.g. Riley) for one.

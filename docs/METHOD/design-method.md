@@ -1,7 +1,7 @@
 # Design Method
 
-**Owner:** Nova  
-**Version:** 318.a  
+**Owners (per section — 327.a):** **Nova** owns the design system — Philosophy, Design Language, Surface & Depth, MD3, Accessibility, Dark Mode, Theming, Animation, Component Patterns, Error States, Anti-Patterns, Tokens Checklist, Prototyping, the design side of the Port Loop, the Design Log. **Maya** owns the structure — Navigation Taxonomy, Adaptive Layout System, State Preservation & SPA Navigation Contract, Content-Level Layout Patterns, Supporting Surfaces, Navigation Patterns, and the port **order**. **Alba** owns the brand — Icon System, Logo & Brand Identity (and `docs/project/brand/` minus `tone/`, which is **Lise**'s). **Gordon** owns every string (**Lise** reads it for tone before it lands, where the repo has voice files, and never edits it); **Brian** owns every component and both ports' implementation. Each section states its owner; a section with none is Nova's.  
+**Version:** 327.a  
 **Purpose:** Global design constraints only (project-level UI lives in project/DESIGN.md)
 
 ---
@@ -64,11 +64,17 @@ This section translates our design inspirations (Swanifly identity, MD3 optional
 - Accessible by default: keyboard, focus rings, touch targets, screen reader semantics.
 - Internationalization: EN/FR baseline; layouts must tolerate text expansion.
 
-### Design outputs expected from Nova (per feature)
-- **Navigation impact**: does it add/remove a destination or a panel?
-- **Screen states**: loading / empty / error / success.
-- **Responsive**: desktop + mobile behavior (what collapses into drawer/sheet).
-- **Copy**: primary CTA label + key microcopy (errors, empty states).
+### Design outputs expected per feature (and who owes each — 327.a)
+- **Navigation impact** — does it add/remove a destination or a panel? → **Maya** (it is a taxonomy
+  decision, not a visual one).
+- **Screen states**: loading / empty / error / success → **Nova**.
+- **Responsive**: desktop + mobile behaviour (what collapses into drawer/sheet) → **Nova**, within the
+  window classes Maya specified.
+- **Copy**: primary CTA label and key microcopy (errors, empty states) → **Gordon writes it**, **Lise
+  reads it** for tone before it lands where the repo has voice files (she never edits it), **Brian**
+  externalises it to i18n. Copy has exactly one **writer**; this line listed it under Nova until 327.a
+  and contradicted four agent files that the 318.a audit had already corrected (§4-O3 — four parties,
+  not three, since Lise joined in 326.a). A design spec says *that* a label is needed, never its words.
 
 ### Reference Models
 
@@ -81,6 +87,8 @@ This section translates our design inspirations (Swanifly identity, MD3 optional
 ---
 
 ## Navigation Taxonomy — Destinations, Actions, Utilities
+
+**Owner:** Maya (327.a)
 
 > [!IMPORTANT]
 > Every UI element in the app shell **must** be classified into exactly one of three types before placement. This taxonomy resolves the recurring question: "Should X go in the header, the nav bar, the drawer, or a menu?"
@@ -266,6 +274,8 @@ Swanifly apps use brand-tinted glow shadows instead of generic neutral shadows:
 
 ## Adaptive Layout System (Window Size Classes)
 
+**Owner:** Maya (327.a) — Nova owns what the surfaces look like at each class
+
 > [!IMPORTANT]
 > This replaces the older "Responsive Design" section. The Swanifly approach is **adaptive** — one information architecture, three chrome expressions. Based on Android window size classes (adopted industry-wide).
 
@@ -313,6 +323,8 @@ Don't design for "mobile" then "desktop." Design the **information architecture*
 ---
 
 ## State Preservation & SPA Navigation Contract
+
+**Owner:** Maya (327.a)
 
 > [!IMPORTANT]
 > A premium SPA must feel native. These rules are **non-negotiable** for any Swanifly app. They separate amateur SPAs from world-class ones.
@@ -567,6 +579,8 @@ For lists, grids, and groups of items entering the screen:
 
 ## Icon System
 
+**Owner:** Alba (327.a)
+
 ### Icon Library
 
 Use **Lucide** as the primary icon set (clean, consistent stroke weight, tree-shakeable):
@@ -608,6 +622,17 @@ Use **Lucide** as the primary icon set (clean, consistent stroke weight, tree-sh
 
 ## Logo & Brand Identity
 
+**Owner:** Alba (327.a) — the identity decision itself is the operator's
+
+> **Open points, raised by Alba's first run (2026-10-19) and not settled here.** Each is `inconnu`
+> until the operator rules, and each app records its answer in `docs/project/brand/logo/USAGE.md`:
+> whether "minimum size 24 / 32 px" measures the **lockup** or the **glyph**; whether clear space is a
+> fixed 8 px or a proportion of the lockup height at large sizes; what to do when the full-colour mark
+> is used on dark (the rule says "white/mono on dark" while the shipped gradient file keeps its colour
+> there); and the gradient spec this section points at in `project/DESIGN.md`, which holds no logo
+> gradient. "Inline SVG" is also contradicted by the mark actually served in this hub's cockpit (a
+> raster plus live text).
+
 ### Logo Type
 
 All Swanifly apps use a **gradient inline icon/favicon** as the primary logo mark:
@@ -629,6 +654,8 @@ All Swanifly apps use a **gradient inline icon/favicon** as the primary logo mar
 ---
 
 ## Navigation Patterns
+
+**Owner:** Maya (327.a) — the shells themselves; Nova owns their tokens and motion
 
 ### Two-Surface Navigation Model
 
@@ -948,7 +975,9 @@ Query-driven panels (?panel=...) are preferred for correctness and deep linking;
 
 ## Content-Level Layout Patterns
 
-Each destination's interior layout should be chosen from these canonical patterns during design (Nova) and documented in `project/DESIGN.md`. The layout pattern can change per window class (e.g., list-detail is push-nav on compact, side-by-side on expanded).
+**Owner:** Maya (327.a)
+
+Each destination's interior layout should be chosen from these canonical patterns during Discovery (Maya) and documented in the app's `docs/project/DESIGN.md`, in its structural sections. The layout pattern can change per window class (e.g., list-detail is push-nav on compact, side-by-side on expanded).
 
 ### Canonical Patterns
 
@@ -981,6 +1010,8 @@ Each destination's interior layout should be chosen from these canonical pattern
 ---
 
 ## Supporting Surfaces — Sheets, FABs, Snackbars
+
+**Owner:** Maya (327.a) — their visual treatment is Nova's
 
 Supporting surfaces display secondary content without leaving the current screen. Choosing the right surface by form factor is critical for ergonomics.
 
@@ -1207,12 +1238,12 @@ Every app must define in `project/DESIGN.md`:
 
 ## Prototyping — Claude Artifacts
 
-**Owner:** Nova · **Surface:** Claude Design (Artifacts in Claude Desktop)
+**Owner:** Nova · **Surface:** Claude Design (Artifacts in Claude Desktop) — invoked as the `nova` sub-agent; the Desktop Skill stub was deleted in 327.a
 
 > **Migrated in v308.a.** The home-made proto-kit live tuner is retired. Prototypes are now
 > generated as **interactive Artifacts** in Claude Desktop, from the spec chapter + the M3
 > token set below. Iterate live with the operator; when approved, the Artifact's markup +
-> tokens become the reference Brian/Teddy implement against.
+> tokens become the reference **Brian** implements against (web and mobile — Teddy is parked).
 >
 > **Evolved in v309.b.** Claude Design is the **bootstrap only**: on approval the Artifact source
 > is exported into the app's **`proto/` workspace** (app root), where the prototype keeps living
@@ -1262,7 +1293,14 @@ pills, tables) · Rail · Layout (spacing, drawer, search, elevation, scrollbars
 
 ## Design Port Loop (Claude Design → code)
 
-**Owner:** Nova (directive; mobile port) + Brian (web port) · **Ritual:** `/port` · **Added in v309.a · Evolved in v309.b (living `proto/` directive).**
+**Owners (327.a):** **Maya** — the port **order** (foundation → nav/shell → one page per land) and the
+structure of each screen · **Nova** — the directive `proto/` and the design side (tokens, visual
+fidelity, states) · **Brian** — the **implementation, web *and* mobile**. · **Ritual:** `/port` ·
+**Added in v309.a · Evolved in v309.b (living `proto/` directive) · Re-owned in v327.a.**
+
+> **The mobile port was assigned to Nova here until 327.a**, while the dormancy table gave mobile to
+> Brian ("mobile is a mode, not a person"). Two documents, two answers; Brian's is the one that was
+> true in practice, so this line now says so (§6, finding 2 of the 2026-10-18 cohort audit).
 
 > Promoted from `docs/porting/PORTING-PLAYBOOK.md` (pilot-validated 2026-06-15). This is how a
 > prototype crosses into a live React/Firebase app — across many apps — **without restating
@@ -1378,6 +1416,6 @@ Maintain in `project/DESIGN.md`:
 ---
 
 
-**Owner:** Nova  
-**Last Updated:** 2026-06-16
+**Owner:** Nova (the Design Log)  
+**Last Updated:** 2026-10-19
 

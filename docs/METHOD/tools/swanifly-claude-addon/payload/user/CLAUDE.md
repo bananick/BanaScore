@@ -112,7 +112,81 @@ One card per answer, never two. The Flight Deck **opens** a pickup; the Debrief 
 
 **Both cards are written in plain markdown, never inside a fenced block.** A `text` fence renders small, monospace, unstyled, and makes every path unclickable — that is what made the previous card unreadable. Markdown gives real bold, real emoji, real spacing, wrapping that follows the window, and clickable `file.md:42` paths. The only fenced block in a closing is the `▶ Prompt suivant`, which must stay fenced because it is copy-paste.
 
-### The Debrief — closing card of every substantial answer
+### La fermeture dépend du type de session (METHOD 330.a · 335.a)
+
+Mesuré le 2026-10-23 sur 40 sessions : une fermeture moyenne de 43 lignes, 61 % de mes réponses en un mot (« go »), 16 % seulement finies par un quiz. La plus courte est donc le défaut. 335.a, d'après l'étude d'Iris du 2026-10-29 : 25/57 fins ratées, 6/57 états redemandés (« merged ? »), 10/57 confirmations tapées. Canonique : `docs/METHOD/method-core.md` → "Closing by session type".
+
+| Type de session | Fermeture |
+|---|---|
+| **Mission autonome** (mission libre, slice seule) | **Carte mission, ≤ 9 lignes rendues** |
+| **Superviseur de chantier** | **Tour de contrôle** |
+| Handoff, `/brief`, `/relay`, `/review`, ≥ 3 décisions | le **Debrief** complet (ci-dessous) |
+| Sous-session de chantier · sous-agent délégué | pas de carte |
+
+**Toute réponse qui a fait quelque chose finit par Fait / Suite (335.a).**
+
+- **Fait** — 1 à 3 puces : ce que la réponse a obtenu, l'objet nommé, en langage opérateur. **Chaque ligne Fait porte une preuve cliquable** : URL de PR ou de commit pour du code, URL servie ou révision pour un déploiement, capture pour de l'UI, lien de fichier pour une étude, une ligne de sortie pour de l'ops.
+- **Suite** — 1 à 3 puces, simples et actionnables. **La puce 1 est le destin de la session.**
+- Chaque puce porte un emoji choisi **pour son sens** (🐛 corrigé · 🧪 tests · 🚀 déployé · 🔍 trouvé · 📝 doc), jamais un ✅ par ligne. **Les puces portent les emojis, donc les titres n'en portent pas** : **Fait** et **Suite** en gras simple.
+- Conversation pure ou rien de fait : pas de Fait / Suite.
+- **Le mot d'état dans chaque titre de fermeture** : `CODÉ · ATTERRI · DÉPLOYÉ · PROUVÉ · en cours · bloqué`. Pas d'emoji d'état dans le titre d'une carte : le suffixe du titre de la barre latérale le porte.
+- **🚨 en tête du titre** quand tu as cassé ou trouvé quelque chose en prod (erreur prod, données ou secret en jeu) : l'incident et sa commande de réparation d'abord. C'est un drapeau, pas un destin.
+
+**Le destin — puce 1 de Suite, `{emoji} {Verbe} : {l'objet}`**, avec son kit « Prêt pour toi » :
+
+| Destin | Quand | Prêt pour toi | Suffixe du titre |
+|---|---|---|---|
+| 🗄️ **Archive** | ATTERRI, rien de non commité ni de non poussé, rien en attente | l'archivage proposé dans le quiz, ou fait si je l'ai déjà dit | ✅ |
+| 💬 **Réponds** | un choix que moi seul peux faire | le quiz, ≤ 4 options, « go = … » d'abord ; les captures avant si le choix est visuel | 🟡 |
+| 🧪 **Teste** | un écran ou un comportement que je peux atteindre a changé | l'URL + un script ≤ 3 min + captures par `SendUserFile` ; quiz « accepter / rouvrir / différer » | 🟡 |
+| 🔑 **Agis** | il faut mes mains hors du chat (bloqué compris) | un kit par canal, ci-dessous | 🟡 · 🔴 |
+| ⏳ **Attends** | ce que tu as lancé tourne encore, rien d'autre pour moi | ce qui tourne (son id), ce qui te réveille, ce que je peux faire en attendant | 👀 |
+| 🔁 **Continue ici** | une autre slice reste ici **et elle coûte** (temps, quota, périmètre) | le bouton « go » | 🟡 |
+
+- **🔑 Agis, un kit par canal** : **merge** (lien de PR + la commande) · **terminal** (un bloc par étape) · **console / Chrome** (URL exacte + étapes numérotées + « Guide-moi dans Chrome ») · **install**. Chaque kit se ferme par le quiz « C'est fait » / « Ça bloque » / « Fais-le avec moi » : **je ne tape jamais de confirmation**. Tu ne saisis jamais mes identifiants ni mes moyens de paiement, et tu n'acceptes jamais de conditions à ma place : tu guides, j'agis.
+- **Une étape réversible dans le périmètre** (commit, land, relance, re-run) **se fait, elle ne se propose pas** : ce n'est jamais un 🔁.
+- Le destin correspond au suffixe du titre. La première phrase du récap de la boîte `wrap_up` (le statut de la barre latérale) s'ouvre sur le même emoji et le même verbe ; ses boutons ne répètent jamais les options du quiz.
+- **Un choix → le quiz, jamais la prose** : `AskUserQuestion`, première option « go = {puce 1} ». Pas de choix → les puces seules, pas de quiz. Jamais de « dis-moi », jamais de « ? » final.
+- **Les commandes en blocs `bash`**, pour que l'app affiche un bouton Run.
+- **Mise en page lisible**, dans chaque fermeture et chaque réponse substantielle : du vrai markdown, jamais un bloc fencé pour de la prose · une ligne vide entre les blocs, un `---` pour encadrer une carte · une idée par puce, le nom clé en gras · un petit tableau plutôt qu'une liste de faits parallèles · des chemins cliquables · aucun paragraphe de plus de 3 lignes.
+- **Carte inline** (`show_widget` HTML : tuiles de preuves, badge d'état, boutons `sendPrompt`) **seulement s'il y a des preuves visuelles ou plusieurs actions** ; sinon du markdown et la boîte `wrap_up`. Elle coûte ~6 k tokens, sans emoji, icônes Tabler seulement.
+- **Choisir le destin** : l'algorithme en 10 étapes d'Iris, `docs/METHOD/method-core.md` → "Choosing the fate".
+
+**Carte mission** — plain markdown, ≤ 9 lignes rendues (lignes vides et filets non comptés) :
+
+---
+
+**{🚨 }{Projet} · {objet} · {ÉTAT}**
+📸 {la preuve en un clic : lien · captures avant/après · test ≤ 3 min}
+
+**Fait**
+- {emoji} {ce qui a bougé, l'objet nommé} · {sa preuve cliquable}
+
+**Suite**
+- {🗄️ Archive | 💬 Réponds | 🧪 Teste | 🔑 Agis | ⏳ Attends | 🔁 Continue ici} : {l'objet}
+
+---
+
+Quatre parties seulement. L'échelle, l'astuce coach et les puces 🧠 / 🤝 permanentes ont quitté la carte ; un **🤝 Décidé pour toi** entre dans Fait seulement quand un choix réversible a vraiment été pris. Puis le quiz du destin, s'il en a un.
+
+**Petite réponse** (une question, un lookup, un fix d'une ligne) — deux lignes, sans titres :
+
+{emoji} {ce qui est fait}
+{emoji du destin} **{Verbe}**
+
+- **L'échelle** (Debrief et tour de contrôle) prolonge les quatre états (Livré = LANDED, Déployé = DEPLOYED, Prouvé = PROVEN) jusqu'aux vrais utilisateurs (Utilisé) et à leurs retours (Retours). Chaque échelon a sa preuve ; inconnu = `inconnu`.
+- **Preuve d'abord** : ce que j'ouvre en un clic vient avant toute prose. Si je dois demander « donne moi le lien », la fermeture a raté.
+- **📸 Preuve visuelle automatique** : un écran a changé → captures avant/après dans le navigateur intégré, envoyées par `SendUserFile` (elles arrivent sur mon téléphone), avec un script de test ≤ 3 minutes.
+- **💡 Astuce coach** (tour de contrôle seulement) — une ligne dans l'esprit d'Oscar, tirée de ce qui s'est vraiment passé dans la session : une habitude ou un raccourci pour arriver plus vite à un résultat que voient les utilisateurs. Jamais générique ; rien de fondé → pas d'astuce.
+- **🏷️ Titre = état** : à la fermeture, le titre devient `{icône repo} {Projet} · {objet en termes de résultat} · {état}` (ex. `⚡ FunFlasher · choix inscription · 🟡`). L'état reste **en suffixe**, celui que lit la règle « épinglé tant qu'il attend » ; le tri, les sections et les épingles restent ceux du contrat de la barre latérale.
+
+**Tour de contrôle** (superviseur de chantier) : titre `### {🚨 }Tour de contrôle · {icône repo} {chantier} · {ÉTAT}` ; si le résultat est un **site publié**, son URL d'abord, en gros lien-bouton ; puis **une ligne par sous-session** (`Slice · État 🔴/🟡/✅ · Il te faut · Preuve` en lien) ; un **rapport visuel** (captures ou artifact) ; une ligne `🤝 Décidé pour toi — {archives · par défaut, conteste si besoin · accepté par la recette — rouvrable}` ; une 💡 astuce ; puis **Fait** / **Suite** (le destin d'abord). Puis **un seul quiz** qui **remonte toutes les décisions en attente dans les sous-sessions** et finit, après une ligne de réflexion sur la suite, par **quel chemin ouvrir ensuite**. Les sous-sessions ne rendent toujours aucune carte, et pas de `▶ Prompt suivant` dans un chantier.
+
+**🗂️ Page portefeuille** — une ligne par projet (échelon, dernière session, décision en attente), mise à jour à chaque fermeture : spécifiée, pas encore construite (prochaine tranche).
+
+### The Debrief — closing card of a handoff, `/brief` or a multi-decision answer
+
+Since 335.a it ends with **Fait** / **Suite** (above): `🧠 À retenir` became **Fait**, `➡️ Suite` became **Suite**, fate first. Since 330.a an autonomous mission closes with the carte mission and a supervisor with the tour de contrôle (above). The ladder replaces the state words of `📊 Avancement` when a journey is named, and `⚖️ Tu décides` is asked as the « go » quiz.
 
 The mental model: a great chief of staff walking in for 30 seconds — *voilà ce qui vient d'être fait, voilà où ça met le projet, voilà ce que tu dois garder en tête, voilà ce que tu dois trancher.* Nicolas must never have to ask "et le projet global, on en est où ?" — the card already answered it.
 
@@ -120,21 +194,21 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 
 ---
 
-### ✅ Debrief · {lane ou workstream}
+### {🚨 }Debrief · {lane ou workstream} · {ÉTAT}
 
 {Une ligne : ce qui vient d'être fait, en langage opérateur.}
 
 **📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N parcours prouvés} · {CODED · LANDED · DEPLOYED · PROVEN — l'état atteint, avec sa preuve}
 
-**🧠 À retenir**
-- {fait clé}
-- {fait clé}
-- 🤝 **Décidé pour toi** — {choix réversible pris sans demander}
+**Fait**
+- {emoji} {fait clé} · {sa preuve cliquable}
+- 🤝 **Décidé pour toi** — {choix réversible pris sans demander} *(seulement s'il y en a un)*
 
 **⚖️ Tu décides**
 - {la question, courte} → **reco :** {l'option recommandée} · sinon {l'alternative}
 
-**➡️ Suite** — {la prochaine action utile}
+**Suite**
+- {destin} : {la prochaine action utile}
 
 **⚠️ Vigilance** — {un seul risque réel}
 
@@ -144,11 +218,11 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 
 - **One idea per bullet, one line at a normal window width.** Never a paragraph inside the card. Markdown wraps gracefully, so there is no character count to respect — but a bullet that needs three lines is two bullets, or belongs in the body above.
 - **Six blocks maximum**, in this order, and an empty block is deleted rather than filled with "none". A full card is ~12 rendered lines.
-- **Status emoji** in the title = real state: `✅` fait · `🟡` besoin de toi · `🔴` bloqué · `👀` en observation. The section emojis (📊 🧠 🤝 ⚖️ ➡️ ⚠️) are fixed — they are landmarks, not decoration, so they never change.
+- **The title carries the state word** (`CODÉ · ATTERRI · DÉPLOYÉ · PROUVÉ · en cours · bloqué`), not a status emoji; 🚨 leads it on an incident. The section emojis (📊 ⚖️ ⚠️) are fixed — they are landmarks, not decoration, so they never change.
 - **`Avancement` is the row Nicolas was missing.** It positions this work in the *global* project, not in the turn: sprint tasks closed, plan to-dos done, screens ported, PRs open. Bar = 5 blocks (🟩 filled / ⬜ empty). Only render a ratio when something countable was actually read this turn (sprint task files, plan checkboxes, `PORT-MAP.md` rows, PR list). Nothing countable → say the position in words. **Never invent a ratio.**
-- **`À retenir` = 2–4 bullets, the brief itself.** What Nicolas must hold in his head tomorrow: what now works, what changed shape, what got ruled out. Include one **`🤝 Décidé pour toi`** bullet whenever a reversible call was made without asking — so he can object cheaply. Not a changelog: no bullet that only restates a file edit.
-- **`Tu décides` = 0–2 items, recommendation first**, same grammar as a `### Needs decision` block. Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : {x}, {y}.` on one line. Never bury a decision in the prose above.
-- **`Suite` = exactly one action.** `terminé` when truly finished.
+- **`Fait` = 1–3 bullets, the brief itself, each with one clickable proof.** What Nicolas must hold in his head tomorrow: what now works, what changed shape, what got ruled out. Include one **`🤝 Décidé pour toi`** bullet whenever a reversible call was made without asking — so he can object cheaply. Not a changelog: no bullet that only restates a file edit.
+- **`Tu décides` = 0–2 items in the card; more → one line naming them, and the « go » quiz carries them (≤ 4)** — recommendation first, same grammar as a `### Needs decision` block. Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : {x}, {y}.` on one line. Never bury a decision in the prose above.
+- **`Suite` = 1–3 bullets, bullet 1 the fate** (🗄️ Archive when truly finished).
 - **Link what is clickable.** Paths render as markdown links (`[method-core.md](docs/METHOD/method-core.md)`), commits and commands as inline code. That is half the reason the card is not fenced.
 - **Every line earns its place.** A bullet survives only if it changes a **decision** Nicolas might take, an **action** he might run, or a **mental model** he carries into tomorrow. A bullet that changes none of the three is deleted, not shortened — "we also touched X" is changelog, and the diff already says it.
 - **Name the object, never the activity.** `docs/METHOD/method-core.md:393` not "the method file"; `npm run doctor` not "the checker"; `afd4cd7` not "the last commit". Everything nameable is named, as a clickable link or a runnable command — that is what makes the card actionable rather than merely informative.
@@ -156,16 +230,16 @@ Exact shape, `---` rules included (they draw the card's frame at full window wid
 
 **Cadence — the card must stay rare enough to keep meaning something:**
 
-- **Substantial answer** (code or docs changed, a slice closed, a decision taken, a handoff, `/brief`) → full Debrief.
-- **Small answer** (a question answered, a lookup, a one-line fix) → no card. One landing line instead: `✅ {ce qui est fait} · suite → {l'action}`.
+- **Substantial answer** (code or docs changed, a slice closed, a decision taken, a handoff, `/brief`) → the closing of its session type: carte mission · tour de contrôle · full Debrief.
+- **Small answer** (a question answered, a lookup, a one-line fix) → no card. Two lines instead, no headings: `{emoji} {ce qui est fait}` / `{emoji du destin} **{Verbe}**`.
 - **Nothing was done** (refusal, clarification, pure conversation) → no card at all.
 - **Chantier sub-session** (it keeps a fiche under `docs/chantiers/`) → no card: it updates its fiche instead (`sprints-method.md` → "The chantier"); spoken to directly, it answers in plain text.
 
 ### Prompt suivant
 
-Immediately after the Debrief, when `Suite` is not `terminé`, add exactly **one** fenced code block labeled `**▶ Prompt suivant** (copier-coller) :`. Self-contained — goal, app/repo + key paths, constraints, acceptance — pasteable into a fresh Claude Code window with zero extra context. If the next step is a shell command, fence it as `bash` so the app shows a Run button. One prompt only: the single most useful next action, not a menu.
+Immediately after the full Debrief, when the fate is not 🗄️ Archive (after a carte mission only when the next step belongs in a fresh window — its quiz's « go » says so), add exactly **one** fenced code block labeled `**▶ Prompt suivant** (copier-coller) :`. Self-contained — goal, app/repo + key paths, constraints, acceptance — pasteable into a fresh Claude Code window with zero extra context. If the next step is a shell command, fence it as `bash` so the app shows a Run button. One prompt only: the single most useful next action, not a menu.
 
-**Exception — a chantier: no `▶ Prompt suivant`.** In a chantier (a supervision session and its sub-sessions), neither a sub-session nor the supervisor's Debrief carries one. The next step is an action the supervisor takes itself — a suggested-task chip carrying the brief, or a typed `SendMessage` to an existing sub-session — and a `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names that action. No copy-paste block. Outside a chantier the rule above stands.
+**Exception — a chantier: no `▶ Prompt suivant`.** In a chantier (a supervision session and its sub-sessions), neither a sub-session nor the supervisor's control tower carries one. The next step is an action the supervisor takes itself — a suggested-task chip carrying the brief, or a typed `SendMessage` to an existing sub-session — and a `Suite` row of the pilot dashboard; its next-path quiz names that action. No copy-paste block. Outside a chantier the rule above stands.
 
 The Debrief, then the Prompt suivant, is the last thing in the answer unless a tool/system directive must come after it.
 

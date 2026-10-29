@@ -9,6 +9,10 @@ description: >-
 
 # ux-review
 
+**Owner — Maya** (327.a; it had no owner at all, one of the ten unowned categories the cohort audit
+found). The structural and usability findings are hers; a finding about a token, a theme, motion or
+the a11y baseline is routed to **Nova**, and one about a string to **Gordon**.
+
 Reviews UI against the standing bar in `SOUL.md`: **fluid, ergonomic, clean, fast, complete — for every persona**.
 
 ## Before reviewing

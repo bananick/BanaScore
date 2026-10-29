@@ -22,7 +22,8 @@
  * CLI (read-only): node lib/branch-hygiene.mjs [--json] [--fetch] [--remote]
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const run = (cmd, args, { cwd, timeout = 60_000, env } = {}) =>
@@ -128,6 +129,14 @@ function remoteOnlyCount(root, remoteRef, base, branch) {
 }
 function remoteOnly(root, remoteRef, base, branch) { return remoteOnlyCount(root, remoteRef, base, branch) ?? -1; }
 
+/** Squash-merge proof: merging the branch into the trunk changes nothing, i.e. `merge-tree --write-tree` yields exactly the trunk's tree. Any error or conflict = false (keep). */
+export function treeEqualsTrunk(cwd, base, branch) {
+  const want = gout(cwd, ['rev-parse', '--verify', '--quiet', `${base}^{tree}`]);
+  if (!want) return false;
+  const r = git(cwd, ['merge-tree', '--write-tree', base, `refs/heads/${branch}`]);
+  return r.status === 0 && (r.stdout ?? '').split(String.fromCharCode(10))[0].trim() === want;
+}
+
 /** Did this branch ever live? A fresh branch sitting at the trunk is indistinguishable from a landed one by ancestry alone. */
 function hasHistory(cwd, branch, hasRemote) {
   if (hasRemote) return true;
@@ -174,7 +183,7 @@ export function classify({ cwd = process.cwd(), trunk, fetch = false, remote = f
     .split('\n').filter(Boolean);
   for (const row of rows) {
     const [branch, tip, upstream, track, tipDate] = row.split(SEP);
-    if (branch === T || branch === 'master') continue;
+    if (branch === T || branch === 'master' || branch.startsWith('backup/')) continue;
     const wt = wtByBranch.get(branch) ?? null;
     const gone = (track ?? '').includes('gone');
     // A branch cut with `worktree add -b x origin/main` tracks the TRUNK: that is not a copy of the branch on GitHub.
@@ -194,13 +203,20 @@ export function classify({ cwd = process.cwd(), trunk, fetch = false, remote = f
     const reasons = [];
     let klass;
     let mergedAtTip = false;
+    let treeMerged = false;
+    const mergedPr = (prInfo?.mergedOids.get(branch) ?? []).length > 0;
 
     if (gone) {
       // Fail closed: patch-equivalence (`git cherry`) ignores merge commits, so it is not used. Either every
       // commit is in the trunk, or GitHub itself says a PR was merged at exactly this tip (squash merge).
       mergedAtTip = (prInfo?.mergedOids.get(branch) ?? []).includes(tip);
       if (ahead === 0 || mergedAtTip) { klass = 'gone'; reasons.push(ahead === 0 ? 'upstream deleted; every commit is already in the trunk' : 'upstream deleted; GitHub merged a PR at this exact tip'); }
-      else { klass = 'orphan'; reasons.push(`upstream deleted but ${ahead} commit(s) are not in ${base}`); }
+      else if (mergedPr) {
+        // PR merged at another tip: deletable only if merging the branch into the trunk changes nothing.
+        treeMerged = treeEqualsTrunk(root, base, branch);
+        if (treeMerged) { klass = 'gone'; reasons.push('upstream deleted; a merged PR + merge-tree equals the trunk tree'); }
+        else { klass = 'held'; reasons.push('upstream deleted; a PR was merged at another tip and merge-tree differs from the trunk tree'); }
+      } else { klass = 'orphan'; reasons.push(`upstream deleted but ${ahead} commit(s) are not in ${base}`); }
     } else if (ahead === 0) {
       if (dirty.length) { klass = 'active'; reasons.push(`${dirty.length} uncommitted path(s)`); }
       else if (!hasHistory(root, branch, !!remoteRef)) { klass = 'active'; reasons.push('fresh branch at the trunk, no history yet'); }
@@ -209,8 +225,11 @@ export function classify({ cwd = process.cwd(), trunk, fetch = false, remote = f
       } else { klass = 'merged'; reasons.push(`already in ${base}`); }
     } else if (!remoteRef) {
       klass = 'orphan'; reasons.push(`${ahead} commit(s) ahead of ${base} on no remote branch`);
+    } else if (mergedPr && !pr && treeEqualsTrunk(root, base, branch)) {
+      treeMerged = true; klass = 'merged'; reasons.push('a merged PR + merge-tree equals the trunk tree');
     } else {
       const held = (heldCheck ? heldCheck(branch) : defaultHeld(root, base, branch)) ?? [];
+      if (mergedPr && !pr) held.push('a PR was merged at another tip and merge-tree differs from the trunk tree');
       if (pr || held.length) { klass = 'held'; reasons.push(...held); if (pr) reasons.push(`PR #${pr.number}${pr.isDraft ? ' (draft)' : ''}`); }
       else { klass = 'active'; reasons.push(`${ahead} commit(s) ahead of ${base}`); }
       if (dirty.length) reasons.push(`${dirty.length} uncommitted path(s)`);
@@ -220,11 +239,12 @@ export function classify({ cwd = process.cwd(), trunk, fetch = false, remote = f
     const blockers = [];
     if (!(klass === 'merged' || klass === 'gone')) blockers.push('not integrated');
     if (dirty.length) blockers.push('dirty tree');
+    if (pr) blockers.push(`open PR #${pr.number}`);
     if (current) blockers.push('current worktree');
     if (isMain) blockers.push('main checkout');
     if (wt?.locked) blockers.push('locked worktree');
     if (wt && now - activityMs < graceMs) blockers.push(`recent activity (< ${Math.round(graceMs / 3_600_000)}h)`);
-    if ((klass === 'merged' || klass === 'gone') && !mergedAtTip) {
+    if ((klass === 'merged' || klass === 'gone') && !mergedAtTip && !treeMerged) {
       if (unique === null) blockers.push('unique commits unknown (fail closed)');
       else if (unique > 0) blockers.push(`${unique} commit(s) on no remote and not in the trunk`);
     }
@@ -292,6 +312,7 @@ export function formatReport(report) {
 export function deleteRemote({ cwd, branch, trunk }) {
   const steps = []; const errors = [];
   if (!branch || branch === trunk || branch === 'master' || branch === 'main') return { steps, errors: ['refusing to delete a trunk ref'] };
+  if (branch.startsWith('backup/')) return { steps, errors: ['refusing to delete a backup/* ref'] };
   const T = trunk ?? trunkOf(cwd);
   if (branch === T) return { steps, errors: ['refusing to delete a trunk ref'] };
   if (git(cwd, ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${branch}`]).status === 0) {
@@ -325,6 +346,7 @@ export function removeLocal({ cwd, branch, worktree, trunk }) {
   const root = gout(cwd, ['rev-parse', '--show-toplevel']) || cwd;
   const T = trunk ?? trunkOf(root);
   if (!branch || branch === T || branch === 'master' || branch === 'main') return { ok: false, skipped: 'trunk' };
+  if (branch.startsWith('backup/')) return { ok: false, skipped: 'backup/* branch' };
   const wt = worktree ?? listWorktrees(root).find((w) => w.branch === branch)?.path ?? null;
   if (wt) {
     if (samePath(wt, root) || samePath(process.cwd(), wt)) return { ok: false, skipped: 'current worktree — left to the next SessionStart sweep' };
@@ -366,6 +388,14 @@ export function forgetLanded(cwd, branches) {
   writeFileSync(p, [...all].join('\n') + (all.size ? '\n' : ''));
 }
 
+/** `repo · branch · local sha · remote sha · date` — appended BEFORE each deletion; restore with `git branch <b> <sha>`. */
+export function logDeletion(cwd, repo, x) {
+  const d = gout(cwd, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
+  if (!d) return false;
+  const remoteSha = gout(cwd, ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${x.branch}`]) || '-';
+  try { appendFileSync(`${d}/branch-deletions.log`, `${[repo, x.branch, x.tip, remoteSha, new Date().toISOString()].join(' · ')}\n`); return true; } catch { return false; }
+}
+
 /** Apply the cleanup of a classify() report: only `removable` merged/gone entries. `dryRun` touches nothing. */
 export function applyCleanup(report, { cwd = process.cwd(), dryRun = false, remote = true, only = null } = {}) {
   const actions = [];
@@ -374,6 +404,8 @@ export function applyCleanup(report, { cwd = process.cwd(), dryRun = false, remo
     if (only && !only.has(x.branch)) continue;
     if (!x.removable) { actions.push({ branch: x.branch, ok: false, skipped: x.blockers.join(', ') }); continue; }
     if (dryRun) { actions.push({ branch: x.branch, ok: true, dryRun: true, skipped: null }); continue; }
+    // Fail closed: no deletion without its restore line.
+    if (!logDeletion(cwd, basename(report.mainRoot ?? cwd), x)) { actions.push({ branch: x.branch, ok: false, skipped: 'deletion log not writable' }); continue; }
     // Remote first: if the local half is then refused, the branch stays listed (upstream gone) and the next sweep retries.
     const rem = remote ? deleteRemote({ cwd, branch: x.branch, trunk: report.trunk }) : { steps: [], errors: [] };
     if (rem.errors.length) { actions.push({ branch: x.branch, ok: false, steps: rem.steps, skipped: rem.errors.join('; ') }); continue; }

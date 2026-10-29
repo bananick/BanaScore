@@ -9,27 +9,52 @@
 
 ## Communication Contract (how agents report to the operator)
 
-- **Close every substantial reply with the Debrief card** (except in a chantier sub-session, which updates its fiche instead — `sprints-method.md` → "The chantier") — ce qui vient d'être fait · où ça met le **projet global** (`Avancement`, a real count, never an invented ratio) · ce qu'il faut retenir (dont `Décidé pour toi :`) · ce que l'opérateur doit trancher · la suite + le `▶ Prompt suivant` (none in a chantier — the supervisor's `Suite` names the action it takes itself). Rendered as **plain markdown, never a fenced block** (a fence renders small, unstyled and unclickable): a `### ✅ Debrief · {lane}` title between two `---` rules, fixed section landmarks 📊 🧠 🤝 ⚖️ ➡️ ⚠️, one idea per bullet, no paragraph, six blocks max. Small answer → one landing line; nothing done → no card. Delegated sub-agents never emit one. Canonical: `docs/METHOD/method-core.md` → "Operator Reporting".
-- Lead with the answer in chat. The **3-line header** — **Done** (what changed) · **State** (🟢 on track / 🟡 needs input / 🔴 blocked) · **Next** (immediate step, or "awaiting your call") — opens **written artifacts**: PR bodies, task reports, sub-agent reports back to an orchestrator. Never a header and a Debrief for the same work.
-- Surface decisions in a `### Needs decision` block (question, 2–4 options, **recommendation first**), and carry the question into the Debrief's `TU DÉCIDES` row. Never decide irreversible / data-model / scope changes — list them and stop.
-- Questions are quizzes, never prose: every question to the operator (Cadrage, `### Needs decision`, ambiguity, accept/reopen/defer) is prepared in advance and asked as one block — numbered questions, lettered options, recommended first (with `AskUserQuestion` where the tool exists) — never as loose questions in the chat text.
-- **The CUJ is the unit.** Every conversation/sprint/task names the journey(s) it closes; `Avancement` counts journeys proven, never tasks closed.
-- Be synthetic: bullets over paragraphs, bold the key noun, tables for >3 items, no tool-call narration. Show multi-step progress as a refreshed ⬜/🔄/✅ checklist. Match depth to stakes; flag risk early; report failures with evidence.
-- **Compress the chat, never the artifact:** terse in conversation (no filler, preambles, hedging, tool narration); full prose in committed docs, EN/FR copy and review/security verdicts. Code, commands, paths, errors and numbers verbatim everywhere. Third-party compression skills (Caveman & co.) opt-in per session, same boundary — measure before adopting (`docs/METHOD/routing-method.md` → "Output Compression").
+> Canonical: `method-core.md` → "§ Operator Reporting" — the Debrief and Flight Deck templates live
+> there and in the operator's user-level `CLAUDE.md`, never in a third copy.
+
+- **Lead with the answer**: the first line of a substantial reply is what changed. Terse in chat, full
+  prose in anything committed; code, commands, paths, errors and numbers **verbatim** everywhere.
+- **Close a substantial reply with the card of its session type** (mission · control tower · Debrief) — plain markdown, never a fenced block, ending
+  **Fait/Suite** (fate first); small → 2 lines; nothing done → none; a chantier sub-session: its fiche.
+- **A delegated sub-agent never emits the card**: it hands back a **Done / State / Next** header — the
+  3-line opener of every written artifact, PR bodies and task reports included — plus its findings,
+  and the coordinator folds them into one card.
+- **Questions are quizzes, never prose.** Every question to the operator — Cadrage, `### Needs
+  decision`, mid-build ambiguity, Recette accept/reopen/defer — is prepared in advance and asked with
+  `AskUserQuestion`: ≤ 4 questions, 2–4 options, recommended first, one consequence line each. A
+  sub-agent cannot ask: it returns a `### Needs decision` and the coordinator makes it the quiz.
+- **Surface decisions, never bury them**; never settle an irreversible, data-model or scope change
+  yourself — list it and stop.
+- **The CUJ is the unit.** Every conversation names the journey(s) it closes; `Avancement` counts
+  journeys **proven**, never an invented ratio. Report failures with evidence; never imply done.
+- **🔎 Preuve à jouer, first.** Any ask to prove or accept a journey carries one block: real clickable URL(s) ·
+  numbered steps → expected · evidence links · what is not proven. Above `➡️ Suite`; else the ask is incomplete
+  (`method-core.md` → "§ The two-moment contract").
+- **Show progress in place** (⬜ 🔄 ✅); **match depth to stakes** (routine: the 3-line header; irreversible: Why / Trade-offs / Risks).
 
 ## Operating Loop
 
 Orient (load entry files + `STATE.md`, be surgical) → **Frame = 🎯 Cadrage** (one `AskUserQuestion` fixing Journey / Proof / out-of-scope, recommended answer first, before the first edit — canonical: `docs/METHOD/method-core.md` → "The two-moment contract — Cadrage · Recette"; stop if ambiguous) → Build (smallest slice, one concern) → Prove (tests / typecheck / lint; state verify status honestly) → **Land = ✅ Recette first** (recette table + the four states `CODED`/`LANDED`/`DEPLOYED`/`PROVEN`, never merged, then the Definition of Done, `type(scope): msg`, `/land` — verify and fast-forward `main`; **no PR** unless the landing gate holds it back; `/relay` only when a slice genuinely spans windows, at a clean boundary). Higher doc wins: METHOD > VISION > PLAN > FOCUS > TASK > CODE. **The CUJ is the unit** — every conversation/sprint/task names the journey(s) it closes.
 
-## Landing (the default) — the operator does not manage PRs
+## Landing & conversation size (non-negotiable)
 
-> Canonical: `docs/METHOD/method-core.md` → "Landing (the default) & the exception list". Tool-agnostic.
+> Canonical: `method-core.md` → "§ Landing (the default) & the exception list", "§ Slice discipline".
+> Synced from the METHOD hub — change it there, never in an app.
 
-- **One conversation = one slice = one landing.** Every conversation ends on the trunk (`main`, or `master` where a repo still uses it — `land.mjs` reads `origin/HEAD`); the result is **LANDED** — `DEPLOYED` and `PROVEN` need their own evidence (there is no CI on this account, and `land.mjs` does not deploy). A pull request is the **exception** — the artifact of a decision only the operator can make — never the normal path. Nothing landed and context is filling up? The slice was too big: land what is green, then stop.
-- **The gate is local and machine-checked**, because there is no CI and no branch protection on this account. `.claude/hooks/verify-gate.mjs` classifies the diff (docs → nothing to run · tooling → `node --check` · app code → that app's `lint`/`typecheck`/`test`/`build`) and stamps `.method/verify-ok.json` **pinned to the HEAD sha**; `.claude/hooks/land.mjs` refuses to land without a green marker at the current commit, then `git push origin HEAD:main`. Fails **closed**: an app with no `typecheck`/`test`/`build` script cannot land app code, and (since 318.a) a newly added intervention or task file without `**Journey:**` + `**Proof:**` cannot land at all.
-- **Exceptions → PR + a `### Needs decision` block:** schema / Firestore rules · auth, secrets, middleware · `SOUL.md` · dependency or lockfile changes · migrations · deploy/CI wiring · >60 files or >2000 deleted lines · `[no-auto-merge]` / `[wip]` / `[hold]` / `Needs decision` in a commit · `wip` branch name · red, absent or stale verify · trunk conflict. Harmless false positive? Land it with **`[land-anyway]`** in the commit subject and say why.
-- **Never:** `gh pr merge --admin` · force-push · `git rebase` · check out the trunk · delete the marker to fake a green.
-- **On a tool with no hooks** (Cursor, Codex): run the same two scripts by hand — `node .claude/hooks/verify-gate.mjs` then `node .claude/hooks/land.mjs` — as the last step of the task, and report the landed sha. Leaving a branch behind for a human to merge is the failure mode this replaces.
+**The operator does not manage pull requests.** Every conversation ends by landing on the trunk; the
+result is **LANDED**, nothing more. **One conversation = one slice = one landing** — nothing landed and
+the context filling up means the slice was too big: land what is green, then stop.
+
+- **Close with `/land`** (`npm run land`), not `/ship`: it fetches the trunk, scans the diff against the
+  exception list, merges the trunk in, runs the verify gate (lint · typecheck · tests · build, per lane)
+  and fast-forwards. There is no CI (`SOUL.md` → Boundaries) — this local gate is the only brake.
+- **Four states, never merged:** `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`, each with its own evidence
+  (a push · a served revision · an observed run). `land.mjs` deploys nothing.
+- **Never** `gh pr merge --admin`, never force-push, never `git rebase`, never check out the trunk.
+- **Exceptions → PR + `### Needs decision`:** schema / Firestore rules · auth, secrets, middleware ·
+  `SOUL.md` · migrations · deploy wiring · `[no-auto-merge]` / `[wip]` / `[hold]` / `Needs decision` in a
+  commit · a `wip` branch. Dependencies and big diffs land alone (332.a).
+  Held back for a harmless reason? Land it with **`[land-anyway]`** and say why in the report.
 
 ## Agent definitions (single source)
 
@@ -39,24 +64,26 @@ Orient (load entry files + `STATE.md`, be surgical) → **Frame = 🎯 Cadrage**
 
 ## Model Routing (default: orchestrate high, execute cheap)
 
-> Canonical policy: `docs/METHOD/routing-method.md` → "Model Routing". Tool-agnostic — applies on Cursor, Codex, and any multi-model agent tool.
+> Canonical policy — **do not restate it here**: `docs/METHOD/routing-method.md`, whose other §§ own
+> what is not below: "§ Token economy" (incl. the `MEMORY.md` ≤ 5 kB cap and cost-per-finished-task),
+> "§ Session Telemetry Ledger", "§ Output Compression", "§ Environment awareness" (non-Claude surfaces).
 
-- **Delegation is the default, not an option.** Coordination stays in the coordinating conversation (read reports, arbitrate, decide, report to the operator); every executable, delegable piece of work leaves it as a sub-agent that returns a conclusion — including high-residue exploration. Forms and triggers (sub-agent · Workflow · parallel sessions): `routing-method.md` → "Delegation is the default".
-- **Coordinator high, delegates cheap.** The orchestrating agent runs on the strongest model the tool exposes; every delegated/sub task runs on the **cheapest model that meets its quality bar**.
-- **Tiers:** **T1** judge/plan/review/security → strongest reasoning model (Fable/Opus/GPT-5.x-class) · **T2** build/tests/ops → mid-tier coding model (Sonnet-class) · **T3** mechanical (scaffolding, renames, i18n extraction, bulk edits) → cheapest competent model (Haiku-class).
-- **Environment awareness first:** before routing, **inventory the models actually available in this tool/workspace** (Cursor: the workspace's enabled model list; Codex: the CLI's model options; Claude Code: `.claude/agents/` frontmatter + per-delegation override) and map them onto T1/T2/T3 by capability and price. Never assume a specific vendor lineup.
-- **Escalation:** one retry max at a tier, then escalate one tier. Review/security tasks never run below T1; the review runs once per slice, at the Recette. Workflow / fan-out workers each get an explicit model (default: the T2 model); review, verify and judgement workers name the T1 model explicitly — a T2 default makes forgetting cheap, not safe. Missing tier → nearest available, preferring upward. Single-model tool → run inline and flag the tier mismatch in the report.
-- **Token economy (319.a) — cost = calls × context, not output** (cache reads + writes were 85.6 % of 14 days' cost). Canonical: `routing-method.md` → "Token economy".
-  - **Review→fix loop: 2 rounds max**, then the operator decides; a re-review reads the diff only; one reviewer per point (review *or* security, not both on the same findings); full gates (suite, build, e2e) once at the end of the slice. (One loop ran 5 rounds and cost 34 % of a ~$610 session.)
-  - **Tiers beat modes** — no session mode ("ultra", "cost is not a constraint") overrides T1/T2/T3 (57/70 sub-agents ran on the T1 model under one).
-  - **Fan-out announces its cost first** — agents × expected calls, as a share of the weekly quota — and stays **< 10 agents** unless the operator agrees (fan-out was 37.5 % of cost). A general-purpose sub-agent runs on T2 unless its task is judgement ($11.5/agent on T1 vs $4.1 on T2).
-  - **Minimal sub-agent context** — pass file paths, never pasted inventories; images only to the design or proof agent, only the needed ones; cap tool calls in the brief (≈ 55 calls per sub-agent on average, each re-reading ≈ 200–260k tokens).
-  - **Memory index ≤ 5 kB** (`MEMORY.md` or the tool's equivalent), one-line pointers — it is loaded every turn.
-  - **Cost per finished task** is the unit: a cheaper tier that needs three passes is not cheaper.
-
-### Session Telemetry Ledger
-
-Each checkout keeps a local `docs/project/telemetry/sessions.jsonl` — gitignored; hooks no longer commit the ledger (318.a), and the file becomes untracked in a follow-up once every checkout runs the 318.a hooks — append-only, one row per invocation (dedupe by `sessionId`, keep the newest, never sum) — with tokens, message counts, duration, model(s) and a best-effort sprint, so the tiers above can be checked against real usage instead of vibes; the hub aggregates with `npm run telemetry:report`. **Automated on Claude Code** (a Stop hook appends it); **no equivalent on Cursor or Codex** — pull the numbers from `/usage` (Codex) or the usage dashboard (Cursor) and append the same fields by hand in the task report. Schema: `docs/METHOD/routing-method.md` → "Session Telemetry Ledger".
+- **Delegate on the four-condition test, not by default.** Send work out when it is
+  **verbose-and-discardable**, **self-contained** (one brief, no back-and-forth), **summarisable**, or
+  **needs a tool restriction**. Stay **inline** for back-and-forth, shared multi-phase context and
+  small targeted edits — a spawn costs 60–75 k tokens before it reads anything.
+- **Tiers:** **T1** judge/plan/review/security/METHOD release → `opus` · **T2** build/prove/ops/design/
+  copy/study → `sonnet` · **T3** mechanical (scaffolding, renames, i18n, bulk edits) → `haiku`. One
+  retry per tier, then escalate one. **Tiers beat modes**: Ultracode or "cost is no constraint" never
+  overrides them.
+- **Name `model` explicitly** on every sub-agent and Workflow worker — unnamed runs `sonnet`. **Review,
+  security and judgement never below T1**; `vera` once per slice, not per task.
+- **Review→fix loop: 2 rounds max**, then the operator decides. A re-review reads the diff only; one
+  reviewer per point; full gates (suite, build, e2e) once, at the end of the slice.
+- **Workflow at ≥ 3 near-identical items** + a verification pass; it announces its cost at Cadrage and
+  stays **< 10 agents** unless the operator agrees.
+- **≥ 2 code-writing slices = a chantier**; inside a slice, a parallel session only on an **observed**
+  trigger (`sprints-method.md` → "§ The chantier").
 
 ## Tech Stack
 

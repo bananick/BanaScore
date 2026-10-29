@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 324.c  
-**Last Updated:** 2026-10-18  
+**Version:** 333.a  
+**Last Updated:** 2026-10-24  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -12,12 +12,17 @@
 
 ### By Agent
 
-> Cohort = **13 active mandates** (`.claude/agents/*.md` canonical + Desktop Skill stubs), plus
-> **3 dormant** agent files listed below the table — not loaded, not delegable. An agent earns a
-> name when its mandate is one you would otherwise have to retype.
-> **Riley** (API/automation) is a demoted advisory hat — no sub-agent, no routing row. An app
-> MAY still re-use a demoted name as a repo-specific domain owner, if its business pack declares it
-> (`agents-method.md` → "Domain owners & the business pack (app-level)").
+> Cohort = **18 active mandates** — `.claude/agents/*.md`, the only surface since 327.a deleted the
+> fourteen Desktop Skill stubs — plus **3 dormant** agent files listed below the table, not loaded,
+> not delegable. An agent earns a name when its mandate is one you would otherwise have to retype.
+> **327.a** added `maya` (UX research & IA), `alba` (brand & visual assets) and `hugo` (METHOD
+> tooling), and cut `nova` from 25 assignments to nine
+> (`docs/interventions/2026-10-19-Lucia-cohort-restructure.md`). **333.a** added `stella` (organic
+> visibility), who takes `seo-audit` and `search-growth` from `gordon`.
+> **There are no advisory hats.** The last one, Riley (API/automation), was removed in 327.a —
+> integration is building, so it is `brian`'s. An app MAY still re-use a removed name as a
+> repo-specific domain owner if its business pack declares it (`agents-method.md` → "Domain owners
+> and the business pack (app-level)"); those rows are app-level and never enter this table.
 
 | Agent   | Mandate     | Sub-agent              | Default model | Entry Files                                                       |
 |---------|-------------|------------------------|---------------|-------------------------------------------------------------------|
@@ -27,13 +32,18 @@
 | Watson  | repair      | `watson`               | sonnet        | `method-core.md` → `tests-method.md` → `project/STATE.md`        |
 | Kasper  | guard       | `kasper`               | opus          | `method-core.md` (Security Baseline) → `project/SCHEMA.md` → the diff |
 | Vera    | judge       | `vera` (read-only)     | opus          | `method-core.md` → `design-method.md` → `templates/REVIEW-TEMPLATE.md` → task file |
-| Nova    | draw        | `nova`                 | sonnet        | `design-method.md` → `project/DESIGN.md`                          |
+| Maya    | UX research & IA | `maya` (specs only, no Bash) | opus      | `design-method.md` (Navigation Taxonomy, Adaptive Layout, State Preservation, Content-Level Layout) → `project/DESIGN.md` → `SOUL.md` (Personas) |
+| Nova    | design system | `nova`              | sonnet        | `design-method.md` → `project/DESIGN.md`                          |
+| Alba    | brand & visual assets | `alba`      | sonnet        | `design-method.md` (Logo & Brand Identity, Icon System, Visual Identity Pillars) → `docs/project/brand/` |
 | Gordon  | commercial & growth | `gordon`       | sonnet        | `agents-method.md` → `project/VISION.md` → `docs/growth/`         |
 | Iris    | study & deliverables | `iris` (read-only on code) | sonnet | `method-core-lite.md` → `project/STATE.md` → the object of study |
-| Lucia   | METHOD release | `lucia`             | opus          | `versioning.md` → `METHOD.md` → the files the change touches      |
+| Hugo    | METHOD tooling | `hugo`              | sonnet (opus for gate semantics) | `method-core.md` (Landing & the exception list) → `versioning.md` (Sync Protocol, Sync Tools) → the tool + its test |
+| Lucia   | METHOD release + the operating model | `lucia` | opus      | `versioning.md` → `METHOD.md` → the files the change touches      |
 | Penny   | token economy | `penny` (read-only on code) | sonnet | `routing-method.md` → `docs/project/telemetry/` → the ledgers |
 | Oscar   | coach         | `oscar` (read-only on code) | opus | `method-core.md` → `project/STATE.md` + `FOCUS.md` → the week's evidence |
 | Régine  | régie       | `regine`               | sonnet        | `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention |
+| Lise    | tone & voice | `lise` (writes only under `docs/project/brand/tone/`) | opus | `tone-method.md` → the repo's `docs/project/brand/tone/` → the last 20 rows of `LOG.md` |
+| Stella  | organic visibility | `stella` (writes only under `docs/growth/`) | sonnet | `agents-method.md` → `docs/analysis/2026-10-24-organic-visibility-study.md` → the skill run → `docs/growth/` |
 
 > **The `Entry Files` column above is the pointer map, not the load list (324.c).** The canonical, section-scoped
 > form — `file → "§ Section"`, with its `read ≤ 12 kB of reference` cap — is the `Entry files:` line of each
@@ -82,7 +92,7 @@ a `git mv` and a release — the operator's call.
 | `/retro`        | the coordinator | The weekly coaching pass (or on demand after a slice that closes a journey) — never once per Debrief | `penny` (sonnet) → `oscar` (opus) |
 | `/clean`        | the coordinator | Run Régine on demand, as a sub-agent: rescue before archive, sidebar contract (pin-while-waiting), clocks, WIP limits, caches — her table back in ≤ 10 lines | `regine` (sonnet) |
 | `/project`      | the coordinator | Open a chantier by the contract: Cadrage, partition map, sidebar group, one task chip per slice, then the supervisor loop | — |
-| `/port` *(optional)* | Nova/Brian | Port one screen from the app's living `proto/` directive — one screen = one land | `brian` |
+| `/port` *(optional)* | Maya (order) / Nova (design side) / Brian (implementation) | Port one screen from the app's living `proto/` directive — one screen = one land | `brian` |
 | `/relay` *(optional)* | the coordinator | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
 
 > Rituals (11), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
@@ -102,15 +112,38 @@ a `git mv` and a release — the operator's call.
 > available on its surface; every delegated task runs on the **cheapest model that meets the
 > task's quality bar**. Cost is a routed variable, not an afterthought.
 
-### Delegation is the default (standing order — comes before the tiers)
+### When to delegate — the four-condition test (standing order, comes before the tiers)
 
-**Never do yourself, in the coordinating conversation, work a cheaper agent can deliver.**
-Coordination stays put: the conversation reads reports, arbitrates, decides, reports to the
-operator. Everything executable and delegable leaves it — building, testing, fixing, high-residue
-exploration (finding where a thing lives, reading ten files to extract three lines, mapping a repo),
-bulk mechanical edits. **This is the default, not an option**; doing delegable work inline is the
-exception you must justify. Offloading context is a goal in itself — the coordinator's context
-carries the decision, not the raw material.
+**Replaces "delegation is the default, not an option" (325.c).** That order was written to stop the
+coordinator doing cheap work on an expensive model, and it did — but it also sent work out that a
+sub-agent cannot do well, and it priced a spawn at zero. Over the study window **1,154 delegations went
+to `general-purpose`**, and a spawn costs **60–75 k tokens of context before it reads anything**. So the
+question is no longer "can this be delegated?" but "does this *fit* a sub-agent?".
+
+**Delegate when the work is any of these four:**
+
+| Condition | Why it fits a sub-agent |
+|---|---|
+| **Verbose-and-discardable** | the output is bulk you read once and throw away — logs, a file sweep, a search across a tree; only the conclusion comes back |
+| **Self-contained** | one brief is enough: no clarification, no mid-flight steer, nothing the operator must answer |
+| **Summarisable** | a conclusion, a verdict or a list *is* the deliverable — not a running commentary |
+| **Needs a tool restriction** | the work should run read-only, or without network, or scoped to one directory |
+
+**Stay inline when:**
+
+- the work needs **back-and-forth** — with the operator, or with its own findings (a sub-agent cannot
+  ask: `AskUserQuestion` is not in its tools, and a `### Needs decision` round-trip costs a whole spawn);
+- it shares **multi-phase context** with what the conversation is already holding — later phases depend
+  on earlier ones, and re-briefing costs more than doing it;
+- it is a **small targeted edit** — a one-line lookup, a known-file change, a handful of tool calls. The
+  spawn costs more than the work.
+
+**Offloading context is still a goal**, and a high-residue exploration that meets the four conditions
+(mapping a repo, reading ten files to extract three lines) is exactly what a sub-agent is for — it
+returns the conclusion and keeps the coordinator's context for the decision. What changed is the
+default: **inline unless the work fits**, not **delegate unless you can justify not to**.
+
+The tiers below are unchanged, and they still bind every delegation that does happen.
 
 | Form | When | Cost |
 |---|---|---|
@@ -130,11 +163,11 @@ Nothing else justifies a second window — not size, not an estimate, not "it lo
 
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
-- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`, `oscar`
-- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`, `regine`
+- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`, `oscar`, `lise`, `maya`
+- **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`, `regine`, `alba`, `hugo`, `stella` (`hugo` → opus when the change is to **gate semantics**: what greens a landing, what fails closed)
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
 - **Opus by override (318.a):** `nova` for a deep UX-architecture study · `gordon` for a pricing or
-  positioning recommendation · `iris` for a ranked recommendation the operator will act on
+  positioning recommendation · `stella` for a ranked organic-visibility strategy · `iris` for a ranked recommendation the operator will act on
 - **Dormant agents** (`teddy`, `aiko`, `april`) are not loaded, so they have no tier to route to.
 
 **Why 318.a moved Nova and Gordon to sonnet.** Over 120 days opus produced **61.4%** of output tokens

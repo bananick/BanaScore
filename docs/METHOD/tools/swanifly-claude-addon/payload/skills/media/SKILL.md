@@ -1,12 +1,14 @@
 ---
 name: media
-description: Produce and manage visual assets — search images, generate or rework imagery, resize and export for UI, prototypes, and marketing. Use when the user says "find an image", "make a hero image", "generate an icon/illustration", "resize this", or "export at 2x", or needs assets for a screen or campaign. Owned by Nova; wires real asset URLs into Storage, never fakes venue data.
+description: Produce and manage visual assets — search images, generate or rework imagery, resize and export for UI, prototypes, and marketing. Use when the user says "find an image", "make a hero image", "generate an icon/illustration", "resize this", or "export at 2x", or needs assets for a screen or campaign. Owned by Alba; wires real asset URLs into Storage, never fakes venue data.
 ---
 
-# /media — Visual Asset Ops (Nova)
+# /media — Visual Asset Ops (Alba)
 
 Search, create, rework, and export visual assets. This is the capability layer for the
-design / marketing surface — **Nova** owns it. (Not a persona: a skill any agent can call.)
+brand / marketing surface — **Alba** owns it since 327.a (it was Nova's while she also carried the
+brand; the logo, the icon system and imagery are Alba's now, and the design system is Nova's).
+Nova still rules on whether an asset fits the token contract. (Not a persona: a skill any agent can call.)
 
 ## When to use
 - **Find** — source an image / photo / icon (web search, stock, brand assets).

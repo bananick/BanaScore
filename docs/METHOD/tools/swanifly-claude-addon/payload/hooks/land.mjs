@@ -46,10 +46,16 @@
  * is refused outright — the gate cannot finish inside a hook budget, and a killed hook would leave an
  * orphan verify holding the lock for nothing. `--lock-wait <min>` (default 180) is the manual queue budget.
  *
+ * Two heavy gates at a time per MACHINE (334.a, after Windows ran out of virtual memory on 2026-10-26 with gates of
+ * several repositories at once): the verify child takes one of the two heavy slots of `~/.claude/heavy-slot/`
+ * (heavy-slot.mjs) after this repository lock, and gives it back when its heavy phase ends. A slot wait that runs
+ * out (`--slot-wait <min>`, default 40) is answered like a busy lock — `heavy-slot busy`, nothing ran, no push, no PR.
+ *
  * Usage:
  *   node .claude/hooks/land.mjs                  # land this branch          (`npm run land`)
  *   node .claude/hooks/land.mjs --lane docs      # only if no app code is in the diff
  *   node .claude/hooks/land.mjs --lock-wait <min> # how long to queue for the gate lock (default 180)
+ *   node .claude/hooks/land.mjs --slot-wait <min> # how long verify queues for a machine heavy slot (default 40)
  *   node .claude/hooks/land.mjs --auto           # hook mode: quiet, always exits 0
  *   node .claude/hooks/land.mjs --sweep          # every open PR + what blocks it, then every local branch/worktree
  *   node .claude/hooks/land.mjs --sweep --apply  # ...and squash-merge the clean PRs (the local branch section stays read-only;
@@ -133,12 +139,16 @@ const LOCK = await import('./gate-lock.mjs').catch(() => null);
 // The landing's lock handle, module-scoped so blocked() / the post-push step can give it back early.
 let landLock = null;
 const LOCK_WAIT_MIN = (() => { const m = Number(flag('lock-wait', 180)); return Number.isFinite(m) && m >= 0 ? m : 180; })();
+const SLOT_WAIT_MIN = (() => { const m = Number(flag('slot-wait', 40)); return Number.isFinite(m) && m >= 0 ? m : 40; })();
 
 /**
  * The "sauf exception" catalogue — machine-checked, fail-closed. Anything here
  * lands only under a human eye, because getting it wrong is expensive or
  * irreversible. Everything NOT here lands automatically.
  */
+// 332.a: a dependency/lockfile change or a big diff no longer waits for the operator — the verify gate (lint ·
+// typecheck · tests · build) is the brake. Explicit holds, conflicts and the security class below still block.
+const BENIGN = /^(deps|scale):/;
 const EXCEPTIONS = [
   { id: 'schema', why: 'data model / Firestore schema or rules', test: (f) => /SCHEMA\.md$/i.test(f) || /(^|\/)schemas?\//.test(f) || /\.zod\.(ts|js)$/.test(f) || /(firestore|storage)\.(rules|indexes\.json)$/.test(f) },
   { id: 'security', why: 'auth, secrets or middleware', test: (f) => /(^|\/)(auth|middleware)\//.test(f) || /(^|\/)\.env(?!\.example)/.test(f) || /serviceAccount/i.test(f) || /(^|\/)security\//.test(f) },
@@ -199,8 +209,10 @@ function landCurrentBranch() {
     return done({ landed: false, quiet: true, reasons: ['app code in the diff — needs an explicit /land at slice close'] });
   }
 
-  if (reasons.length && !override) return blocked(branch, reasons);
+  const blocking = reasons.filter((r) => !BENIGN.test(r));
+  if (blocking.length && !override) return blocked(branch, reasons);
   if (override && reasons.length) log(`⚠ overriding ${reasons.length} exception(s) — [land-anyway]`);
+  else if (reasons.length) log(`auto-landing past ${reasons.length} benign exception(s) — the verify gate still runs: ${reasons.join(' · ')}`);
 
   // A heavy gate cannot finish inside a hook budget (SessionEnd 900 s; lint + type-check + test:gate
   // + build is 20+ min) and a killed hook leaves an orphan verify holding the lock for nothing.
@@ -258,14 +270,17 @@ function landCurrentBranch() {
   const verify = spawnSync(process.execPath, [join(HOOKS, 'verify-gate.mjs'), '--base', base, ...(AS_JSON || AUTO ? ['--quiet'] : []),
     // Only reached WITHOUT the lock when land itself ended up without it (lib missing / threw) — verify then queues
     // on its own, and must not out-wait the budget land was given: a hook never queues, a manual run keeps --lock-wait.
-    '--lock-wait', String(AUTO ? 0 : LOCK_WAIT_MIN)], {
-    stdio: AS_JSON || AUTO ? 'ignore' : 'inherit', timeout: 4 * 30 * 60_000,
+    '--lock-wait', String(AUTO ? 0 : LOCK_WAIT_MIN),
+    // The machine-wide heavy slot is verify's own to take (334.a); its wait is added to the outer cap below.
+    '--slot-wait', String(AUTO ? 0 : SLOT_WAIT_MIN)], {
+    stdio: AS_JSON || AUTO ? 'ignore' : 'inherit', timeout: (4 * 30 + (AUTO ? 0 : SLOT_WAIT_MIN)) * 60_000,
   });
   const marker = readMarker();
   const head = out(['rev-parse', 'HEAD']);
-  // Verify could not get the lock (only possible when land holds none): same answer as a busy lock.
-  if (marker && marker.sha === head && marker.lock?.denied) {
-    const why = (marker.reasons ?? []).find((r) => /^gate lock busy/.test(r));
+  // Verify could not get the repository lock (only possible when land holds none) or a machine heavy slot: nothing
+  // ran, nothing is wrong with the work — the same answer as a busy lock (no push, no PR, just /land again).
+  if (marker && marker.sha === head && (marker.lock?.denied || marker.heavySlot?.denied)) {
+    const why = (marker.reasons ?? []).find((r) => /^(gate lock busy|heavy-slot busy)/.test(r));
     return busy(why ? why.replace(/^gate lock busy/, 'gate busy') : 'gate busy — verify could not get the gate lock');
   }
   if (verify.status !== 0 || !marker || marker.verdict !== 'green' || marker.sha !== head) {
@@ -496,6 +511,7 @@ function sweepPrs() {
     if (ageDays > 30) reasons.push(`stale: ${ageDays} days old — decide it, don't merge it blind`);
     rows.push({ ...pr, ageDays, reasons, clean: reasons.length === 0 });
   }
+  for (const r of rows) r.clean = r.reasons.every((x) => BENIGN.test(x));
   const clean = rows.filter((r) => r.clean);
   if (!AS_JSON) {
     log(`\n${rows.length} open PR(s) · ${clean.length} auto-landable\n`);
@@ -539,11 +555,15 @@ function bodyFile(text) {
 function done(result) {
   if (AS_JSON) console.log(JSON.stringify(result, null, 2));
   else if (!result.quiet) {
-    if (result.landed) log(`\n🚀 ${result.reasons[0]}`);
-    else if (result.blocked) {
+    if (result.landed) {
+      log(`\n🚀 ${result.reasons[0]}`);
+      log('→ next: npm run session:close -- --apply (METHOD 336.a)');
+    } else if (result.blocked) {
       log('\n⛔ held back — not landed:');
       for (const r of result.reasons) log(`  – ${r}`);
       if (result.url) log(`  → ${result.url}`);
+      // 336.a: a hold kasper can judge (schema / security / migration / infra — not soul, hold, red verify, conflict) has a next step.
+      if (result.pr && result.reasons.length && result.reasons.every((r) => /^(schema|security|migration|infra):/.test(r))) log(`→ next: run kasper (opus) on PR #${result.pr}, write .method/kasper/pr-${result.pr}.json, then npm run session:close -- --pr ${result.pr}`);
     } else if (!SWEEP) log(`· ${result.reasons?.[0] ?? 'nothing to do'}`);
   }
   if (AUTO && result.landed) console.log(JSON.stringify({ systemMessage: `🚀 landed on ${TRUNK}: ${result.reasons[0]}` }));

@@ -15,9 +15,10 @@ pass to her as a sub-agent so this conversation's context stays small, and relay
    on-demand pass —
    - **rescue before archive** (a `wip(rescue) … [wip]` commit pushed on the session's own branch;
      a refused push means no archive);
-   - the **sidebar contract**, including pin-while-waiting (rule 1: pin every non-supervisor session
-     whose title ends with `· 🟡`, unpin those whose title no longer has it, never a supervisor);
-   - the **clocks** (a title ending with `· 🟡` is never 💤 and never archived — reported when waiting
+   - the **sidebar contract**, including pin-while-waiting (rule 1, 329.a: pin every session whose
+     title ends with `· 🟡` or `· 🔴`, unpin those whose title no longer has it and every supervisor that is
+     top-level and filed — a nested supervisor keeps its pin);
+   - the **clocks** (a title ending with `· 🟡` or `· 🔴` is never 💤 and never archived — reported when waiting
      > 48 h) and the **WIP limits**;
    - **`fleet-clean --apply --caches-only`** with a protect file built from `list_sessions` (she
      runs the hub's script from `origin/main`; worktrees are removed by `clean_up_worktrees`, never
@@ -30,4 +31,4 @@ pass to her as a sub-agent so this conversation's context stays small, and relay
    > 48 h, any deletion she recommends) becomes **one `AskUserQuestion` batch** — at most 4
    questions, recommended option first, one line of consequence each. Nothing flagged → no question.
 
-She archives, never deletes; she never lands or edits product code. Nothing else happens in `/clean`.
+She archives, never deletes work (integrated branches go through `branch-sweep.mjs` only); she never lands or edits product code. Nothing else happens in `/clean`.

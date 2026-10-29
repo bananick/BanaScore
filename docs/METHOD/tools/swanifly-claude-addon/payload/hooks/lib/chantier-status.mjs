@@ -3,12 +3,13 @@
 //
 // validateFiche() is the HAND-ROLLED MIRROR of docs/METHOD/templates/chantier-status.schema.json
 // (schema `chantier-status/1`; 322.g added `decisions[].reversible` / `deadline` / status `defaulted` and
-// `review[].needsOperator`, all required — a fiche written before 322.g adds them on its next write).
+// `review[].needsOperator`, all required — a fiche written before 322.g adds them on its next write;
+// 330.b added `review[].urls` (required when kind is result) and `review[].notProven`, same mechanic).
 // Change the schema and this file together;
 // tests/chantier-status.lib.test.mjs fails if the enums, required fields or caps drift apart.
 
-/** The 12 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
-export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar', 'regine'];
+/** The 18 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
+export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar', 'regine', 'maya', 'alba', 'hugo', 'lise', 'stella'];
 /** `agent` = a cohort id or a domain owner declared in the app's business pack (docs/project/business/README.md): a lowercase slug. */
 export const AGENT_RE = /^[a-z][a-z0-9-]{1,23}$/;
 export const STATES = ['planning', 'working', 'waiting', 'blocked', 'landed', 'parked'];
@@ -122,7 +123,7 @@ function checkQuestion(errs, q, path) {
 }
 
 function checkReview(errs, r, path) {
-  if (!obj(errs, path, r, { id: true, kind: true, what: true, evidence: true, script: true, questions: true, needsOperator: true, status: true, feedback: false })) return;
+  if (!obj(errs, path, r, { id: true, kind: true, what: true, evidence: true, script: true, questions: true, needsOperator: true, status: true, urls: false, notProven: false, feedback: false })) return;
   fields(r, path, {
     needsOperator: (v, p) => bool(errs, p, v),
     id: (v, p) => str(errs, p, v, 16),
@@ -130,10 +131,14 @@ function checkReview(errs, r, path) {
     what: (v, p) => str(errs, p, v, 200),
     evidence: (v, p) => arr(errs, p, v, (s, x) => str(errs, x, s, 200)),
     script: (v, p) => str(errs, p, v, 600, { min: 0 }),
+    urls: (v, p) => arr(errs, p, v, (s, x) => str(errs, x, s, 300), { min: 1 }),
+    notProven: (v, p) => str(errs, p, v, 300, { min: 0 }),
     questions: (v, p) => arr(errs, p, v, (q, x) => checkQuestion(errs, q, x), { min: 1, max: 3 }),
     status: (v, p) => oneOf(errs, p, v, ['open', 'accepted', 'reopened', 'deferred']),
     feedback: (v, p) => str(errs, p, v, 500, { nullable: true, min: 0 }),
   });
+  // 330.b: a result carries the clickable URL(s) to open — the 🔎 Preuve à jouer block's "where".
+  if (r.kind === 'result' && !('urls' in r)) errs.push(`${at(path, 'urls')}: missing (required when kind is result)`);
 }
 
 /**

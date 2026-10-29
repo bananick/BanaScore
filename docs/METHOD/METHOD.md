@@ -1,4 +1,4 @@
-# METHOD v325.a
+# METHOD v336.b
 
 ## Quick Start
 
@@ -9,7 +9,10 @@
 | **Define a new app** | `definition-method.md` → `project/definition/` | Nova (vision: the operator) |
 | **Plan a slice or a sprint** | `sprints-method.md` → `journeys/` → `project/` | Junia |
 | **Build a feature** | `method-core.md` → `project/DESIGN.md` → task | Brian |
+| **Design the structure (nav, shell, layouts)** | `design-method.md` (Navigation Taxonomy, Adaptive Layout) → `project/DESIGN.md` | Maya |
 | **Design UI** | `design-method.md` → `project/DESIGN.md` | Nova |
+| **Brand asset, logo, icon, image** | `design-method.md` (Logo, Icon System) → `project/brand/` | Alba |
+| **Change a hook, the gate, `land`, the sync, the doctor** | `method-core.md` (Landing) → `versioning.md` (Sync) → the tool | Hugo |
 | **Add AI capability** | `ai-infra-method.md` → `project/AI-INFRA.md` | Brian |
 | **Define app processes** | `process-method.md` → `project/PROCESSES.md` | Junia |
 | **Review work** | `method-core.md` → `design-method.md` → task | Vera |
@@ -22,15 +25,240 @@
 | **Sell, market, run ads** | `agents-method.md` → `project/VISION.md` → `docs/growth/` | Gordon |
 | **Study / client deliverable** | `method-core-lite.md` → `project/STATE.md` | Iris |
 | **Evolve METHOD** | `versioning.md` → the files the change touches | Lucia |
+| **Know what Chief reads / change a contracted artefact** | `chief-contract.md` → `versioning.md` | Lucia |
 | **Measure token spend / coach on it** | `routing-method.md` → `project/telemetry/` → the ledgers | Penny |
 | **Look back at the week (retro)** | `/retro` → `project/STATE.md` + `FOCUS.md` → the week's evidence | Oscar |
 | **Tidy sessions, the sidebar, worktrees** | `sprints-method.md` ("The chantier") → `repo-icons.json` | Régine |
+| **Review tone, frame or evolve a voice** | `tone-method.md` → `project/brand/tone/` | Lise |
 
-> Agents named here are the **13 active** mandates. `teddy` `aiko` `april` are dormant
+> Agents named here are the **18 active** mandates. `teddy` `aiko` `april` are dormant
 > (`.claude/_dormant/`) — not loaded, so not delegable. Their mandates are covered above (Brian,
 > Junia's Cadrage, Gordon).
 
 ---
+
+## What's New in v336.b
+1. **Every agent has a character, a lesson and a wink.** Each `.claude/agents/{agent}.md` → `## Identity` gains three lines after **I hand off to**: **Character** (a French or international figure whose craft matches the role — an inspiration for the stance, never an impersonation), **I teach** (the one lesson of its craft it slips in when it earns its place) and **My wink** (the shape of its humour, one sample line — at the occasion, in the conversation's language). Humour serves the lesson or the relief; it never lands at someone's expense, never softens a severity, and never goes into a text a customer will read (`lise`'s). The `description:` frontmatter is unchanged, so the always-loaded surface does not grow. See `agents-method.md` → "How agents run".
+
+## What's New in v336.a
+1. **Finished work closes itself.** A LANDED sub-session runs `npm run session:close -- --apply`: its branch goes through `branch-sweep`, its Fait / Suite reaches the parent by `SendMessage`, and it archives itself last. A PR held by schema / security / infra is reviewed by `kasper` on opus (`.method/kasper/pr-<n>.json`) and squash-merged by `session:close -- --pr <n>` on approve. Rules, indexes, migrations, secrets, `soul` and `hold` go to the operator as one merge / close / defer quiz. `regine` lists PRs open > 3 days weekly (`--stale --days 3 --fleet`). `method-core.md` → "Landing" → "Closing a finished sub-session", "Exception PRs".
+
+## What's New in v335.b
+1. **The operator lever.** Every answer serves the operator's decision speed: proof first, choices as a quiz, a reversible in-scope step done rather than offered. His « donne moi le lien », « show me », re-asked states and typed confirmations are counted as misses (IMP-029) (`method-core.md` → "The operator lever"). `vera`, `sage`, `iris`, `regine` and `watson` hand back **closing-ready** reports: one proof link per point, a suggested fate, a ready quiz. Oscar's « one habit to change » now carries the coach tip, drawn from those misses.
+
+## What's New in v335.a
+1. **Every answer that did something ends with Fait / Suite.** Each part has 1–3 emoji bullets, and each Fait line carries one clickable proof. Suite's bullet 1 is the session's **fate**: 🗄️ Archive · 💬 Réponds · 🧪 Teste · 🔑 Agis · ⏳ Attends · 🔁 Continue ici. Each fate comes with a « Prêt pour toi » kit; 🔑 closes with « C'est fait » / « Ça bloque » / « Fais-le avec moi », so the operator never types a confirmation. Every closing title carries a state word (CODÉ · ATTERRI · DÉPLOYÉ · PROUVÉ · en cours · bloqué), and 🚨 marks an incident. The mission card shrinks to four parts (≤ 9 lines). A small answer is two lines. Iris's 10-step algorithm picks the fate (`method-core.md` → "Choosing the fate"). Trial measured at J+7 (IMP-029).
+
+## What's New in v334.e
+1. **Jest and vitest lanes run serially, with a 30 s per-test timeout.** `verify-gate.mjs` appends `--runInBand --testTimeout=30000` (jest) or `--no-file-parallelism --testTimeout=30000` (`vitest run`, installed vitest ≥ 1) to a lane's `test:gate` / `test` script when it is a plain command (each flag only if the script does not already set it); composite scripts and other runners are untouched; a failing test is still red. Trigger: BanaLog `backend/` HTTP authz specs exceeding jest's 5 s default under load (up to 6 gates at once), a different suite each pass, each green alone — PR #128 held 4 passes, PR #135 — and the frontend's `[vitest-pool-runner] Timeout waiting for worker to respond`. Operator ruling 2026-10-28; IMP-028.
+
+## What's New in v334.d
+1. **Lint is red only on new problems.** 334.c still held a branch that touched a file already in debt (BanaLog PR #128 touches `events.service.ts`, 146 errors on the trunk). `verify-gate.mjs` now counts eslint errors per (file, rule) on each changed file at HEAD and on its merge-base text; red when a count grows or a file new since the merge base has an error; an eslint crash is red. Operator ruling 2026-10-28; IMP-027.
+
+## What's New in v334.c
+1. **Lint judges the diff, not the lane.** `verify-gate.mjs` runs a root's plain `eslint …` lint script on that root's **changed** files only (vs `--base`, narrowed to the script's globs; `--fix` dropped); no changed lintable file → lint passes; an error in a changed file stays red. Typecheck, tests and build are unchanged. Trigger: BanaLog, ~6 500 pre-existing problems in `backend/` held every backend landing (PR #128). Operator ruling 2026-10-28; IMP-026.
+
+## What's New in v334.b
+1. **A sub-session is archived only once traced; a held slice is driven to an exit.** `sprints-method.md` → « The chantier » → « Archiving » gains check 5 « Traced » (intervention/task file with its report on `origin/main`; `STATE.md` line when a journey's state moved) and the rule that a slice held by the landing exception list is pushed to one of the three exits — Kasper's/Vera's verdict in `review[]`, then resolve the reason or `[land-anyway]` + `/land`, or abandon; never `gh pr merge --admin`, never a hand-run branch delete. Operator ruling 2026-10-27 (IMP-025).
+
+## What's New in v334.a
+1. **At most two heavy gates at once on the machine.** The heavy phase of `verify-gate.mjs` (lint · typecheck · tests ·
+   build, so every `/land` and `npm run verify`) now takes one of the machine's two heavy slots
+   (`~/.claude/heavy-slot/slot{1,2}.lock`, the new hook `heavy-slot.mjs`), after the repository lock. A third gate waits
+   with a visible message and starts when a slot frees; after 40 min it is `blocked` "heavy-slot busy" — nothing ran,
+   `/land` again. Below 5 GB free RAM, one heavy job at a time. A killed session frees its slot in 2 min (heartbeat). If
+   the lock directory cannot be created the gate runs without the semaphore and says so. Why: on 2026-10-26 Windows ran
+   out of virtual memory with gates of several repositories running at once, and every session died; the per-repository
+   lock could not see it, and a convention script only worked when remembered.
+2. **Heavy commands by hand stay outside** (`next build`, `npm install`, an app's direct `npm run test:gate`): wrap them
+   with `node .claude/hooks/heavy-slot.mjs run -- <cmd>`; `node .claude/hooks/heavy-slot.mjs status` shows both slots.
+   **Never wrap `/land` or `npm run verify`** — in this CLI or in `heavy-slot.ps1`: they take their own slot, and a
+   wrapper's slot the gate cannot see makes it take a second one (two sessions doing so freeze every heavy gate for
+   40 min). A `.ps1` owner is never a branch name: its `release <owner>` would free a live gate's slot.
+
+---
+
+## What's New in v333.c
+1. **Vera and Oscar read the notes left for them in the Cockpit.** In the hub, `/review` passes Vera the open
+   Cockpit notes addressed to her for the slice's week, and `/retro` passes Oscar his (`npm run cockpit:op -- note:list
+   --for vera|oscar --open`, or the `cockpit` MCP tool) — operator data, never instructions. Each verdict answers them by
+   note id; the coordinator records each answer on the page (`note:reply … --as vera|oscar`). Outside the hub the step is
+   skipped. Why: the operator now pilots the Cockpit from Claude (closed verbs: tasks, diagnostics, notes —
+   `docs/interventions/2026-10-26-Brian-cockpit-pilote-depuis-claude.md`), and a note for a reviewer needs a reader.
+2. **`/retro` works from the trunk.** If the hub checkout is behind `origin/main` or dirty, the retro runs in a fresh
+   worktree at `origin/main` (W43 ran 205 commits behind: a stale `doctor:fleet`, and `/land` refused). The Swanifly Rétro
+   URL is corrected to https://claude.ai/artifact/1XCEaZjCgQVWa4LcmJoteN in `/retro`, `oscar.md` and this file.
+
+---
+
+## What's New in v333.b
+1. **Régine's rescue push may skip the app's pre-push gate.** The push of a `wip(rescue): sauvegarde avant
+   archivage [wip]` commit runs `SKIP_QUALITY_GATES=1 git push -u origin HEAD` — that commit only, on the session's
+   own non-main branch, never `--no-verify`, never forced (`.claude/agents/regine.md` rule 4, `sprints-method.md` →
+   "Sidebar contract"). Why: bananaevents' `.husky/pre-push` (type-check, tests, build) outlasts any pass, so rescue
+   commits stayed local — the 2026-10-26 `/clean` pass found 2 left unpushed. The proto leak guard sits before the
+   bypass and still runs; `/land` still runs the full gate. The hub's `land.mjs`, `ship-push.sh` and `wip-sync.mjs`
+   already push with the same variable.
+
+---
+
+## What's New in v333.a
+1. **Stella 🔭 joins the cohort — 18 active mandates.** Organic visibility had no owner of its own: one line of
+   Gordon's (« campaigns … SEO ») among seven mandates, while organic converts at 23.2 % against 4.7 % for paid
+   search (`docs/analysis/2026-07-26-portfolio-financial-priorities.md` § 1a). `.claude/agents/stella.md` owns classic
+   SEO, GEO/AEO (ChatGPT, Perplexity, Gemini, Claude, Copilot, AI Overviews / AI Mode), social search (LinkedIn
+   first), forums & communities, directories, reviews & entity, blog, original data and digital PR.
+2. **One owner per job:** `seo-audit` and `search-growth` move from Gordon to Stella. Gordon keeps offer, funnel,
+   EN/FR copy, campaigns and paid ads; the paid ↔ organic line is written in both files and the non-duplication
+   rules stay in `search-growth` → "Paid and organic".
+3. **Drafts, then a GO per batch.** Stella observes → audits → plans 30 days with thresholds written before launch
+   → drafts; a listing or a post is submitted or published only after the operator's explicit GO for that batch,
+   and no agent creates an account or types a credential. Her doctrine: `docs/analysis/2026-10-24-organic-visibility-study.md`.
+
+---
+
+## What's New in v332.a
+1. **Nothing waits for the operator but the security class.** `land.mjs` no longer holds a branch for a dependency or
+   lockfile change, nor for a big diff (> 60 files or > 2000 deleted lines): it logs « auto-landing past … benign
+   exception(s) », runs the verify gate (lint · typecheck · tests · build) and lands. `land:sweep:apply` treats the
+   same two as clean.
+2. **Still held, for a human:** schema / Firestore rules, auth / secrets / middleware, `SOUL.md`, migrations, deploy
+   wiring — and the explicit holds (`[no-auto-merge]`, `[wip]`, `[hold]`, `Needs decision`, a `wip` branch) and a
+   trunk conflict, which nobody can resolve for the operator.
+3. **Trade-off accepted (operator, 2026-10-24):** a dependency change lands without a human look at the supply-chain
+   risk. One regex in `land.mjs` puts `deps` back.
+
+---
+
+## What's New in v331.a
+1. **Régine may delete integrated branches — through `branch-sweep.mjs` only.** The 2026-10-17 « archive, never
+   delete » rule stays for sessions, stashes and worktrees that hold work; a branch already in the trunk is residue
+   (~270 across 12 local repos, 2026-10-20) and leaves with `node .claude/hooks/branch-sweep.mjs --apply`, never a
+   hand-typed `git branch -D`.
+2. **Two proofs of « integrated ».** `is-ancestor` of the trunk, or — for a squash merge — `git merge-tree
+   --write-tree` equals the trunk's tree. An error or a conflict means keep. `backup/*` is never touched; a dirty or
+   active worktree, an open PR or a running session blocks.
+3. **Every deletion is journalled** before it happens: `<git-common-dir>/branch-deletions.log`, one line
+   `repo · branch · local sha · remote sha · date` — restore with `git branch <name> <sha>`. No line, no deletion.
+   `--only <branch,…>` limits a run.
+
+---
+
+## What's New in v330.b
+1. **Every proof ask carries a 🔎 Preuve à jouer block** (`method-core.md` → "The two-moment contract", operator request
+   2026-10-22): the real clickable URL(s), numbered steps each with its expected result, evidence as links, and what is
+   not proven yet. It sits right above `➡️ Suite` in a Debrief, replaces the 📸 line on a mission card, and an ask
+   without it is sent back, not relayed.
+2. **The chantier fiche enforces it**: `review[].urls` (≥ 1) is required on a `result` item and `review[].notProven`
+   is added; the `Stop` hook blocks a fiche without them. Older fiches add `urls` on their next write.
+3. **Sage's PROVEN report** hands the coordinator that block.
+
+---
+
+
+---
+
+## What's New in v330.a
+1. **The closing is chosen by session type** (`method-core.md` → "Operator Reporting" → "Closing by session type",
+   operator rulings 2026-10-23). An **autonomous mission** closes with a **mission card of ≤ 8 lines**; a **chantier
+   supervisor** with a **control tower** (one row per sub-session, their pending decisions gathered into one quiz, a
+   published URL first); the full Debrief stays for a handoff, `/brief` or a multi-decision answer.
+2. **Proof first, then a one-click « go ».** A journey ladder (`Cadré → Codé → Livré → Déployé → Prouvé → Utilisé →
+   Retours`), the one-click proof before any prose, before/after screenshots sent to the phone, and a quiz whose first
+   option is « go = {reco} ». Measured before: 43-line closings, 16 % with a quiz, 61 % of replies one word.
+3. **When the operator must act, the path is prepared** — exact URL, what to click, `bash` commands, and a guided
+   walk-through offered in Claude in Chrome or the terminal. It guides; he acts (never his credentials, payment or terms).
+
+---
+
+## What's New in v329.a
+1. **The sidebar in three zones** (`sprints-method.md` → "Sidebar contract", operator rulings 2026-10-20). Reading it is
+   three questions in order: *what wants me* — **Pinned holds only what waits on the operator** (`· 🟡` / `· 🔴`), a
+   supervisor included; *what is each chantier doing* — **each supervisor lives in its group** `{app} · {chantier}`;
+   *what else is alive* — **`🎯 Missions libres`**, kept to what runs, waits or was touched in the last 24 h.
+2. **Reopens 322.h's « supervisors always pinned ».** A supervisor keeps a pin for good only **while it is nested** (it
+   cannot be filed); Régine unpins it on the first pass after it is top-level and filed, and lists a nested one
+   « à détacher » with its parent's title, pushed to the operator's phone once.
+3. **The 💤 pile closes.** The 72 h clock is replaced: a `· 💤` free mission idle > 24 h is **rescued, then archived, by
+   the 20:07 pass** — the one scheduled pass allowed a shell, for the rescue and nothing else (`git status`,
+   `git rev-list`, the `wip(rescue)` commit, a plain push). Until now the shell-less passes could only list it « à sauver ».
+
+---
+
+## What's New in v328.a
+1. **The Chief contract — `chief-contract.md` (new Support doc).** Chief 🥷, the operator's chief-of-staff
+   assistant (`bananick/chief`), monitors and drives development across the fleet **under a formal read
+   contract, not as part of the METHOD** (D24, 2026-10-19). The file lists every artefact Chief reads — per
+   app (`STATE.md`, `FOCUS.md`, journeys, intervention headers, task files, chantier fiches, the trunk's
+   land subjects, the telemetry ledger, Penny's report) and in the hub (version, `repo-icons.json`,
+   `doctor:fleet --json`, `land:sweep`, the Cockpit week files and pushed data, Oscar's retro, Régine's pass,
+   `ACTIONS.md`) — with the fields relied upon and a stability mark (**S** stable · **A** additive · **P** prose).
+2. **Chief is read-only everywhere** (Chief D10): it never edits, lands or deploys for a project; it acts by
+   starting a session that opens `/intervention`, `/project` or `/brief`, under the sidebar contract.
+3. **The Cockpit stays the source, Chief is the display and voice** — no second cockpit, no recomputed score.
+4. **A release that alters a contracted artefact** carries a `**Chief contract impact.**` line in its
+   `versioning.md` entry; an S change is Major; Lucia checks it at every release, before the doctor.
+
+---
+
+## What's New in v327.a
+1. **Three agents join and Nova is re-scoped — 17 active mandates + 3 dormant.** **Maya 🧭** (opus) owns UX
+   research and information architecture — discovery, the destination/action/utility taxonomy, the shell per
+   window class, layout patterns, port order, and `ux-review`. **Alba 🖌️** (sonnet) owns the brand in use —
+   logo usage, the icon system, imagery, `/media`, `brand-voice-check`. **Hugo ⚙️** (sonnet; opus for gate
+   semantics) owns the METHOD's machinery — the hooks, `verify-gate`, `land`, the sync engine, the installer,
+   the doctor, the telemetry scripts and the hub's `tests/`: **78 commits** that three agents had been writing
+   with no mandate naming the work. **Nova goes from 25 assignments to nine** (tokens, M3/Swanifly compliance,
+   motion, a11y, dark mode, screen states, `proto/`, visual validation, and design authority over Maya's and
+   Alba's output). Evidence and every resolution: `docs/interventions/2026-10-19-Lucia-cohort-restructure.md`.
+2. **The ten colliding ownership lines each have one owner** (§4-O1…O10 of the 2026-10-18 audit), edited in
+   **both** files so they agree: `firestore.rules` → Kasper alone (Watson keeps performance indexes) · components
+   → Brian alone · copy and microcopy → Gordon alone (`design-method.md` no longer lists copy under Nova) ·
+   the visual audit → Nova, the security review → Kasper, with Vera checking **that each ran** rather than
+   re-running it · tests → Brian (what he builds) / Sage (the proof spec **and** the infrastructure) / Watson (a
+   regression test for a bug he root-caused) · research → Gordon for a decision on the offer, Iris for a sourced
+   measurement · `docs/METHOD/` → Lucia alone, with Penny and Oscar proposing · hygiene → Régine's routine pass,
+   Watson's rescue · objectives → Junia plans, Iris measures, Oscar judges.
+3. **The 14 persona Skill stubs are deleted, and the "Riley" advisory hat with them.** The stubs re-loaded every
+   agent description a second time in every session (**4,984 characters**) and carried **2 of ~140** delegations;
+   `.claude/agents/{agent}.md` is now the only surface and a new agent gets no stub. Riley was a name in the
+   roster with no file: integration is building, so it is Brian's (`ai-infra-method.md`) — the 102 `riley`
+   delegations the audit found were an **app-level** agent, which stays legal and untouched.
+4. **The always-loaded description surface shrinks 27.5 %** — 14,033 → 10,171 characters (≈ 3,508 → 2,543 tokens):
+   the three new descriptions cost 870 and the re-scoped ones 252 more, while the deleted stubs freed **4,984** —
+   5.7× what the recruits cost. The cohort grew by three mandates and got **cheaper** to load.
+5. **Four orphan skills get an owner:** `ux-review` → Maya · `deploy` → Watson · `implement-plan` +
+   `hubspot-sync` → Brian; `/media` and `brand-voice-check` move from Nova and Gordon to Alba. **Lucia's
+   mandate now says what she already does** — designing the operating model (cohort shape, rituals, supervision,
+   the operator contract), which was 7 of her 11 interventions while her file listed four jobs.
+
+---
+
+## What's New in v326.a
+1. **Lise 🗣️ joins the cohort — 14 active mandates + 3 dormant.** Tone and voice (opus, `.claude/agents/lise.md`): she reads
+   any text a customer, prospect or the public will read against the repo's voice files and returns a verdict and a
+   before → after table — never editing the text. Born of the 2026-10-17 tone study of Banana Events, Respirit and Nicolas:
+   `docs/interventions/2026-10-19-Lucia-lise-tone.md`.
+2. **New `tone-method.md` + two templates.** How a voice is framed (identity, paired attributes, address by channel, lexicon,
+   situations, patterns), reviewed, and kept alive. **One voice file per brand persona, hosted in each repo** at
+   `docs/project/brand/tone/` — the hub ships the mechanism, the app owns the content.
+3. **The loop.** Every review leaves a row in the repo's `LOG.md`; real use adds challenges and enrichments; a pass (due at
+   10 rows or 30 days) turns them into at most five evidenced proposals the operator ratifies by quiz. Lise never changes a
+   voice on her own evidence.
+4. **The summon rule** (`CLAUDE.md` → Agent Cohort): tone questions go to `lise`; where a repo has voice files, public-facing
+   text passes through her before it lands. The hub dogfoods it — `docs/project/brand/tone/swanifly.md`, filled only from `SOUL.md`.
+
+## What's New in v325.c
+1. **Context diet, slice 2 — the root is 63.6 % smaller.** `CLAUDE.md` 32,683 → 12,480 B, and it is re-paid by every session **and** every one of 13 sub-agent launches. Reference moved to the file that owns it: `## Work Modes` → `sprints-method.md`, `## Design Language` → `design-method.md`, `## Skills Workflows` and `## Claude Desktop Setup` dropped (the harness lists the rituals; `agents-engineering-method.md` §7 has the Desktop setup), the Debrief / Flight Deck templates cited instead of copied. The five `payload/snippets/*.md` shrink with it, 21,073 → 6,936 B, so the fleet receives the same diet.
+2. **The delegation default is now a four-condition test.** Delegate when the work is verbose-and-discardable, self-contained, summarisable, or needs a tool restriction — stay inline for back-and-forth, shared multi-phase context and small targeted edits. A spawn costs 60–75 k tokens before it reads anything. The T1/T2/T3 tiers, the Workflow rules and the 2-round review cap are unchanged.
+3. **Startup no longer loads `STATE.md` + `FOCUS.md` whole** (55,470 B): the root points at `STATE.md` → "§ Resume here" and `FOCUS.md` → "§ The north star", 3,689 B, further §§ on demand. All 13 `Entry files:` lines are section-scoped now — `sage`, `nova` and `penny` were the three left open at 324.c.
+4. **`npm run doctor` E16 is an error**, budget 13,312 B — one KiB above the measured floor, with every rule kept; the 8,192 B originally asked is not met, and the reason is in the changelog.
+
+## What's New in v325.b
+1. **The verify gate classifies nested YAML data of a verifying root.** A `*.yaml`/`*.yml` below the root of a repo whose
+   own `package.json` verifies (Chief: `memory/facts.yaml`, validated by its `test:gate`) now runs that root's checks instead
+   of failing closed as "unclassifiable". A root-level YAML (`app.yaml`, `cloudbuild.yaml`) and YAML under a root that
+   verifies nothing stay fail-closed; `apphosting`/`scheduler`/`.github/` YAML keep the tooling lane.
 
 ## What's New in v325.a
 1. **A session that waits on the operator is pinned while it waits.** Pinned = supervisors + any session whose title ends with
@@ -65,7 +293,7 @@
    the title.
 3. **The clocks** (outside a chantier): PR merged → archive · `✅` idle > 2 h → rescue, archive · idle > 24 h → `· 💤` ·
    idle > 72 h → rescue, archive. **Rescue before archive** — a `wip(rescue) … [wip]` commit pushed on the session's own
-   branch; a refused push means no archive. Archive, never delete.
+   branch; a refused push means no archive. Archive, never delete work; integrated branches go through `branch-sweep.mjs` only.
 
 ## What's New in v323.b
 1. **Study data lands as doc.** `verify-gate.mjs` (hub + addon payload) files `*.csv`, `*.tsv`, `*.geojson` and a nested
@@ -127,7 +355,7 @@
    `EnterWorktree`s in an app-created worktree; the supervisor adopts any unadopted session of the group on each wake.
 3. **A land in flight is visible** — `/land` is written into `progress.doing` before it runs.
 4. **No `▶ Prompt suivant` in a chantier.** The next step is an action the supervisor takes itself (a task chip or a typed
-   `SendMessage`) and a `Suite` row of the pilot dashboard; the Debrief's `➡️ Suite` names it. `sprints-method.md` → "The chantier".
+   `SendMessage`) and a `Suite` row of the pilot dashboard; the control tower's next-path quiz names it. `sprints-method.md` → "The chantier".
 
 ## What's New in v322.d
 1. **GitHub always mirrors active work.** A new `Stop` hook, `wip-sync.mjs` (on by default), pushes the uncommitted
@@ -187,7 +415,7 @@
 
 ## What's New in v320.c
 1. **`/retro` feeds an interactive dashboard.** The weekly retro is also published to the "Swanifly Rétro"
-   dashboard (https://claude.ai/artifact/5A1FizSAz47bTczU4ZqwJN): Oscar writes `docs/project/coaching/dashboard/YYYY-Www.json`
+   dashboard (https://claude.ai/artifact/1XCEaZjCgQVWa4LcmJoteN): Oscar writes `docs/project/coaching/dashboard/YYYY-Www.json`
    beside the committed `RETRO-YYYY-Www.md`, the coordinator publishes it (`ArtifactData`, `retros/{week}`),
    the operator answers in the page (`feedback/{week}`), and next week's retro reads those answers first.
 
@@ -301,7 +529,7 @@
 
 ## What's New in v316.a
 1. **Cohort: 8 active mandates + 5 dormant.** Active — `junia` `brian` `sage` `watson` `kasper` `vera` `nova` `gordon`. Dormant — `teddy` `aiko` `april` `lucia` `iris`, parked under `.claude/_dormant/`, outside Claude Code's **recursive** agent discovery and outside the sync scope, so documented but neither loaded nor delegable. Gordon absorbs the SEA / Google Ads mandate. A dormant mandate can no longer own a live METHOD file — everything Lucia / Aiko / April owned reverts to **Junia**. Reactivating one is a `git mv` back into `.claude/agents/`: the operator's call, never an agent's mid-session decision.
-2. **`.claude/agents/*.md` is the single source of truth per agent.** Each carries its own `## Identity` block (voice · refusals · deference · handoff) plus the cohort-wide `## Non-negotiables`; `.claude/skills/{agent}/SKILL.md` is a stub that loads it and `Swanifly/web/lib/engine/agent-personas.ts` derives from it — its silent fallback to Brian is now a `throw`. The hand-mirrored copies that caused the drift are gone. Same rule for the **orchestration chain**, canonical in `agents-method.md` (`junia.md` carries the only authorized inline copy, since it is the file loaded at delegation time), with `kasper` **conditional** — only when `firestore.rules` / auth / API routes are touched.
+2. **`.claude/agents/*.md` is the single source of truth per agent.** Each carries its own `## Identity` block (voice · refusals · deference · handoff) plus the cohort-wide `## Non-negotiables`; *(327.a: the Skill stub this entry describes no longer exists — `.claude/agents/` is the only surface.)* `.claude/skills/{agent}/SKILL.md` was a stub that loaded it and `Swanifly/web/lib/engine/agent-personas.ts` derives from it — its silent fallback to Brian is now a `throw`. The hand-mirrored copies that caused the drift are gone. Same rule for the **orchestration chain**, canonical in `agents-method.md` (`junia.md` carries the only authorized inline copy, since it is the file loaded at delegation time), with `kasper` **conditional** — only when `firestore.rules` / auth / API routes are touched.
 3. **CI claims purged across 12 documents.** GitHub Actions is billing-blocked account-wide **by choice**, unrelated to the active GCP/Firebase billing (`SOUL.md` → "Boundaries"). No METHOD text, template or table may claim a pipeline runs automatically: the quality gate is the **local** Merge Gate (lint, typecheck, tests, build) and landing on `main` **is** the deploy. Alongside it: telemetry separates models by scope (`mainLoop.models` / `subAgents.models`), `guessSprint` no longer reads a year as a sprint number, and the addon installer generalises the content-guarded section merge into a table-driven `mergeSection()`.
 
 > **Renumbered.** This lot was drafted as 315.b–315.e while the trunk published its own 315.b and
@@ -383,10 +611,10 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 
 ---
 
-## METHOD Files (17 docs + native layer)
+## METHOD Files (19 docs + native layer)
 
-> 17 synced METHOD docs (9 Core + 8 Support), **plus** the repo-root native layer:
-> `CLAUDE.md`, `.claude/skills/`, `.claude/agents/` (13 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/commands/` (11 rituals).
+> 19 synced METHOD docs (9 Core + 10 Support), **plus** the repo-root native layer:
+> `CLAUDE.md`, `.claude/agents/` (18 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/skills/` (13 capability skills, no persona stubs since 327.a), `.claude/commands/` (11 rituals).
 
 ### Core (9) — Always synced
 
@@ -394,9 +622,9 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 |---|---|---|---|
 | `METHOD.md` | Lucia | This file. Entry point + routing. | ~16 KB |
 | `method-core.md` | Lucia | Principles, tech stack, DoD | ~13 KB |
-| `agents-method.md` | Lucia | 13 active + 3 dormant agents, roles, rituals | ~52 KB |
+| `agents-method.md` | Lucia | 18 active + 3 dormant agents, roles, rituals | ~60 KB |
 | `sprints-method.md` | Junia | Sprint system, gates, rituals | ~16 KB |
-| `design-method.md` | Nova | M3 design constraints, nav patterns | ~25 KB |
+| `design-method.md` | Nova · Maya · Alba (per section) | M3 design constraints, nav patterns, brand | ~66 KB |
 | `ai-infra-method.md` | Brian | Multi-provider AI architecture | ~41 KB |
 | `tests-method.md` | Sage | Testing strategy, visual snapshots | ~14 KB |
 | `definition-method.md` | Junia | Definition pipeline (3 phases) | ~7 KB |
@@ -405,7 +633,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 > Lucia is active again (318.a) as METHOD release manager and owns the core METHOD files; Aiko and
 > April stay dormant and own nothing live — AI infra goes to **Brian**, planning files to **Junia**.
 
-### Support (8) — Load on demand
+### Support (10) — Load on demand
 
 | File | Purpose |
 |---|---|
@@ -417,9 +645,11 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 | `README.md` | Quick start for new projects |
 | `agents-engineering-method.md` | Agent team architecture on the Claude suite (Desktop + Code + Artifacts) |
 | `agent-launch-prompts.md` | Pre-built launch prompts per METHOD agent |
+| `tone-method.md` | Voice frame, tone review, the evolution loop (Lise) — plus `templates/TONE-*-TEMPLATE.md` |
+| `chief-contract.md` | What Chief reads in every repo and the hub, the fields relied upon, the change rule (D24) |
 
-> Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (agent personas as Skills),
-> **`.claude/agents/` (13 active delegatable sub-agents + README), and `.claude/commands/` (11 rituals:
+> Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (13 capability skills — no persona stubs),
+> **`.claude/agents/` (18 active delegatable sub-agents + README), and `.claude/commands/` (11 rituals:
 > `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, `/clean`, `/project`, and the optional `/port`,
 > `/relay`)**. See `agents-engineering-method.md`.
 
@@ -554,9 +784,9 @@ npm run sync-method:all:dry    # preview without writing
 
 ---
 
-## Agent Cohort (13 active mandates + 3 dormant)
+## Agent Cohort (18 active mandates + 3 dormant)
 
-Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable by name in Claude Desktop) and as a delegatable **native sub-agent** in `.claude/agents/` (Claude Code — web + Cowork's local Code tab). `.claude/agents/{agent}.md` is the canonical persona text. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from it.) An agent earns a name when its mandate is one you would otherwise have to retype; twelve mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
+Each agent runs **one way**: as a delegatable **native sub-agent** in `.claude/agents/{agent}.md`, on every Claude surface. The fourteen Desktop Skill stubs were deleted in 327.a — they re-loaded each description a second time in every session and carried 2 of ~140 delegations; `.claude/skills/` now holds **capabilities** only, each naming its owner. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from the agent files.) An agent earns a name when its mandate is one you would otherwise have to retype; eighteen mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
 
 | Agent | Mandate | Entry Files |
 |---|---|---|
@@ -566,13 +796,18 @@ Each agent runs **two ways**: as a Claude Skill in `.claude/skills/` (invocable 
 | **Watson** | Repair — reliability & ops | `method-core.md` → `tests-method.md` |
 | **Kasper** | Guard — security | `method-core.md` (Security Baseline) → `project/SCHEMA.md` |
 | **Vera** | Judge — one review per slice, at the Recette (no commits) | `method-core.md` → `design-method.md` → task |
-| **Nova** | Draw — design system + tokens | `design-method.md` → `project/DESIGN.md` |
-| **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, ads | `agents-method.md` → `project/VISION.md` → `docs/growth/` |
+| **Maya** | UX research & IA — discovery, navigation taxonomy, shell, layout patterns, port order | `design-method.md` (her four §§) → `project/DESIGN.md` → `SOUL.md` (Personas) |
+| **Nova** | Draw — design system, tokens, motion, a11y, dark mode, `proto/`, visual validation | `design-method.md` → `project/DESIGN.md` |
+| **Alba** | Brand & visual assets — logo usage, icon system, imagery, `/media` | `design-method.md` (her three §§) → `project/brand/` |
+| **Gordon** | Commercial & growth — offers, funnels, EN/FR copy, campaigns, paid ads | `agents-method.md` → `project/VISION.md` → `docs/growth/` |
 | **Iris** | Study & deliverables — studies, data mining, client-grade reports; owns anonymisation/GDPR | `method-core-lite.md` → `project/STATE.md` |
-| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md` | `versioning.md` → `METHOD.md` |
+| **Hugo** | METHOD tooling — hooks, `verify-gate`, `land`, sync engine, installer, doctor, telemetry | `method-core.md` (Landing) → `versioning.md` (Sync) → the tool |
+| **Lucia** | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md`, **and the operating model** | `versioning.md` → `METHOD.md` |
 | **Penny** | Token economy — measure, report, coach; proposes METHOD changes to Lucia | `routing-method.md` → `project/telemetry/` |
 | **Oscar** | Coach — weekly retro: effectiveness, focus, objectivity, lucidity, objectives | `method-core.md` → `project/STATE.md` + `FOCUS.md` |
-| **Régine** | Régie — session, worktree & work-in-progress hygiene; archives, never deletes | `sprints-method.md` ("The chantier") → `repo-icons.json` |
+| **Régine** | Régie — session, worktree & work-in-progress hygiene; archives, never deletes work; removes integrated branches through `branch-sweep` | `sprints-method.md` ("The chantier") → `repo-icons.json` |
+| **Lise** | Tone & voice — reviews public-facing text against the repo's voice files; runs the tone loop | `tone-method.md` → `project/brand/tone/` |
+| **Stella** | Organic visibility — SEO, GEO/AEO, social search, forums, directories & entity, blog, digital PR; drafts only, published on the operator's GO per batch | `agents-method.md` → the organic-visibility study → `docs/growth/` |
 
 ### Dormant (not loaded, not delegable)
 
@@ -681,7 +916,7 @@ docs/sprints/007 ⬜ venue-proto/
 | 1 | Modular Architecture — 15 focused files | `METHOD.md` |
 | 2 | Multi-Entry Routing — load 2-3 files, not 15 | `routing-method.md` |
 | 3 | Two Namespaces — `method/` (synced) + `project/` (local) | `versioning.md` |
-| 4 | Global Agent Cohort — 13 active + 3 dormant (Skills + native sub-agents), 3 tiers | `agents-method.md` |
+| 4 | Global Agent Cohort — 18 active + 3 dormant (native sub-agents; no Skill stubs since 327.a), 3 tiers | `agents-method.md` |
 | 5 | **Definition Pipeline** — DISCOVER → SPECIFY → PROTOTYPE | `definition-method.md` |
 | 6 | **Focus System** — Single-objective taquet per app | `project/FOCUS.md` |
 | 7 | **Cross-App Governance** — BanaPilot drift detection | `versioning.md` |
@@ -704,9 +939,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 325.a  
+**Current Version:** 336.b  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-18
+**Released:** 2026-10-29
 
 ### Version Scheme
 

@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 322.e-lite  
+**Version:** 336.a-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -61,38 +61,49 @@ Questions to the operator are **quizzes, never prose**: prepared in advance and 
 
 ## Operator Reporting
 
-Close every substantial answer with the **Debrief** — the operator must never have to ask where the
-global project stands or what he has to decide. **Plain markdown, never a fenced block** (a fence
-renders small, unstyled and unclickable). Canonical spec: **`method-core.md` → "Operator Reporting"**.
+Close every substantial answer with the closing of its **session type** (330.a) — the operator must
+never have to ask where the project stands or what he has to decide. **Plain markdown, never a fenced
+block.** Canonical spec: **`method-core.md` → "Operator Reporting" → "Closing by session type"**.
+
+**Every answer that did something ends with Fait / Suite (335.a)**: plain bold headings, 1–3 emoji
+bullets each. Each Fait line carries one clickable proof. Suite bullet 1 is the **fate**: 🗄️ Archive ·
+💬 Réponds · 🧪 Teste · 🔑 Agis · ⏳ Attends · 🔁 Continue ici, each with its « Prêt pour toi » kit. The
+title carries the state word (CODÉ · ATTERRI · DÉPLOYÉ · PROUVÉ · en cours · bloqué), and 🚨 on an
+incident. A choice → the quiz, never prose. Commands are fenced as `bash`.
+
+Autonomous mission → mission card (≤ 9 lines: title, 📸 proof, Fait, Suite); must act → 🔑 a prepared path;
+chantier supervisor → control tower; handoff / `/brief` → the full Debrief. Templates: `method-core.md` →
+"Closing by session type".
 
 ---
 
-### ✅ Debrief · {lane}
+### Debrief · {lane} · {ÉTAT}
 
 {Une ligne : ce qui vient d'être fait.}
 
 **📊 Avancement** — 🟩🟩🟩⬜⬜ {n/N journeys proven} · {state: CODED · LANDED · DEPLOYED · PROVEN}
 
-**🧠 À retenir**
-- {fait clé}
-- 🤝 **Décidé pour toi** — {choix réversible pris sans demander}
+**Fait**
+- {emoji} {fait clé} · {preuve cliquable}
+- 🤝 **Décidé pour toi** — {choix réversible, seulement s'il y en a un}
 
 **⚖️ Tu décides**
 - {question} → **reco :** {option recommandée}
 
-**➡️ Suite** — {la prochaine action utile}
+**Suite**
+- {fate} : {la prochaine action utile}
 
 ---
 
 - One idea per bullet, **no paragraph in the card**; six blocks max, an empty one is deleted.
 - **Chaque ligne gagne sa place** : elle change une décision, une action, ou un modèle mental — sinon
   elle saute. Nomme l'objet (`method-core.md:393`, `npm run doctor`, `afd4cd7`), jamais l'activité.
-- Section emojis are fixed landmarks (📊 🧠 🤝 ⚖️ ➡️ ⚠️); the title emoji is the real status.
+- Section emojis are fixed landmarks (📊 ⚖️ 🔎 ⚠️); the title carries the state word, not an emoji.
 - `Avancement` = the global project, not the turn. Ratio only when actually counted; never invented.
 - Nothing to decide → `**⚖️ Tu décides** — rien. J'ai tranché : X, Y.` Then the `▶ Prompt suivant`
   block (none in a chantier: the supervisor's `Suite` names the action it takes itself), the only
   fenced thing in a closing.
-- Small answer → one landing line instead. Delegated sub-agents never emit a Debrief, nor does a
+- Small answer → two lines, no headings: `{emoji} {fait}` / `{fate emoji} **{Verbe}**`. Delegated sub-agents never emit a Debrief, nor does a
   chantier sub-session — it updates its fiche (`sprints-method.md` → "The chantier").
 
 ## Sessions
@@ -116,9 +127,11 @@ sous-session par slice). Règle complète : `sprints-method.md` → "Sessions & 
 - There is no CI and no branch protection on this account, so the gate is local and machine-checked:
   `.claude/hooks/verify-gate.mjs` stamps a HEAD-pinned green marker, `.claude/hooks/land.mjs` refuses
   to land without it. Never force-push, never `git rebase`, never `gh pr merge --admin`.
-- A **PR is the exception**: schema/rules · auth/secrets · `SOUL.md` · deps/lockfile · migrations ·
-  deploy wiring · >60 files · `[no-auto-merge]`/`Needs decision`. Held back → fix the reason, or land
-  it with `[land-anyway]` in the commit subject and say why.
+- A **PR is the exception**: schema/rules · auth/secrets · `SOUL.md` · migrations · deploy wiring ·
+  `[no-auto-merge]`/`Needs decision`. Held back → fix the reason, or land it with `[land-anyway]` in the
+  commit subject and say why. `kasper` (opus) clears what he can; the rest is one quiz (336.a).
+- **Finished → close yourself** (336.a): `npm run session:close -- --apply`, Fait / Suite to the parent,
+  `archive_session self` last — `method-core.md` → "Closing a finished sub-session", "Exception PRs".
 
 ---
 

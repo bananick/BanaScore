@@ -2,16 +2,16 @@
 
 Pre-built prompts to invoke each METHOD agent on the right Claude surface.
 
-> **v308.a:** Each agent is now a **Claude Skill** (`.claude/skills/{agent}/`). In Claude
-> Desktop and Claude Code you can simply invoke the agent **by name** ("Act as Brian and …")
-> or via its Skill, and the persona loads automatically. The prompts below remain useful as
-> manual fallbacks or for non-Claude tools.
+> **v327.a:** Each agent is a **native sub-agent** — one file, `.claude/agents/{agent}.md`, on every surface; the Desktop Skill stubs were deleted. *(Historical: v308.a made each agent a Claude Skill (`.claude/skills/{agent}/`); in Claude
+> Desktop and Claude Code you could invoke it by name or via its Skill.)* Invoking an agent **by name**
+> ("Act as Brian and …") still loads its file; the prompts below remain useful as manual fallbacks or
+> for non-Claude tools.
 
 ---
 
 ## 🟣 Junia — Plan (Claude Desktop or Code)
 
-Use this when a request needs a plan (or run the `junia` Skill; `/plan-sprint` for the rare sprint).
+Use this when a request needs a plan (or delegate to the `junia` sub-agent; `/plan-sprint` for the rare sprint).
 Junia plans; the coordinating conversation orchestrates and lands.
 
 ```
@@ -35,7 +35,7 @@ Then:
 
 ## 🔵 Brian — Feature Implementation (Claude Code)
 
-Use this in **Claude Code** for a sprint task (or run the `brian` Skill):
+Use this in **Claude Code** for a sprint task (or delegate to the `brian` sub-agent):
 
 ```
 You are Brian, the Web Developer agent.
@@ -62,7 +62,7 @@ When done:
 
 ## 🟢 Vera — Slice Review (once per slice, opus)
 
-Use this once per slice, at the Recette, before `/land` (or run the `vera` Skill / `/review`):
+Use this once per slice, at the Recette, before `/land` (or delegate to the `vera` sub-agent / `/review`):
 
 ```
 You are Vera, the Review & Validation agent.
@@ -89,7 +89,7 @@ Output: PASS or FAIL with specific issues per file.
 
 ## 🟡 Sage — Prove (Claude Code)
 
-Use this in **Claude Code** to turn LANDED/DEPLOYED into PROVEN (or run the `sage` Skill):
+Use this in **Claude Code** to turn LANDED/DEPLOYED into PROVEN (or delegate to the `sage` sub-agent):
 
 ```
 You are Sage, the proof.
@@ -111,7 +111,7 @@ Do NOT modify production source code. Only test files and the ## Recette block.
 
 ## 🔴 Watson — Debugging (Claude Code)
 
-Use this in **Claude Code** for bug investigation (or run the `watson` Skill):
+Use this in **Claude Code** for bug investigation (or delegate to the `watson` sub-agent):
 
 ```
 You are Watson, the Reliability & Ops agent.
@@ -132,9 +132,14 @@ Format output as:
 
 ---
 
-## 🟠 Nova — Design Review + Prototypes (Claude Desktop / Artifacts)
+## 🟠 Nova — Design System, Visual Validation + Prototypes (Claude Desktop / Artifacts)
 
-Use this in **Claude Desktop** when design guidance is needed (or run the `nova` Skill).
+> **Structure before style (327.a):** a question about destinations, the shell, a layout pattern or the
+> port order goes to **`maya`** (opus); a logo, an icon, an image or an export goes to **`alba`**; a
+> string goes to **`gordon`**. Nova owns tokens, M3 compliance, motion, a11y, dark mode, screen states,
+> `proto/` and the visual validation.
+
+Use this in **Claude Desktop** when design guidance is needed (or delegate to the `nova` sub-agent).
 For new views, ask Nova to generate an interactive **Artifact** (see `design-method.md`):
 
 ```
@@ -157,7 +162,7 @@ Output: specific design corrections with token references.
 
 ## 🩵 Iris — Study & Deliverables (Claude Code or Desktop)
 
-Use this for a study, a data question or a client deliverable (or run the `iris` Skill):
+Use this for a study, a data question or a client deliverable (or delegate to the `iris` sub-agent):
 
 ```
 You are Iris, study & deliverables.
@@ -178,7 +183,7 @@ Read-only on product code.
 
 ## 🟣 Lucia — METHOD Release (Claude Code)
 
-Use this for a METHOD change, a release or a sync (or run the `lucia` Skill):
+Use this for a METHOD change, a release or a sync (or delegate to the `lucia` sub-agent):
 
 ```
 You are Lucia, METHOD release manager.
@@ -207,18 +212,21 @@ Change: [what must change in the METHOD, and why — or the app proposal to upst
 | Kasper | Claude Code | Opus (T1 floor — never below) | Rules / auth / API routes touched |
 | Vera | Code or Desktop | Opus (T1 floor — never below) | Once per slice, at the Recette |
 | Sage | Claude Code | Sonnet (T2) | The Proof — LANDED/DEPLOYED → PROVEN |
-| Nova | Desktop (Artifacts) + Code | Sonnet (T2; opus by override) | Design clarity / prototypes / ports |
+| Maya | Code or Desktop | Opus (T1) | Before a shell, route family or navigation change; a `ux-review` |
+| Nova | Desktop (Artifacts) + Code | Sonnet (T2; opus by override) | Tokens, motion, a11y, dark mode, prototypes, visual validation |
+| Alba | Code or Desktop | Sonnet (T2; haiku for a resize batch) | A logo placement, an icon, an image, an export, a brand check |
 | Gordon | Desktop + Code | Sonnet (T2; opus for pricing/positioning) | Offers, funnels, copy, campaigns, ads |
 | Iris | Code + Desktop | Sonnet (T2; opus for ranked recommendations) | A study, a data question, a client deliverable |
-| Lucia | Claude Code | Opus (T1) | A METHOD change, a release, a sync |
+| Hugo | Claude Code | Sonnet (T2; **opus for gate semantics**) | A hook, the gate, `land`, the sync engine, the doctor |
+| Lucia | Claude Code | Opus (T1) | A METHOD change, a release, a sync, a change to how we work |
 
 > **Dormant — not loaded, not delegable:** April, Aiko, Teddy (`.claude/_dormant/`). Their mandates
 > are covered by the active roster above: mobile + AI wiring → **Brian**; vision → the Cadrage
 > (Junia drafts, the operator answers); copy → **Gordon**.
 
-> **Advisory hat (not executable):** only API/multi-agent orchestration guidance (ex-Riley) is
-> wielded in a Desktop chat with `ai-infra-method.md` loaded. Gordon and Kasper are first-class
-> executable sub-agents + Skills since v309.a.
+> **No advisory hats (327.a).** The last one, API/multi-agent orchestration (ex-Riley), was removed:
+> wiring an integration is **building**, so it is **Brian**'s, with `ai-infra-method.md` loaded and
+> **Kasper** for the security pass. Every mandate in the table above is an executable sub-agent.
 
 ---
 
