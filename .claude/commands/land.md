@@ -16,7 +16,8 @@ Since 318.a the gate also refuses a **newly added** intervention or task file th
 
 **Before landing: Recette** (`method-core.md` → "The two-moment contract — Cadrage · Recette") —
 the recette table (asked → shown/not), `vera`'s one review of the slice (opus — skipped only on
-Fast-Track), and the four states `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`, never merged. `/land`
+Fast-Track), and the four states `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`, never merged. An `Appris:` line in a
+delegate's report goes through the learning gate here (`agents-method.md` → "§ Training"). `/land`
 only ever produces `LANDED`; never write `DEPLOYED` or `PROVEN` without their own evidence (a served
 revision; `sage`'s observed run of the Proof).
 

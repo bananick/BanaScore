@@ -3,7 +3,7 @@
 // SessionStart resume hook.
 //
 // This is the Node port of the machine-local ~/.claude/scripts/flight-deck.ps1: that script
-// only exists on Nicolas's own machine, is PowerShell-only, and reads a machine-absolute
+// only exists on the operator's own machine, is PowerShell-only, and reads a machine-absolute
 // memory path — so it never travelled with the METHOD and gave every OTHER checkout (a
 // sibling GitHub repo, Claude Code cloud, a teammate's machine) no pickup card at all. This
 // file ships via the addon like land.mjs / verify-gate.mjs / session-telemetry.mjs, so /brief
@@ -14,7 +14,9 @@
 //                  /brief command's `!`...`` live-context injection.
 //   resume-hook  — same summary, wrapped as SessionStart hookSpecificOutput JSON.
 //   startup-hook — SessionStart `startup`: only the branch-lifecycle report (active work, alarms,
-//                  integrated residues) from lib/branch-hygiene.mjs; silent when there is nothing.
+//                  integrated residues) from lib/branch-hygiene.mjs, and one line when the main
+//                  checkout's ignored .claude/ differs from the trunk's payload (lib/claude-drift.mjs);
+//                  silent when there is nothing.
 // `context` and `resume-hook` also carry that report (active_work / branch_alarms / branch_residues).
 //
 // Deliberately NOT ported: `statusline` mode. The statusline is a per-machine terminal
@@ -247,6 +249,17 @@ async function getHygiene(cwd) {
   }
 }
 
+// The main checkout's ignored .claude/ against the trunk's addon payload (lib/claude-drift.mjs): every new worktree
+// inherits those files, so a difference after a METHOD sync is invisible to git. One line, or '' — fails open.
+async function getClaudeDrift(cwd) {
+  try {
+    const lib = await import('./lib/claude-drift.mjs');
+    return lib.formatDriftLine(lib.findClaudeDrift({ cwd }));
+  } catch {
+    return '';
+  }
+}
+
 function buildContext(cwd, git, memory, sprint, hygiene = null) {
   if (!git) {
     return ['flight_deck_context:', `  cwd: ${cwd}`, '  git: not a git repository'].join('\n');
@@ -325,10 +338,15 @@ async function main() {
   // startup-hook (SessionStart `startup`): a fresh session gets no Flight Deck, only the branch
   // lifecycle report — what is in flight and what is residue. Read-only; silent when there is nothing.
   if (mode === 'startup-hook') {
+    const drift = await getClaudeDrift(cwd);
     const h = await getHygiene(cwd);
-    if (h && !h.quiet) {
-      const additionalContext = `Branch lifecycle (GitHub must mirror every active piece of work; integrated branches are residue):\n${h.lines.join('\n')}\n\nMention alarms and residues to the operator only if they change what they should do next.`;
-      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext } }));
+    const parts = [];
+    if (drift) parts.push(`${drift}\nRelay this line to the operator verbatim: until it is fixed, every new worktree runs these files instead of the trunk's.`);
+    if (h && !h.quiet) parts.push(`Branch lifecycle (GitHub must mirror every active piece of work; integrated branches are residue):\n${h.lines.join('\n')}\n\nMention alarms and residues to the operator only if they change what they should do next.`);
+    if (parts.length) {
+      const out = { hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: parts.join('\n\n') } };
+      if (drift) out.systemMessage = drift;
+      process.stdout.write(JSON.stringify(out));
     }
     return;
   }

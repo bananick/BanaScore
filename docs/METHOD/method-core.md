@@ -1,7 +1,7 @@
 # METHOD Core Principles
 
 **Owner:** Lucia  
-**Version:** 336.a  
+**Version:** 339.a  
 **Purpose:** Universal principles, tech stack, Definition of Done
 
 ---
@@ -241,13 +241,47 @@ something the agent could have turned into a choice.
 - "Shall I continue?" check-ins stay banned: a quiz is for a real choice, not for permission.
 - **In a chantier the operator's input is an inbox (322.g):** the supervisor asks at most 4 closed questions per batch, recommendation first, ordered by blocking cost (conflict-gate decisions first, then slices blocked × deadline), pushes to the phone only when a slice is actually blocked, and a reversible decision defaults to its reco after 2 h instead of waiting — `sprints-method.md` → "The chantier".
 
+**When the quiz is too small — the review page (337.c).** The quiz stays the default. A **review page** —
+a claude.ai artifact with its own storage — replaces it in two cases only: **more than 4 decisions ready
+together** at a Cadrage (the chantier inbox's 4-per-batch rule above still governs mid-flight asks), or
+**a result not built yet** to judge point by point (a screen that exists still goes as captures + quiz).
+A phone is not a trigger — a short quiz is quicker there — but every page reads and fills on one.
+
+- **Invariants** (a page without them is sent back): (1) quiz grammar per point, recommendation first and
+  marked, one consequence line per option; (2) an origin tag per point — « Décidé le JJ/MM » ·
+  « Décidé pour toi » · « À trancher »; (3) numbered pastilles linking each screen to its points;
+  (4) a three-state verdict (« Ça me va » / « À ajuster » / « Pas ça ») + a comment per point,
+  « Autre chose ? » per screen, a live summary and an overall verdict; (5) every frame says
+  « Données d'exemple », and the page states the real rung (« Rien n'est construit » is `Cadré`, never
+  `CODED`) — invented examples only; (6) storage proven by one probe write, read back, deleted, before
+  the page is shared; (7) on « Artefact complété » the coordinator reads the answers (`ArtifactData`
+  `list`), reports them **verbatim** — those that overturn its recommendations included — into the file
+  of truth (chantier map, task, intervention) with the page URL and the read time, commits, and only
+  then acts; (8) one round per page: open points go back as a new page or a quiz, never as prose.
+- **Conflict gate.** A conflict-gate decision may go through a page, in a **block of its own at the top**
+  and in the quiz grammar. **Never a production GO**: an `--apply`, a deploy, a secret or an irreversible
+  write keeps its written GO on its dry-run and its own quiz.
+- **Formats by use case.** Five families — grouped decisions · mockups to judge point by point · vote
+  between variants · list review · journey acceptance — each with its trigger, blocks and storage
+  collection: the open census `docs/improvement/review-pages-census.md` (hub only). Template:
+  `docs/METHOD/templates/review-page.html` (fixed skeleton, one JSON data block, phone first, light and
+  dark). Every new page adds one row to the census.
+- **Limits.** Only the coordinating conversation publishes and reads the page (a delegate drafts the
+  points as a `### Needs decision`); sharing the private page is the operator's gesture; never a real
+  client, contact, amount, e-mail or secret; republish with the artifact's URL (a publish without it
+  creates an empty copy); a review page judges, it does not direct — it is not a prototype
+  (`design-method.md` → "Prototyping — Claude Artifacts"). A surface without artifacts (Cursor, Codex,
+  headless) keeps the numbered quiz block.
+- Why: 19 decisions (2026-10-31) and 12 planned screens / 49 points (2026-11-01) did not fit a quiz
+  (bananaevents `docs/interventions/2026-11-01-Lucia-page-de-revue.md`).
+
 **✅ Recette — before the Debrief.** (1) The **recette table**: each deliverable asked at Cadrage →
 shown (link / evidence) or not; a test count never substitutes for the thing asked. (2) **Four
 states, never merged:** `CODED` · `LANDED` · `DEPLOYED` · `PROVEN`. Landed is a push; it is never
 reported as deployed or proven without its own evidence (served revision · observed run). (3) When
 a journey is claimed `PROVEN`, one `AskUserQuestion`: **accept / reopen / defer**, with a ≤ 3-minute
 test script the operator can run, written as the **🔎 Preuve à jouer** block (below). In a chantier only the results that clients see or that touch money (`needsOperator`) reach the operator, in one batch per slice at its Recette; the rest are accepted by `vera` + `sage` and listed as reopenable (`sprints-method.md` → "The chantier"). (4) `Avancement` in the Debrief counts journeys proven, not tasks
-closed. **Who does what at the Recette:** `vera` reviews the slice once (opus) before it lands;
+closed. (5) **`Appris:` lines** — when a delegate's report carries one, the coordinator applies the learning gate here, without spawning `agathe` (`agents-method.md` → "§ Training"). **Who does what at the Recette:** `vera` reviews the slice once (opus) before it lands;
 `sage` runs the `Proof:` on the environment it names, with real data, and records it — so `PROVEN`
 is an observation, never the coordinator's say-so.
 
@@ -454,13 +488,13 @@ A sub-session whose work is LANDED closes itself — the operator never archives
 
 | Step | What runs |
 |---|---|
-| **1. Done test** | `npm run session:close` (`--check`, the default): LANDED on the trunk · nothing uncommitted · nothing unpushed · no open PR. Any "no" → it prints why; the session stays open. |
-| **2. Git side** | `npm run session:close -- --apply`: detaches HEAD, deletes the branch **only** through `branch-sweep.mjs --apply --landed-only --only <branch>` (331.a) — never a hand-typed `git branch -D`. |
+| **1. Done test** | `node .claude/hooks/session-close.mjs` (`--check`, the default): LANDED on the trunk · nothing uncommitted · nothing unpushed · no open PR. Any "no" → it prints why; the session stays open. |
+| **2. Git side** | `node .claude/hooks/session-close.mjs --apply`: detaches HEAD, deletes the branch **only** through `branch-sweep.mjs --apply --landed-only --only <branch>` (331.a) — never a hand-typed `git branch -D`. |
 | **3. Report up** | The session's **Fait / Suite** (335.a) goes to the parent control tower by `SendMessage` — the script prints the step, the agent runs it. |
 | **4. Archive, last** | `archive_session self` — reversible, and the session's final action. |
 
 Hooks cannot call the app's session tools, so `.claude/hooks/session-close.mjs` (`hugo`) does the git side and
-prints steps 3–4; `land.mjs` names `session:close` as the next step after a landing. A session that misses its
+prints steps 3–4; `land.mjs` names `session-close.mjs` as the next step after a landing. A session that misses its
 close is caught by `regine`'s weekly pass — the fallback, not the path.
 
 #### Exception PRs (336.a)
@@ -468,7 +502,7 @@ close is caught by `regine`'s weekly pass — the fallback, not the path.
 A PR held by **schema / security / migration / infra** is reviewed by `kasper`, run automatically on **opus**
 (never below). He writes `.method/kasper/pr-<n>.json` → `{ "reviewer": "kasper", "verdict": "approve" | "reject", "summary", "sha" }`
 (`block` = `reject`) and never merges himself. The file is an **honour-system** brake, like the verify marker:
-only the sha binding is machine-checked, so writing it for kasper is forbidden. Then `npm run session:close -- --pr <n>` does exactly one of:
+only the sha binding is machine-checked, so writing it for kasper is forbidden. Then `node .claude/hooks/session-close.mjs --pr <n>` does exactly one of:
 
 | The PR | `--pr <n>` does |
 |---|---|
@@ -478,7 +512,7 @@ only the sha binding is machine-checked, so writing it for kasper is forbidden. 
 
 `--pr` runs from the trunk's copy of the hook (it refuses a lib older than its own checks); a PR that touches
 `.claude/hooks/` is merged by the operator, never by `--pr`. Never `--admin`, never `--delete-branch`, never a force-push. Deploying rules or running a migration stays
-`/deploy` and the operator. PRs open > 3 days: `npm run session:close -- --stale --days 3 --fleet`, in
+`/deploy` and the operator. PRs open > 3 days: `node .claude/hooks/session-close.mjs --stale --days 3 --fleet`, in
 `regine`'s weekly pass, one merge / close / defer quiz per PR.
 
 ### Slice discipline (why this saves tokens)
@@ -590,7 +624,7 @@ there is none (see "Cadence").
 Every answer serves **the operator's decision speed**. Four rules hold before any card is drawn:
 
 - **Proof first.** He opens what was done in one click, before any prose.
-- **Choices come prepared**, as a quiz (`AskUserQuestion`, ≤ 4 options, the recommendation first). A
+- **Choices come prepared**, as a quiz (`AskUserQuestion`, ≤ 4 options, the recommendation first) — or a review page when the quiz is too small ("The two-moment contract"). A
   choice is never left for him to type.
 - **A reversible step inside scope is done, not offered**: commit, land, relaunch, re-run.
 - **His replies are a measured signal.** « donne moi le lien », « show me », a re-asked state
@@ -667,10 +701,15 @@ operator rulings of 2026-10-23, trial until the J+7 measurement, `ACTIONS.md` �
   - One idea per bullet, with the **key noun** in bold. Prefer a short table to a list of parallel
     facts.
   - Write paths as clickable links. No paragraph runs longer than 3 lines.
-- **Inline card, only when it earns its cost.** The closing may render an inline visual card
-  (`show_widget` HTML: tiles with the proofs, a state badge, `sendPrompt` buttons) **only when there are
-  visual proofs or several actions**. Otherwise it is plain markdown plus the `wrap_up` box. The card
-  costs about 6 k tokens and carries no emoji, only Tabler icons.
+- **Inline card — compact by default (336.d).** Every **mission card** closing and every full
+  **Debrief** / **control tower** renders the **compact card**: the fixed `show_widget` template
+  `docs/METHOD/templates/closing-card-compact.html` (~2 k tokens) — title + state word, 1–3 Fait tiles
+  each with its proof link, the Suite fate line, 1–2 `sendPrompt` buttons. Fill its placeholders;
+  never redesign it. The **full card** (~6 k tokens, free layout) only when there are visual proofs
+  (screenshots, before/after). **Never** for a small answer (the 2-line closing), a chantier
+  sub-session or a delegated sub-agent. The card does not replace the text: the markdown Fait / Suite,
+  the `wrap_up` box and the « go » quiz still follow it. Both cards: no emoji, Tabler icons only,
+  theme CSS variables, transparent background, dark mode.
 - **The journey ladder** (the Debrief's `📊` and the control tower; not the mission card since 335.a) — one line: `Cadré → Codé → Livré → Déployé → Prouvé → Utilisé → Retours`, the
   rung reached in **bold**, then « cette session : X → Y ». It extends the four states (`Livré` =
   LANDED, `Déployé` = DEPLOYED, `Prouvé` = PROVEN) toward real users (`Utilisé`) and their feedback
@@ -1166,5 +1205,5 @@ GEMINI_API_KEY=...                    # ⛔ Server-only — never NEXT_PUBLIC_ o
 ---
 
 **Owner:** Lucia  
-**Last Updated:** 2026-10-15
+**Last Updated:** 2026-11-04
 

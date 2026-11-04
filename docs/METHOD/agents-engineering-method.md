@@ -1,7 +1,7 @@
 # Agents Engineering & AI Agent Team Architecture
 
 **Owner:** Lucia (method-level) + Developers
-**Version:** 333.a
+**Version:** 339.a
 **Purpose:** Define the agent team architecture on the **Claude suite** — the native sub-agent layer, runners & orchestration, parallel + fleet execution, hard gates via hooks, agent-to-Skill mapping, the Desktop/Code division of labour, Artifacts-based design, and context management protocols.
 
 ---
@@ -204,7 +204,7 @@ The METHOD assumes a specific Desktop configuration. Set this up once per machin
 - **Project knowledge** = add the small, stable docs the agents always need: `project/STATE.md`, `project/DESIGN.md` (if it exists), `project/SCHEMA.md` (if it exists). Do **not** dump the whole repo — keep it surgical (see Context Hygiene).
 
 ### 7.2 The cohort (nothing to install since 327.a)
-- **There are no agent Skills to install.** The 18 mandates live in `.claude/agents/` and are invoked by name as sub-agents on every surface; the persona stubs were deleted in 327.a and doctor **E17** fails if one comes back.
+- **There are no agent Skills to install.** The 19 mandates live in `.claude/agents/` and are invoked by name as sub-agents on every surface; the persona stubs were deleted in 327.a and doctor **E17** fails if one comes back.
 - `.claude/skills/` holds **capability** skills only (`deploy`, `/media`, `ux-review`, `ads-ops`, …), each naming its owner. Enable the relevant ones per Project: a consulting project mostly needs `app-economics`, a growth project `ads-ops` and `landing-page`.
 
 ### 7.3 Connectors (MCP)
@@ -303,5 +303,5 @@ Long threads lose context ("context rot"). Maintain strict hygiene:
 7. **For autonomous sprints, use Swanifly** — it already runs Claude Code per persona and opens a PR.
 
 ---
-**Last Updated:** 2026-10-24
+**Last Updated:** 2026-11-04
 **Status:** ✅ Production-Ready (Claude Desktop + Claude Code + Artifacts)

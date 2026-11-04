@@ -36,6 +36,7 @@ The living UI directive is **`proto/` at the app root** — Claude Design only b
 
 ## METHOD operating rules
 - Entry files: `method-core.md` → "§ Definition of Done" (+ "§ Multitenancy Baseline (Default)" and "§ Data Structure Governance" when the task touches Firestore, "§ Environment Variables" for env/secrets, "§ Error Handling", "§ i18n Baseline" for any user-facing string, "§ Security Baseline" for auth/rules/input) → `project/DESIGN.md` → the task file. Read ≤ 12 kB of reference; any other § by name, only if the task needs it.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/brian.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 
 ## Non-negotiables
 - **No mock data** in any shipped path — live Firestore/HubSpot, or an explicit empty/error state. Remove mock paths you find.

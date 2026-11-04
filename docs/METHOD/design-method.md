@@ -1,7 +1,7 @@
 # Design Method
 
 **Owners (per section — 327.a):** **Nova** owns the design system — Philosophy, Design Language, Surface & Depth, MD3, Accessibility, Dark Mode, Theming, Animation, Component Patterns, Error States, Anti-Patterns, Tokens Checklist, Prototyping, the design side of the Port Loop, the Design Log. **Maya** owns the structure — Navigation Taxonomy, Adaptive Layout System, State Preservation & SPA Navigation Contract, Content-Level Layout Patterns, Supporting Surfaces, Navigation Patterns, and the port **order**. **Alba** owns the brand — Icon System, Logo & Brand Identity (and `docs/project/brand/` minus `tone/`, which is **Lise**'s). **Gordon** owns every string (**Lise** reads it for tone before it lands, where the repo has voice files, and never edits it); **Brian** owns every component and both ports' implementation. Each section states its owner; a section with none is Nova's.  
-**Version:** 327.a  
+**Version:** 337.c  
 **Purpose:** Global design constraints only (project-level UI lives in project/DESIGN.md)
 
 ---
@@ -1258,6 +1258,12 @@ Every app must define in `project/DESIGN.md`:
    the Artifact regenerates on request.
 4. On approval, **export the Artifact source into the app's `proto/` folder** (its seed commit —
    the proto then evolves in the repo) and record the resolved token values in `project/DESIGN.md`.
+
+> **A review page is not a prototype (337.c).** A **review page** (`method-core.md` → "When the quiz is
+> too small", template `templates/review-page.html`) *judges* a planned result with « Données d'exemple »
+> frames; it does not *direct* the build. When its screens will be ported, Nova carries the accepted
+> points into `proto/` — turning a review page into the seed of a proto is Nova's call (step 4), never
+> automatic. It uses the token contract below.
 
 ### Token Contract (Artifacts must use these — never hardcode colors)
 

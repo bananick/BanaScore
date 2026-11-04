@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{title}</title>
+<!--
+  METHOD 337.c — review page template. Rule: method-core.md → "The two-moment contract" → "When the quiz
+  is too small". Census and formats: docs/improvement/review-pages-census.md (hub only).
+  The skeleton, the styles and the script are FIXED: the coordinator fills ONLY the JSON block
+  #review-data (and, for mockups, the `frame` HTML of a section). Never redesign it; a change to the
+  skeleton is a METHOD release.
+
+  Publish with:  capabilities: { db: {}, user: {} }   (add assets: {} only for a recette with screenshots).
+  Republish ALWAYS with the artifact's `url` — a publish without it creates an empty copy with no database.
+  Seed nothing in the page: the data block is the page. No real client, contact, amount, e-mail or secret.
+
+  JSON block — top level
+    title        page title (also <title>)            date   "JJ/MM/AAAA"
+    rung         "Cadré" | "CODED" | "LANDED" | "DEPLOYED" | "PROVEN"  — the REAL state, never flattering
+    rungNote     e.g. "Rien n'est construit" (true for Cadré)
+    intro        one or two sentences: what is asked, how long it takes
+    collection   storage collection: "decisions" | "evaluations" | "votes" | "leads" | "evals"
+    perUser      true when several people answer (vote, recette): doc id = user id, not item id
+    sections[]   see below; a section with gate:true is rendered FIRST, in its own block
+  Section
+    id, title, kind  "decisions" | "mockups" | "vote" | "list" | "recette"
+    gate         true = conflict-gate decisions (data model, permissions, scope). NEVER a production GO.
+    frame        (mockups) coordinator-authored HTML of the screen, example data only; put <i class="pin" data-n="N">N</i> on it
+    items[]      { id, n, origin, q, ctx, type, options[] }
+      origin     "decide" ("Décidé le JJ/MM", give `date`) | "pour-toi" ("Décidé pour toi") | "a-trancher"
+      type       "choice"  options[] = { id, label, cons, reco }  — recommendation FIRST, one consequence line each
+                 "verdict" three states: Ça me va / À ajuster / Pas ça  (+ comment)
+                 "rank"    pick 1st / 2nd / 3rd among options[]   (vote)
+                 "list"    Valider / À revoir / Écarter  (+ editable text in `text`)
+  Stored doc  { section, point, q, choice|verdict|rank|decision, note, updatedAt }  — read back with ArtifactData `list`.
+  Checklist before sharing: probe write OK (status bar says "Stockage vérifié") · every frame says « Données d'exemple »
+  · rung is the real one · republish used `url`.
+-->
+<style>
+:root{--bg:#fbf8f2;--s1:#fff;--s2:#f3eee4;--s3:#e9e2d4;--text:#1f1b13;--text2:#5b5444;--text3:#8a826f;--border:#d9d1bf;
+--pri:#6a4fd8;--pri2:#8a73ee;--ok:#1f7a4c;--warn:#a86400;--bad:#b3261e;--r:12px;--r-btn:999px;--ease:.18s ease}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15130f;--s1:#1e1b15;--s2:#27231b;--s3:#322d22;--text:#f1ece0;--text2:#c2baa6;--text3:#8f8774;--border:#3d3729;--pri:#a897ff;--pri2:#c3b7ff;--ok:#6fd39d;--warn:#f0b35a;--bad:#ff8a80}}
+:root[data-theme="dark"]{--bg:#15130f;--s1:#1e1b15;--s2:#27231b;--s3:#322d22;--text:#f1ece0;--text2:#c2baa6;--text3:#8f8774;--border:#3d3729;--pri:#a897ff;--pri2:#c3b7ff;--ok:#6fd39d;--warn:#f0b35a;--bad:#ff8a80}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 Inter,system-ui,sans-serif;padding:0 max(16px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+main{max-width:860px;margin:0 auto}
+h1{font-size:1.4rem;margin:20px 0 4px}h2{font-size:1.1rem;margin:0 0 8px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--text2);font-size:.85rem}
+.pill{display:inline-block;padding:2px 10px;border-radius:var(--r-btn);background:var(--s3);color:var(--text2);font-size:.78rem;white-space:nowrap}
+.pill.rung{background:var(--pri);color:#fff}.pill.warn{background:var(--warn);color:#fff}.pill.ok{background:var(--ok);color:#fff}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--border);margin-top:12px}
+.track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}.track i{display:block;height:100%;width:0;background:var(--pri);transition:width var(--ease)}
+.status{font-size:.8rem;color:var(--text3);margin-top:6px}
+section{margin:22px 0}.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin:10px 0}
+.gate{border:2px solid var(--warn);border-radius:var(--r);padding:4px 14px 10px;background:var(--s2)}
+.gate .note{font-size:.82rem;color:var(--warn)}
+.frame{border:1px dashed var(--border);border-radius:var(--r);padding:14px;background:var(--s2);position:relative;overflow:auto}
+.frame .ex{position:absolute;top:6px;right:10px;font-size:.72rem;color:var(--text3)}
+.pin{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--pri);color:#fff;font:600 .75rem Inter,sans-serif;font-style:normal}
+.q{display:flex;gap:10px;align-items:flex-start}.q b{font-weight:600}.ctx{color:var(--text2);font-size:.88rem;margin:4px 0 8px}
+.opts{display:grid;gap:8px}.opt{display:block;text-align:left;width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--s1);color:var(--text);font:inherit;cursor:pointer;transition:border-color var(--ease),background var(--ease)}
+.opt[aria-pressed="true"]{border-color:var(--pri);background:var(--s2);box-shadow:inset 0 0 0 1px var(--pri)}
+.opt small{display:block;color:var(--text2);margin-top:2px}.reco{color:var(--pri);font-size:.72rem;font-weight:600;margin-left:6px}
+.verd{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.verd .opt{text-align:center}
+.verd .opt[aria-pressed="true"][data-v="ok"]{border-color:var(--ok)}.verd .opt[aria-pressed="true"][data-v="adj"]{border-color:var(--warn)}.verd .opt[aria-pressed="true"][data-v="no"]{border-color:var(--bad)}
+textarea{width:100%;min-height:44px;margin-top:8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--s1);color:var(--text);font:inherit;resize:vertical}
+button.main{min-height:44px;padding:0 18px;border:0;border-radius:var(--r-btn);background:var(--pri);color:#fff;font:600 1rem Inter,system-ui,sans-serif;cursor:pointer}
+button:disabled{opacity:.5}.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.sum div{background:var(--s2);border-radius:var(--r);padding:10px;text-align:center}
+.sum strong{display:block;font-size:1.3rem}ul.todo{padding-left:18px;margin:6px 0}.empty{color:var(--text2);padding:20px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:480px){.verd{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="t"></h1>
+  <div class="meta"><span id="date"></span><span class="pill rung" id="rung"></span><span class="pill warn" id="rungnote"></span><span class="pill">Données d'exemple</span></div>
+  <p id="intro" class="ctx"></p>
+  <div class="bar"><div class="track"><i id="prog"></i></div><div class="status" id="status">Connexion au stockage…</div></div>
+  <div id="root"><p class="empty">Chargement…</p></div>
+  <section class="card" id="end"></section>
+</main>
+
+<script type="application/json" id="review-data">
+{
+  "title": "{title}",
+  "date": "{JJ/MM/AAAA}",
+  "rung": "Cadré",
+  "rungNote": "Rien n'est construit",
+  "intro": "{ce qui est demandé, en une ou deux phrases}",
+  "collection": "decisions",
+  "perUser": false,
+  "sections": [
+    {
+      "id": "gate", "title": "À trancher d'abord — décisions lourdes", "kind": "decisions", "gate": true,
+      "items": [
+        { "id": "d1", "n": 1, "origin": "a-trancher", "q": "{question}", "ctx": "{contexte}", "type": "choice",
+          "options": [ { "id": "a", "label": "{recommandée}", "cons": "{une ligne de conséquence}", "reco": true },
+                       { "id": "b", "label": "{alternative}", "cons": "{conséquence}" } ] }
+      ]
+    },
+    {
+      "id": "s1", "title": "{Tranche ou écran}", "kind": "decisions",
+      "items": [
+        { "id": "d2", "n": 2, "origin": "decide", "date": "{JJ/MM}", "q": "{rappel d'un choix déjà fait}", "type": "verdict" }
+      ]
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var D=JSON.parse(document.getElementById("review-data").textContent);
+var $=function(i){return document.getElementById(i)};
+var db=null,uid="local",canWrite=true,answers={},items=[],queue={};
+var LS="review:"+(D.title||"page");
+function lsGet(){try{return JSON.parse(localStorage.getItem(LS)||"{}")}catch(e){return {}}}
+function lsSet(){try{localStorage.setItem(LS,JSON.stringify(answers))}catch(e){}}
+function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+var ORIGIN={"decide":function(it){return "Décidé le "+(it.date||"")},"pour-toi":function(){return "Décidé pour toi"},"a-trancher":function(){return "À trancher"}};
+var VERD=[["ok","Ça me va"],["adj","À ajuster"],["no","Pas ça"]];
+var LIST=[["ok","Valider"],["adj","À revoir"],["no","Écarter"]];
+function docId(it){return D.perUser?uid+"__"+it.id:it.id}
+function status(m){$("status").textContent=m}
+
+function save(it,patch){
+  var key=docId(it),a=answers[it.id]=Object.assign({},answers[it.id],patch);
+  lsSet();update();
+  if(!db||!canWrite){return}
+  var doc=Object.assign({section:it.sec,point:it.n,q:it.q,updatedAt:Date.now()},a);
+  queue[key]=(queue[key]||Promise.resolve()).then(function(){return db.collection(D.collection).doc(key).set(doc)})
+    .catch(function(e){status(e&&e.code==="invalid_argument"?"Lecture seule pour toi — tes réponses ne sont pas enregistrées.":"Enregistrement impossible — "+(e&&e.message||"erreur"))});
+}
+function btn(label,pressed,fn,v){var b=el("button","opt");b.type="button";b.setAttribute("aria-pressed",pressed);if(v)b.dataset.v=v;b.textContent=label;b.onclick=fn;return b}
+
+function renderItem(it){
+  var c=el("div","card"),q=el("div","q");
+  q.appendChild(el("i","pin",it.n));
+  var h=el("div");h.appendChild(el("b",null,it.q));
+  h.appendChild(el("div","meta",(ORIGIN[it.origin]||ORIGIN["a-trancher"])(it)));
+  if(it.ctx)h.appendChild(el("div","ctx",it.ctx));
+  q.appendChild(h);c.appendChild(q);
+  var a=answers[it.id]||{},box;
+  if(it.type==="choice"){
+    box=el("div","opts");
+    (it.options||[]).forEach(function(o){
+      var b=btn("",a.choice===o.id,function(){save(it,{choice:o.id});draw()});
+      b.appendChild(el("span",null,o.label));if(o.reco)b.appendChild(el("span","reco","Reco"));
+      if(o.cons)b.appendChild(el("small",null,o.cons));box.appendChild(b)});
+  }else if(it.type==="rank"){
+    box=el("div","opts");var r=a.rank||{};
+    (it.options||[]).forEach(function(o){
+      var row=el("div","verd");row.appendChild(el("span",null,o.label));
+      [["first","1er"],["second","2e"],["third","3e"]].forEach(function(p){
+        row.appendChild(btn(p[1],r[p[0]]===o.id,function(){var n=Object.assign({},r);
+          Object.keys(n).forEach(function(k){if(n[k]===o.id)delete n[k]});n[p[0]]=o.id;save(it,{rank:n});draw()}))});
+      box.appendChild(row)});
+  }else{
+    var set=it.type==="list"?LIST:VERD,key=it.type==="list"?"decision":"verdict";
+    box=el("div","verd");
+    set.forEach(function(s){box.appendChild(btn(s[1],a[key]===s[0],function(){var p={};p[key]=s[0];save(it,p);draw()},s[0]))});
+  }
+  c.appendChild(box);
+  var ta=el("textarea");ta.placeholder="Commentaire (facultatif)";ta.value=a.note||"";ta.setAttribute("aria-label","Commentaire du point "+it.n);
+  ta.onchange=function(){save(it,{note:ta.value})};c.appendChild(ta);
+  return c;
+}
+function answered(it){var a=answers[it.id]||{};return !!(a.choice||a.verdict||a.decision||(a.rank&&a.rank.first))}
+
+function draw(){
+  var root=$("root");if(document.activeElement&&document.activeElement.tagName==="TEXTAREA")return;
+  root.textContent="";
+  var secs=D.sections.slice().sort(function(x,y){return (y.gate?1:0)-(x.gate?1:0)});
+  if(!secs.length){root.appendChild(el("p","empty","Rien à décider."));return}
+  secs.forEach(function(s){
+    var sec=el("section",s.gate?"gate":null);sec.appendChild(el("h2",null,s.title));
+    if(s.gate)sec.appendChild(el("p","note","Décisions de la conflict gate. Jamais un GO de production : un --apply, un déploiement ou un secret garde son GO écrit."));
+    if(s.frame){var f=el("div","frame");f.appendChild(el("span","ex","Données d'exemple"));var inner=el("div");inner.innerHTML=s.frame;f.appendChild(inner);sec.appendChild(f)}
+    var n=s.items.filter(answered).length;sec.appendChild(el("div","meta",n+"/"+s.items.length+" avis"));
+    s.items.forEach(function(it){sec.appendChild(renderItem(it))});
+    if(s.kind==="mockups"){var ot=el("textarea");ot.placeholder="Autre chose ? (cet écran)";var oa=answers[s.id+"-autre"];ot.value=oa&&oa.note||"";
+      ot.onchange=function(){save({id:s.id+"-autre",sec:s.id,n:0,q:"Autre chose ?"},{note:ot.value})};sec.appendChild(ot)}
+    root.appendChild(sec)});
+  update();
+}
+function update(){
+  var done=items.filter(answered).length,tot=items.length;
+  $("prog").style.width=(tot?100*done/tot:0)+"%";
+  var c={ok:0,adj:0,no:0},open=[];
+  items.forEach(function(it){var a=answers[it.id]||{},v=a.verdict||a.decision;if(v&&c[v]!=null)c[v]++;if((v==="adj"||v==="no")&&a.note)open.push("#"+it.n+" — "+a.note)});
+  var e=$("end");e.textContent="";
+  e.appendChild(el("h2",null,"Bilan — "+done+"/"+tot+" points"));
+  var sm=el("div","sum");[["Ça me va",c.ok],["À ajuster",c.adj],["Pas ça",c.no]].forEach(function(x){var d=el("div");d.appendChild(el("strong",null,x[1]));d.appendChild(document.createTextNode(x[0]));sm.appendChild(d)});
+  e.appendChild(sm);
+  if(open.length){var u=el("ul","todo");open.forEach(function(t){u.appendChild(el("li",null,t))});e.appendChild(u)}
+  var g=answers.general||{},ta=el("textarea");ta.placeholder="Avis général";ta.value=g.note||"";
+  ta.onchange=function(){save({id:"general",sec:"general",n:0,q:"Avis général"},{note:ta.value})};e.appendChild(ta);
+  var p=el("p","ctx","Quand tu as fini, dis « Artefact complété » dans la conversation : les réponses sont relues, reportées telles quelles puis le travail repart. Un point changé après coup demande un nouveau « Artefact complété ».");
+  e.appendChild(p);
+}
+
+async function probe(){
+  var ref=db.collection(D.collection).doc("_probe_"+uid);
+  await ref.set({at:Date.now()});var s=await ref.get();
+  if(!(s&&(s.exists===true||typeof s.exists==="function"&&s.exists()||s.data&&s.data())))throw new Error("relecture vide");
+  await ref.delete();
+}
+async function boot(){
+  $("t").textContent=D.title;document.title=D.title;$("date").textContent=D.date;$("rung").textContent=D.rung;
+  $("rungnote").textContent=D.rungNote||"";if(!D.rungNote)$("rungnote").hidden=true;$("intro").textContent=D.intro||"";
+  D.sections.forEach(function(s){s.items.forEach(function(it){it.sec=s.id;items.push(it)})});
+  answers=lsGet();draw();
+  try{
+    var cl=window.claude;if(!cl||!cl.use)throw new Error("absent");
+    var user=await cl.use("user");if(user){try{uid=String(await user.id())}catch(e){}if(user.can&&user.can("data.write")===false)canWrite=false}
+    db=await cl.use("db");if(!db)throw new Error("base inaccessible — ouvre la page depuis claude.ai");
+    await probe();status(canWrite?"Stockage vérifié — tes réponses sont enregistrées au fil de l'eau.":"Lecture seule pour toi.");
+    db.collection(D.collection).onSnapshot(function(snap){
+      var rows=[];snap.forEach?snap.forEach(function(d){rows.push(d)}):(snap.docs||[]).forEach(function(d){rows.push(d)});
+      rows.forEach(function(d){var data=Object.assign({},typeof d.data==="function"?d.data():d),id=d.id||data.id||"";
+        if(D.perUser){if(id.indexOf(uid+"__")!==0)return;id=id.slice(uid.length+2)}
+        if(id.charAt(0)!=="_")answers[id]=data});
+      lsSet();draw()});
+  }catch(e){db=null;status("Stockage indisponible ("+(e&&e.message||"erreur")+") — réponses gardées sur cet appareil seulement.")}
+}
+boot();
+})();
+</script>
+</body>
+</html>

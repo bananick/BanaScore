@@ -4,12 +4,12 @@ The METHOD cohort as Claude Code **sub-agents** — delegatable, each with its o
 window and a scoped tool allow-list. **This directory is the whole cohort**: since 327.a there is no
 second surface. `.claude/skills/` holds *capabilities* only.
 
-**18 active mandates** live in this directory — `junia` (plan) · `brian` (build) · `sage` (prove) ·
+**19 active mandates** live in this directory — `junia` (plan) · `brian` (build) · `sage` (prove) ·
 `watson` (repair) · `kasper` (guard) · `vera` (judge) · `maya` (UX research & IA) · `nova` (design
 system) · `alba` (brand & visual assets) · `gordon` (commercial & growth) · `iris` (study &
 deliverables) · `hugo` (METHOD tooling) · `lucia` (METHOD release) · `penny` (token economy) ·
 `oscar` (coach) · `regine` (régie — sessions, worktrees, work in progress) · `lise` (tone & voice) · `stella` (organic visibility — SEO, GEO/AEO, social,
-directories; added in 333.a).
+directories; added in 333.a) · `agathe` (recruit & train — hire, exam, learning loop, scorecard; added in 339.a, on probation).
 **3 parked** agent files (`teddy`, `aiko`, `april`) live under `.claude/_dormant/agents/`, outside the
 scanned agent root: **not loaded, not delegable**. Bringing one back is a `git mv`, the operator's
 call. An agent earns a name when its mandate is one you would otherwise have to retype.
@@ -58,6 +58,7 @@ agent gets **no stub** — there is nothing to keep in sync (`.claude/skills/REA
 | **oscar** | opus | Read, Glob, Grep, Bash, Write, Edit | coach: the weekly retro only — **read-only on code** (prompt-enforced); weekly, never per Debrief |
 | **regine** | sonnet | Read, Glob, Grep, Bash, Write, Edit | régie: sidebar pass, idle clocks, rescue before archive — **archives, never deletes work** (integrated branches: branch-sweep only); never edits or lands product code (prompt-enforced) |
 | **lise** | opus | Read, Glob, Grep, Write, Edit | tone & voice: reviews public-facing text against the repo's voice files, runs the tone loop — **writes only under `docs/project/brand/tone/`** (prompt-enforced); never edits the text she reviews |
+| **agathe** | opus | Read, Write, Edit, Bash, Glob, Grep | recruit & train: hire, entrance exam, learning loop, scorecard — **writes only in the repo she runs in, never a hub cohort file** (prompt-enforced); `Bash` read-only, commit excepted; no `Agent` tool: the coordinator runs the owner during an exam |
 
 Parked files (`teddy`, `aiko`, `april`) keep their frontmatter as it was; it applies only if the
 operator moves one back.
@@ -76,14 +77,15 @@ stay inline for back-and-forth, shared multi-phase context and small targeted ed
 one conversation = one branch = one worktree. Triggers: `docs/METHOD/sprints-method.md` →
 "Sessions & branches".
 
-The 11 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the PR exception),
-`/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro` (weekly), `/clean` (Régine on demand),
-`/project` (open a chantier), and two optional ones —
+The 13 rituals in `.claude/commands/`: `/land` (the default close), `/ship` (the PR exception),
+`/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro` (weekly), `/hire` (Agathe: an owner for a
+domain), `/clean` (Régine on demand),
+`/project` (open a chantier), `/projects` (the fleet board, hub only), and two optional ones —
 `/port`, `/relay`.
 
 ## Model routing (default: orchestrate high, execute cheap)
 The `model` column above is each sub-agent's **default tier** — T1 judge/plan/review/security/METHOD
-release/UX architecture on opus, T2 build/tests/ops/design/brand/tooling/copy/study/token
+release/UX architecture/hiring on opus, T2 build/tests/ops/design/brand/tooling/copy/study/token
 economy/régie on sonnet. The orchestrator runs on the
 strongest model and delegates each task on the **cheapest model that meets its quality bar**,
 overriding the default per delegation when tiers differ (e.g. `brian` + `model: haiku` for pure

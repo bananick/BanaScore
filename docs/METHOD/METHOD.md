@@ -1,4 +1,4 @@
-# METHOD v336.b
+# METHOD v339.a
 
 ## Quick Start
 
@@ -30,18 +30,49 @@
 | **Look back at the week (retro)** | `/retro` → `project/STATE.md` + `FOCUS.md` → the week's evidence | Oscar |
 | **Tidy sessions, the sidebar, worktrees** | `sprints-method.md` ("The chantier") → `repo-icons.json` | Régine |
 | **Review tone, frame or evolve a voice** | `tone-method.md` → `project/brand/tone/` | Lise |
+| **Hire, examine or train an agent; decide whether to keep it** | `/hire` → `agents-method.md` (§ 19, Domain owners) → `project/business/` | Agathe |
 
-> Agents named here are the **18 active** mandates. `teddy` `aiko` `april` are dormant
+> Agents named here are the **19 active** mandates. `teddy` `aiko` `april` are dormant
 > (`.claude/_dormant/`) — not loaded, so not delegable. Their mandates are covered above (Brian,
 > Junia's Cadrage, Gordon).
 
 ---
 
+## What's New in v339.a
+1. **Agathe 🎓 joins the cohort — 19 active mandates, on probation.** Recruit & train: spot, hire, onboard, examine, train, score, propose parking. Nobody tested an agent before trusting it; her **entrance exam** (3 real closed cases, read-only, graded pass · trap hit · invented) is the job no one held. She runs on signals, never on a clock: a script counts, and the coordinator applies the learning gate at the Recette without spawning her. The operator's ruling of 2026-11-04 stands in for the agent bar, as it did for Oscar; at J+60 Penny reports hires, exams, parkings and cost per finished hire, and 60 idle days make her a parking candidate under her own rule. `agents-method.md` → "§ 19. Agathe — Recruit & Train".
+2. **`/hire {domain}`, the 13th ritual.** H1 (the brief is retyped) plus H2 (knowledge outside git) or H3 (external writes); H4 decides agent vs skill. One quiz, one spawn (she is resumed, like Junia), one dossier in one commit, in the target app only. An owner stays `probation` until it passes its exam. `.claude/commands/hire.md`.
+3. **What an agent learns is versioned.** A registry for a many-entity domain, a carnet (`docs/project/carnets/{name}.md`) otherwise, both app-owned. Every cohort agent's `Entry files:` now reads its carnet, and a run that taught something adds an `Appris:` line. **Two speeds:** a search rule on evidence alone; anything touching a write, money or a classification only on the operator's answer. So no app needs to teach a hub cohort file in place, which freezes it out of the sync. `agents-method.md` → "§ Training".
+4. **Crew checks C1–C6 in the doctor, `npm run crew:report`, a crew column in `doctor:fleet`** — read from the files, never a hard-coded roster, and **WARN only** in this release, so no repo is skipped from a sync for them. `agents-method.md` → "§ Crew checks". `justine` and `cleo` join "Known domain owners". `IMP-032`.
+
+## What's New in v338.a
+1. **A main checkout out of step with the trunk is said at session start.** The Claude desktop app seeds every new worktree with the main checkout's ignored `.claude/` files, so a main checkout left behind after a METHOD sync freezes every worktree's hooks and commands, invisibly to git. `flight-deck.mjs`'s startup hook now says it in one line, naming the files and `node docs/METHOD/tools/swanifly-claude-addon/install.mjs <main checkout> --seeded-only --dry-run`, through `lib/claude-drift.mjs`. It compares only when the session's checkout is at the trunk, ignores line endings, and skips tracked files and a main checkout already ahead. It spawns no git process unless an untracked file differs or is missing. Past 200 ms it says what it found so far, or nothing if it found nothing, so a session on an older branch or a busy machine may say nothing and a later one does. `--seeded-only` writes only those ignored hooks and commands, keeping each replaced copy in `.method/claude-backup/`: no tracked file, section, skill or settings. Run it once on each main checkout the fleet sync skipped: until then its old `flight-deck.mjs` cannot warn.
+2. **`session-close` reaches the apps, merge path included.** `install.mjs` exports its hook list (`ADDON_HOOKS`) and now installs `session-close.mjs` + `lib/session-close.mjs` (in the payload since 336.b, never installed). By the operator's call of 2026-11-03, a held PR that `kasper` approves can then merge in an app without him; rules, indexes, migrations, secrets, `SOUL.md` and METHOD tooling still go to him. `land.mjs` and the METHOD now write the step `node .claude/hooks/session-close.mjs`, because the npm script exists only in the hub. `tests/claude-drift.test.mjs` fails on any payload hook that is neither installed nor listed in `NOT_INSTALLED`.
+
+## What's New in v337.d
+1. **Régine's night pass (04:00) — « Régie des sessions ».** `regine.md` → « Passe de nuit (04:00) »: the scheduled task `regie-de-nuit` (the operator's machine, outside the sync) reads every session's git state and only the transcripts that moved since the last pass, pushes the unpushed commits of idle worktree sessions after the rule-4 checks, archives finished sessions already fully on origin (never a chantier sub-session), and republishes one page with every gesture waiting on the operator, by project. Never a merge, a relayed GO or a main checkout touched; one phone push only when a gesture is due before the next 04:00. **Observed 2026-11-03:** a session refuses a GO relayed by another session, so the page gives one GO per session, where the recommendation is a clear yes, for the operator to paste himself.
+2. **The script is versioned.** `scripts/regie/gitstate.sh` (hub only), read by the task, from this landing, through `git show origin/main:scripts/regie/gitstate.sh`, like `machine-check.mjs`. `agents-method.md` → Régine: roster and ritual. `IMP-031`.
+
+## What's New in v337.c
+1. **The review page — when the quiz is too small.** `method-core.md` → "The two-moment contract" → "When the quiz is too small": more than 4 decisions ready together at a Cadrage, or a result not built yet to judge point by point, go to a **review page** (a claude.ai artifact with its own storage) instead of quizzes in series; a phone is a constraint, not a trigger. Eight invariants (quiz grammar per point, origin tag, numbered pastilles, three-state verdict + comment, « Données d'exemple » and the real rung, probe write, read → report verbatim → commit → act, one round per page). A conflict-gate decision may go through a page, in a block of its own at the top; **never a production GO**. Born in bananaevents (19 decisions on 2026-10-31, 12 screens / 49 points on 2026-11-01), ratified by the operator on 2026-11-01.
+2. **Template and census.** `docs/METHOD/templates/review-page.html` — fixed skeleton, one JSON data block, phone first, light and dark; five formats from the study (grouped decisions · mockups · vote · list review · journey acceptance). The study stays open: `docs/improvement/review-pages-census.md` (hub only) takes one row per new page. Cross-links in `design-method.md` (a review page judges, it does not direct), `sprints-method.md` (chantier Cadrage) and the quiz rule of `CLAUDE.md`. `IMP-030`.
+
+## What's New in v337.b
+1. **`wip-sync` survives a path git cannot index.** A stray Windows device-name file (`nul`, `con`, `com1`…) no longer aborts the Stop hook's snapshot of uncommitted work: such names are skipped by name, `git add --ignore-errors` skips and lists any other path git cannot index (`.git/wip-sync.last-skipped`) and mirrors the rest, an all-failed batch still fails closed, and the error carries its cause line instead of `fatal: adding files failed`. `.env*` directories are denied too; `docs/METHOD/tools/swanifly-claude-addon/tests/wip-sync.test.mjs` proves secrets are never mirrored. Upstream of bananaevents `0fa07d07f` (`versioning.md` → 337.b).
+
+## What's New in v337.a
+1. **`/projects`, the fleet board (hub only).** `scripts/build-projects.mjs` reads every chantier fiche under `C:\Apps` — the copy found by its branch — into one snapshot (`fleet-board/1`) and a static page; `/projects` republishes the desk artifact from it at the same URL. The desk takes one click per decision, geste or recette and **relays** it through the slice's sub-session, which records it (`answeredAt`, `answeredVia: board`): the fiche stays the only truth, and 322.g rule 1 is amended accordingly. Fiches without the new fields are never dropped — the fallback rules derive one row per slice and the cards from open items (`templates/fleet-board.md`). `chantier-status/1` gains **optional** `session`, `next`, `tasks[]` (six-step ladder), `screens[]`, object options + `recoId`, `task`, `answeredAt` / `answeredVia`, `review[].minutes`; every sub-session fills them on its next write.
+
+## What's New in v336.d
+1. **The compact closing card, by default.** Every mission card, full Debrief and control tower now renders a fixed `show_widget` template, `docs/METHOD/templates/closing-card-compact.html` (~2 k tokens): title + state word, 1–3 Fait tiles with their proof links, the Suite fate line, 1–2 `sendPrompt` buttons. The agent fills its placeholders and never redesigns it. The full card (~6 k tokens) stays for visual proofs only; small answers, chantier sub-sessions and delegated sub-agents render none. The markdown Fait / Suite, the `wrap_up` box and the « go » quiz still follow the card. See `method-core.md` → "Closing by session type".
+
+## What's New in v336.c
+1. **Brand voices come in three layers — family · brand · signer.** `tone-method.md` § 1 → "The three layers": a hub-hosted family file (`docs/project/brand/tone/_family.md`, the shared checks and rules, every line **P**), the brand file with a new **Signers** table (what the brand mutes or allows for each person who signs under it), and the signer's constant file. Precedence on conflict: channel > brand > signer > family. A repo's `_common.md` extends the family file and keeps only deltas. Every voice is indexed in the hub registry `docs/project/brand/VOICES.md`. `TONE-VOICE-TEMPLATE.md` gains `Extends:` and `## Signers`.
+
 ## What's New in v336.b
 1. **Every agent has a character, a lesson and a wink.** Each `.claude/agents/{agent}.md` → `## Identity` gains three lines after **I hand off to**: **Character** (a French or international figure whose craft matches the role — an inspiration for the stance, never an impersonation), **I teach** (the one lesson of its craft it slips in when it earns its place) and **My wink** (the shape of its humour, one sample line — at the occasion, in the conversation's language). Humour serves the lesson or the relief; it never lands at someone's expense, never softens a severity, and never goes into a text a customer will read (`lise`'s). The `description:` frontmatter is unchanged, so the always-loaded surface does not grow. See `agents-method.md` → "How agents run".
 
 ## What's New in v336.a
-1. **Finished work closes itself.** A LANDED sub-session runs `npm run session:close -- --apply`: its branch goes through `branch-sweep`, its Fait / Suite reaches the parent by `SendMessage`, and it archives itself last. A PR held by schema / security / infra is reviewed by `kasper` on opus (`.method/kasper/pr-<n>.json`) and squash-merged by `session:close -- --pr <n>` on approve. Rules, indexes, migrations, secrets, `soul` and `hold` go to the operator as one merge / close / defer quiz. `regine` lists PRs open > 3 days weekly (`--stale --days 3 --fleet`). `method-core.md` → "Landing" → "Closing a finished sub-session", "Exception PRs".
+1. **Finished work closes itself.** A LANDED sub-session runs `node .claude/hooks/session-close.mjs --apply`: its branch goes through `branch-sweep`, its Fait / Suite reaches the parent by `SendMessage`, and it archives itself last. A PR held by schema / security / infra is reviewed by `kasper` on opus (`.method/kasper/pr-<n>.json`) and squash-merged by `session-close.mjs --pr <n>` on approve. Rules, indexes, migrations, secrets, `soul` and `hold` go to the operator as one merge / close / defer quiz. `regine` lists PRs open > 3 days weekly (`--stale --days 3 --fleet`). `method-core.md` → "Landing" → "Closing a finished sub-session", "Exception PRs".
 
 ## What's New in v335.b
 1. **The operator lever.** Every answer serves the operator's decision speed: proof first, choices as a quiz, a reversible in-scope step done rather than offered. His « donne moi le lien », « show me », re-asked states and typed confirmations are counted as misses (IMP-029) (`method-core.md` → "The operator lever"). `vera`, `sage`, `iris`, `regine` and `watson` hand back **closing-ready** reports: one proof link per point, a suggested fate, a ready quiz. Oscar's « one habit to change » now carries the coach tip, drawn from those misses.
@@ -614,7 +645,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 ## METHOD Files (19 docs + native layer)
 
 > 19 synced METHOD docs (9 Core + 10 Support), **plus** the repo-root native layer:
-> `CLAUDE.md`, `.claude/agents/` (18 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/skills/` (13 capability skills, no persona stubs since 327.a), `.claude/commands/` (11 rituals).
+> `CLAUDE.md`, `.claude/agents/` (19 active sub-agents + README; 3 dormant under `.claude/_dormant/`), `.claude/skills/` (13 capability skills, no persona stubs since 327.a), `.claude/commands/` (13 rituals; `/projects` is hub only).
 
 ### Core (9) — Always synced
 
@@ -622,7 +653,7 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 |---|---|---|---|
 | `METHOD.md` | Lucia | This file. Entry point + routing. | ~16 KB |
 | `method-core.md` | Lucia | Principles, tech stack, DoD | ~13 KB |
-| `agents-method.md` | Lucia | 18 active + 3 dormant agents, roles, rituals | ~60 KB |
+| `agents-method.md` | Lucia | 19 active + 3 dormant agents, roles, rituals | ~60 KB |
 | `sprints-method.md` | Junia | Sprint system, gates, rituals | ~16 KB |
 | `design-method.md` | Nova · Maya · Alba (per section) | M3 design constraints, nav patterns, brand | ~66 KB |
 | `ai-infra-method.md` | Brian | Multi-provider AI architecture | ~41 KB |
@@ -649,8 +680,8 @@ METHOD > VISION > PLAN > FOCUS > TASK > CODE
 | `chief-contract.md` | What Chief reads in every repo and the hub, the fields relied upon, the change rule (D24) |
 
 > Plus root `CLAUDE.md` (canonical context), `.claude/skills/` (13 capability skills — no persona stubs),
-> **`.claude/agents/` (18 active delegatable sub-agents + README), and `.claude/commands/` (11 rituals:
-> `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, `/clean`, `/project`, and the optional `/port`,
+> **`.claude/agents/` (19 active delegatable sub-agents + README), and `.claude/commands/` (13 rituals:
+> `/land`, `/ship`, `/intervention`, `/plan-sprint`, `/review`, `/brief`, `/retro`, `/hire`, `/clean`, `/project`, `/projects` (hub only), and the optional `/port`,
 > `/relay`)**. See `agents-engineering-method.md`.
 
 ### Tools (synced to all apps)
@@ -784,9 +815,9 @@ npm run sync-method:all:dry    # preview without writing
 
 ---
 
-## Agent Cohort (18 active mandates + 3 dormant)
+## Agent Cohort (19 active mandates + 3 dormant)
 
-Each agent runs **one way**: as a delegatable **native sub-agent** in `.claude/agents/{agent}.md`, on every Claude surface. The fourteen Desktop Skill stubs were deleted in 327.a — they re-loaded each description a second time in every session and carried 2 of ~140 delegations; `.claude/skills/` now holds **capabilities** only, each naming its owner. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from the agent files.) An agent earns a name when its mandate is one you would otherwise have to retype; eighteen mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
+Each agent runs **one way**: as a delegatable **native sub-agent** in `.claude/agents/{agent}.md`, on every Claude surface. The fourteen Desktop Skill stubs were deleted in 327.a — they re-loaded each description a second time in every session and carried 2 of ~140 delegations; `.claude/skills/` now holds **capabilities** only, each naming its owner. (`Swanifly/web/lib/engine/agent-personas.ts` is hand-maintained and parked — not derived from the agent files.) An agent earns a name when its mandate is one you would otherwise have to retype; nineteen mandates hold that bar. **The coordinating conversation orchestrates them** — not an agent.
 
 | Agent | Mandate | Entry Files |
 |---|---|---|
@@ -808,6 +839,7 @@ Each agent runs **one way**: as a delegatable **native sub-agent** in `.claude/a
 | **Régine** | Régie — session, worktree & work-in-progress hygiene; archives, never deletes work; removes integrated branches through `branch-sweep` | `sprints-method.md` ("The chantier") → `repo-icons.json` |
 | **Lise** | Tone & voice — reviews public-facing text against the repo's voice files; runs the tone loop | `tone-method.md` → `project/brand/tone/` |
 | **Stella** | Organic visibility — SEO, GEO/AEO, social search, forums, directories & entity, blog, digital PR; drafts only, published on the operator's GO per batch | `agents-method.md` → the organic-visibility study → `docs/growth/` |
+| **Agathe** | Recruit & train — spot, hire, onboard, examine, train, score, propose parking; on probation | `agents-method.md` (§ 19, Domain owners) → `project/business/` → the agent's store |
 
 ### Dormant (not loaded, not delegable)
 
@@ -916,7 +948,7 @@ docs/sprints/007 ⬜ venue-proto/
 | 1 | Modular Architecture — 15 focused files | `METHOD.md` |
 | 2 | Multi-Entry Routing — load 2-3 files, not 15 | `routing-method.md` |
 | 3 | Two Namespaces — `method/` (synced) + `project/` (local) | `versioning.md` |
-| 4 | Global Agent Cohort — 18 active + 3 dormant (native sub-agents; no Skill stubs since 327.a), 3 tiers | `agents-method.md` |
+| 4 | Global Agent Cohort — 19 active + 3 dormant (native sub-agents; no Skill stubs since 327.a), 3 tiers | `agents-method.md` |
 | 5 | **Definition Pipeline** — DISCOVER → SPECIFY → PROTOTYPE | `definition-method.md` |
 | 6 | **Focus System** — Single-objective taquet per app | `project/FOCUS.md` |
 | 7 | **Cross-App Governance** — BanaPilot drift detection | `versioning.md` |
@@ -939,9 +971,9 @@ docs/sprints/007 ⬜ venue-proto/
 
 ## Version & Sync
 
-**Current Version:** 336.b  
+**Current Version:** 339.a  
 **Epoch:** 3 (Modular & Multi-Entry)  
-**Released:** 2026-10-29
+**Released:** 2026-11-04
 
 ### Version Scheme
 

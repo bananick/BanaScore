@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "chantier-status/1",
   "title": "chantier-status/1 — the fiche of one chantier sub-session",
-  "description": "Written by the sub-session only (single writer), at docs/chantiers/{chantier}/{slice}.json on the slice branch. A small typed record, not a report: evidence[] holds references (sha, file:line, URL, screenshot path), never pasted prose. Mirrored by hand in .claude/hooks/lib/chantier-status.mjs (validateFiche) — change both together.",
+  "description": "Written by the sub-session only (single writer), at docs/chantiers/{chantier}/{slice}.json on the slice branch. A small typed record, not a report: evidence[] holds references (sha, file:line, URL, screenshot path), never pasted prose. Mirrored by hand in .claude/hooks/lib/chantier-status.mjs (validateFiche) — change both together. 337.a adds OPTIONAL fields for the fleet board (/projects, docs/METHOD/templates/fleet-board.md): session, next, tasks[], screens[], object options, recoId, task, minutes, answeredAt, answeredVia — a fiche without them stays valid; the sub-session adds them on its next write. Cross-field rules JSON Schema cannot state (answeredVia needs answeredAt, options never mixed strings and objects, recoId names an option id, task / waitsOn name tasks of the fiche) are enforced by validateFiche in .claude/hooks/lib/chantier-status.mjs.",
   "type": "object",
   "additionalProperties": false,
   "required": ["v", "chantier", "slice", "agent", "title", "branch", "journey", "state", "updatedAt", "head", "gate", "progress", "decisions", "operatorActions", "review"],
@@ -21,41 +21,37 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["lint", "typecheck", "tests", "build"],
-      "properties": {
-        "lint": { "$ref": "#/$defs/gateResult" },
-        "typecheck": { "$ref": "#/$defs/gateResult" },
-        "tests": { "$ref": "#/$defs/gateResult" },
-        "build": { "$ref": "#/$defs/gateResult" }
-      },
+      "properties": { "lint": { "$ref": "#/$defs/gateResult" }, "typecheck": { "$ref": "#/$defs/gateResult" }, "tests": { "$ref": "#/$defs/gateResult" }, "build": { "$ref": "#/$defs/gateResult" } },
       "description": "last local gate"
     },
-    "progress": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["done", "doing", "todo"],
-      "properties": {
-        "done": { "$ref": "#/$defs/progressList" },
-        "doing": { "$ref": "#/$defs/progressList" },
-        "todo": { "$ref": "#/$defs/progressList" }
-      }
-    },
+    "progress": { "type": "object", "additionalProperties": false, "required": ["done", "doing", "todo"], "properties": { "done": { "$ref": "#/$defs/progressList" }, "doing": { "$ref": "#/$defs/progressList" }, "todo": { "$ref": "#/$defs/progressList" } } },
     "decisions": {
       "type": "array",
       "description": "questions that shape the end result; a question for Nicolas lives here, never only in chat. 322.g: a REVERSIBLE decision never stops the slice (state stays `working`; at `deadline` with no answer the supervisor routes the reco and the slice marks it `defaulted`); only a non-reversible one (the conflict gate: data model, permissions/money, irreversible, external production writes) puts the slice in `waiting`",
       "items": {
         "type": "object",
         "additionalProperties": false,
+        "dependentRequired": { "answeredVia": ["answeredAt"] },
         "required": ["id", "question", "options", "reco", "ifNoAnswer", "reversible", "status"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 16 },
           "question": { "type": "string", "minLength": 1, "maxLength": 300 },
-          "options": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 120 } },
+          "options": { "type": "array", "minItems": 1, "description": "337.a: all plain strings, or all {id,label,why} objects (never mixed); object ids are unique", "items": { "oneOf": [{ "type": "string", "minLength": 1, "maxLength": 120 }, { "$ref": "#/$defs/option" }] } },
           "reco": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "recoId": { "type": "string", "minLength": 1, "maxLength": 16, "description": "337.a: the id of the recommended option — only with object options, and it must name one of them" },
           "ifNoAnswer": { "type": "string", "minLength": 1, "maxLength": 200, "description": "reversible: restates the reco applied at the deadline; non-reversible: what stays blocked" },
           "reversible": { "type": "boolean", "description": "true = a wrong call can be undone cheaply, so the slice keeps working and the reco is applied at the deadline; false = the conflict gate, the slice waits. In doubt: false" },
-          "deadline": { "type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$", "description": "ISO-8601 with timezone = the time the decision was raised + 2 h, stamped from the real clock. Required (a string) when reversible is true; absent or null when false" },
+          "deadline": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$",
+            "description": "ISO-8601 with timezone = the time the decision was raised + 2 h, stamped from the real clock. Required (a string) when reversible is true; absent or null when false"
+          },
           "status": { "enum": ["open", "answered", "consumed", "defaulted"], "description": "defaulted = the deadline passed with no answer and the reco was applied (reversible decisions only; `answer` holds the reco)" },
-          "answer": { "type": ["string", "null"], "maxLength": 500 }
+          "answer": { "type": ["string", "null"], "maxLength": 500 },
+          "task": { "$ref": "#/$defs/taskRef" },
+          "answeredAt": { "$ref": "#/$defs/answeredAt" },
+          "answeredVia": { "$ref": "#/$defs/answeredVia" }
         }
       }
     },
@@ -65,12 +61,16 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
+        "dependentRequired": { "answeredVia": ["answeredAt"] },
         "required": ["id", "action", "why", "status"],
         "properties": {
           "id": { "type": "string", "minLength": 1, "maxLength": 16 },
           "action": { "type": "string", "minLength": 1, "maxLength": 200 },
           "why": { "type": "string", "minLength": 1, "maxLength": 200 },
-          "status": { "enum": ["open", "done"] }
+          "status": { "enum": ["open", "done"] },
+          "task": { "$ref": "#/$defs/taskRef" },
+          "answeredAt": { "$ref": "#/$defs/answeredAt" },
+          "answeredVia": { "$ref": "#/$defs/answeredVia" }
         }
       }
     },
@@ -80,6 +80,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
+        "dependentRequired": { "answeredVia": ["answeredAt"] },
         "required": ["id", "kind", "what", "evidence", "script", "questions", "needsOperator", "status"],
         "if": { "properties": { "kind": { "const": "result" } }, "required": ["kind"] },
         "then": { "required": ["urls"] },
@@ -91,6 +92,7 @@
           "script": { "type": "string", "maxLength": 600, "description": "the <= 3-minute script Nicolas can play himself: numbered steps, each with its expected result (→ you see …)" },
           "urls": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 300 }, "description": "330.b: the exact clickable URL(s) to open, real slug/locale/params, never a placeholder — required when kind is result" },
           "notProven": { "type": "string", "maxLength": 300, "description": "330.b: what this ask does not cover (failure/recovery case, persona, environment); \"Rien\" when nothing" },
+          "minutes": { "type": "integer", "minimum": 1, "maximum": 10, "description": "337.a: how long the script takes to play, in minutes (the board shows 3 when absent)" },
           "questions": {
             "type": "array",
             "minItems": 1,
@@ -99,22 +101,65 @@
               "type": "object",
               "additionalProperties": false,
               "required": ["q", "options", "reco"],
-              "properties": {
-                "q": { "type": "string", "minLength": 1, "maxLength": 200 },
-                "options": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 120 } },
-                "reco": { "type": "string", "minLength": 1, "maxLength": 120 }
-              }
+              "properties": { "q": { "type": "string", "minLength": 1, "maxLength": 200 }, "options": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1, "maxLength": 120 } }, "reco": { "type": "string", "minLength": 1, "maxLength": 120 } }
             }
           },
           "needsOperator": { "type": "boolean", "description": "true only for a result clients see or that touches money: it reaches the operator in ONE batch at the slice Recette. false: accepted by Vera's review + Sage's proof (`accepted`, reopenable), never asked" },
           "status": { "enum": ["open", "accepted", "reopened", "deferred"] },
-          "feedback": { "type": ["string", "null"], "maxLength": 500 }
+          "feedback": { "type": ["string", "null"], "maxLength": 500 },
+          "task": { "$ref": "#/$defs/taskRef" },
+          "answeredAt": { "$ref": "#/$defs/answeredAt" },
+          "answeredVia": { "$ref": "#/$defs/answeredVia" }
         }
       }
-    }
+    },
+    "session": {
+      "type": ["string", "null"],
+      "pattern": "^local_[A-Za-z0-9-]{8,64}$",
+      "description": "337.a: this sub-session's Claude session id (local_…), opened by the board as claude://claude.ai/epitaxy/<session>. The supervisor reads it from list_sessions at adoption and routes `SESSION = local_…`; the sub-session records it. Never guessed: null until routed"
+    },
+    "next": { "type": ["string", "null"], "minLength": 1, "maxLength": 120, "description": "337.a: the slice's next action, in one line, in operator words" },
+    "tasks": { "type": "array", "maxItems": 40, "items": { "$ref": "#/$defs/task" }, "description": "337.a: the slice's tasks on the six-step ladder, in the order the sub-session works them; ids unique; waitsOn names ids of this array" },
+    "screens": { "type": "array", "maxItems": 60, "items": { "$ref": "#/$defs/screen" }, "description": "337.a: the screens this slice touches, with a verdict; the board shows an explicit empty state when no fiche declares any" }
   },
   "$defs": {
     "gateResult": { "enum": ["pass", "fail", "skip", "unknown"] },
-    "progressList": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 100 } }
+    "progressList": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 100 } },
+    "step": { "type": "integer", "minimum": 0, "maximum": 5, "description": "the ladder: 0 À faire · 1 En cours · 2 Codé (CODED) · 3 Landé (LANDED) · 4 Déployé (DEPLOYED) · 5 Prouvé (PROVEN)" },
+    "taskRef": { "type": "string", "minLength": 1, "maxLength": 16, "description": "337.a: the tasks[].id this item belongs to — the board puts that row on the operator's desk while the item is open" },
+    "answeredAt": { "type": ["string", "null"], "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$", "description": "337.a: when the sub-session recorded the answer (real clock). The board shows « relayé » once this is at or after the board click" },
+    "answeredVia": { "enum": ["board", "chat", "deadline"], "description": "337.a: where the answer came from — the /projects desk, the supervisor chat, or the 2 h deadline (defaulted); needs answeredAt" },
+    "option": { "type": "object", "additionalProperties": false, "required": ["id", "label"], "properties": { "id": { "type": "string", "minLength": 1, "maxLength": 16 }, "label": { "type": "string", "minLength": 1, "maxLength": 120 }, "why": { "type": "string", "minLength": 1, "maxLength": 200 } } },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "step", "movedAt"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 16 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "short": { "type": "string", "minLength": 1, "maxLength": 24, "description": "the row's label when space is short" },
+        "step": { "$ref": "#/$defs/step" },
+        "waitsOn": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 16 }, "description": "ids of tasks in this fiche that must move first" },
+        "movedAt": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$", "description": "when step last changed (real clock) — the board turns the row orange 48 h after it while step < 5" },
+        "ref": { "type": "string", "minLength": 1, "maxLength": 200, "description": "a reference: sha, PR, file:line" },
+        "url": { "type": "string", "minLength": 1, "maxLength": 300, "description": "a clickable URL for the row" },
+        "blocked": { "type": ["string", "null"], "minLength": 1, "maxLength": 200, "description": "why it cannot move, in one line; null or absent = not blocked" }
+      }
+    },
+    "screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "title", "step", "verdict"],
+      "properties": {
+        "group": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "code": { "type": "string", "minLength": 1, "maxLength": 16 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "step": { "$ref": "#/$defs/step" },
+        "verdict": { "enum": ["keep", "align", "evolve", "talk"], "description": "keep as is · align on the design system · evolve the screen · talk = needs the operator (on his desk)" },
+        "vnote": { "type": "string", "minLength": 1, "maxLength": 200, "description": "the verdict's reason" },
+        "note": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "task": { "$ref": "#/$defs/taskRef" }
+      }
+    }
   }
 }

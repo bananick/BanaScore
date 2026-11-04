@@ -557,13 +557,13 @@ function done(result) {
   else if (!result.quiet) {
     if (result.landed) {
       log(`\n🚀 ${result.reasons[0]}`);
-      log('→ next: npm run session:close -- --apply (METHOD 336.a)');
+      log('→ next: node .claude/hooks/session-close.mjs --apply (METHOD 336.a)');
     } else if (result.blocked) {
       log('\n⛔ held back — not landed:');
       for (const r of result.reasons) log(`  – ${r}`);
       if (result.url) log(`  → ${result.url}`);
       // 336.a: a hold kasper can judge (schema / security / migration / infra — not soul, hold, red verify, conflict) has a next step.
-      if (result.pr && result.reasons.length && result.reasons.every((r) => /^(schema|security|migration|infra):/.test(r))) log(`→ next: run kasper (opus) on PR #${result.pr}, write .method/kasper/pr-${result.pr}.json, then npm run session:close -- --pr ${result.pr}`);
+      if (result.pr && result.reasons.length && result.reasons.every((r) => /^(schema|security|migration|infra):/.test(r))) log(`→ next: run kasper (opus) on PR #${result.pr}, write .method/kasper/pr-${result.pr}.json, then node .claude/hooks/session-close.mjs --pr ${result.pr}`);
     } else if (!SWEEP) log(`· ${result.reasons?.[0] ?? 'nothing to do'}`);
   }
   if (AUTO && result.landed) console.log(JSON.stringify({ systemMessage: `🚀 landed on ${TRUNK}: ${result.reasons[0]}` }));

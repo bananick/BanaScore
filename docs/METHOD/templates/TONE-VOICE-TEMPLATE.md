@@ -1,8 +1,8 @@
 # TONE-VOICE-TEMPLATE — one file per voice
 
 **Owner:** Lise  
-**Version:** 326.a  
-**Last Updated:** 2026-10-19  
+**Version:** 336.c  
+**Last Updated:** 2026-10-29  
 **Purpose:** The skeleton of `docs/project/brand/tone/{voice}.md` — copy it, fill it by quiz, never ship it with the braces
 
 > Copy to `docs/project/brand/tone/{voice}.md`. Method: `docs/METHOD/tone-method.md` → "§ 2. Framing a voice".
@@ -15,6 +15,7 @@
 
 **Voice:** {id, lowercase — the file name}  
 **Speaks for:** {a brand, a product, or a person who signs}  
+**Extends:** hub `_family.md` {+ this repo's `_common.md`} · precedence channel > brand > signer > family  
 **Home:** {this repo} · *Mirror of: {repo}@v{n}* (only if the home is elsewhere)  
 **Version:** {0 while a draft, 1 once the operator ratifies} · **Last reconciled:** {YYYY-MM-DD}  
 **Owners of claims:** prices → {person or grid} · guarantees → {…} · legal → {…}  
@@ -48,6 +49,13 @@
 ## Situations
 {Only those that apply: announcing a price · saying no · a delay or error · a payment chase · a limit of scope ·
 a client reference · health or regulated claims · a competitor. One stock formula each, braces to fill.}
+
+## Signers
+{Brand files only — delete in a person's file. One row per person who signs under this brand; the signer's
+own file stays constant. `tone-method.md` § 1 → "The three layers".}
+| Signer | What the brand mutes / allows | Status | Source |
+|:--|:--|:--|:--|
+| {voice id} | {e.g. "no humour in a public study; *nous* = the brand only in the declaration of interests"} | **P** | {D-n or log id} |
 
 ## Before → after
 | Status | Before | After | Source |

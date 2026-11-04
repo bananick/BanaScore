@@ -36,7 +36,11 @@
  *   - .claude/hooks/{ship-push.sh,land.mjs,verify-gate.mjs,gate-lock.mjs,heavy-slot.mjs} -> app/.claude (OVERWRITE — the "land, don't ship" engine, v313.a;
  *       gate-lock.mjs is the per-repository landing lock land.mjs and verify-gate.mjs import — optional at runtime, so the two still gate without it;
  *       heavy-slot.mjs (334.a) is the machine-wide two-slot heavy-job semaphore verify-gate.mjs imports — optional the same way)
- *   - .claude/hooks/flight-deck.mjs   -> app/.claude      (OVERWRITE — /brief + the SessionStart resume hook, v316.a)
+ *   - .claude/hooks/flight-deck.mjs + .claude/hooks/lib/claude-drift.mjs -> app/.claude  (OVERWRITE — /brief + the SessionStart
+ *       resume hook, v316.a; its startup hook also says in one line when the MAIN checkout's ignored .claude/ lags the trunk's
+ *       payload — the app seeds every new worktree with those files, so the lag is invisible to git, 338.a)
+ *   - .claude/hooks/session-close.mjs + .claude/hooks/lib/session-close.mjs -> app/.claude  (OVERWRITE — 336.a: a finished
+ *       sub-session closes itself; land.mjs names it as the next step after a landing. In the payload since 336.b, installed since 338.a)
  *   - .claude/hooks/pilotage-refresh.mjs -> app/.claude  (OVERWRITE — rebuilds docs/pilotage/index.html
  *       at Stop, but ONLY when the turn touched docs/sprints/** or chantiers.mjs; inert and silent
  *       in an app that has no scripts/build-pilotage.mjs)
@@ -69,6 +73,9 @@
  * skipped. settings.json carries `__HOME__`, replaced by os.homedir() when written. Run it on a new machine.
  *
  * Usage (standalone):   node install.mjs <appRoot> [--dry-run] [--force]
+ *                       node install.mjs <appRoot> --seeded-only [--dry-run]
+ *                       (338.a: only the hooks and commands git ignores in <appRoot>, each one named, each replaced copy kept in .method/claude-backup/. No tracked file, section, skill,
+ *                       .gitignore or settings: the narrow fix flight-deck's warning prints for a main checkout)
  *                       node install.mjs --user [--dry-run] [--only settings.json] [--env-only]
  *                       (--env-only writes just the missing env.CLAUDE_CODE_SUBAGENT_MODEL; exit 1 if settings.json is invalid JSON)
  *                       node install.mjs --user --telemetry [--dry-run]
@@ -132,6 +139,20 @@ export const REMOVED_SECTIONS = ["## Délégation par défaut"];
  * @type {Record<string,string>}
  */
 export const FOLDED_INTO = { "## Délégation par défaut": "## Model Routing" };
+
+/**
+ * Program hooks copied into `<app>/.claude/hooks/` (step 4c), paths relative to `payload/hooks/`. Every other file under
+ * payload/hooks/ is either no-mock-guard.ps1 (step 4b) or listed in lib/claude-drift.mjs → NOT_INSTALLED;
+ * tests/claude-drift.test.mjs fails on a payload hook that is neither, so a hook can no longer ship uninstalled
+ * (session-close.mjs did, 336.b → 338.a).
+ * @type {string[]}
+ */
+export const ADDON_HOOKS = [
+  "session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "heavy-slot.mjs",
+  "flight-deck.mjs", "lib/claude-drift.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs",
+  "session-sidebar.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs",
+  "session-close.mjs", "lib/session-close.mjs",
+];
 
 /** The gitignore line for raw study extracts (Iris, rule 3: personal data stays local and out of git). */
 export const RAW_EXTRACTS_IGNORE = "docs/deliverables/**/raw/";
@@ -585,7 +606,7 @@ export function installClaudeAddon({ appRoot, addonDir = HERE, hubRoot, dryRun =
   // heavy-slot (334.a) is the machine-wide heavy-job semaphore verify-gate.mjs imports; it travels with it.
   // chantier-status (Supervision v2) is the Stop hook that keeps a chantier sub-session's fiche
   // valid and fresh; it imports hooks/lib/chantier-status.mjs, so the two travel together.
-  for (const name of ["session-telemetry.mjs", "ship-push.sh", "land.mjs", "verify-gate.mjs", "gate-lock.mjs", "heavy-slot.mjs", "flight-deck.mjs", "pilotage-refresh.mjs", "chantier-status.mjs", "lib/chantier-status.mjs", "session-sidebar.mjs", "wip-sync.mjs", "branch-sweep.mjs", "lib/branch-hygiene.mjs"]) {
+  for (const name of ADDON_HOOKS) {
     const src = join(payload, "hooks", name);
     if (!existsSync(src)) continue;
     put(src, join(appRoot, ".claude", "hooks", name), `.claude/hooks/${name}`,
@@ -852,6 +873,40 @@ export function installUserTelemetry({ addonDir = HERE, claudeDir, home = homedi
   return res;
 }
 
+/**
+ * `--seeded-only`: the hooks and commands the desktop app copies into new worktrees, which are the ones git ignores in
+ * this checkout, and nothing else. A main checkout that lags the trunk keeps tracked copies of some hooks and merged
+ * sections of CLAUDE.md: the full installer would rewrite them, dirty the checkout and refuse its next fast-forward.
+ * @returns {{updated: string[], same: string[], notSeeded: string[]}} payload-relative paths
+ */
+export async function installSeededOnly({ appRoot, addonDir = HERE, dryRun = false } = {}) {
+  // Imported here, not at the top: the doctor and the tests import this file alone, without its payload.
+  const { keepSeeded, payloadFiles } = await import("./payload/hooks/lib/claude-drift.mjs");
+  const payload = join(addonDir, "payload");
+  const files = payloadFiles(payload);
+  const seeded = keepSeeded(appRoot, files);
+  if (seeded === null) throw new Error(`${appRoot}: git check-ignore failed — not a git checkout?`);
+  const kept = new Set(seeded);
+  const res = { updated: [], same: [], notSeeded: files.filter((f) => !kept.has(f)) };
+  for (const rel of seeded) {
+    const src = join(payload, rel);
+    const dest = join(appRoot, ".claude", rel);
+    if (existsSync(dest) && lf(readFileSync(dest, "utf8")) === lf(readFileSync(src, "utf8"))) { res.same.push(rel); continue; }
+    if (!dryRun) {
+      // An ignored file has no git history: its previous copy is the only way back. `.method/` is not seeded.
+      if (existsSync(dest)) {
+        const backup = join(appRoot, ".method", "claude-backup", rel);
+        mkdirSync(dirname(backup), { recursive: true });
+        copyFileSync(dest, backup);
+      }
+      mkdirSync(dirname(dest), { recursive: true });
+      copyFileSync(src, dest);
+    }
+    res.updated.push(rel);
+  }
+  return res;
+}
+
 // --- standalone CLI ---
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
@@ -885,8 +940,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
   const appRoot = args.find((a) => !a.startsWith("--"));
   if (!appRoot) {
-    console.error("Usage: node install.mjs <appRoot> [--dry-run] [--force]");
+    console.error("Usage: node install.mjs <appRoot> [--dry-run] [--force] | <appRoot> --seeded-only [--dry-run]");
     process.exit(1);
+  }
+  if (args.includes("--seeded-only")) {
+    const r = await installSeededOnly({ appRoot, dryRun });
+    console.log(`[swanifly-claude-addon --seeded-only]${dryRun ? " (dry-run)" : ""} ${appRoot}`);
+    for (const rel of r.updated) console.log(`  ${dryRun ? "would write" : "written"} : .claude/${rel}`);
+    console.log(`  summary : ${r.updated.length} ${dryRun ? "to write" : "written"}, ${r.same.length} identical, ${r.notSeeded.length} left alone (tracked or not ignored here)${!dryRun && r.updated.length ? "; replaced copies in .method/claude-backup/" : ""}`);
+    process.exit(0);
   }
   const r = installClaudeAddon({ appRoot, dryRun, force });
   console.log(`[swanifly-claude-addon]${dryRun ? " (dry-run)" : ""} ${appRoot}`);

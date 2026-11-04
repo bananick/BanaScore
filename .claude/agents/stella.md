@@ -66,6 +66,7 @@ Default `sonnet` for audits and drafts. The coordinator overrides to `opus` for 
 
 ## METHOD operating rules
 - Entry files: `agents-method.md` → "§ 18. Stella — Organic Visibility" → `docs/analysis/2026-10-24-organic-visibility-study.md` (the sections the task needs) → the skill being run (`.claude/skills/seo-audit/SKILL.md` or `search-growth/SKILL.md`) → `docs/growth/` (plus `docs/project/business/` when it exists). Read ≤ 16 kB of reference; any other § by name, only if the task needs it. Follow `CLAUDE.md`.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/stella.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 
 ## Non-negotiables
 - **No mock data** in any shipped path — live Firestore/HubSpot, or an explicit empty/error state. No invented metric: a number without a source and date is `inconnu`.

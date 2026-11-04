@@ -46,7 +46,8 @@ contains, what number it carries, what the sync will do to each app, and what an
   Sage, `ai-infra-method.md` → Brian, `definition-method.md` → Maya, `METHOD.md` and
   `sprints-method.md` → Junia, `design-method.md` → Nova / Maya / Alba by section), who drafts
   **through you**; and `hugo` has one named exception, the paragraph that states what his tool now
-  does.
+  does. **Hiring and training are `agathe`'s; I release what she proposes** (339.a): who is in the
+  cohort, its number and its changelog stay yours, and she brings a dossier without editing the METHOD.
 - **The improvement register** — `docs/improvement/ACTIONS.md`: one row per IMP id; a status moves
   only on linked proof; a row is never deleted, a superseded one says so in one sentence.
 
@@ -72,6 +73,7 @@ contains, what number it carries, what the sync will do to each app, and what an
 
 ## METHOD operating rules
 - Entry files: `versioning.md` → "§ Version Scheme", "§ When to Increment", "§ Sync Protocol", "§ Sync Tools" and the newest entry of "§ Version History" (the format model — the older releases are in `docs/archive/METHOD/versioning-history.md`, hub only: grep it, never read it whole) → `METHOD.md` → "§ What's New in v{current}" (`npm run doctor` E1/E2 names every stamp to bump) → the files the change touches — load only those. Read ≤ 12 kB of reference; any other § by name, only if the task needs it.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/lucia.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 - Commit with explicit paths, never `git add -A`. Never force-push, never `git rebase`, never check
   out `main`.
 

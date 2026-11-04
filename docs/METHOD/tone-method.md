@@ -1,9 +1,9 @@
 # Tone Method
 
 **Owner:** Lise  
-**Version:** 326.a  
-**Last Updated:** 2026-10-19  
-**Purpose:** How a brand voice is framed, reviewed and kept alive — one voice file per brand persona, hosted in each repo
+**Version:** 336.c  
+**Last Updated:** 2026-10-29  
+**Purpose:** How a brand voice is framed, reviewed and kept alive — one voice file per brand persona, hosted in each repo, layered family · brand · signer
 
 ---
 
@@ -29,7 +29,7 @@ by the sync. The voices themselves are app-owned and never synced.
 | Path | What | Owner |
 |:--|:--|:--|
 | `docs/project/brand/tone/{voice}.md` | **one file per voice** the repo publishes in — from `templates/TONE-VOICE-TEMPLATE.md` | the app |
-| `docs/project/brand/tone/_common.md` | optional — what all the repo's voices share (default checks, shared situations) | the app |
+| `docs/project/brand/tone/_common.md` | optional — what the repo's voices share **beyond the family file**: deltas only, it extends `_family.md` | the app |
 | `docs/project/brand/tone/LOG.md` | the loop's ledger, **one per repo**, append-only — from `templates/TONE-LOG-TEMPLATE.md` | Lise appends |
 | `docs/project/brand/tone/LOG-archive.md` | rows moved out of `LOG.md` (§ 4), never read whole | Lise |
 
@@ -40,6 +40,21 @@ by the sync. The voices themselves are app-owned and never synced.
   marked `P` — for the operator to ratify. She does not review against a rule nobody wrote.
 - `SOUL.md` § Voice stays the repo's one-paragraph summary; add one line pointing here. The voice file
   supersedes it wherever they differ.
+
+### The three layers (336.c)
+A text is judged against up to three files; the **channel** lives inside each.
+
+| Layer | File | Holds |
+|:--|:--|:--|
+| **Family** | hub `Bana-Share` → `docs/project/brand/tone/_family.md` (one file, hub-hosted) | what every voice shares: the default checks, bilingual, invent nothing, claims owned, forbid-never-demand |
+| **Brand** | `{repo}/docs/project/brand/tone/{brand}.md` | the brand's voice and channels, plus a **Signers** table |
+| **Signer** | the person's `{voice}.md` (`nicolas`) | the person's constant voice — never a brand-specific rule |
+
+- **Precedence on conflict: channel > brand > signer > family.** A Signers row is a brand rule.
+- **Signers table** (in the brand file): `Signer · What the brand mutes / allows · Status (V/D/P) · Source`.
+  A signer file that grows a brand-specific block is a `drift`: the block moves to that brand's Signers row.
+- **Registry:** hub `docs/project/brand/VOICES.md` — one row per voice × repo (home / mirror, version,
+  status, open points). Index only, no voice content; whoever adds, moves or re-versions a voice updates its row.
 
 ## 2. Framing a voice
 
@@ -67,28 +82,26 @@ dose* ("one touch of humour per page"), not as a slider.
 
 ### Rules of the frame
 - **Attributes come in pairs: "A, but not B".** The pair draws the boundary a single adjective cannot.
-- **Bilingual repos** state the voice per language. French is judged on its own terms (idiom, typography,
-  *tu*/*vous*), never through a literal reading of English; EN and FR carry the same meaning and register,
-  not the same word order.
-- **Claims are owned.** The file names who owns prices, guarantees and legal text (a person or a grid);
-  Lise refers them, never rewrites them.
-- **A test may forbid a word, never demand a sentence.** No pattern requires a disclaimer ("we do not…") —
-  that would reintroduce the defensive tone the voice may be trying to leave.
+- **Bilingual per language, claims owned, a test may forbid a word but never demand a sentence** — family
+  rules, worded once in `_family.md` (§ 1 → "The three layers"). Each voice file still names its claim owners.
 
 ### Default checks (opt in, amend, or replace in `_common.md`)
 Three tests proven in the 2026-10 tone study of three voices, for any voice that wants to be *reassuring
 rather than defensive*. A voice opts in with a `Checks:` line in its header (`default three`,
 `replaced by {…}`, or `none`); with no such line Lise applies none and says so.
-1. **Reader test** — does the sentence teach the reader something useful? If it only covers the writer, it goes.
-2. **Positive test** — strip every negation: is a promise left? If not, rewrite in the positive.
-3. **Rule test** — does it state an internal rule (quota, condition, precaution)? It belongs in the quote,
-   the scoping call or the conversation — not on the shop window. *Exception:* a safety, health or legal
-   notice the claim owner requires stays where it is required.
+1. **Reader test** — does the sentence teach the reader something useful?
+2. **Positive test** — strip every negation: is a promise left?
+3. **Rule test** — does it state an internal rule (quota, condition, precaution)?
+
+Their exact wording, the rule test's exception and the other shared rules live once, in the family file
+(§ 1 → "The three layers"); a repo's `_common.md` amends them and states only the delta.
 
 ## 3. Review — what Lise returns
 
 **Inputs:** the text · the channel · the voice (deduced from the path and **said**, else she reviews for
-both candidate voices) · the voice file, `_common.md`, the last 20 rows of `LOG.md` · a pattern report if one ran.
+both candidate voices) · the brand file, plus its Signers row and the signer file when the text is signed ·
+`_family.md` and `_common.md` · the last 20 rows of `LOG.md` · a pattern report if one ran. Each point names
+its layer; conflicts follow the precedence of § 1.
 
 **Output (fixed):**
 ```
@@ -111,8 +124,7 @@ Log: LOG.md row {id} appended    ·    Pass due: yes|no ({n} rows, {d} days sinc
   where the repo has that skill), not a point. Lise judges the tone of each language on its own terms.
 - **The After is in the language of the row,** inside the voice asked for (a warm voice's rewrite never
   borrows the sobriety of a sober one, nor the reverse), and respects the voice's sentence ceiling.
-- **Invent nothing:** no client name, no figure, no testimonial, no capability the product cannot back. A figure
-  with no source is flagged, never replaced by another.
+- **Invent nothing:** `_family.md` F-5 — a figure with no source is flagged, never replaced by another.
 - **Lise never edits the reviewed file.** She writes only under `docs/project/brand/tone/`.
 - **Cost discipline:** one text per call (up to 10 short strings of one voice and channel count as one),
   the voice file in context, ≤ 10 tool calls, opus. Mechanical checks
@@ -184,7 +196,8 @@ included), or ≥ 30 days and ≥ 1 row — Lise states
    to `LOG.md`. Copy each file once per voice; one `LOG.md` per repo.
 2. Frame the voice (§ 2). If a charter already exists elsewhere, it is the evidence for step 1, not a shortcut
    past the quiz.
-3. Add one line to `SOUL.md` § Voice: *Voices: `docs/project/brand/tone/`.*
+3. Add one line to `SOUL.md` § Voice: *Voices: `docs/project/brand/tone/`.* Add or update the voice's row
+   in the hub registry `docs/project/brand/VOICES.md`; a person who signs under the brand gets a Signers row.
 4. From then on, text a customer, prospect or the public will read passes through `lise` before it lands
    (`CLAUDE.md` → "Agent Cohort"). `gordon` writes the copy; `lise` reads it.
 

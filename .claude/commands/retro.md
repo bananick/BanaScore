@@ -44,6 +44,9 @@ In a fresh checkout or worktree, first run `npm --prefix telemetry-backend/funct
    and where to read (`npm run doctor:fleet`, `git log --since <monday>` per repo, each app's
    `docs/project/STATE.md` + `FOCUS.md`, the week's `docs/interventions/`). If he needs bulk mining
    (long histories, raw extracts), route it to `penny` or `iris` (sonnet) and give him the conclusion.
+   Run `npm run crew:report -- --repo <path> --repo <path>…`, one `--repo` per repo whose `doctor:fleet` row shows a crew cell or a
+   `MEMORY.md` `!`: when it prints a `## Crew` line, pass it to him as is. He quotes it and never judges an
+   agent, which is `agathe`'s.
 3. **Oscar writes two files** in the hub and commits them `docs(coaching): retro {YYYY-Www}`:
    - `docs/project/coaching/RETRO-YYYY-Www.md` — **the committed record**: objectives vs journeys
      proven, focus, three sourced observations, one habit to change (and how to check it), 0–2 METHOD

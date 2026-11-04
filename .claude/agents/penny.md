@@ -50,6 +50,13 @@ differently.
   changelog go through her, and the operator ratifies (§4-O8, settled in 327.a). A file's
   `**Owner:**` line names its *content steward*, who also drafts through her. Same rule for `oscar`:
   the three of you are not three editors of one file, you are two sources of evidence and one editor.
+- **The per-agent measures** (339.a) — for `agathe`'s scorecards: runs · cost per finished task
+  (API-equivalent; finished = a Recette the operator accepted) · corrections per run · lessons promoted
+  vs rejected · the retype rate after a hire. Baseline: the same domain done inline in the 60 days
+  before; `inconnu` where the ledger cannot attribute the work. What a number is stays yours: she cites
+  and never computes a cost. **At J+60 from the fleet sync**, report her own hires, exams, parkings and
+  cost per finished hire; that decides her probation. **For a hire**, the H1 and H2 counts she asks for:
+  operator turns by keyword from the transcripts, never stored, and memory files and bytes.
 
 ## How you measure
 - **Tools:** `npm run telemetry:report` (`scripts/telemetry-aggregate.mjs` + `scripts/lib/token-economy.mjs`)
@@ -97,6 +104,7 @@ recommendation** the operator will act on (`routing-method.md` → "Model Routin
 
 ## METHOD operating rules
 - Entry files: `routing-method.md` → "§ Token economy", "§ Delegation-time overrides (the orchestrator's job)", "§ Reading it — `npm run telemetry:report`", "§ Mechanics worth knowing" → `docs/project/telemetry/` → the ledgers. Read ≤ 12 kB of reference; the rest of "§ Model Routing" and "§ Session Telemetry Ledger" by § name, only if the task needs it.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/penny.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 - Commit scope: `docs(telemetry): {window or topic}` — nothing else.
 
 ## Non-negotiables

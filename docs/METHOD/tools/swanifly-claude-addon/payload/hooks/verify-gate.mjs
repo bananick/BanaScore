@@ -11,7 +11,7 @@
  * It classifies the diff against the trunk into three lanes, and only spends
  * build time on the lane that can actually break production:
  *
- *   doc      docs/, *.md, proto/, qa/, prompts/, *.jsonl, study data (*.csv/tsv/geojson, unowned *.json) → nothing to run (green)
+ *   doc      docs/, *.md, proto/, qa/, prompts/, *.jsonl, static media + sitemap*.xml, study data (*.csv/tsv/geojson, unowned *.json) → nothing to run (green)
  *   tooling  scripts/, .claude/, tools/, registries      → `node --check` on JS
  *   rules    telemetry-backend/firestore.{rules,indexes.json} → parsed and sanity-checked (below)
  *   app      real app code under an app root             → that app's npm checks (334.c: a plain `eslint` lint
@@ -168,6 +168,11 @@ function changedFiles() {
 const DOC = [
   /(^|\/)docs\//, /\.mdx?$/i, /(^|\/)proto\//, /(^|\/)qa\//, /(^|\/)prompts\//, /(^|\/)_agents\//,
   /\.jsonl$/, /(^|\/)TEMPLATES\//, /(^|\/)projects\//, /(^|\/)README/i, /\.(png|jpe?g|svg|webp|gif|pdf)$/i,
+  // Static media and sitemaps (upstreamed from IAcademy b3e5d32, 2026-10-22 → hub 2026-10-30): no code, nothing to build
+  // or to node --check. A silent site video (.mp4/.webm/.mov), a self-hosted font (.woff/.woff2) and a sitemap fell
+  // through every lane into "unclassifiable (fail closed)". Narrowed to `sitemap*.xml` on purpose: any other .xml can
+  // be config (AndroidManifest, pom, web.config) and keeps failing closed.
+  /\.(mp4|webm|mov|woff2?)$/i, /(^|\/)sitemap[^/]*\.xml$/i,
   /(^|\/)(SOUL|CLAUDE|AGENTS|GEMINI)\.md$/,
   // Study data — tables and maps a study folder commits next to its report: no runtime, nothing a gate can run.
   // Fell through every lane into "unclassifiable paths (fail closed)" and held a whole study dossier at /land

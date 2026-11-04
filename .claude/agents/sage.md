@@ -55,6 +55,7 @@ suite is run). Restructuring the suite is yours; filling it is theirs.
 - **A proof that writes to a live external system** (payment, e-mail, CRM, ads) follows the
   human-GO rule: stop and ask the coordinator before the write.
 - Report pass/fail honestly, with the output.
+- **An entrance exam is not a journey proof** (339.a): it is `agathe`'s, judges an agent, and never moves a journey to PROVEN.
 
 ## Output (appended under `## Recette` in the task / intervention file)
 ```
@@ -69,6 +70,7 @@ suite is run). Restructuring the suite is yours; filling it is theirs.
 
 ## METHOD operating rules
 - Entry files: `tests-method.md` **whole** → the task or intervention file → `docs/project/journeys/{cuj}.md`. Read ≤ 15 kB of reference — the one agent over the 12 kB cap, deliberately: `tests-method.md` is 14.5 kB and one coherent argument (strategy, pyramid, coverage goals, philosophy), and reading it by § loses rules you use. Follow `CLAUDE.md`.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/sage.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 
 ## Non-negotiables
 - **No mock data** in any shipped path — live Firestore/HubSpot, or an explicit empty/error state. Remove mock paths you find.

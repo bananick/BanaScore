@@ -1,7 +1,7 @@
 # Sprint Structure
 
 **Owner:** Junia  
-**Version:** 334.b  
+**Version:** 337.c  
 **Purpose:** Sprint system, DoD by mode, rituals
 
 > **When a sprint is justified — and when it isn't.** The sprint is the **exceptional** mode: open
@@ -545,7 +545,7 @@ found it filled in **0 of 85** task files. A second unfilled field next to an un
 automation; it is more surface to sync. The trigger list above is checked by whoever is executing, at
 the moment the trigger fires, and needs no field to live in.
 
-#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g · sidebar contract 322.h · startup hook 323.a)
+#### The chantier — one supervision session, one sub-session per slice (321.a · v2 322.a · proof fixes 322.e · operator inbox 322.g · sidebar contract 322.h · startup hook 323.a · fleet board 337.a)
 
 A workstream that already holds **≥ 2 code-writing slices** is a *chantier*, and it is the nominal
 multi-slice shape. Unlike the four triggers, this one is a known fact at the start (the slices are
@@ -565,6 +565,9 @@ a janitor ("Sidebar contract" below). Its « only supervisors are pinned » is r
 with idle clocks and a rescue before every archive (rule 6 below).
 **325.a** (`docs/interventions/2026-10-18-Lucia-clean-project-commands.md`) pins a session while it waits on the operator
 (rule 1) and adds `/clean` (Régine on demand, as a sub-agent) and `/project` (opens a chantier by this contract).
+**337.a** (`docs/interventions/2026-10-29-Lucia-fleet-projects-board.md`) puts every fiche of the machine on one board,
+`/projects` (hub only), whose desk takes answers and relays them through the sub-session (rule 1 below); the contract —
+discovery, fallback rules, the `fleet-board/1` snapshot, the relay — is `templates/fleet-board.md`.
 
 - **The supervisor writes no code.** It is the coordinating conversation one level up: it frames each
   slice, arbitrates, calls each slice's Recette — asking the sub-session for `/review`, then `/land`,
@@ -585,7 +588,7 @@ share a `touches` glob: partitioned writers are what lets sub-sessions run at on
 **The fiche — `docs/chantiers/{chantier}/{slice}.json`, the only report.** One per sub-session,
 committed on the slice branch, so it lands with the slice and `main` keeps the chantier's history.
 **Single writer: the sub-session** — the supervisor reads it and never edits it. Schema
-`chantier-status/1`, 15 top-level fields, canonical in `docs/METHOD/templates/chantier-status.schema.json`:
+`chantier-status/1`, 15 required top-level fields (+ 4 optional board fields since 337.a), canonical in `docs/METHOD/templates/chantier-status.schema.json`:
 identity (`v` · `chantier` · `slice` · `agent` · `title` · `branch` · `journey`), status (`state` =
 `planning` · `working` · `waiting` (needs the operator) · `blocked` (cannot proceed) · `landed` ·
 `parked`; `updatedAt`; `head`; `gate`) and the operator's inbox (`progress` done / doing / to do ·
@@ -603,8 +606,12 @@ the fiche, and the docs lane lands that commit.
 overview and bad as an input system: clearing every decision and review in one sitting takes long focus, so sub-sessions
 waited and development stalled. Four rules.
 
-1. **The dashboard is read-only.** The pilot dashboard and the Cockpit "Chantiers" view show the state — done / doing / to do,
-   blockers, results — and take no input: no form, no answer field. Answers go through the supervisor chat only.
+1. **The fiche stays the truth; the desk takes answers, never writes them (337.a, amends 322.g).** The pilot dashboard and
+   the Cockpit "Chantiers" view stay read-only. The `/projects` desk takes one click per card — decision, geste, recette —
+   and **relays** it: artifact db → « Envoyer » (`comments.sendToClaude`) → the `/projects` session → one typed
+   `SendMessage` to the slice's sub-session (else its supervisor), suffixed `· via board` → the sub-session applies and
+   records it, its fiche's single writer still. The card reads « relayé » only once the fiche's `answeredAt` is at or after
+   the click (`templates/fleet-board.md` → §4). The supervisor chat remains the other way in; no form ever writes a fiche.
 2. **Small batches in the supervisor chat.** The supervisor asks with `AskUserQuestion`: at most **4 closed questions per
    batch**, recommendation first (`method-core.md` → "Questions are quizzes"), ordered by **blocking cost** — conflict-gate
    decisions first, then by (number of slices blocked × closeness of the earliest deadline). Never a long form, never every
@@ -634,6 +641,9 @@ waited and development stalled. Four rules.
 `chantier-status/1` keeps its id (no `v: 2`): a fiche written before 322.g adds `decisions[].reversible` (and `deadline` when
 true) and `review[].needsOperator` on its next write — the Stop hook blocks the stop with a message naming the missing fields.
 A fiche written before 330.b adds `review[].urls` to each `result` item on its next write, same mechanic.
+**337.a adds only optional fields** — `session`, `next`, `tasks[]`, `screens[]`, object `options` + `recoId`, `task`,
+`answeredAt` / `answeredVia`, `review[].minutes` — so no fiche turns invalid; **each sub-session fills them on its next
+write** (the list: `templates/fleet-board.md` → §5), and the board falls back on the older fields meanwhile (§2 there).
 
 **The sub-session contract.**
 
@@ -655,7 +665,16 @@ A fiche written before 330.b adds `review[].urls` to each `result` item on its n
   `plan` (≤ 6 lines) and stops in `waiting`; building starts once it is accepted.
 - **A routed answer is applied, then recorded** in the fiche (`consumed`, the review's verdict, or
   `done`) — it arrives as one typed message: `DECISION d2 = B — note` · `REVIEW r1 = reopen —
-  feedback` · `ACTION a1 = done` · `DECISION d2 = default (A)` (the deadline passed: record `defaulted`, `answer` = the reco).
+  feedback` · `ACTION a1 = done` (or `not-yet`) · `DECISION d2 = default (A)` (the deadline passed: record `defaulted`, `answer` = the reco).
+  Since 337.a it also stamps `answeredAt` (real clock) and `answeredVia`: `board` when the message ends `· via board`,
+  `deadline` for a default, `chat` otherwise. A board `DECISION` carries the option label — `d2 = o2 (« label »)` — and when the id is synthetic (string options) the sub-session matches on the label. `SESSION = local_…` (sent by the supervisor at adoption) is recorded in `session`.
+- **The board fields (337.a)** — `next` (one line), `tasks[]` on the six-step ladder (À faire · En cours · Codé · Landé ·
+  Déployé · Prouvé; `movedAt` changes only with `step`), `task` on each inbox item that belongs to one, `screens[]` when
+  the slice touches screens — kept true on every write, never back-filled by anyone else.
+- **One slice, one open ask (337.a, Oscar's read).** A slice keeps at most **one** open blocking item for the operator:
+  the very next thing he must do, short title, written in his words; the rest of a checklist goes into its `why` or a
+  linked file. Ten gestures for one sitting are one gesture. Checked on the /projects snapshot: awake blocking cards per
+  slice ≤ 1.
 - **Review and land are the sub-session's to run.** The supervisor asks for them by `SendMessage` —
   `/review`, then `/land` — and the sub-session runs them: Vera's verdict goes into `review[]` (a
   `result` item, with its evidence), the verify-gate outcome into `gate`; after `/land` it sets `state`
@@ -694,7 +713,8 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
 2. **Adopt** each new sub-session — on its `adopt {slice}` message, and on **every wake** any session of
    the group not yet adopted (`list_sessions`, group filter: it may have started and stopped before the
    supervisor looked) — `set_session_title`, `move_sessions` into the group, re-read `ListAgents`, then
-   `SendMessage` with `notify_when_idle: true` by its `ListAgents` name. The notice is **one-shot**:
+   `SendMessage` with `notify_when_idle: true` by its `ListAgents` name — its first adoption message carries
+   `SESSION = {its list_sessions id}` (337.a: the board opens the session by it). The notice is **one-shot**:
    re-subscribe after each.
 3. **On each idle notice** — read the fiche **by branch** ("Finding the fiche" above), never from the
    session's `cwd`; read the transcript (`list_events`) **only** when the fiche is missing or stale;
@@ -703,7 +723,7 @@ W42 cash), where the doctrine read the wrong place and used the wrong address.
    `PushNotification` **only** when a slice is actually blocked — `1 question bloque {slice} — {n} s` — never for a new
    `review` item or a reversible decision.
    On a `landed` fiche, run the archive check below.
-4. **Ask in batches, route answers** — ask the open items as small `AskUserQuestion` batches (≤ 4 closed questions, ordered
+4. **Ask in batches, route answers** — the chantier's Cadrage with more than 4 details to settle goes through a **review page** instead (`method-core.md` → "When the quiz is too small"); mid-flight, ask the open items as small `AskUserQuestion` batches (≤ 4 closed questions, ordered
    by blocking cost: rule 2 of the inbox), never a long form; each operator answer, and each expired deadline, becomes one
    typed `SendMessage` into that sub-session, addressed by its `ListAgents` name.
 5. **Close each slice** — `SendMessage` the sub-session `/review`, then `/land` (it runs both and

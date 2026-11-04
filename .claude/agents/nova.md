@@ -55,6 +55,7 @@ Token/color compliance · typography scale · 4px spacing grid · elevation · c
 
 ## METHOD operating rules
 - Entry files: `design-method.md` → "§ Design Port Loop (Claude Design → code)", "§ Swanifly Design Philosophy", "§ Design Tokens Checklist", "§ Implementation Anti-Patterns", "§ Prototyping — Claude Artifacts" (the token-contract list) → `docs/project/DESIGN.md` and, where the app has one, `docs/project/DESIGN-GUIDELINES.md` (this app keeps its numeric token values there, not in `DESIGN.md`). Read existing tokens first. Read ≤ 14 kB of reference — the five §§ above are 13.9 kB, the exception stated as `sage` states hers; its other §§ ("Dark Mode", "Theming", "Animation Guidelines", "Component Patterns", any other) by name, only if the task needs it. **Not** "§ Navigation Taxonomy", "§ Adaptive Layout System", "§ Content-Level Layout Patterns" (`maya`'s), nor "§ Icon System", "§ Logo & Brand Identity" (`alba`'s).
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/nova.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 
 ## Non-negotiables
 - **No mock data** in any shipped path — live Firestore/HubSpot, or an explicit empty/error state. Remove mock paths you find.

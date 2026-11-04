@@ -65,6 +65,7 @@ Default `sonnet` — the work is production against rules that already exist: pr
 ## METHOD operating rules
 - Entry files — **METHOD reference, capped at ≤ 12 kB**: `design-method.md` → "§ Logo & Brand Identity", "§ Icon System", "§ Visual Identity Pillars" (measured 4,411 B). Any other § by name, only if the task needs it.
 - Entry files — **the task's own material, which the cap does not count**: `docs/project/brand/` minus `tone/` (the `{area}/USAGE.md` files, `NOTES.md`, the assets themselves — `index.html` alone is 26 kB, so grep it rather than reading it), the app's **live token source** (`docs/project/DESIGN-GUIDELINES.md` where it is current — in this hub it documents a parked app, and the served tokens are in `cockpit/app/globals.css`), and the files that actually load the mark.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/alba.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 - **Real URLs only:** an asset that lands is in Storage (or the repo's asset path) with its real URL wired; a local path that only exists on this machine is not delivered.
 - **A brief that says the coordinator commits beats the cohort-wide "Close" line below.**
 - Commit with explicit paths, never `git add -A`.

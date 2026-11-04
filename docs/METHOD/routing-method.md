@@ -1,8 +1,8 @@
 ﻿# Routing & Entry Points
 
 **Owner:** Lucia  
-**Version:** 333.a  
-**Last Updated:** 2026-10-24  
+**Version:** 339.a  
+**Last Updated:** 2026-11-04  
 **Purpose:** Define multi-entry system, orchestration patterns, model routing, session telemetry, and output compression
 
 ---
@@ -12,13 +12,14 @@
 
 ### By Agent
 
-> Cohort = **18 active mandates** — `.claude/agents/*.md`, the only surface since 327.a deleted the
+> Cohort = **19 active mandates** — `.claude/agents/*.md`, the only surface since 327.a deleted the
 > fourteen Desktop Skill stubs — plus **3 dormant** agent files listed below the table, not loaded,
 > not delegable. An agent earns a name when its mandate is one you would otherwise have to retype.
 > **327.a** added `maya` (UX research & IA), `alba` (brand & visual assets) and `hugo` (METHOD
 > tooling), and cut `nova` from 25 assignments to nine
 > (`docs/interventions/2026-10-19-Lucia-cohort-restructure.md`). **333.a** added `stella` (organic
-> visibility), who takes `seo-audit` and `search-growth` from `gordon`.
+> visibility), who takes `seo-audit` and `search-growth` from `gordon`. **339.a** added `agathe`
+> (recruit & train), on probation.
 > **There are no advisory hats.** The last one, Riley (API/automation), was removed in 327.a —
 > integration is building, so it is `brian`'s. An app MAY still re-use a removed name as a
 > repo-specific domain owner if its business pack declares it (`agents-method.md` → "Domain owners
@@ -44,6 +45,7 @@
 | Régine  | régie       | `regine`               | sonnet        | `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention |
 | Lise    | tone & voice | `lise` (writes only under `docs/project/brand/tone/`) | opus | `tone-method.md` → the repo's `docs/project/brand/tone/` → the last 20 rows of `LOG.md` |
 | Stella  | organic visibility | `stella` (writes only under `docs/growth/`) | sonnet | `agents-method.md` → `docs/analysis/2026-10-24-organic-visibility-study.md` → the skill run → `docs/growth/` |
+| Agathe  | recruit & train | `agathe` (writes only in the repo she runs in, never a hub cohort file) | opus | `agents-method.md` → "§ 19" and "§ Domain owners" → `.claude/commands/hire.md` on a hire → the app's `docs/project/business/README.md` → the agent's store |
 
 > **The `Entry Files` column above is the pointer map, not the load list (324.c).** The canonical, section-scoped
 > form — `file → "§ Section"`, with its `read ≤ 12 kB of reference` cap — is the `Entry files:` line of each
@@ -92,10 +94,11 @@ a `git mv` and a release — the operator's call.
 | `/retro`        | the coordinator | The weekly coaching pass (or on demand after a slice that closes a journey) — never once per Debrief | `penny` (sonnet) → `oscar` (opus) |
 | `/clean`        | the coordinator | Run Régine on demand, as a sub-agent: rescue before archive, sidebar contract (pin-while-waiting), clocks, WIP limits, caches — her table back in ≤ 10 lines | `regine` (sonnet) |
 | `/project`      | the coordinator | Open a chantier by the contract: Cadrage, partition map, sidebar group, one task chip per slice, then the supervisor loop | — |
+| `/projects` *(hub only)* | the coordinator | The fleet board: rebuild the `fleet-board/1` snapshot from every chantier fiche on the machine, republish the desk at the same URL, relay the unrelayed answers through each slice's sub-session (`templates/fleet-board.md`) | — |
 | `/port` *(optional)* | Maya (order) / Nova (design side) / Brian (implementation) | Port one screen from the app's living `proto/` directive — one screen = one land | `brian` |
 | `/relay` *(optional)* | the coordinator | Flush live working-state into `STATE.md` → `## Resume here` (dropoff) | — |
 
-> Rituals (11), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
+> Rituals (13), all in `.claude/commands/`. The orchestration chain the coordinator runs is defined
 > **once**, in `agents-method.md` → "Orchestration chain" — reference it, never restate it here.
 > A slice closes on **`/land`**: the trunk is then **LANDED** — `DEPLOYED` and `PROVEN` need their
 > own evidence (a served revision, an observed run); the gate is local, there is no CI on this
@@ -163,7 +166,7 @@ Nothing else justifies a second window — not size, not an estimate, not "it lo
 
 ### Per-agent defaults (Claude Code — `model:` frontmatter in `.claude/agents/`)
 
-- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`, `oscar`, `lise`, `maya`
+- **T1 (opus):** `junia`, `vera`, `kasper`, `lucia`, `oscar`, `lise`, `maya`, `agathe`
 - **T2 (sonnet):** `brian`, `sage`, `watson`, `nova`, `gordon`, `iris`, `penny`, `regine`, `alba`, `hugo`, `stella` (`hugo` → opus when the change is to **gate semantics**: what greens a landing, what fails closed)
 - **T3 (haiku):** no agent *defaults* to T3 — it is a **delegation-time override** for mechanical sub-tasks
 - **Opus by override (318.a):** `nova` for a deep UX-architecture study · `gordon` for a pricing or

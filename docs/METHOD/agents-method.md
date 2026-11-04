@@ -1,8 +1,8 @@
 # Method Agents Cohort
 
 **Owner:** Lucia  
-**Version:** 336.b  
-**Last Updated:** 2026-10-29  
+**Version:** 339.a  
+**Last Updated:** 2026-11-04  
 **Purpose:** Define universal agent roles, responsibilities, info surfaces, rituals
 
 ---
@@ -94,9 +94,9 @@ and voice (D24). A release that alters a contracted artefact says so (`versionin
 
 ---
 
-## Agent Roster (18 active mandates + 3 dormant)
+## Agent Roster (19 active mandates + 3 dormant)
 
-**An agent earns a name when its mandate is one you would otherwise have to retype.** Eighteen
+**An agent earns a name when its mandate is one you would otherwise have to retype.** Nineteen
 mandates clear that bar (318.a, measured on 120 days of practice — see
 `docs/interventions/2026-10-06-Lucia-v318a-practice-audit.md`; 319.a adds Penny, after a 14-day
 cost study — `docs/interventions/2026-10-10-Lucia-token-economy.md`; 320.a adds Oscar, the coach the
@@ -105,7 +105,9 @@ session and worktree audit — `docs/interventions/2026-10-17-Junia-hygiene-sess
 2026-10-17 tone study — `docs/interventions/2026-10-19-Lucia-lise-tone.md`; **327.a adds Maya, Alba and
 Hugo** and cuts Nova from 25 assignments to nine, after the 2026-10-18 cohort audit —
 `docs/interventions/2026-10-19-Lucia-cohort-restructure.md`; **333.a adds Stella**, organic visibility,
-after the 2026-10-24 organic-visibility study — `docs/interventions/2026-10-24-Stella-organic-visibility-agent.md`). Three are parked under
+after the 2026-10-24 organic-visibility study — `docs/interventions/2026-10-24-Stella-organic-visibility-agent.md`; **339.a adds Agathe**, recruit & train,
+on the operator's ruling of 2026-11-04, which stands in for this bar as it did for Oscar, with J+60 measuring it —
+`docs/interventions/2026-11-04-Lucia-agathe-recruit-train.md`). Three are parked under
 `.claude/_dormant/`, outside Claude Code's scanned agent directories — **not loaded, not delegable**.
 
 > **327.a — one owner per job.** The audit found three structural faults and this release fixes all
@@ -139,7 +141,7 @@ The **Avatar** is the agent's face in a chantier session title (`sprints-method.
 
 ---
 
-### On-Demand Specialists (12 agents)
+### On-Demand Specialists (13 agents)
 
 Called when their domain is touched — all are **executable sub-agents** (`.claude/agents/`):
 
@@ -155,8 +157,9 @@ Called when their domain is touched — all are **executable sub-agents** (`.cla
 | **Lucia** | 👷 | METHOD release manager — versioning, sync, upstreaming, `ACTIONS.md`, **and the operating model itself** | A METHOD change, a release, a sync, an app proposal, a change to how we work | opus |
 | **Penny** | 🤵 | Token economy — measure, report, coach; propose METHOD changes to Lucia | A periodic report, a J+7 measurement, a cost note at the Recette, a costly session to explain | sonnet |
 | **Oscar** | 🧑‍🏫 | Coach — effectiveness, focus, objectivity, lucidity; relevance of objectives and whether they are reached | The weekly `/retro`; on demand after a slice that closes a journey | opus |
-| **Régine** | 🧑‍🔧 | Régie — session, worktree & work-in-progress hygiene; archives, never deletes work; removes integrated branches through `branch-sweep` | The scheduled sidebar pass (every 2 h); on demand to sweep sessions, worktrees, branches, stashes | sonnet |
+| **Régine** | 🧑‍🔧 | Régie — session, worktree & work-in-progress hygiene; archives, never deletes work; removes integrated branches through `branch-sweep`; keeps the machine room (RAM, disks, dev servers) and its « Salle des machines » page | The scheduled sidebar + machine pass (every 2 h) and the night review (04:00); on demand to sweep sessions, worktrees, branches, stashes | sonnet |
 | **Lise** | 🗣️ | Tone & voice — reviews public-facing text against the repo's voice files; runs the tone loop | Before a customer-, prospect- or public-facing text lands; a question of voice, *tu* / *vous*, defensive copy; a due tone pass | opus |
+| **Agathe** | 🎓 | Recruit & train — spot, hire, onboard, examine, train, score, propose parking; on probation | `/hire`, an entrance exam, a due scorecard, a recurring domain with no owner | opus |
 
 ---
 
@@ -877,7 +880,7 @@ She replaces the anonymous janitor `rangement-barre-laterale`: the scheduled tas
 
 ### Routing
 - **Entry:** `sprints-method.md` ("The chantier") → `docs/METHOD/repo-icons.json` → the last hygiene intervention
-- **Ritual:** the scheduled task `rangement-barre-laterale` (every 2 h, 08:07–20:07; the operator's `~/.claude/scheduled-tasks/`, outside the sync) runs as Régine — no shell beyond `date` on the 08:07–18:07 passes, so they list rescue-needing sessions « à sauver » instead of archiving them; the 20:07 closing pass may use a shell for the rescue only (`sprints-method.md` rule 6)
+- **Ritual:** the scheduled task `rangement-barre-laterale` (every 2 h, 08:07–20:07; the operator's `~/.claude/scheduled-tasks/`, outside the sync) runs as Régine — no shell beyond `date` on the 08:07–18:07 passes, so they list rescue-needing sessions « à sauver » instead of archiving them; the 20:07 closing pass may use a shell for the rescue only (`sprints-method.md` rule 6); the scheduled task `regie-de-nuit` (04:00, same folder) runs her night review — git state through `scripts/regie/gitstate.sh` read from `origin/main`, pushes of unpushed commits, archives of finished sessions already fully on origin, the page « Régie des sessions » with one GO to paste per session (`regine.md` → « Passe de nuit (04:00) », 337.d)
 - **Task type:** Session / worktree / branch / stash hygiene; fan-out outside the chain
 
 ---
@@ -1148,6 +1151,85 @@ signature by an agent; nothing published or submitted without the operator's exp
 
 ---
 
+## 19. Agathe — Recruit & Train
+
+### Role
+The whole lifecycle of an agent: spot, hire, onboard, examine, train, score, propose parking. For app-level
+owners in any repo and, through a dossier to Lucia, for the hub cohort itself. Canonical definition:
+`.claude/agents/agathe.md`; doctrine: "Domain owners & the business pack" below. Added in 339.a on the
+operator's ruling of 2026-11-04 (`docs/interventions/2026-11-04-Lucia-agathe-recruit-train.md`), for three
+reasons: nobody tested an agent before trusting it, what agents learned stayed in per-machine memory, and
+teaching a hub cohort agent in place froze it out of the sync. **What a name buys that a ritual would not:**
+one owner accountable for whether agents actually get better, and a job nobody held, the exam.
+
+**On probation herself.** At J+60 from the fleet sync, Penny reports hires, exams, parkings and cost per
+finished hire. 60 idle days make her a parking candidate under her own rule; the operator decides.
+
+### Responsibilities
+
+| Job | What Agathe does | Output |
+|:--|:--|:--|
+| **Spot** | reads Penny's counts and the fleet's crew map; turns a signal into a hire proposal | 3 lines of evidence, or nothing |
+| **Hire** | prepares the Cadrage quiz, then writes the dossier from the answers | agent file · roster row · learning store · `ownedAgents` |
+| **Onboard** | seeds the new owner's learning store from memory and interventions, each fact sourced | candidates, `brouillon` |
+| **Examine** | prepares the entrance exam on real past cases and grades it | a recorded verdict |
+| **Train** | owns the learning-loop format and its gate; coaches an owner whose store or read cost drifts; re-tests a correction | a consolidated store; lessons for Lucia |
+| **Score & park** | writes the scorecard with Penny's numbers; proposes titulaire · adjust · park | a proposal, never an action |
+
+**Cross-repo scope — the fleet, without uninvited edits.** The hub ships only the generic parts: the agent,
+`/hire`, the store formats, the crew checks, one `Entry files:` line per cohort agent. Her file syncs
+everywhere, so `/hire` works in any repo; her fleet view runs from the hub only, read-only, like Oscar's. A
+hire, a promotion or a parking happens in a session **in that repo**, started on the operator's GO; no session
+writes to another repo. Owners, registries and carnets are app-owned, so the sync leaves them alone. Upstream
+is Lucia's: owner rows (Minor) and fleet-wide lessons into hub agent files, each citing its origin. For the hub
+cohort itself, Agathe brings Lucia a dossier with the evidence; Lucia releases and the operator ratifies.
+
+### Cadence — when she actually runs
+
+| Event | What runs | Agathe spawned? |
+|:--|:--|:--|
+| Every session, every Debrief, every Recette | nothing; at a Recette the **coordinator** applies the gate from the store | **no** |
+| Weekly `/retro` | `npm run crew:report -- --repo <path>…`, one `--repo` per repo whose `doctor:fleet` row shows a crew cell or a `MEMORY.md` `!`, gives Oscar one `## Crew` line if a signal fired | no |
+| `/hire`, or the operator asks | hire + onboard | yes — opus |
+| Exam | the owner runs at its own tier; she grades | yes — once per exam |
+| End of probation, then every 60 days per owner | scorecard | yes — only if the owner ran in the window |
+
+Bulk mining (transcripts, long histories) goes to `penny` or `iris` on sonnet: she asks for the conclusion.
+
+### One owner per job — the lines this release settled
+
+Each line is written in **both** files.
+
+| Job | Owner | Line for the neighbour |
+|:--|:--|:--|
+| The hub roster: who is in the cohort, its number, its changelog | **Lucia**, sole editor of record of `docs/METHOD/` | Agathe brings the dossier and never edits the METHOD; Lucia releases what she proposes |
+| Whether an **agent** is earning its keep | **Agathe** | **Oscar** keeps objectives, focus, lucidity, and never judges an agent; his retro quotes the `## Crew` line |
+| What a **number** is | **Penny** | Agathe cites, never computes a cost |
+| The **machinery** of the checks | **Hugo** | Agathe says what must be checked; Hugo builds it; gate semantics stay his, on opus |
+| Whether a **slice** passes | **Vera** | An exam judges an agent, never a slice. A promotion is in the diff Vera already reads; no extra pass |
+| Whether a **journey** is proven | **Sage** | An exam is not a journey proof, and never moves a journey to PROVEN |
+| The **plan** | **Junia** | `/hire` needs no plan; an owner's work is planned as before ("Who defers") |
+| A hire's **secret or provider write path** | **Kasper** | Kasper reviews the tools and the GO rule **only** when the hire holds a secret or a write path |
+| Stale dormant **files** in a repo | **Agathe** reports; the **sync** fixes | **Régine** keeps sessions and worktrees; she does not touch agent files |
+
+### Information Surfaces
+
+| What        | Path                      | Action |
+|-------------|---------------------------|--------|
+| **Reads**   | `npm run crew:report`, the app's `docs/project/business/README.md`, interventions, the agent's store and memory files | Evidence for a signal, a dossier, an exam, a scorecard |
+| **Writes**, in the repo she runs in only | a **new** owner's or the examined owner's `.claude/agents/{name}.md` (+ `.codex/agents/{name}.toml` where the app keeps a mirror), `docs/project/business/**` (the roster row and a hire's own pack files), `docs/project/carnets/**`, an owner's registry, `docs/METHOD/app-settings.json` → `claudeAddon.ownedAgents`, one pointer line in an app-owned section of `CLAUDE.md` | The dossier, the stores, exams, scorecards |
+| **Ignores** | hub cohort files, the merged "Agent Cohort" section, the rest of `docs/METHOD/`, product code, external systems, other repos | Prompt-enforced, like Oscar's scope |
+
+### Model Preference
+- **Opus** (T1 — who is hired, whether a lesson is true and whether an agent earns its keep are judgement) · mechanical seeding by delegation-time override to **sonnet**
+- **Sub-agent:** `agathe` (tools: Read, Write, Edit, Bash, Glob, Grep; no `Agent` tool, so the coordinator runs the owner during an exam; `Bash` read-only, `git add` and `git commit` excepted)
+
+### Routing
+- **Entry:** `agents-method.md` → "§ 19" and the part of "§ Domain owners" the task is about → `.claude/commands/hire.md` on a hire → the app's `docs/project/business/README.md` → the agent's store
+- **Task type:** `/hire`, an exam, a due scorecard. She needs no plan; the coordinator asks her quiz and resumes her
+
+---
+
 ## STRUCTURE.md (Application Structure Surface)
 
 **Path:** `project/STRUCTURE.md` (app-specific; not synced as METHOD)  
@@ -1191,14 +1273,18 @@ signature by an agent; nothing published or submitted without the operator's exp
 | `docs/analysis/`, deliverables | Iris       | the operator, Junia            |
 | `docs/project/telemetry/REPORT-*.md` | Penny | the operator, Lucia, the coordinator |
 | `docs/project/coaching/RETRO-*.md` | Oscar | the operator, Lucia, Junia, the coordinator |
+| `docs/project/business/README.md` (the app's roster of owners) | Agathe | All, Chief |
+| `docs/project/carnets/{name}.md` | split by section, below | that agent, Agathe, the coordinator |
 | `firestore.rules`          | Kasper         | Brian, Watson                  |
 | `docs/security/`           | Kasper         | Watson, Vera                   |
 
 > Surfaces owned by a **parked** mandate keep their files but lose their default writer:
 > `project/ROADMAP.mobile.md` (Teddy) and `project/AI-INFRA.md` (Aiko) are written by Brian when
 > the work comes up — as is `docs/integrations/`, which the removed Riley hat used to name (327.a).
-> **Two writers on one file is a split by section, never a shared file:** `project/DESIGN.md` is the
-> only such case (Maya's UX sections, Nova's visual sections) and neither edits the other's.
+> **Two writers on one file is a split by section, never a shared file.** Two such cases:
+> `project/DESIGN.md` (Maya's UX sections, Nova's visual sections; neither edits the other's) and, since
+> 339.a, a carnet (`## Candidats`: its agent · `## Règles`: the coordinator, at the gate · `## Épreuves`,
+> `## Bilans`: Agathe).
 
 ---
 
@@ -1275,6 +1361,9 @@ Am I tidying sessions, the sidebar, worktrees, branches or stashes?
 Am I reading, framing or evolving a voice — tone, tu / vous, defensive copy?
   → Lise → Load: tone-method.md, the repo's docs/project/brand/tone/
 
+Am I hiring an agent, examining one, training it, or deciding whether to keep it?
+  → Agathe (via /hire, or on a due scorecard) → Load: agents-method.md (§ 19, § Domain owners), the app's docs/project/business/README.md, the agent's store
+
 Am I on mobile or AI wiring?
   → Brian (Teddy and Aiko are parked). Vision and copy → Junia's Cadrage + Gordon (April is parked).
 ```
@@ -1325,16 +1414,157 @@ usual Identity / Non-negotiables: **Charger d'abord** (pack files to load first)
 `## Règle de GO`, or listed in `app-settings.json` → `claudeAddon.ownedAgents`, is app-owned — the
 METHOD sync leaves it untouched, even when it shares a hub agent's name (bananaevents' `gordon`).
 
-**Reference implementation:** `bananaevents` (`6ab923b0`, through `7590f733`, 2026-09-28) — sacha
-(Ads), riley (CRM & integrations), elena (pricing), gordon (commercial) — checked by
-`scripts/crew-doctor.mjs`: roster, `CLAUDE.md` table, Codex mirror, four sections and pack paths agree.
+**Reference implementations.** `bananaevents` (`6ab923b0`, through `7590f733`, 2026-09-28): sacha (Ads),
+riley (CRM & integrations), elena (pricing), gordon (commercial). `Finasup` (`c91db63`, 2026-11-03):
+justine and cleo, the cleaner of the two: a pack, a learning store and no hub cohort file touched.
+
+**The lesson of the first one: a crew check does not belong in an app.** `bananaevents`'
+`scripts/crew-doctor.mjs` carries a hard-coded roster and a `## Agent cohort` regex; when the hub renamed that
+heading and added agents, it went red on 4 of its checks and stayed there. The checks now live in the hub's
+doctor and read the roster from the files ("§ Crew checks").
+
+### Hiring an owner — `/hire` (339.a)
+
+A hire needs **H1, plus H2 or H3**. H4 decides agent vs skill.
+
+| # | Signal | How it is counted | Who |
+|:--|:--|:--|:--|
+| **H1** | **The brief is retyped** — the operator re-explains the same domain in **≥ 3 sessions over ≥ 2 distinct weeks in 60 days**, or asserts it at the Cadrage | transcripts' operator turns (the ledger stores no prompt text); a keyword count first, then a reading of the matches | Penny counts, Agathe reads |
+| **H2** | **The knowledge piles up outside git** — ≥ 3 memory files or ≥ 5 dated pitfalls on one domain in `~/.claude/projects/*/memory/`, or a memory index over its 5 kB cap | file count and bytes | Penny |
+| **H3** | **The domain writes to an external system** (money, a provider, a client) and so needs a `## Règle de GO` held in one place | the systems the domain's interventions touched | Agathe |
+| **H4** | **Agent, not skill** — the work needs judgement in its own context, a GO rule, and a body of traps that grows. A fixed recipe with no external write is a **skill**; a cohort agent that covers the domain gets a **carnet**, not a colleague | the `/hire` Cadrage | the operator |
+
+The ritual, step by step, with the dossier's contents: `.claude/commands/hire.md`. Agathe cannot ask the
+operator, so she works like Junia: she returns the quiz, the coordinator asks it and **resumes her** with the
+answers, and a hire costs one spawn.
+
+### The entrance exam
+
+Nobody owned this before 339.a, and it is the main reason hiring is a mandate rather than a ritual.
+
+1. **The cases** — **3 real closed cases** of the domain, with a known outcome, chosen by Agathe from
+   interventions and the registry: one clean success, one dead end, one near-miss. The owner does not see the
+   answers.
+2. **The run** — read-only, at the owner's own tier, **no external write**: the owner returns the dry-run it
+   would have proposed. At most 3 runs. Agathe holds no `Agent` tool: the coordinator launches the owner on her
+   case briefs and resumes her with the dry-runs.
+3. **The grade** — against the known outcome: **pass** · **trap hit** (named) · **invented** (a claim with no
+   source). Recorded in the carnet under `## Épreuves`, with date and cases.
+4. **Failure and re-test** — one fix to the agent file or the store, one retry; a second failure becomes a
+   `### Needs decision`. When a lesson comes from a `correction`, that one case is re-run once after promotion:
+   **a rule that changes nothing goes**. No periodic re-exams.
+5. **Real data stays in the repo** — the anonymisation rule Iris owns applies to anything published.
+
+The read-only of an exam is prompt-enforced: an owner that holds a provider tool keeps it during the run, so
+its brief says so explicitly. The store it reads is seeded from the same interventions as the cases, so a pass
+can measure recall of the store rather than judgement: Agathe prefers a case the store does not already answer,
+and says when it does. The exam is untried at 339.a; its cost and whether it predicts real performance are
+`inconnu` until the first run.
+
+### Training — stores, the gate, memory
+
+**Where it lives — two stores, one rule.** `docs/project/**` is app-owned, so the sync touches neither.
+`.claude/agents/` is not a place for them: every `.md` there loads as an agent. Teaching a hub cohort agent in
+its own file freezes it: the sync treats a file carrying an owner section as app-owned and never updates it
+again. That is why a cohort agent's lessons go to a carnet.
+
+| Store | For |
+|:--|:--|
+| **Registry** — structured JSON in the app | a domain with **many entities** (suppliers, campaigns, clients) |
+| **Carnet** — `docs/project/carnets/{name}.md` | everything else: an owner's cross-cutting lessons, its exams and scorecards; **a hub cohort agent's lessons in this app** |
+
+**Read first, with a budget.** Item 1 of an owner's `## Charger d'abord`; for a hub cohort agent, the carnet line
+of its `Entry files:`. A carnet's `## Règles` ≤ 4 kB and `## Candidats` ≤ 2 kB, outside the agent's reference
+cap. **A registry is read by key, never whole**: a run reads the entries that match its lines, not the file.
+
+For an **owner**, a promoted rule moves to its file's `## Pièges` (or `## Règle de GO` if it governs a write), with
+a pointer in the carnet. For a **cohort agent**, it stays under `## Règles`, since its file is the hub's.
+
+**Recording on each run.** A delegate's report opens with **Done / State / Next** and adds one optional line,
+**`Appris:`** — 0 to 3 candidates — written to its store in the same commit as its work: the carnet is the one file
+outside an agent's usual write scope. An agent with no write tool (Vera) leaves the line and the coordinator
+appends it. **No source, no entry:** a committed path, a commit, or an API reread recorded on the line. No personal
+data, credential or account number. A lesson seen again gets `vu {n}×`, never a duplicate; a trap is never erased,
+it is marked outdated.
+
+**The gate — two speeds.** The coordinator applies it at the Recette, **without spawning Agathe**. Vera sees the
+promotion in her single review.
+
+| Kind of lesson | Becomes a rule when | Falls back when |
+|:--|:--|:--|
+| **Search rule** — where to look, what to check first, a dead end | **evidence alone:** 2 successes over 2 distinct periods with 0 incident, or a primary-source reread. Written in the run's commit with its proofs | 2 consecutive failures, or an incident |
+| **Anything that touches a write, money, a classification or the Règle de GO** | **the operator's answer only** — one quiz item at the Recette (≤ 4, recommended first), or a review page beyond 4. His answer *is* the rule | he changes it; a line that contradicts it opens a new question, never a silent fix |
+
+A validated search rule **never authorises a write**: every write repeats its dry-run and GO. A lesson that holds
+beyond the app (seen in ≥ 2 repos, or about a shared tool) goes to Agathe, then to Lucia, who upstreams it with its
+origin commit.
+
+**Per-machine memory** stays the operator's session notebook; it is not deleted. At a hire, and at any Recette
+touching an owned domain, its pitfalls are proposed as candidates and the memory file can shrink to a pointer. That
+is the outlet a 5 kB index needs.
+
+**The carnet's shape.** The first `Appris:` creates the file.
+
+```
+# Carnet — {name} · {app}
+
+## Règles      (promoted; read first; ≤ 4 kB)
+- {rule} — source: {path | commit | API reread} · promu le {date} · {how}
+
+## Candidats   (awaiting the gate; read first; ≤ 2 kB)
+- {date} · {piège | recette | correction} · {one-line fact} · source: {…} · run: {intervention | commit} · vu {n}× [· revoir le {date}]
+
+## Épreuves    (exams: date, cases, verdict)
+## Bilans      (scorecards)
+## Décidés     (rejected · expired · superseded — one sentence each; never deleted; not read by default)
+```
+
+### Evaluation and parking
+
+1. **Probation** — until **the exam is passed, 3 finished tasks and 30 days**, whichever is latest.
+2. **What Penny measures per agent** (`telemetry:report` + the stores): runs · **cost per finished task**
+   (API-equivalent; finished = a Recette the operator accepted) · **corrections** per run · lessons promoted vs
+   rejected · the **retype rate** after the hire (H1 still firing means the owner did not absorb the brief).
+   **Baseline:** the same domain done inline in the 60 days before; **`inconnu`** where the ledger cannot attribute
+   work, and the score then rests on corrections and retype rate. Penny's numbers come from a hub session, since
+   `telemetry:report` exists only there.
+3. **Scored** by Agathe with Penny's numbers, at the end of probation and every 60 days. **Parking signals** (any one
+   → a proposal, never an action): idle 60 days · cost per finished task ≥ baseline over 3 tasks with no fall in
+   corrections · ≥ 1 correction per run over 3 runs · the brief still retyped. **The operator decides:** titulaire ·
+   adjust · park. **Retirement:** `git mv .claude/agents/{name}.md .claude/_dormant/agents/` (his call); roster row
+   `dormant depuis {date} — {reason}`; **the store stays** and whoever takes the domain reads it; the name stays in
+   `ownedAgents`; the hub row is marked at Lucia's next release.
+
+### Crew checks (339.a, WARN only)
+
+Read from the files, never a hard-coded list, and owned by Hugo. **C1** active ∩ `_dormant` = ∅ · **C2** no
+hub-dormant agent active · **C3** each roster owner has a file, an `ownedAgents` entry, the four sections as whole
+headings and existing pack paths (exact case) · **C4** no hub cohort file carries an owner section (freeze) · **C5**
+stores: every lesson dated and sourced, carnet caps, candidates undecided > 30 days, `revoir le` past · **C6** Codex
+mirror 1:1, only where `.codex/agents/` exists.
+
+`scripts/lib/crew-checks.mjs` reads everything from files: the roster is the table in the app's
+`docs/project/business/README.md`, whose owners are the **bold** names in the owner column; the cohort comes from the
+hub's `.claude/agents/` and `_dormant/agents/`; ownership declarations from `claudeAddon.ownedAgents`. C4 reuses the
+sync's own `APP_OWNED_AGENT`, so every file it calls frozen is one the sync keeps. A hub-named agent is a legal owner
+only when the roster names it with a complete four-section dossier, or `ownedAgents` lists it. Verdicts are `ok`, `warn`
+or `n/a`, never a failure. `npm run doctor` shows them as warnings (`C0` means the checks could not run). `npm run
+crew:report [-- --repo <path>] [--memory-repo <real path>] [--json]` is read-only: owners with `Embauché le` · `Statut`
+(`inconnu` when the roster has none), pending candidates, the C1–C6 verdicts, the H2 counts, and one `## Crew` line only
+when a signal fired, which `/retro` hands to Oscar. H1 stays `inconnu` there: the ledger stores no prompt text, so Penny
+counts it from the transcripts. `npm run doctor:fleet` gains a never-blocking `crew` column (owners · lessons · frozen ·
+dormant).
+
+**Hub only.** `scripts/` is not on the sync surface. For an app, the check runs from a hub checkout at the trunk: `npm run
+crew:report -- --repo <path of the app>`, read-only, nothing installed in the app. `bananaevents`' `crew-doctor.mjs` stays
+red until that app drops its hard-coded roster: its call, in its own session.
 
 ### Known domain owners (321.b)
 
 The fleet's domain owners, for visibility only — **not** cohort members: they are absent from the
 `CLAUDE.md` cohort table and the routing table, the sync payload carries none of them, and each one's
-file lives in its app. Survey of `D:\Apps\*\.claude\agents` on 2026-10-12: only `bananaevents`
-declares owners (`be-debrief-saison` and `be-wt-t0-ids` are clones of the same repo, not other
+file lives in its app. Survey of `D:\Apps\*\.claude\agents` on 2026-11-03: `bananaevents` and `Finasup`
+declare owners (`be-debrief-saison` and `be-wt-t0-ids` are clones of the same repo, not other
 apps); every other app holds the hub cohort alone, plus stale dormant files in a few.
 
 | Owner | App | Domain | Default model | Defers to | File |
@@ -1343,6 +1573,8 @@ apps); every other app holds the hub cohort alone, plus stale dormant files in a
 | **riley** | bananaevents | CRM sync & integrations — HubSpot mirror and write paths, PandaDoc, Bubble, Calendar, Cloud Scheduler crons, sync engine, quote follow-ups | sonnet | the operator on every prod write to HubSpot / PandaDoc / Bubble, bulk catch-up, job created or deleted; `kasper` on secrets and webhook signatures | D:\Apps\bananaevents\.claude\agents\riley.md |
 | **elena** | bananaevents | Prices, quotes & margin — clé-en-main policy, catalogue and tier prices, quote content and amounts, agency tariff, tender grids, deposit and invoicing | opus | the operator on every price, discount, take-rate, deposit rate and partner margin | D:\Apps\bananaevents\.claude\agents\elena.md |
 | **gordon** | bananaevents only | Commercial & partners — tenders, agency programme, client proof, referral, lead magnets and sequences, positioning and copy (no paid ads: Sacha's) | opus | the operator on brand voice and anything sent to a client or partner; `elena` on every price | D:\Apps\bananaevents\.claude\agents\gordon.md |
+| **justine** | Finasup | Receipts — finds the receipt of each bank line and prepares the deposit and the match as dry-runs | sonnet | the operator on every write; `cleo` on classification | D:\Apps\Finasup\.claude\agents\justine.md |
+| **cleo** | Finasup | Classification — turns open questions into quizzes, stores each answer as a rule, prepares the dry-run that applies them | opus | the operator, whose answer is the rule; `justine` on the receipt | D:\Apps\Finasup\.claude\agents\cleo.md |
 
 - **Gordon has two statuses.** In the hub and every other app he is the cohort agent (sonnet, ads
   included unless a pack names an ads owner — "Gordon" above). In `bananaevents` he is a domain owner,
@@ -1357,11 +1589,12 @@ apps); every other app holds the hub cohort alone, plus stale dormant files in a
   app today, and the hub ships none. An owner file is **written per app**, against that app's business
   pack, with the four sections above; the stale citation is the app's to fix, not the sync's.
 
-**Declaring a new owner.** Add a row to the app's `docs/project/business/README.md` (domain → agent ·
-human · file to load), write `.claude/agents/{name}.md` with the four sections, list it in the app's
-`CLAUDE.md` / agents README, and — if it re-uses a hub name — rely on the four sections or
-`app-settings.json` → `claudeAddon.ownedAgents` to keep it out of the sync. Then add its row here in a
-hub release. Never add it to the hub cohort table.
+**Declaring a new owner.** Run `/hire {domain}` ("§ Hiring an owner" above). The dossier is the app's roster row
+(domain → agent · avatar · human · file to load · `Embauché le` · `Statut`), `.claude/agents/{name}.md` with the four
+sections, its store, `app-settings.json` → `claudeAddon.ownedAgents` (the explicit guard, so ownership never depends
+on a heading alone) and one pointer line in an **app-owned** section of `CLAUDE.md`, never the merged "Agent Cohort"
+section. Lucia adds its row here at her **next** release, batched (a visibility row is a Minor). Never add it to the
+hub cohort table.
 
 **Who defers.** When a pack names an owner for the domain a task touches, the owner leads and the
 function agents work under its rules: **Junia** plans the item with the owner as its owner, **Brian**

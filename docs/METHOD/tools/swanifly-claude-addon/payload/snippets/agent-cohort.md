@@ -21,13 +21,14 @@
 | `penny` | Token economy |
 | `oscar` | Coach (`/retro`) |
 | `regine` | Régie — sessions & worktrees |
-| `lise` | Tone & voice (`docs/METHOD/tone-method.md`) |
+| `lise` | Tone & voice (`tone-method.md`) |
 | `stella` | Organic visibility (SEO · GEO) |
+| `agathe` | Recruit & train (`/hire`) |
 
-**One owner per job** (327.a): a collision or a gap goes to `agents-method.md` → "§ Agent Roster", never to a second claimant. **Dormant, not loaded, not delegable:** April, Aiko, Teddy. **The coordinating
+**One owner per job** (327.a): a collision or a gap goes to `agents-method.md` → "§ Agent Roster", never to a second claimant. **Dormant, not delegable:** April, Aiko, Teddy. **The coordinating
 conversation orchestrates; it is not an agent.** Per task `brian` → `watson` (only if the gate goes
 red) → `kasper` (only when rules / auth / API routes are touched); once per slice, at the Recette,
-`vera` → `/land` → `sage`. Chain, roster, domain owners: `docs/METHOD/agents-method.md` →
+`vera` → `/land` → `sage`. Chain, domain owners: `agents-method.md` →
 "§ Orchestration chain", "§ Domain owners".
 
 **Tone → `lise`.** Any question of voice, *tu* / *vous* or *ton* goes to her; where

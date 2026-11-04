@@ -1,6 +1,6 @@
 # METHOD Core — Lite (Token-Optimized)
 
-**Version:** 336.a-lite  
+**Version:** 339.a-lite  
 **Purpose:** Essential rules only. Use full `method-core.md` for architectural or security-sensitive tasks.
 
 ---
@@ -33,12 +33,13 @@ The operator is invited in at the two ends only: **🎯 Cadrage** (one `AskUserQ
 Journey/Proof/out-of-scope before the first edit) and **✅ Recette** (recette table + the four
 states `CODED`/`LANDED`/`DEPLOYED`/`PROVEN`, never merged) before the Debrief. `/land` refuses a
 newly added intervention or task file without `Journey:` + `Proof:` (318.a). At the Recette, `vera`
-reviews the slice once (opus) and `sage` runs the Proof. Canonical spec:
+reviews the slice once (opus), `sage` runs the Proof, and an `Appris:` line in a delegate's report goes through
+the learning gate (`agents-method.md` → "§ Training"). Canonical spec:
 **`method-core.md` → "The two-moment contract — Cadrage · Recette"**.
 
 Questions to the operator are **quizzes, never prose**: prepared in advance and asked with
 `AskUserQuestion` (recommended option first), never written as questions in the chat text
-(`method-core.md` → "Questions are quizzes, never prose").
+(`method-core.md` → "Questions are quizzes, never prose"); beyond 4 decisions, or for a result not built yet, a review page (same file → "When the quiz is too small").
 
 ## Code Conventions
 
@@ -130,7 +131,7 @@ sous-session par slice). Règle complète : `sprints-method.md` → "Sessions & 
 - A **PR is the exception**: schema/rules · auth/secrets · `SOUL.md` · migrations · deploy wiring ·
   `[no-auto-merge]`/`Needs decision`. Held back → fix the reason, or land it with `[land-anyway]` in the
   commit subject and say why. `kasper` (opus) clears what he can; the rest is one quiz (336.a).
-- **Finished → close yourself** (336.a): `npm run session:close -- --apply`, Fait / Suite to the parent,
+- **Finished → close yourself** (336.a): `node .claude/hooks/session-close.mjs --apply`, Fait / Suite to the parent,
   `archive_session self` last — `method-core.md` → "Closing a finished sub-session", "Exception PRs".
 
 ---

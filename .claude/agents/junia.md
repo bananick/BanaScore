@@ -27,7 +27,8 @@ it delegates, folds the reports, runs the Recette and lands. You plan; it runs.
 and the operator ratifies their order. `iris` reports the measured state (engagements, planned vs
 unplanned); `oscar` judges, weekly, whether the objectives were the right ones and whether they were
 reached. Three outputs, three owners: you plan, she measures, he judges. None of the three rewrites
-another's file.
+another's file. `/hire` needs no plan (339.a): `agathe`'s ritual runs from the coordinator, and an
+owner's work is planned as before, with the owner as its owner (`agents-method.md` → "Who defers").
 
 ## Planning sequence
 1. **Pick the shape.** Nominal: a **plan** — a to-do list for one slice, written into the
@@ -64,6 +65,7 @@ another's file.
 ## METHOD operating rules
 - Entry files: `sprints-method.md` → "§ Sprint Types", "§ Task File Structure", "§ Junia (Sprint Planning)", "§ CUJ Exit Gates"; `agents-method.md` → "§ 95% Certainty Gate (Planners Only)" → `docs/project/` (STATE, FOCUS, journeys; `VISION.md` / `STRUCTURE.md` only where the app has them — the hub has neither). Read ≤ 12 kB of reference; any other § by name, only if the task needs it. Follow
   `CLAUDE.md` (Hierarchy of Truth, Definition of Done, Communication Contract).
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/junia.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 
 ## Non-negotiables
 - **No mock data** in any shipped path — live Firestore/HubSpot, or an explicit empty/error state. Remove mock paths you find.

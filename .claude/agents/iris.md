@@ -97,6 +97,7 @@ you measure.
 ## METHOD operating rules
 - Entry files: `method-core-lite.md` (whole — 6 kB, already the token-optimised core) → `docs/project/STATE.md` → the object of study (plus
   `docs/project/business/` when the app has a business pack). Max 3 METHOD files; read ≤ 12 kB of reference.
+- Entry files — **your carnet in this app, outside the cap:** `docs/project/carnets/iris.md` → `## Règles`, `## Candidats`, if it exists. A run that taught you something adds an `Appris:` line to your report and to that carnet's `## Candidats`, creating it if needed, sourced (`agents-method.md` → "§ Training").
 - Commit scope: `docs(analysis): {topic}` or `docs(deliverable): {topic}` — nothing else.
 
 ## Non-negotiables

@@ -23,6 +23,11 @@
  *      secret-shaped names, build/dependency dirs, files over 5 MB, `.method/`, the telemetry ledger, and any
  *      file whose CONTENT looks like a credential (private key, service-account JSON, and the well-known API token shapes of GitHub, Stripe, AWS, Google, Anthropic, OpenAI, HubSpot and Slack).
  *      A tracked file that is denied keeps its HEAD entry (it is not recorded as deleted).
+ *      Also denied on Windows: device names (`nul`, `con`, `aux`, `com1`…, with or without extension) and names
+ *      ending in a dot or a space — `ls-files` lists them but `open()` reaches the device, so `git add` dies
+ *      with "short read while indexing nul" and aborts the WHOLE batch (2026-11-01: a stray `nul` file at the root).
+ *      One path git still cannot index never costs the others: the add runs with `--ignore-errors`, the culprits
+ *      are read from stderr, skipped and listed in `wip-sync.last-skipped`.
  *   5. After write-tree, every path that differs from HEAD is re-checked against the same rules.
  * What was skipped, and why (names only, never contents), is in `<gitdir>/wip-sync.last-skipped`.
  *
@@ -43,13 +48,16 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const VISIBILITY_TTL_MS = 3_600_000; // only a PRIVATE answer is ever cached
 const NUL = String.fromCharCode(0);
 
-const git = (args, opts = {}) => spawnSync('git', args, { encoding: 'utf8', timeout: 25_000, ...opts });
+// maxBuffer: with core.autocrlf, `git add` prints one CRLF warning per file — 5000 files overflow the 1 MB default.
+const git = (args, opts = {}) => spawnSync('git', args, { encoding: 'utf8', timeout: 25_000, maxBuffer: 64 * 1024 * 1024, ...opts });
 const out = (args, opts) => (git(args, opts).stdout ?? '').trim();
+/** The last `n` meaningful stderr lines. git prints the CAUSE before its closing `fatal:` line, and CRLF warnings are noise. */
+const stderrTail = (r, n = 3) => (r.stderr ?? '').split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('warning:')).slice(-n).join(' | ');
 /** Every git call in the snapshot path goes through here: a non-zero exit, a timeout or a lock is an error. */
 function must(args, opts = {}) {
   const r = git(args, opts);
   if (r.error || r.status !== 0) {
-    const why = r.error ? (r.error.code ?? r.error.message) : ((r.stderr ?? '').trim().split('\n').pop() || `exit ${r.status}`);
+    const why = r.error ? (r.error.code ?? r.error.message) : (stderrTail(r) || `exit ${r.status}`);
     throw new Error(`git ${args.slice(0, 3).join(' ')}: ${why}`);
   }
   return r.stdout ?? '';
@@ -71,9 +79,14 @@ const SECRET_CONTENT = [
   /github_pat_[A-Za-z0-9_]{20,}/, /gh[ousr]_[A-Za-z0-9]{20,}/, /rk_li[v]e_/, /whse[c]_/, /xox[abprs]-[A-Za-z0-9-]{10,}/,
 ];
 
+// Windows device names and dot/space-terminated names: listed by git, unreadable by name (see header, guard 4).
+const WIN_DEVICE = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
+const WIN_UNOPENABLE = /[. ]$/;
+
 function denyReason(path) {
   const parts = path.split('/');
-  if (parts.slice(0, -1).some((d) => DENY_DIRS.has(d.toLowerCase()))) return 'build/dependency/auth directory';
+  if (process.platform === 'win32' && parts.some((s) => WIN_DEVICE.test(s) || WIN_UNOPENABLE.test(s))) return 'not addable on Windows (device name, or ends in a dot or space)';
+  if (parts.slice(0, -1).some((d) => DENY_DIRS.has(d.toLowerCase()) || /^\.env/i.test(d))) return 'build/dependency/auth directory';
   if (path.startsWith('.method/') || path === 'docs/project/telemetry/sessions.jsonl') return 'local state';
   return DENY_NAMES.some((re) => re.test(parts[parts.length - 1])) ? 'secret-shaped name' : null;
 }
@@ -90,6 +103,24 @@ function fileReason(path) {
   if (buf.subarray(0, 8000).includes(0)) return null; // binary: judged by name only
   const text = buf.toString('latin1');
   return SECRET_CONTENT.some((re) => re.test(text)) ? 'content looks like a credential' : null;
+}
+
+/** Paths git named as unindexable (`error: unable to index file '<path>'`), in order of appearance. */
+function indexFailures(stderr) {
+  return [...String(stderr ?? '').matchAll(/^error: unable to index file '(.+)'\s*$/gm)].map((m) => m[1]);
+}
+
+/**
+ * `git add` into the temp index that survives a path it cannot read: `--ignore-errors` keeps indexing the others,
+ * exits 1 and names the culprits on stderr; they are returned. A lock, a timeout, or a failure that names no path
+ * is a real error and throws.
+ */
+function addPaths(paths, env, cwd) {
+  const r = git(['add', '-A', '--ignore-errors', '--pathspec-from-file=-', '--pathspec-file-nul'], { env, cwd, input: paths.join(NUL) });
+  if (!r.error && r.status === 0) return [];
+  const failed = r.error ? [] : indexFailures(r.stderr);
+  if (r.error || r.status !== 1 || !failed.length) throw new Error(`git add: ${r.error ? (r.error.code ?? r.error.message) : (stderrTail(r, 4) || `exit ${r.status}`)}`);
+  return failed;
 }
 
 function fail(gitDir, msg) {
@@ -183,7 +214,11 @@ function main() {
     }
     // 3 ─ the temp index = HEAD + only the allowed paths.
     must(['read-tree', 'HEAD'], { env });
-    if (allowed.size) must(['add', '-A', '--pathspec-from-file=-', '--pathspec-file-nul'], { env, input: [...allowed].join(NUL) });
+    if (allowed.size) {
+      const candidates = allowed.size;
+      for (const p of addPaths([...allowed], env)) { allowed.delete(p); skipped.push(`${p}  (git could not index it)`); }
+      if (!allowed.size) throw new Error(`git could not index any of the ${candidates} candidate file(s) — ${skipped.slice(-3).join('; ')}`);
+    }
     const tree = must(['write-tree'], { env }).trim();
     if (!tree) throw new Error('write-tree produced nothing');
     // 4 ─ verify the result, independently of the filter above: every path that differs from HEAD must be one we vetted.
@@ -217,5 +252,9 @@ function main() {
   }
 }
 
-try { main(); } catch (e) { console.error(`wip-sync: ${e?.message ?? e}`); }
-process.exit(0);
+// Test seam: WIP_SYNC_NO_MAIN=1 imports the pure helpers without running the hook. Unset = the hook runs, as before.
+export { addPaths, denyReason, indexFailures };
+if (!process.env.WIP_SYNC_NO_MAIN) {
+  try { main(); } catch (e) { console.error(`wip-sync: ${e?.message ?? e}`); }
+  process.exit(0);
+}

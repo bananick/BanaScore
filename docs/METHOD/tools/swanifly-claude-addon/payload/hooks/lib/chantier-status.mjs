@@ -4,20 +4,31 @@
 // validateFiche() is the HAND-ROLLED MIRROR of docs/METHOD/templates/chantier-status.schema.json
 // (schema `chantier-status/1`; 322.g added `decisions[].reversible` / `deadline` / status `defaulted` and
 // `review[].needsOperator`, all required — a fiche written before 322.g adds them on its next write;
-// 330.b added `review[].urls` (required when kind is result) and `review[].notProven`, same mechanic).
+// 330.b added `review[].urls` (required when kind is result) and `review[].notProven`, same mechanic;
+// 337.a added OPTIONAL fields for the fleet board — `session`, `next`, `tasks[]`, `screens[]`, object options +
+// `recoId`, `task`, `review[].minutes`, `answeredAt` / `answeredVia` — so every older fiche stays valid).
 // Change the schema and this file together;
 // tests/chantier-status.lib.test.mjs fails if the enums, required fields or caps drift apart.
 
-/** The 18 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
-export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar', 'regine', 'maya', 'alba', 'hugo', 'lise', 'stella'];
+/** The 19 cohort ids. Informational since 322.b: `agent` is validated by AGENT_RE, so a domain owner passes too. */
+export const AGENTS = ['junia', 'brian', 'sage', 'watson', 'kasper', 'vera', 'nova', 'gordon', 'iris', 'lucia', 'penny', 'oscar', 'regine', 'maya', 'alba', 'hugo', 'lise', 'stella', 'agathe'];
 /** `agent` = a cohort id or a domain owner declared in the app's business pack (docs/project/business/README.md): a lowercase slug. */
 export const AGENT_RE = /^[a-z][a-z0-9-]{1,23}$/;
 export const STATES = ['planning', 'working', 'waiting', 'blocked', 'landed', 'parked'];
 export const GATE_KEYS = ['lint', 'typecheck', 'tests', 'build'];
 export const GATE_VALUES = ['pass', 'fail', 'skip', 'unknown'];
 export const TOP_FIELDS = ['v', 'chantier', 'slice', 'agent', 'title', 'branch', 'journey', 'state', 'updatedAt', 'head', 'gate', 'progress', 'decisions', 'operatorActions', 'review'];
+/** 337.a: optional top-level fields read by the fleet board (docs/METHOD/templates/fleet-board.md). */
+export const OPTIONAL_TOP_FIELDS = ['session', 'next', 'tasks', 'screens'];
 /** String length caps that the spec fixes (the rest live inline below, mirrored in the schema). */
-export const CAPS = { slice: 8, title: 40, progressItem: 100 };
+export const CAPS = { slice: 8, title: 40, progressItem: 100, next: 120, taskTitle: 80, tasks: 40, screens: 60 };
+/** 337.a: the six-step ladder — 2..5 are the four states CODED · LANDED · DEPLOYED · PROVEN. */
+export const STEP_LABELS = ['À faire', 'En cours', 'Codé', 'Landé', 'Déployé', 'Prouvé'];
+export const VERDICTS = ['keep', 'align', 'evolve', 'talk'];
+/** 337.a: where a recorded answer came from — the /projects desk, the supervisor chat, or the 2 h deadline. */
+export const ANSWERED_VIA = ['board', 'chat', 'deadline'];
+/** 337.a: the Claude session id the board opens as claude://claude.ai/epitaxy/<id>. */
+export const SESSION_RE = /^local_[A-Za-z0-9-]{8,64}$/;
 /** An `updatedAt` later than now + this many seconds is a guessed clock, not a write time. */
 export const FUTURE_SLACK_SECONDS = 120;
 
@@ -81,19 +92,56 @@ function isoInstant(errs, path, v, { nullable = false } = {}) {
   if (typeof v === 'string' && ISO_RE.test(v) && Number.isNaN(Date.parse(v))) errs.push(`${path}: not a real date, got ${fmt(v)}`);
 }
 
+/** 337.a: the task link and the answer trail, shared by decisions, operator actions and review items. */
+export const ANSWER_KEYS = { task: false, answeredAt: false, answeredVia: false };
+/** 337.a: field -> required?, for tasks[] / screens[] / object options (the drift test compares them with the schema). */
+export const TASK_KEYS = { id: true, title: true, short: false, step: true, waitsOn: false, movedAt: true, ref: false, url: false, blocked: false };
+export const SCREEN_KEYS = { group: false, code: true, title: true, step: true, verdict: true, vnote: false, note: false, task: false };
+export const OPTION_KEYS = { id: true, label: true, why: false };
+function answerFields(errs, item, path) {
+  fields(item, path, {
+    task: (v, p) => str(errs, p, v, 16),
+    answeredAt: (v, p) => isoInstant(errs, p, v, { nullable: true }),
+    answeredVia: (v, p) => oneOf(errs, p, v, ANSWERED_VIA),
+  });
+  if ('answeredVia' in item && typeof item.answeredAt !== 'string') errs.push(`${at(path, 'answeredAt')}: required when answeredVia is set`);
+}
+
+function checkOption(errs, o, path) {
+  if (typeof o === 'string') { str(errs, path, o, 120); return; }
+  if (!isObj(o)) { errs.push(`${path}: expected a string or an {id,label} object, got ${fmt(o)}`); return; }
+  if (!obj(errs, path, o, OPTION_KEYS)) return;
+  fields(o, path, { id: (v, p) => str(errs, p, v, 16), label: (v, p) => str(errs, p, v, 120), why: (v, p) => str(errs, p, v, 200) });
+}
+
+/** 337.a: options are all strings or all {id,label,why} objects; object ids are unique; recoId names one of them. */
+function optionRules(errs, d, path) {
+  if (!Array.isArray(d.options) || d.options.length === 0) return;
+  const objs = d.options.filter(isObj);
+  if (objs.length > 0 && objs.length !== d.options.length) errs.push(`${at(path, 'options')}: all strings or all {id,label} objects, never mixed`);
+  const ids = objs.map((o) => o.id);
+  if (new Set(ids).size !== ids.length) errs.push(`${at(path, 'options')}: option ids must be unique`);
+  if (!('recoId' in d)) return;
+  if (objs.length === 0) errs.push(`${at(path, 'recoId')}: only with {id,label} options`);
+  else if (!ids.includes(d.recoId)) errs.push(`${at(path, 'recoId')}: names no option id, got ${fmt(d.recoId)}`);
+}
+
 function checkDecision(errs, d, path) {
-  if (!obj(errs, path, d, { id: true, question: true, options: true, reco: true, ifNoAnswer: true, reversible: true, deadline: false, status: true, answer: false })) return;
+  if (!obj(errs, path, d, { id: true, question: true, options: true, reco: true, recoId: false, ifNoAnswer: true, reversible: true, deadline: false, status: true, answer: false, ...ANSWER_KEYS })) return;
   fields(d, path, {
     id: (v, p) => str(errs, p, v, 16),
     question: (v, p) => str(errs, p, v, 300),
-    options: (v, p) => arr(errs, p, v, (s, q) => str(errs, q, s, 120), { min: 1 }),
+    options: (v, p) => arr(errs, p, v, (o, q) => checkOption(errs, o, q), { min: 1 }),
     reco: (v, p) => str(errs, p, v, 300),
+    recoId: (v, p) => str(errs, p, v, 16),
     ifNoAnswer: (v, p) => str(errs, p, v, 200),
     reversible: (v, p) => bool(errs, p, v),
     deadline: (v, p) => isoInstant(errs, p, v, { nullable: true }),
     status: (v, p) => oneOf(errs, p, v, DECISION_STATUSES),
     answer: (v, p) => str(errs, p, v, 500, { nullable: true, min: 0 }),
   });
+  answerFields(errs, d, path);
+  optionRules(errs, d, path);
   // 322.g cross-field rules: only a reversible decision carries a deadline and may default.
   if (d.reversible === true && typeof d.deadline !== 'string') errs.push(`${at(path, 'deadline')}: required (ISO-8601 with timezone, raised time + 2 h) when reversible is true`);
   if (d.reversible === false && d.deadline !== undefined && d.deadline !== null) errs.push(`${at(path, 'deadline')}: must be absent or null when reversible is false`);
@@ -104,7 +152,8 @@ function checkDecision(errs, d, path) {
 }
 
 function checkAction(errs, a, path) {
-  if (!obj(errs, path, a, { id: true, action: true, why: true, status: true })) return;
+  if (!obj(errs, path, a, { id: true, action: true, why: true, status: true, ...ANSWER_KEYS })) return;
+  answerFields(errs, a, path);
   fields(a, path, {
     id: (v, p) => str(errs, p, v, 16),
     action: (v, p) => str(errs, p, v, 200),
@@ -123,7 +172,8 @@ function checkQuestion(errs, q, path) {
 }
 
 function checkReview(errs, r, path) {
-  if (!obj(errs, path, r, { id: true, kind: true, what: true, evidence: true, script: true, questions: true, needsOperator: true, status: true, urls: false, notProven: false, feedback: false })) return;
+  if (!obj(errs, path, r, { id: true, kind: true, what: true, evidence: true, script: true, questions: true, needsOperator: true, status: true, urls: false, notProven: false, minutes: false, feedback: false, ...ANSWER_KEYS })) return;
+  answerFields(errs, r, path);
   fields(r, path, {
     needsOperator: (v, p) => bool(errs, p, v),
     id: (v, p) => str(errs, p, v, 16),
@@ -133,12 +183,63 @@ function checkReview(errs, r, path) {
     script: (v, p) => str(errs, p, v, 600, { min: 0 }),
     urls: (v, p) => arr(errs, p, v, (s, x) => str(errs, x, s, 300), { min: 1 }),
     notProven: (v, p) => str(errs, p, v, 300, { min: 0 }),
+    minutes: (v, p) => { if (!Number.isInteger(v) || v < 1 || v > 10) errs.push(`${p}: an integer from 1 to 10, got ${fmt(v)}`); },
     questions: (v, p) => arr(errs, p, v, (q, x) => checkQuestion(errs, q, x), { min: 1, max: 3 }),
     status: (v, p) => oneOf(errs, p, v, ['open', 'accepted', 'reopened', 'deferred']),
     feedback: (v, p) => str(errs, p, v, 500, { nullable: true, min: 0 }),
   });
   // 330.b: a result carries the clickable URL(s) to open — the 🔎 Preuve à jouer block's "where".
   if (r.kind === 'result' && !('urls' in r)) errs.push(`${at(path, 'urls')}: missing (required when kind is result)`);
+}
+
+function step(errs, path, v) {
+  if (!Number.isInteger(v) || v < 0 || v > 5) errs.push(`${path}: an integer from 0 to 5 (${STEP_LABELS.join(' · ')}), got ${fmt(v)}`);
+}
+
+function checkTask(errs, t, path) {
+  if (!obj(errs, path, t, TASK_KEYS)) return;
+  fields(t, path, {
+    id: (v, p) => str(errs, p, v, 16),
+    title: (v, p) => str(errs, p, v, CAPS.taskTitle),
+    short: (v, p) => str(errs, p, v, 24),
+    step: (v, p) => step(errs, p, v),
+    waitsOn: strList(errs, 16),
+    movedAt: (v, p) => isoInstant(errs, p, v),
+    ref: (v, p) => str(errs, p, v, 200),
+    url: (v, p) => str(errs, p, v, 300),
+    blocked: (v, p) => str(errs, p, v, 200, { nullable: true }),
+  });
+}
+
+function checkScreen(errs, s, path) {
+  if (!obj(errs, path, s, SCREEN_KEYS)) return;
+  fields(s, path, {
+    group: (v, p) => str(errs, p, v, 40),
+    code: (v, p) => str(errs, p, v, 16),
+    title: (v, p) => str(errs, p, v, 80),
+    step: (v, p) => step(errs, p, v),
+    verdict: (v, p) => oneOf(errs, p, v, VERDICTS),
+    vnote: (v, p) => str(errs, p, v, 200),
+    note: (v, p) => str(errs, p, v, 200),
+    task: (v, p) => str(errs, p, v, 16),
+  });
+}
+
+/** 337.a cross-references: task ids unique; waitsOn and every `task` link name a task of this fiche. */
+function taskLinks(errs, f) {
+  const tasks = Array.isArray(f.tasks) ? f.tasks.filter(isObj) : [];
+  const ids = tasks.map((t) => t.id);
+  if (new Set(ids).size !== ids.length) errs.push('tasks: task ids must be unique');
+  const known = new Set(ids);
+  tasks.forEach((t, i) => {
+    if (Array.isArray(t.waitsOn)) t.waitsOn.forEach((w, j) => { if (typeof w === 'string' && !known.has(w)) errs.push(`tasks[${i}].waitsOn[${j}]: names no task of this fiche, got ${fmt(w)}`); });
+  });
+  for (const key of ['decisions', 'operatorActions', 'review', 'screens']) {
+    if (!Array.isArray(f[key])) continue;
+    f[key].forEach((item, i) => {
+      if (isObj(item) && typeof item.task === 'string' && !known.has(item.task)) errs.push(`${key}[${i}].task: names no task of this fiche, got ${fmt(item.task)}`);
+    });
+  }
 }
 
 /**
@@ -149,7 +250,7 @@ function checkReview(errs, r, path) {
  */
 export function validateFiche(f, nowMs = Date.now()) {
   const errs = [];
-  if (!obj(errs, '', f, Object.fromEntries(TOP_FIELDS.map((k) => [k, true])))) return errs;
+  if (!obj(errs, '', f, Object.fromEntries([...TOP_FIELDS.map((k) => [k, true]), ...OPTIONAL_TOP_FIELDS.map((k) => [k, false])]))) return errs;
   fields(f, '', {
     v: (v, p) => { if (v !== 1) errs.push(`${p}: must be 1, got ${fmt(v)}`); },
     chantier: (v, p) => str(errs, p, v, 60, { re: SLUG_RE }),
@@ -176,7 +277,12 @@ export function validateFiche(f, nowMs = Date.now()) {
     decisions: (v, p) => arr(errs, p, v, (d, x) => checkDecision(errs, d, x)),
     operatorActions: (v, p) => arr(errs, p, v, (a, x) => checkAction(errs, a, x)),
     review: (v, p) => arr(errs, p, v, (r, x) => checkReview(errs, r, x)),
+    session: (v, p) => str(errs, p, v, 71, { re: SESSION_RE, nullable: true }),
+    next: (v, p) => str(errs, p, v, CAPS.next, { nullable: true }),
+    tasks: (v, p) => arr(errs, p, v, (t, x) => checkTask(errs, t, x), { max: CAPS.tasks }),
+    screens: (v, p) => arr(errs, p, v, (s, x) => checkScreen(errs, s, x), { max: CAPS.screens }),
   });
+  taskLinks(errs, f);
   return errs;
 }
 
